@@ -1,10 +1,13 @@
-from pathlib import Path
-from typing import Dict
-from typing import Tuple
-from typing import List
-from typing import Set
-
 import enum
+from pathlib import Path
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+
 import attr
 import pytest
 from py._path.local import LocalPath as TmpDir
@@ -72,16 +75,46 @@ DUMMY_METRICS: List[DummyMetric] = [
 ]
 
 
+@attr.s(auto_attribs=True, frozen=True)
+class Person(Metric["Person"]):
+    name: str
+    age: int
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class Name:
+    first: str
+    last: str
+
+    @classmethod
+    def parse(cls, value: str) -> "Name":
+        fields = value.split(" ")
+        return Name(first=fields[0], last=fields[1])
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class NamedPerson(Metric["NamedPerson"]):
+    name: Name
+    age: int
+
+    @classmethod
+    def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
+        return {Name: lambda value: Name.parse(value=value)}
+
+    @classmethod
+    def format_value(cls, value: Any) -> str:
+        if isinstance(value, (Name)):
+            return f"{value.first} {value.last}"
+        else:
+            return super().format_value(value=value)
+
+
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
 def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
 
     DummyMetric.write(path, metric)
-    metrics: List[DummyMetric] = DummyMetric.read(path=path)
-
-    with path.open("r") as reader:
-        for line in reader:
-            print(line)
+    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == 1
     assert metrics[0] == metric
@@ -91,11 +124,43 @@ def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
 
     DummyMetric.write(path, *DUMMY_METRICS)
-    metrics: List[DummyMetric] = DummyMetric.read(path=path)
-
-    with path.open("r") as reader:
-        for line in reader:
-            print(line)
+    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == len(DUMMY_METRICS)
     assert metrics == DUMMY_METRICS
+
+
+def test_metric_header() -> None:
+    assert DummyMetric.header() == [
+        "int_value",
+        "str_value",
+        "bool_val",
+        "enum_val",
+        "dict_value",
+        "tuple_value",
+        "list_value",
+        "complex_value",
+    ]
+
+
+def test_metric_values() -> None:
+    assert list(Person(name="name", age=42).values()) == ["name", 42]
+
+
+def test_metric_parse() -> None:
+    assert Person.parse(fields=["name", "42"]) == Person(name="name", age=42)
+
+
+def test_metric_formatted_values() -> None:
+    assert Person(name="name", age=42).formatted_values() == (["name", "42"])
+
+
+def test_metric_custom_parser() -> None:
+    assert NamedPerson.parse(fields=["john doe", "42"]) == (
+        NamedPerson(name=Name(first="john", last="doe"), age=42)
+    )
+
+
+def test_metric_custom_formatter() -> None:
+    person = NamedPerson(name=Name(first="john", last="doe"), age=42)
+    assert list(person.formatted_values()) == ["john doe", "42"]

@@ -1,9 +1,9 @@
 from typing import Any
 from typing import Dict
+from typing import List
+from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import Tuple
-from typing import List
 
 try:  # py>=38
     from typing import Literal
@@ -278,7 +278,9 @@ def attr_from(
                     pass
 
             # fail otherwise
-            assert set_value, f"Do not know how to convert string to {attribute.type}"
+            assert (
+                set_value
+            ), f"Do not know how to convert string to {attribute.type} for value: {str_value}"
         else:  # no value, check for a default
             assert attribute.default is not None or (
                 types.get_origin_type(attribute.type) is Union

@@ -1,5 +1,38 @@
-import attr
+"""
+Utility Methods for SAM/BAM
+---------------------------
+
+This module contains class and mehtods for storing and parsing supplementary alignment data
+(SA tag) from a SAM/BAM file.
+
+Examples of parsing the SA tag and individual supplementary alignments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: python
+
+   >>> from fgpyo.sam import SupplementaryAlignment
+   >>> sup = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
+   >>> sup.reference_name
+   'chr1
+   >>> sup.nm
+   0
+   >>> from typing import List
+   >>> sa_tag = "chr1,123,+,50S100M,60,0;chr2,456,-,75S75M,60,1"
+   >>> sups: List[SupplementaryAlignment] = SupplementaryAlignment.parse_sa_tag(tag=sa_tag)
+   >>> len(sups)
+   2
+   >>> [str(sup.cigar) for sup in sups]
+   ['50S100M', '75S75M']
+
+Module Contents
+~~~~~~~~~~~~~~~
+The module contains the following public classes:
+    - :class:`~fgpyo.sam.SupplementaryAlignment` -- Stores a supplementary alignment record
+        produced by BWA and stored in the SA SAM tag.
+"""
+
 from typing import List
+
+import attr
 from samwell.sam import Cigar
 
 

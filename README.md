@@ -39,6 +39,8 @@
 
 **Requires python 3.6+**
 
+See documentation on [fgpyo.readthedocs.org][rtd-link].
+
 # Getting Setup
 
 [Poetry][poetry-link] is used to manage the python development environment. 
@@ -56,5 +58,7 @@ If, during `poetry install` on Mac OS X errors are encountered running gcc/clang
 export CFLAGS="-stdlib=libc++"
 ``` 
 
+
+[rtd-link]:    http://fgpyo.readthedocs.org/en/stable
 [poetry-link]: https://github.com/python-poetry/poetry
 [conda-link]:  https://docs.conda.io/en/latest/miniconda.html

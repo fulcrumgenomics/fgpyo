@@ -75,7 +75,7 @@ jobs:
       run: |
         set -euo pipefail
         pushd docs
-        make html
+        poetry run make html
         popd
 
     - name: Upload code coverage

@@ -33,11 +33,6 @@ jobs:
       shell: bash
       run: poetry config virtualenvs.in-project true
 
-    - name: Install sphinx
-      shell: bash
-      run: |
-        pip install sphinx==4.3.1
-
     - name: Set up cache
       uses: actions/cache@v2
       id: cache
@@ -53,7 +48,7 @@ jobs:
     - name: Install deps
       shell: bash
       run: |
-        poetry install
+        poetry install --extras sphinx
 
     - name: Run pytest
       shell: bash

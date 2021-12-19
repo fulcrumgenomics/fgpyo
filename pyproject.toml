@@ -30,6 +30,10 @@ attrs = ">=19.3.0"
 samwell = ">=0.0.2"
 typing_extensions = { version = ">=3.7.4", python = "<3.8" }  # Literal support
 typing_inspect = { version = ">=0.3.1", python = "<3.8" }  # inspecting types
+sphinx = {version = "^3", optional = true}
+
+[tool.poetry.extras]
+docs = ["sphinx"]
 
 [tool.poetry.dev-dependencies]
 pytest = ">=5.4.2"

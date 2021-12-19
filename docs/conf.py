@@ -70,7 +70,7 @@ with toml_path.open("r") as reader:
     for line in reader:
         if line.startswith("version"):
             version = line.rstrip("\r\n").split(" = ")[1]
-            version = version[1:-2]
+            version = version[1:-1]
             break
 
 # The full version, including alpha/beta/rc tags.

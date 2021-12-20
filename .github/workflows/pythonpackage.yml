@@ -48,7 +48,7 @@ jobs:
     - name: Install deps
       shell: bash
       run: |
-        poetry install
+        poetry install --extras docs 
 
     - name: Run pytest
       shell: bash
@@ -69,6 +69,14 @@ jobs:
       shell: bash
       run: |
         poetry run mypy -p fgpyo --config=ci/mypy.ini
+
+    - name: Run docs
+      shell: bash
+      run: |
+        set -euo pipefail
+        pushd docs
+        poetry run make html
+        popd
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v2.1.0

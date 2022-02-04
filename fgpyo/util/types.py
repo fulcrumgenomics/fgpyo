@@ -16,8 +16,8 @@ except ImportError:
 
 
 # `get_origin_type` is a method that gets the outer type (ex list in a List[str])
-if hasattr(typing, "get_origin_type"):  # py>=38
-    get_origin_type = typing.get_origin_type
+if hasattr(typing, "get_origin"):  # py>=38
+    get_origin_type = typing.get_origin
 else:  # py<38
 
     def get_origin_type(tp: Type) -> Type:
@@ -78,7 +78,7 @@ def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
     """Worker function behind enum parsing. Takes enum type and creates an instance of the enum
     from a string if possible"""
     try:
-        return enum[value]
+        return enum(value)
     except KeyError:
         raise InspectException(
             "invalid choice: {!r} (choose from {})".format(
@@ -92,7 +92,7 @@ def make_enum_parser(enum: Type[EnumType]) -> partial:
     return partial(_make_enum_parser_worker, enum)
 
 
-def _is_constructible_from_str(type_: T) -> bool:
+def is_constructible_from_str(type_: T) -> bool:
     """Returns true if the provided type can be constructed from a string"""
     try:
         sig = inspect.signature(type_)
@@ -113,6 +113,11 @@ def _is_constructible_from_str(type_: T) -> bool:
     return False
 
 
+def _is_optional(type_: T) -> bool:
+    """Returns true if type_ is optional"""
+    return get_origin_type(type_) is Union and type(None) in get_arg_types(type_)
+
+
 def _make_union_parser_worker(
     union: Type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
@@ -121,6 +126,13 @@ def _make_union_parser_worker(
     """Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise raises an error if none
     work"""
+    # Need to do this in the case of type Optional[str], because otherwise it'll return the string
+    # 'None' instead of the object None
+    if _is_optional(union):
+        try:
+            return none_parser(value)
+        except (ValueError, InspectException):
+            pass
     for p in parsers:
         try:
             return p(value)
@@ -167,3 +179,10 @@ def make_literal_parser(
 def is_list_like(type_: T) -> bool:
     """Returns true if the value is a list or list like object"""
     return get_origin_type(type_) in [list, collections.abc.Iterable, collections.abc.Sequence]
+
+
+def none_parser(value: str) -> None:
+    """Returns None if the value is 'None', else raises an error"""
+    if value == "None":
+        return None
+    raise ValueError(f"NoneType not a valid type for {value}")

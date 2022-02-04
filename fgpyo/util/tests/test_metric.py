@@ -1,6 +1,6 @@
 import enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -26,6 +26,10 @@ class DummyMetric(Metric["DummyMetric"]):
     str_value: str
     bool_val: bool
     enum_val: EnumTest = attr.ib()
+    optional_str_value: Optional[str] = attr.ib()
+    optional_int_value: Optional[int] = attr.ib()
+    optional_bool_value: Optional[bool] = attr.ib()
+    optional_enum_value: Optional[EnumTest] = attr.ib()
     dict_value: Dict[int, str] = attr.ib()
     tuple_value: Tuple[int, str] = attr.ib()
     list_value: List[str] = attr.ib()
@@ -44,6 +48,10 @@ DUMMY_METRICS: List[DummyMetric] = [
         str_value="2",
         bool_val=True,
         enum_val=EnumTest.EnumVal1,
+        optional_str_value="test4",
+        optional_int_value=-5,
+        optional_bool_value=True,
+        optional_enum_value=EnumTest.EnumVal3,
         dict_value={
             1: "test1",
         },
@@ -56,6 +64,10 @@ DUMMY_METRICS: List[DummyMetric] = [
         str_value="2",
         bool_val=False,
         enum_val=EnumTest.EnumVal2,
+        optional_str_value="test",
+        optional_int_value=1,
+        optional_bool_value=False,
+        optional_enum_value=EnumTest.EnumVal1,
         dict_value={2: "test2", 7: "test4"},
         tuple_value=(1, "test2"),
         list_value=["1"],
@@ -66,6 +78,10 @@ DUMMY_METRICS: List[DummyMetric] = [
         str_value="2",
         bool_val=False,
         enum_val=EnumTest.EnumVal3,
+        optional_str_value=None,
+        optional_int_value=None,
+        optional_bool_value=None,
+        optional_enum_value=None,
         dict_value={},
         tuple_value=(2, "test3"),
         list_value=["1", "2", "3"],
@@ -135,6 +151,10 @@ def test_metric_header() -> None:
         "str_value",
         "bool_val",
         "enum_val",
+        "optional_str_value",
+        "optional_int_value",
+        "optional_bool_value",
+        "optional_enum_value",
         "dict_value",
         "tuple_value",
         "list_value",

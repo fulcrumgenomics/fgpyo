@@ -217,9 +217,12 @@ def _get_parser(
                 return types.make_enum_parser(type_)
             elif types.is_constructible_from_str(type_):
                 return functools.partial(type_)
+            elif isinstance(type_, type(type(None))):
+                return functools.partial(types.none_parser)
             elif types.get_origin_type(type_) is Union:
                 return types.make_union_parser(
-                    type_, [_get_parser(cls, arg, parsers) for arg in types.get_arg_types(type_)]
+                    union=type_,
+                    parsers=[_get_parser(cls, arg, parsers) for arg in types.get_arg_types(type_)],
                 )
             elif types.get_origin_type(type_) is Literal:  # Py>=3.7.
                 return types.make_literal_parser(
@@ -272,7 +275,7 @@ def attr_from(
             if not set_value:
                 try:
                     parser = _get_parser(cls=cls, type_=attribute.type, parsers=parsers)
-                    return_value = parser.func(str_value)
+                    return_value = parser(str_value)
                     set_value = True
                 except Exception:
                     pass

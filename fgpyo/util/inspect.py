@@ -20,6 +20,10 @@ from typing import Optional
 import fgpyo.util.types as types
 
 
+class ParserNotFoundException(Exception):
+    pass
+
+
 def split_at_given_level(
     field: str,
     split_delim: str = ",",
@@ -230,7 +234,7 @@ def _get_parser(
                     [_get_parser(cls, type(arg), parsers) for arg in types.get_arg_types(type_)],
                 )
             else:
-                raise Exception(
+                raise ParserNotFoundException(
                     "no parser found for type {}".format(
                         # typing types have no __name__.
                         getattr(type_, "__name__", repr(type_))
@@ -268,7 +272,7 @@ def attr_from(
                 try:
                     return_value = attribute.type(str_value)
                     set_value = True
-                except Exception:
+                except (ValueError, TypeError):
                     pass
 
             # try getting a known parser
@@ -277,7 +281,7 @@ def attr_from(
                     parser = _get_parser(cls=cls, type_=attribute.type, parsers=parsers)
                     return_value = parser(str_value)
                     set_value = True
-                except Exception:
+                except ParserNotFoundException:
                     pass
 
             # fail otherwise

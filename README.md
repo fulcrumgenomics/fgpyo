@@ -22,10 +22,10 @@
 [type-checking-link]:   http://mypy-lang.org/
 [pep-8-badge]:          https://img.shields.io/badge/code%20style-pep8-brightgreen.svg
 [pep-8-link]:           https://www.python.org/dev/peps/pep-0008/
-[code-coverage-badge]:  https://codecov.io/gh/fulcrumgenomics/fgpyo/branch/master/graph/badge.svg
+[code-coverage-badge]:  https://codecov.io/gh/fulcrumgenomics/fgpyo/branch/main/graph/badge.svg
 [code-coverage-link]:   https://codecov.io/gh/fulcrumgenomics/fgpyo
 [license-badge]:        http://img.shields.io/badge/license-MIT-blue.svg
-[license-link]:         https://github.com/fulcrumgenomics/fgpyo/blob/master/LICENSE
+[license-link]:         https://github.com/fulcrumgenomics/fgpyo/blob/main/LICENSE
 [python-package-badge]: https://github.com/fulcrumgenomics/fgpyo/workflows/Python%20package/badge.svg
 [python-package-link]:  https://github.com/fulcrumgenomics/fgpyo/actions?query=workflow%3A%22Python+package%22
 [pypi-badge]:           https://badge.fury.io/py/fgpyo.svg

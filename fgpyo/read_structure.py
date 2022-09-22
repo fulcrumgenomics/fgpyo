@@ -21,6 +21,9 @@ class SegmentType(enum.Enum):
     MolecularBarcode = "M"
     Skip = "S"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
 class SubReadWithoutQuals:
@@ -117,9 +120,9 @@ class ReadSegment:
 
     def __str__(self) -> str:
         if self.has_fixed_length:
-            return f"{self.length}{self.kind}"
+            return f"{self.length}{self.kind.value}"
         else:
-            return f"{ANY_LENGTH_CHAR}{self.kind}"
+            return f"{ANY_LENGTH_CHAR}{self.kind.value}"
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
@@ -198,6 +201,12 @@ class ReadStructure(Iterable[ReadSegment]):
 
     def __str__(self) -> str:
         return "".join(str(s) for s in self.segments)
+
+    def __len__(self) -> int:
+        return self.length
+
+    def __getitem__(self, index: int) -> ReadSegment:
+        return self.segments[index]
 
     @classmethod
     def from_segments(

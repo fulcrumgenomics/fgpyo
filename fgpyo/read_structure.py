@@ -58,7 +58,7 @@ The module contains the following public classes:
         structure
     - :class:`~fgpyo.read_structure.SubReadWithoutQuals` -- Contains the bases that correspond to
         the given read segment
-    - :class:`~fgpyo.read_structure.SubReadWitQuals` -- Contains the bases and qualities that
+    - :class:`~fgpyo.read_structure.SubReadWithQuals` -- Contains the bases and qualities that
         correspond to the given read segment
 """
 import enum

@@ -1,4 +1,66 @@
-# TODO: docstring with examples
+"""
+Classes for representing Read Structures
+----------------------------------------
+
+A Read Structure refers to a String that describes how the bases in a sequencing run should be
+allocated into logical reads.  It serves a similar purpose to the --use-bases-mask in Illumina's
+`bcltofastq` software, but provides some additional capabilities.
+
+A Read Structure is a sequence of `<number><operator>` pairs or segments where, optionally, the last
+segment in the string is allowed to use `+` instead of a number for its length. The `+` translates
+to whatever bases are left after the other segments are processed and can be thought of as meaning
+`[0..infinity]`.
+
+See more at: https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures
+
+Examples
+~~~~~~~~
+.. code-block:: python
+
+   >>> from fgpyo.read_structure import ReadStructure
+   >>> rs = ReadStructure.from_string("75T8B75T")
+   >>> [str(segment) for segment in rs]
+   '75T', '8B', '75T'
+   >>> rs[0]
+   ReadSegment(offset=0, length=75, kind=<SegmentType.Template: 'T'>)
+   >>> rs = rs.with_variable_last_segment()
+   >>> [str(segment) for segment in rs]
+   ['75T', '8B', '+T']
+   >>> rs[-1]
+   ReadSegment(offset=83, length=None, kind=<SegmentType.Template: 'T'>)
+   >>> rs = ReadStructure.from_string("1B2M+T")
+   >>> [s.bases for s in rs.extract("A"*6)]
+   ['A', 'AA', 'AAA']
+   >>> [s.bases for s in rs.extract("A"*5)]
+   ['A', 'AA', 'AA']
+   >>> [s.bases for s in rs.extract("A"*4)]
+   ['A', 'AA', 'A']
+   >>> [s.bases for s in rs.extract("A"*3)]
+   ['A', 'AA', '']
+   >>> rs.template_segments()
+   (ReadSegment(offset=3, length=None, kind=<SegmentType.Template: 'T'>),)
+   >>> [str(segment) for segment in rs.template_segments()]
+   ['+T']
+   >>> try:
+   ...   ReadStructure.from_string("23T2TT23T")
+   ... except ValueError as ex:
+   ...   print(str(ex))
+   ...
+   Read structure missing length information: 23T2T[T]23T
+
+Module Contents
+~~~~~~~~~~~~~~~
+The module contains the following public classes:
+    - :class:`~fgpyo.read_structure.ReadStructure` -- Describes the structure of a give read
+    - :class:`~fgpyo.read_structure.ReadSegment` -- Describes all the information about a segment
+        within a read structure
+    - :class:`~fgpyo.read_structure.SegmentType` -- The type of segments that can show up in a read
+        structure
+    - :class:`~fgpyo.read_structure.SubReadWithoutQuals` -- Contains the bases that correspond to
+        the given read segment
+    - :class:`~fgpyo.read_structure.SubReadWitQuals` -- Contains the bases and qualities that
+        correspond to the given read segment
+"""
 import enum
 from typing import Optional
 from typing import Iterable
@@ -14,7 +76,7 @@ ANY_LENGTH_CHAR: str = "+"
 
 @enum.unique
 class SegmentType(enum.Enum):
-    """The type of segments that can show up n a read structure"""
+    """The type of segments that can show up in a read structure"""
 
     Template = "T"
     SampleBarcode = "B"

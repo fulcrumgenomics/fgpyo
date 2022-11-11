@@ -64,25 +64,25 @@ def test_to_templates() -> None:
     template1, template2, template3 = templates
 
     # Check template 1
-    assert template1.r1.qname == "q1"
-    assert template1.r2.qname == "q1"
-    assert len(template1.r1_supplementals) == 2
-    assert len(template1.r2_supplementals) == 1
-    assert len(template1.r1_secondaries) == 1
-    assert len(template1.r2_secondaries) == 1
+    assert template1.r1.query_name == "q1"
+    assert template1.r2.query_name == "q1"
+    assert len(list(template1.r1_supplementals)) == 2
+    assert len(list(template1.r2_supplementals)) == 1
+    assert len(list(template1.r1_secondaries)) == 1
+    assert len(list(template1.r2_secondaries)) == 1
 
     # Check template 2
-    assert template2.r2.qname == "q2"
-    assert len(template2.r1_supplementals) == 0
-    assert len(template2.r2_supplementals) == 0
-    assert len(template2.r1_secondaries) == 0
-    assert len(template2.r2_secondaries) == 0
+    assert template2.r2.query_name == "q2"
+    assert len(list(template2.r1_supplementals)) == 0
+    assert len(list(template2.r2_supplementals)) == 0
+    assert len(list(template2.r1_secondaries)) == 0
+    assert len(list(template2.r2_secondaries)) == 0
 
     # Check template 3
     assert template3.r1 is None
     assert template3.r2 is None
-    assert len(template3.r1_supplementals) == 0
-    assert len(template3.r2_supplementals) == 1
-    assert template3.r2_supplementals[0].qname == "q1"
-    assert len(template3.r1_secondaries) == 0
-    assert len(template3.r2_secondaries) == 0
+    assert len(list(template3.r1_supplementals)) == 0
+    assert len(list(template3.r2_supplementals)) == 1
+    assert list(template3.r2_supplementals)[0].query_name == "q1"
+    assert len(list(template3.r1_secondaries)) == 0
+    assert len(list(template3.r2_secondaries)) == 0

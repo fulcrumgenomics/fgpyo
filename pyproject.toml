@@ -28,6 +28,7 @@ include = [
 python = ">=3.6.0"
 attrs = ">=19.3.0"
 samwell = ">=0.0.2"
+pysam = ">=0.19.1"
 typing_extensions = { version = ">=3.7.4", python = "<3.8" }  # Literal support
 typing_inspect = { version = ">=0.3.1", python = "<3.8" }  # inspecting types
 sphinx = {version = "4.3.1", optional = true}

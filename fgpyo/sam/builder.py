@@ -179,21 +179,28 @@ class SamBuilder:
         rec.set_tags(list(attrs.items()))
         return rec
 
-    def _set_flags(self, rec: pysam.AlignedSegment, is_r1: bool, strand: str) -> None:
+    def _set_flags(
+        self,
+        rec: pysam.AlignedSegment,
+        read_num: Optional[int],
+        strand: str,
+        secondary: bool = False,
+        supplementary: bool = False,
+    ) -> None:
         """Appropriately sets most flag fields on the given read.
 
         Args:
             rec: the read to set the flags on
-            is_r1: True if the read is a R1, False if it is an R2
+            read_num: Either None for an unpaired read, or 1 or 2
             strand: Either "+" or "-" to indicate strand of the read
         """
-        rec.is_paired = True
-        rec.is_read1 = is_r1
-        rec.is_read2 = not is_r1
+        rec.is_paired = read_num is not None
+        rec.is_read1 = read_num == 1
+        rec.is_read2 = read_num == 2
         rec.is_qcfail = False
         rec.is_duplicate = False
-        rec.is_secondary = False
-        rec.is_supplementary = False
+        rec.is_secondary = secondary
+        rec.is_supplementary = supplementary
         if not rec.is_unmapped:
             rec.is_reverse = strand != "+"
 
@@ -388,14 +395,14 @@ class SamBuilder:
 
         # Setup R1
         r1 = self._new_rec(name=name, chrom=chrom, start=start1, attrs=attrs)
-        self._set_flags(r1, is_r1=True, strand=strand1)
+        self._set_flags(r1, read_num=1, strand=strand1)
         self._set_length_dependent_fields(
             rec=r1, length=self.r1_len, bases=bases1, quals=quals1, cigar=cigar1
         )
 
         # Setup R2
         r2 = self._new_rec(name=name, chrom=chrom, start=start2, attrs=attrs)
-        self._set_flags(r2, is_r1=False, strand=strand2)
+        self._set_flags(r2, read_num=2, strand=strand2)
         self._set_length_dependent_fields(
             rec=r2, length=self.r2_len, bases=bases2, quals=quals2, cigar=cigar2
         )
@@ -405,6 +412,85 @@ class SamBuilder:
         self._records.append(r1)
         self._records.append(r2)
         return r1, r2
+
+    def add_single(
+        self,
+        *,
+        name: Optional[str] = None,
+        read_num: Optional[int] = None,
+        bases: Optional[str] = None,
+        quals: Optional[List[int]] = None,
+        chrom: str = sam.NO_REF_NAME,
+        start: int = sam.NO_REF_POS,
+        cigar: Optional[str] = None,
+        strand: str = "+",
+        secondary: bool = False,
+        supplementary: bool = False,
+        attrs: Optional[Dict[str, Any]] = None,
+    ) -> AlignedSegment:
+        """Generates a new single reads, adds them to the internal collection, and returns it.
+
+        Most fields are optional.
+
+        If `read_num` is None (the default) an unpaired read will be created.  If `read_num` is
+        set to 1 or 2, the read will have it's paired flag set and read number flags set.
+
+        An unmapped read can be created by calling the method with no parameters (specifically,
+        not setting chrom, start1 or start2).  If cigar is provided, it will be ignored.
+
+        A mapped read is created by providing chrom and start.
+
+        The length of the read is determined based on the presence or absence of bases, quals,
+        and cigar.  If values are provided for one or more of these parameters, the lengths must
+        match, and the length will be used to generate any unsupplied values.  If none of bases,
+        quals, and cigar are provided, all three will be synthesized based on either the r1_len
+        or r2_len stored on the class as appropriate.
+
+        When synthesizing, bases are always a random sequence of bases, quals are all the default
+        base quality (supplied when constructing a SamBuilder) and the cigar is always a single M
+        operator of the read length.
+
+        Args:
+            name: The name of the template. If None is given a unique name will be auto-generated.
+            read_num: Either None, 1 for R1 or 2 for R2
+            bases: The bases for the read. If None is given a random sequence is generated.
+            quals: The list of qualities for the read. If None, the default base quality is used.
+            chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
+            start: The start position of the read. Defaults to the unmapped value.
+            cigar: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
+            strand: The strand for R1, either "+" or "-". Defaults to "+".
+            secondary: If true the read will be flagged as secondary
+            supplementary: If true the read will be flagged as supplementary
+            attrs: An optional dictionary of SAM attribute to place on both R1 and R2.
+
+        Raises:
+            ValueError: if strand field is not "+" or "-"
+            ValueError: if read_num is not None, 1 or 2
+            ValueError: if bases/quals/cigar are set in a way that is not self-consistent
+
+        Returns:
+            AlignedSegment: The record created
+        """
+
+        if strand not in ["+", "-"]:
+            raise ValueError(f"Invalid value for strand1: {strand}")
+        if read_num not in [None, 1, 2]:
+            raise ValueError(f"Invalid value for read_num: {read_num}")
+
+        name = name if name is not None else self._next_name()
+
+        # Setup the read
+        read_len = self.r1_len if read_num != 2 else self.r2_len
+        rec = self._new_rec(name=name, chrom=chrom, start=start, attrs=attrs)
+        self._set_flags(
+            rec, read_num=read_num, strand=strand, secondary=secondary, supplementary=supplementary
+        )
+        self._set_length_dependent_fields(
+            rec=rec, length=read_len, bases=bases, quals=quals, cigar=cigar
+        )
+
+        self._records.append(rec)
+        return rec
 
     def to_path(
         self,

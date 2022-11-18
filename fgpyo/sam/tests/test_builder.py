@@ -161,6 +161,36 @@ def test_proper_pair() -> None:
         assert not rec.is_proper_pair
 
 
+def test_add_single() -> None:
+    builder = SamBuilder(r1_len=25, r2_len=50)
+
+    # Unmapped fragment
+    r = builder.add_single()
+    assert not r.is_paired
+    assert r.is_unmapped
+    assert len(r.query_sequence) == 25
+
+    # Supplementary R1
+    r = builder.add_single(name="q1", read_num=1, chrom="chr1", start=1000, supplementary=True)
+    assert r.is_paired
+    assert r.is_read1
+    assert not r.is_read2
+    assert not r.is_unmapped
+    assert r.is_supplementary
+    assert len(r.query_sequence) == 25
+
+    # A read two
+    r = builder.add_single(name="q1", read_num=2, chrom="chr1", start=1000)
+    assert r.is_paired
+    assert not r.is_read1
+    assert r.is_read2
+    assert not r.is_unmapped
+    assert len(r.query_sequence) == 50
+
+    with pytest.raises(ValueError, match="read_num"):
+        builder.add_single(read_num=0)
+
+
 def test_sorting() -> None:
     builder = SamBuilder()
     builder.add_pair(chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+")

@@ -1,6 +1,19 @@
 The MIT License
 
-Copyright (c) 2020 Fulcrum Genomics LLC
+Portions of the following files are Copyright (c) 2020 Myriad Genetics, Inc.
+and were extracted from https://github.com/myriad-opensource/samwell as permitted
+by the MIT License of that software:
+    fgpyo/collections/__init__.py
+    fgpyo/collections/test/test_peekable_iterator.py
+    fgpyo/sam/__init__.pyt
+    fgpyo/sam/builder.py
+    fgpyo/sam/clipping.py
+    fgpyo/sam/tests/test_builder.py
+    fgpyo/sam/tests/test_clipping.py
+    fgpyo/sam/tests/test_sam.py
+    fgpyo/sam/tests/test_supplementary_ailgnments.py
+
+All other content and files Copyright (c) 2020-2022 Fulcrum Genomics LLC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

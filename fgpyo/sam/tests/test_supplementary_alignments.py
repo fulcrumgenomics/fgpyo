@@ -1,5 +1,5 @@
 import pytest
-from samwell.sam import Cigar
+from fgpyo.sam import Cigar
 
 from fgpyo.sam import SupplementaryAlignment
 

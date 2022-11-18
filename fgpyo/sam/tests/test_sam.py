@@ -3,7 +3,6 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
 from typing import Any
-from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Tuple

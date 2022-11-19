@@ -1,7 +1,9 @@
-import pytest
 from typing import Tuple
-from fgpyo.read_structure import ReadStructure
+
+import pytest
+
 from fgpyo.read_structure import ReadSegment
+from fgpyo.read_structure import ReadStructure
 from fgpyo.read_structure import SegmentType
 
 

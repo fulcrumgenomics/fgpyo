@@ -1,13 +1,13 @@
-from enum import Enum
-import typing
 import collections
-from typing import Union
-from typing import TypeVar
+import inspect
+import typing
+from enum import Enum
+from functools import partial
+from typing import Callable
 from typing import Iterable
 from typing import Type
-from typing import Callable
-import inspect
-from functools import partial
+from typing import TypeVar
+from typing import Union
 
 try:
     from typing import Literal

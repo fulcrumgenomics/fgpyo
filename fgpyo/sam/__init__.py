@@ -605,22 +605,23 @@ class Template:
     """
 
     name: str
-    r1: Optional[AlignedSegment] = None
-    r2: Optional[AlignedSegment] = None
-    r1_supplementals: List[AlignedSegment] = []
-    r2_supplementals: List[AlignedSegment] = []
-    r1_secondaries: List[AlignedSegment] = []
-    r2_secondaries: List[AlignedSegment] = []
+    r1: Optional[AlignedSegment]
+    r2: Optional[AlignedSegment]
+    r1_supplementals: List[AlignedSegment]
+    r2_supplementals: List[AlignedSegment]
+    r1_secondaries: List[AlignedSegment]
+    r2_secondaries: List[AlignedSegment]
 
     @staticmethod
     def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
         """Returns an iterator over templates. Assumes the input iterable is queryname grouped,
-        and gathers contiguous runs of records sharing a common query name into templates."""
+        and gathers consecutive runs of records sharing a common query name into templates."""
         return TemplateIterator(alns)
 
     @staticmethod
     def build(recs: Iterable[AlignedSegment]) -> "Template":
         """Build a template from a set of records all with the same queryname."""
+        name = None
         r1 = None
         r2 = None
         r1_supplementals: List[AlignedSegment] = []
@@ -629,6 +630,9 @@ class Template:
         r2_secondaries: List[AlignedSegment] = []
 
         for rec in recs:
+            if name is None:
+                name = rec.query_name
+
             is_r1 = not rec.is_paired or rec.is_read1
 
             if not rec.is_supplementary and not rec.is_secondary:
@@ -650,7 +654,7 @@ class Template:
                     r2_secondaries.append(rec)
 
         return Template(
-            name=next(iter(recs)).query_name,
+            name=name,
             r1=r1,
             r2=r2,
             r1_supplementals=r1_supplementals,
@@ -661,12 +665,7 @@ class Template:
 
     def primary_recs(self) -> List[AlignedSegment]:
         """Returns a list with all the primary records for the template."""
-        recs = []
-        if self.r1 is not None:
-            recs.append(self.r1)
-        if self.r2 is not None:
-            recs.append(self.r2)
-        return recs
+        return [r for r in (self.r1, self.r2) if r is not None]
 
     def all_recs(self) -> List[AlignedSegment]:
         """Returns a list with all the records for the template."""

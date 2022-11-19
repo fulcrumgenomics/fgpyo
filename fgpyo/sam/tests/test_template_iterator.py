@@ -51,8 +51,8 @@ def test_to_templates() -> None:
     assert len(template1.r2_supplementals) == 1
     assert len(template1.r1_secondaries) == 1
     assert len(template1.r2_secondaries) == 1
-    assert len(template1.primary_recs()) == 2
-    assert len(template1.all_recs()) == 7
+    assert len(list(template1.primary_recs())) == 2
+    assert len(list(template1.all_recs())) == 7
 
     # Check template 2
     assert template2.name == "q2"
@@ -62,5 +62,5 @@ def test_to_templates() -> None:
     assert len(template2.r2_supplementals) == 0
     assert len(template2.r1_secondaries) == 1
     assert len(template2.r2_secondaries) == 0
-    assert len(template2.primary_recs()) == 1
-    assert len(template2.all_recs()) == 2
+    assert len(list(template2.primary_recs())) == 1
+    assert len(list(template2.all_recs())) == 2

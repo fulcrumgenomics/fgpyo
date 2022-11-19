@@ -663,18 +663,23 @@ class Template:
             r2_secondaries=r2_secondaries,
         )
 
-    def primary_recs(self) -> List[AlignedSegment]:
+    def primary_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the primary records for the template."""
-        return [r for r in (self.r1, self.r2) if r is not None]
+        return (r for r in (self.r1, self.r2) if r is not None)
 
-    def all_recs(self) -> List[AlignedSegment]:
+    def all_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the records for the template."""
-        recs = self.primary_recs()
-        recs.extend(self.r1_supplementals)
-        recs.extend(self.r1_secondaries)
-        recs.extend(self.r2_supplementals)
-        recs.extend(self.r2_secondaries)
-        return recs
+        for rec in self.primary_recs():
+            yield rec
+
+        for recs in (
+            self.r1_supplementals,
+            self.r1_secondaries,
+            self.r2_supplementals,
+            self.r2_secondaries,
+        ):
+            for rec in recs:
+                yield rec
 
 
 class TemplateIterator(Iterator[Template]):

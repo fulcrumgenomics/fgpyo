@@ -156,10 +156,11 @@ The module contains the following methods:
 import enum
 import io
 from pathlib import Path
-from typing import Any, Iterable, Iterator
 from typing import IO
 from typing import Any
 from typing import Dict
+from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -594,6 +595,11 @@ class Template:
     """A container for alignment records corresponding to a single sequenced template
     or insert.
 
+    It is strongly preferred that new Template instances be created with `Template.build()`
+    which will ensure that reads are stored in the correct Template property, and run basic
+    validations of the Template by default.  If constructing Template instances by construction
+    users are encouraged to use the validate method post-construction.
+
     Attributes:
         name: the name of the template/query
         r1: Primary alignment for read 1, or None if there is none
@@ -619,7 +625,7 @@ class Template:
         return TemplateIterator(alns)
 
     @staticmethod
-    def build(recs: Iterable[AlignedSegment]) -> "Template":
+    def build(recs: Iterable[AlignedSegment], validate: bool = True) -> "Template":
         """Build a template from a set of records all with the same queryname."""
         name = None
         r1 = None
@@ -653,7 +659,9 @@ class Template:
                 else:
                     r2_secondaries.append(rec)
 
-        return Template(
+        assert name is not None, "Cannot construct a template from zero records."
+
+        template = Template(
             name=name,
             r1=r1,
             r2=r2,
@@ -662,6 +670,42 @@ class Template:
             r1_secondaries=r1_secondaries,
             r2_secondaries=r2_secondaries,
         )
+
+        if validate:
+            template.validate()
+
+        return template
+
+    def validate(self) -> None:
+        """Performs sanity checks that all the records in the Template are as expected."""
+        for rec in self.all_recs():
+            assert rec.query_name == self.name, f"Name error {self.name} vs. {rec.query_name}"
+
+        if self.r1 is not None:
+            assert self.r1.is_read1 or not self.r1.is_paired, "R1 not flagged as R1 or unpaired"
+            assert not self.r1.is_supplementary, "R1 primary flagged as supplementary"
+            assert not self.r1.is_secondary, "R1 primary flagged as secondary"
+
+        if self.r2 is not None:
+            assert self.r2.is_read2, "R2 not flagged as R2"
+            assert not self.r2.is_supplementary, "R2 primary flagged as supplementary"
+            assert not self.r2.is_secondary, "R2 primary flagged as secondary"
+
+        for rec in self.r1_secondaries:
+            assert rec.is_read1 or not rec.is_paired, "R1 secondary not flagged as R1 or unpaired"
+            assert rec.is_secondary, "R1 secondary not flagged as secondary"
+
+        for rec in self.r1_supplementals:
+            assert rec.is_read1 or not rec.is_paired, "R1 supp. not flagged as R1 or unpaired"
+            assert rec.is_supplementary, "R1 supp. not flagged as supplementary"
+
+        for rec in self.r2_secondaries:
+            assert rec.is_read2, "R2 secondary not flagged as R2"
+            assert rec.is_secondary, "R2 secondary not flagged as secondary"
+
+        for rec in self.r2_supplementals:
+            assert rec.is_read2, "R2 supp. not flagged as R2"
+            assert rec.is_supplementary, "R2 supp. not flagged as supplementary"
 
     def primary_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the primary records for the template."""
@@ -697,4 +741,4 @@ class TemplateIterator(Iterator[Template]):
     def __next__(self) -> Template:
         name = self._iter.peek().query_name
         recs = self._iter.takewhile(lambda r: r.query_name == name)
-        return Template.build(recs)
+        return Template.build(recs, validate=False)

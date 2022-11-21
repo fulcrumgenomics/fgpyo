@@ -159,6 +159,8 @@ from pathlib import Path
 from typing import IO
 from typing import Any
 from typing import Dict
+from typing import Iterable
+from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -169,6 +171,8 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+
+from fgpyo.collections import PeekableIterator
 
 """The valid base classes for opening a SAM/BAM/CRAM file."""
 SamPath = Union[IO[Any], Path, str]
@@ -584,3 +588,157 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     insert_size = isize(r1, r2)
     r1.template_length = insert_size
     r2.template_length = -insert_size
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class Template:
+    """A container for alignment records corresponding to a single sequenced template
+    or insert.
+
+    It is strongly preferred that new Template instances be created with `Template.build()`
+    which will ensure that reads are stored in the correct Template property, and run basic
+    validations of the Template by default.  If constructing Template instances by construction
+    users are encouraged to use the validate method post-construction.
+
+    Attributes:
+        name: the name of the template/query
+        r1: Primary alignment for read 1, or None if there is none
+        r2: Primary alignment for read 2, or None if there is none
+        r1_supplementals: Supplementary alignments for read 1
+        r2_supplementals: Supplementary alignments for read 2
+        r1_secondaries: Secondary (non-primary) alignments for read 1
+        r2_secondaries: Secondary (non-primary) alignments for read 2
+    """
+
+    name: str
+    r1: Optional[AlignedSegment]
+    r2: Optional[AlignedSegment]
+    r1_supplementals: List[AlignedSegment]
+    r2_supplementals: List[AlignedSegment]
+    r1_secondaries: List[AlignedSegment]
+    r2_secondaries: List[AlignedSegment]
+
+    @staticmethod
+    def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
+        """Returns an iterator over templates. Assumes the input iterable is queryname grouped,
+        and gathers consecutive runs of records sharing a common query name into templates."""
+        return TemplateIterator(alns)
+
+    @staticmethod
+    def build(recs: Iterable[AlignedSegment], validate: bool = True) -> "Template":
+        """Build a template from a set of records all with the same queryname."""
+        name = None
+        r1 = None
+        r2 = None
+        r1_supplementals: List[AlignedSegment] = []
+        r2_supplementals: List[AlignedSegment] = []
+        r1_secondaries: List[AlignedSegment] = []
+        r2_secondaries: List[AlignedSegment] = []
+
+        for rec in recs:
+            if name is None:
+                name = rec.query_name
+
+            is_r1 = not rec.is_paired or rec.is_read1
+
+            if not rec.is_supplementary and not rec.is_secondary:
+                if is_r1:
+                    assert r1 is None, f"Multiple R1 primary reads found in {recs}"
+                    r1 = rec
+                else:
+                    assert r2 is None, f"Multiple R2 primary reads found in {recs}"
+                    r2 = rec
+            elif rec.is_supplementary:
+                if is_r1:
+                    r1_supplementals.append(rec)
+                else:
+                    r2_supplementals.append(rec)
+            if rec.is_secondary:
+                if is_r1:
+                    r1_secondaries.append(rec)
+                else:
+                    r2_secondaries.append(rec)
+
+        assert name is not None, "Cannot construct a template from zero records."
+
+        template = Template(
+            name=name,
+            r1=r1,
+            r2=r2,
+            r1_supplementals=r1_supplementals,
+            r2_supplementals=r2_supplementals,
+            r1_secondaries=r1_secondaries,
+            r2_secondaries=r2_secondaries,
+        )
+
+        if validate:
+            template.validate()
+
+        return template
+
+    def validate(self) -> None:
+        """Performs sanity checks that all the records in the Template are as expected."""
+        for rec in self.all_recs():
+            assert rec.query_name == self.name, f"Name error {self.name} vs. {rec.query_name}"
+
+        if self.r1 is not None:
+            assert self.r1.is_read1 or not self.r1.is_paired, "R1 not flagged as R1 or unpaired"
+            assert not self.r1.is_supplementary, "R1 primary flagged as supplementary"
+            assert not self.r1.is_secondary, "R1 primary flagged as secondary"
+
+        if self.r2 is not None:
+            assert self.r2.is_read2, "R2 not flagged as R2"
+            assert not self.r2.is_supplementary, "R2 primary flagged as supplementary"
+            assert not self.r2.is_secondary, "R2 primary flagged as secondary"
+
+        for rec in self.r1_secondaries:
+            assert rec.is_read1 or not rec.is_paired, "R1 secondary not flagged as R1 or unpaired"
+            assert rec.is_secondary, "R1 secondary not flagged as secondary"
+
+        for rec in self.r1_supplementals:
+            assert rec.is_read1 or not rec.is_paired, "R1 supp. not flagged as R1 or unpaired"
+            assert rec.is_supplementary, "R1 supp. not flagged as supplementary"
+
+        for rec in self.r2_secondaries:
+            assert rec.is_read2, "R2 secondary not flagged as R2"
+            assert rec.is_secondary, "R2 secondary not flagged as secondary"
+
+        for rec in self.r2_supplementals:
+            assert rec.is_read2, "R2 supp. not flagged as R2"
+            assert rec.is_supplementary, "R2 supp. not flagged as supplementary"
+
+    def primary_recs(self) -> Iterator[AlignedSegment]:
+        """Returns a list with all the primary records for the template."""
+        return (r for r in (self.r1, self.r2) if r is not None)
+
+    def all_recs(self) -> Iterator[AlignedSegment]:
+        """Returns a list with all the records for the template."""
+        for rec in self.primary_recs():
+            yield rec
+
+        for recs in (
+            self.r1_supplementals,
+            self.r1_secondaries,
+            self.r2_supplementals,
+            self.r2_secondaries,
+        ):
+            for rec in recs:
+                yield rec
+
+
+class TemplateIterator(Iterator[Template]):
+    """
+    An iterator that converts an iterator over query-grouped reads into an iterator
+    over templates.
+    """
+
+    def __init__(self, iterator: Iterator[AlignedSegment]) -> None:
+        self._iter = PeekableIterator(iterator)
+
+    def __iter__(self) -> Iterator[Template]:
+        return self
+
+    def __next__(self) -> Template:
+        name = self._iter.peek().query_name
+        recs = self._iter.takewhile(lambda r: r.query_name == name)
+        return Template.build(recs, validate=False)

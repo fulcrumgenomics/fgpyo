@@ -68,7 +68,6 @@ from typing import List
 from typing import TypeVar
 from typing import Union
 
-
 IterType = TypeVar("IterType")
 
 

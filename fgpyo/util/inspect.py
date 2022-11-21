@@ -9,13 +9,15 @@ try:  # py>=38
     from typing import Literal
 except ImportError:  # py<38
     from typing_extensions import Literal
-import attr
-from typing import Callable
+
 import functools
-from functools import partial
 from enum import Enum
+from functools import partial
 from pathlib import PurePath
+from typing import Callable
 from typing import Optional
+
+import attr
 
 import fgpyo.util.types as types
 

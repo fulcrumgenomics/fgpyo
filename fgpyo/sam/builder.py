@@ -22,7 +22,8 @@ from typing import Optional
 from typing import Tuple
 
 import pysam
-from pysam import AlignmentHeader, AlignedSegment
+from pysam import AlignedSegment
+from pysam import AlignmentHeader
 
 from fgpyo import sam
 

@@ -156,9 +156,9 @@ The module contains the following methods:
 import enum
 import io
 from pathlib import Path
+from typing import IO
 from typing import Any
 from typing import Dict
-from typing import IO
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -166,9 +166,9 @@ from typing import Union
 
 import attr
 import pysam
+from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
-from pysam import AlignedSegment
 
 """The valid base classes for opening a SAM/BAM/CRAM file."""
 SamPath = Union[IO[Any], Path, str]

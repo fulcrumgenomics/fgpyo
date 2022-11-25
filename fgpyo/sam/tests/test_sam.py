@@ -279,3 +279,70 @@ def test_isize() -> None:
 
     r2.is_unmapped = True
     assert sam.isize(r1, r2) == 0
+
+
+def test_calc_edit_info_no_edits() -> None:
+    chrom = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
+    builder = SamBuilder(r1_len=30)
+    rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
+    info = sam.calc_edit_info(rec, chrom)
+    assert info.mismatches == 0
+    assert info.nm == 0
+
+
+def test_calc_edit_info_no_edits_with_offset() -> None:
+    chrom = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
+    builder = SamBuilder(r1_len=30)
+    rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
+    info = sam.calc_edit_info(rec, chrom[10:40], reference_offset=0)
+    assert info.mismatches == 0
+    assert info.nm == 0
+
+
+def test_calc_edit_info_with_mms_and_insertions() -> None:
+    chrom = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    builder = SamBuilder(r1_len=30)
+    rec = builder.add_single(
+        bases="AAAAACAAAAAAAAGGGAAAAAAAAAAAAA", chrom="chr1", start=10, cigar="14M3I13M"
+    )
+
+    info = sam.calc_edit_info(rec, chrom)
+    assert info.mismatches == 1
+    assert info.insertions == 1
+    assert info.inserted_bases == 3
+    assert info.deletions == 0
+    assert info.deleted_bases == 0
+    assert info.nm == 4
+
+
+def test_calc_edit_info_with_clipping_and_deletions() -> None:
+    chrom = "ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT"
+    builder = SamBuilder(r1_len=30)
+    rec = builder.add_single(
+        bases="NNNNACGTGTACGTACGTACGTACGTACGT", chrom="chr1", start=8, cigar="4S4M2D22M"
+    )
+
+    info = sam.calc_edit_info(rec, chrom)
+    assert info.mismatches == 0
+    assert info.insertions == 0
+    assert info.inserted_bases == 0
+    assert info.deletions == 1
+    assert info.deleted_bases == 2
+    assert info.nm == 2
+
+
+def test_calc_edit_info_with_aligned_Ns() -> None:
+    """Ns in query match Ns in reference, but should be counted as mismatches for NM."""
+    chrom = "ACGTNCGTACNTACGTACGTANNNACGTACACGTACGTACGTACGTACGTACGTACGTAT"
+    builder = SamBuilder(r1_len=30)
+    rec = builder.add_single(
+        bases="ACGTNCGTACNTACGTACGTANNNACGTAC", chrom="chr1", start=0, cigar="30M"
+    )
+
+    info = sam.calc_edit_info(rec, chrom)
+    assert info.mismatches == 5
+    assert info.insertions == 0
+    assert info.inserted_bases == 0
+    assert info.deletions == 0
+    assert info.deleted_bases == 0
+    assert info.nm == 5

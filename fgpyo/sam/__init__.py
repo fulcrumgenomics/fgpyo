@@ -519,7 +519,17 @@ class SupplementaryAlignment:
     nm: int = attr.ib()
 
     def __str__(self) -> str:
-        return ",".join(str(item) for item in attr.astuple(self, recurse=False))
+        return ",".join(
+            str(item)
+            for item in (
+                self.reference_name,
+                self.start + 1,
+                "+" if self.is_forward else "-",
+                self.cigar,
+                self.mapq,
+                self.nm,
+            )
+        )
 
     @staticmethod
     def parse(string: str) -> "SupplementaryAlignment":

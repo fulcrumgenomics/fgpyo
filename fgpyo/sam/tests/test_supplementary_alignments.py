@@ -42,3 +42,9 @@ def test_parse_sa_tag() -> None:
     assert SupplementaryAlignment.parse_sa_tag(f"{s1};") == [sa1]
     assert SupplementaryAlignment.parse_sa_tag(f"{s2};") == [sa2]
     assert SupplementaryAlignment.parse_sa_tag(f"{s1};{s2};") == [sa1, sa2]
+
+
+def test_format_supplementary_alignment() -> None:
+    for sa_string in ["chr1,123,-,100M50S,60,4", "chr1,123,+,100M50S,60,3"]:
+        sa = SupplementaryAlignment.parse(sa_string)
+        assert str(sa) == sa_string

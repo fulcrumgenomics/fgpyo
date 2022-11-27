@@ -141,16 +141,13 @@ The module contains the following public classes:
     - :class:`~fgpyo.sam.CigarParsingException` -- The exception raised specific to parsing a
         cigar
     - :class:`~fgpyo.sam.Cigar` -- Class representing a cigar string.
+    - :class:`~fgpyo.sam.ReadEditInfo` -- Class describing how a read differs from the reference
 
 The module contains the following methods:
 
     - :func:`~fgpyo.sam.reader` -- opens a SAM/BAM/CRAM file for reading.
     - :func:`~fgpyo.sam.writer` -- opens a SAM/BAM/CRAM file for writing
-    - :func:`~fgpyo.sam.set_qc_fail` -- sets the QC fail flag in a
-        :class:`pysam.AlignedSegment` record and sets additional SAM tags giving the tool name and
-        reason for why the QC fail flag was set.
-    - :func:`~fgpyo.sam.get_qc_fail` -- gets the tool name and reason for why the QC fail flag
-        was set, or None if it is not set.
+    - :func:`~fgpyo.sam.calc_edit_info` -- calculates how a read differs from the reference
 """
 
 import enum
@@ -588,6 +585,95 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     insert_size = isize(r1, r2)
     r1.template_length = insert_size
     r2.template_length = -insert_size
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class ReadEditInfo:
+    """
+    Counts various stats about how a read compares to a reference sequence.
+
+    Attributes:
+        matches: the number of bases in the read that match the reference
+        mismatches: the number of mismatches between the read sequence and the reference sequence
+          as dictated by the alignment.  Like as defined for the SAM NM tag computation, any base
+          except A/C/G/T in the read is considered a mismatch.
+        insertions: the number of insertions in the read vs. the reference.  I.e. the number of I
+          operators in the CIGAR string.
+        inserted_bases: the total number of bases contained within insertions in the read
+        deletions: the number of deletions in the read vs. the reference.  I.e. the number of D
+          operators in the CIGAT string.
+        deleted_bases: the total number of that are deleted within the alignment (i.e. bases in
+          the reference but not in the read).
+        nm: the computed value of the SAM NM tag, calculated as mismatches + inserted_bases +
+          deleted_bases
+    """
+
+    matches: int
+    mismatches: int
+    insertions: int
+    inserted_bases: int
+    deletions: int
+    deleted_bases: int
+    nm: int
+
+
+def calculate_edit_info(
+    rec: AlignedSegment, reference_sequence: str, reference_offset: Optional[int] = None
+) -> ReadEditInfo:
+    """
+    Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
+    reference.  Computes the number of mismatches, indels, indel bases and the SAM NM tag.
+    The read must be aligned.
+
+    Args:
+        rec: the read/record for which to calculate values
+        reference_sequence: the reference sequence (or fragment thereof) that the read is
+          aligned to
+        reference_offset: if provided, assume that reference_sequence[reference_offset] is the
+          first base aligned to in reference_sequence, otherwise use r.reference_start
+
+    Returns:
+        a ReadEditInfo with information about how the read differs from the reference
+    """
+    assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
+
+    query_offset = 0
+    target_offset = reference_offset if reference_offset is not None else rec.reference_start
+    cigar = Cigar.from_cigartuples(rec.cigartuples)
+
+    matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
+    ok_bases = {"A", "C", "G", "T"}
+
+    for elem in cigar.elements:
+        op = elem.operator
+
+        if op == CigarOp.I:
+            insertions += 1
+            ins_bases += elem.length
+        elif op == CigarOp.D:
+            deletions += 1
+            del_bases += elem.length
+        elif op == CigarOp.M or op == CigarOp.X or op == CigarOp.EQ:
+            for i in range(0, elem.length):
+                q = rec.query_sequence[query_offset + i].upper()
+                t = reference_sequence[target_offset + i].upper()
+                if q != t or q not in ok_bases:
+                    mms += 1
+                else:
+                    matches += 1
+
+        query_offset += elem.length_on_query
+        target_offset += elem.length_on_target
+
+    return ReadEditInfo(
+        matches=matches,
+        mismatches=mms,
+        insertions=insertions,
+        inserted_bases=ins_bases,
+        deletions=deletions,
+        deleted_bases=del_bases,
+        nm=mms + ins_bases + del_bases,
+    )
 
 
 @attr.s(auto_attribs=True, frozen=True)

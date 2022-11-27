@@ -285,7 +285,7 @@ def test_calc_edit_info_no_edits() -> None:
     chrom = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
-    info = sam.calc_edit_info(rec, chrom)
+    info = sam.calculate_edit_info(rec, chrom)
     assert info.mismatches == 0
     assert info.nm == 0
 
@@ -294,7 +294,7 @@ def test_calc_edit_info_no_edits_with_offset() -> None:
     chrom = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
-    info = sam.calc_edit_info(rec, chrom[10:40], reference_offset=0)
+    info = sam.calculate_edit_info(rec, chrom[10:40], reference_offset=0)
     assert info.mismatches == 0
     assert info.nm == 0
 
@@ -306,7 +306,7 @@ def test_calc_edit_info_with_mms_and_insertions() -> None:
         bases="AAAAACAAAAAAAAGGGAAAAAAAAAAAAA", chrom="chr1", start=10, cigar="14M3I13M"
     )
 
-    info = sam.calc_edit_info(rec, chrom)
+    info = sam.calculate_edit_info(rec, chrom)
     assert info.mismatches == 1
     assert info.insertions == 1
     assert info.inserted_bases == 3
@@ -322,7 +322,7 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
         bases="NNNNACGTGTACGTACGTACGTACGTACGT", chrom="chr1", start=8, cigar="4S4M2D22M"
     )
 
-    info = sam.calc_edit_info(rec, chrom)
+    info = sam.calculate_edit_info(rec, chrom)
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
@@ -339,7 +339,7 @@ def test_calc_edit_info_with_aligned_Ns() -> None:
         bases="ACGTNCGTACNTACGTACGTANNNACGTAC", chrom="chr1", start=0, cigar="30M"
     )
 
-    info = sam.calc_edit_info(rec, chrom)
+    info = sam.calculate_edit_info(rec, chrom)
     assert info.mismatches == 5
     assert info.insertions == 0
     assert info.inserted_bases == 0

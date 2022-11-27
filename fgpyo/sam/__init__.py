@@ -589,8 +589,26 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
 
 @attr.s(auto_attribs=True, frozen=True)
 class ReadEditInfo:
-    """Counts various stats about how a read compares to a reference sequence."""
+    """
+    Counts various stats about how a read compares to a reference sequence.
 
+    Attributes:
+        matches: the number of bases in the read that match the reference
+        mismatches: the number of mismatches between the read sequence and the reference sequence
+          as dictated by the alignment.  Like as defined for the SAM NM tag computation, any base
+          except A/C/G/T in the read is considered a mismatch.
+        insertions: the number of insertions in the read vs. the reference.  I.e. the number of I
+          operators in the CIGAR string.
+        inserted_bases: the total number of bases contained within insertions in the read
+        deletions: the number of deletions in the read vs. the reference.  I.e. the number of D
+          operators in the CIGAT string.
+        deleted_bases: the total number of that are deleted within the alignment (i.e. bases in
+          the reference but not in the read).
+        nm: the computed value of the SAM NM tag, calculated as mismatches + inserted_bases +
+          deleted_bases
+    """
+
+    matches: int
     mismatches: int
     insertions: int
     inserted_bases: int
@@ -599,14 +617,16 @@ class ReadEditInfo:
     nm: int
 
 
-def calc_edit_info(
-    r: AlignedSegment, reference_sequence: str, reference_offset: Optional[int] = None
+def calculate_edit_info(
+    rec: AlignedSegment, reference_sequence: str, reference_offset: Optional[int] = None
 ) -> ReadEditInfo:
     """
-    Calculates the number of mismatches and the NM tag value for a read.  The read must be aligned.
+    Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
+    reference.  Computes the number of mismatches, indels, indel bases and the SAM NM tag.
+    The read must be aligned.
 
     Args:
-        r: the read/record for which to calculate values
+        rec: the read/record for which to calculate values
         reference_sequence: the reference sequence (or fragment thereof) that the read is
           aligned to
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
@@ -615,12 +635,14 @@ def calc_edit_info(
     Returns:
         a ReadEditInfo with information about how the read differs from the reference
     """
-    query_offset = 0
-    target_offset = reference_offset if reference_offset is not None else r.reference_start
-    cigar = Cigar.from_cigartuples(r.cigartuples)
+    assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
 
-    mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0
-    ok_bases = ["A", "C", "G", "T"]
+    query_offset = 0
+    target_offset = reference_offset if reference_offset is not None else rec.reference_start
+    cigar = Cigar.from_cigartuples(rec.cigartuples)
+
+    matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
+    ok_bases = {"A", "C", "G", "T"}
 
     for elem in cigar.elements:
         op = elem.operator
@@ -633,15 +655,18 @@ def calc_edit_info(
             del_bases += elem.length
         elif op == CigarOp.M or op == CigarOp.X or op == CigarOp.EQ:
             for i in range(0, elem.length):
-                q = r.query_sequence[query_offset + i].upper()
+                q = rec.query_sequence[query_offset + i].upper()
                 t = reference_sequence[target_offset + i].upper()
                 if q != t or q not in ok_bases:
                     mms += 1
+                else:
+                    matches += 1
 
         query_offset += elem.length_on_query
         target_offset += elem.length_on_target
 
     return ReadEditInfo(
+        matches=matches,
         mismatches=mms,
         insertions=insertions,
         inserted_bases=ins_bases,

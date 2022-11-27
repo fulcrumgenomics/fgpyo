@@ -15,11 +15,13 @@ def test_add_pair_all_fields() -> None:
         quals1=[20, 21, 22, 23, 24],
         start1=10000,
         cigar1="5M",
+        mapq1=51,
         strand1="+",
         bases2="GCGC",
         quals2=[30, 31, 32, 33],
         start2=10200,
         cigar2="4M",
+        mapq2=52,
         strand2="-",
         attrs={"aa": "Hello", "bb": 42},
     )
@@ -38,16 +40,18 @@ def test_add_pair_all_fields() -> None:
             assert rec.query_sequence == "ACGTG"
             assert list(rec.query_qualities) == [20, 21, 22, 23, 24]
             assert rec.cigarstring == "5M"
+            assert rec.mapping_quality == 51
         else:
             assert rec.reference_start == 10200
             assert rec.is_reverse
             assert rec.query_sequence == "GCGC"
             assert list(rec.query_qualities) == [30, 31, 32, 33]
             assert rec.cigarstring == "4M"
+            assert rec.mapping_quality == 52
 
 
 def test_add_pair_minimal() -> None:
-    builder = SamBuilder(r1_len=10, r2_len=5, base_quality=25)
+    builder = SamBuilder(r1_len=10, r2_len=5, base_quality=25, mapping_quality=20)
     r1, r2 = builder.add_pair(chrom="chr1", start1=1000, start2=1200)
     assert r1.query_name == r2.query_name
     assert r1.reference_name == r2.reference_name == "chr1"
@@ -59,6 +63,8 @@ def test_add_pair_minimal() -> None:
     assert len(r2.query_sequence) == len(r2.query_qualities) == 5
     assert r1.cigarstring == "10M"
     assert r2.cigarstring == "5M"
+    assert r1.mapping_quality == 20
+    assert r2.mapping_quality == 20
     assert r1.get_tag("RG") == builder.rg_id()
     assert r2.get_tag("RG") == builder.rg_id()
 

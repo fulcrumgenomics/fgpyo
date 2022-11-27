@@ -147,7 +147,12 @@ class SamBuilder:
         return "".join(self._random.choices("ACGT", k=length))  # type: ignore
 
     def _new_rec(
-        self, name: str, chrom: str, start: int, attrs: Optional[Dict[str, Any]]
+        self,
+        name: str,
+        chrom: str,
+        start: int,
+        mapq: Optional[int],
+        attrs: Optional[Dict[str, Any]],
     ) -> AlignedSegment:
         """Generates a new AlignedSegment.  Sets the segment up with the correct
         header and adds the RG attribute if not contained in attrs.
@@ -156,6 +161,7 @@ class SamBuilder:
             name: the name of the read/template
             chrom: the chromosome to which the read is mapped
             start: the start position of the read on the chromosome
+            mapq: an optional mapping quality; use self.mapping_quality if None
             attrs: an optional dictionary of SAM attributes with two-char keys
 
         Returns:
@@ -169,10 +175,11 @@ class SamBuilder:
         rec.query_name = name
         rec.reference_name = chrom
         rec.reference_start = start
-        rec.mapping_quality = self.mapping_quality
+        rec.mapping_quality = mapq if mapq is not None else self.mapping_quality
 
         if chrom == sam.NO_REF_NAME or start == sam.NO_REF_POS:
             rec.is_unmapped = True
+            rec.mapping_quality = 0
 
         attrs = attrs if attrs else dict()
         if "RG" not in attrs:
@@ -338,6 +345,8 @@ class SamBuilder:
         start2: int = sam.NO_REF_POS,
         cigar1: Optional[str] = None,
         cigar2: Optional[str] = None,
+        mapq1: Optional[int] = None,
+        mapq2: Optional[int] = None,
         strand1: str = "+",
         strand2: str = "-",
         attrs: Optional[Dict[str, Any]] = None,
@@ -375,6 +384,8 @@ class SamBuilder:
             start2: The start position of R2. Defaults to the unmapped value.
             cigar1: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
             cigar2: The cigar string for R2. Defaults to None for unmapped reads, otherwise all M.
+            mapq1: Mapping quality for R1. Defaults to self.mapping_quality if None.
+            mapq2: Mapping quality for R2. Defaults to self.mapping_quality if None.
             strand1: The strand for R1, either "+" or "-". Defaults to "+".
             strand2: The strand for R2, either "+" or "-". Defaults to "-".
             attrs: An optional dictionary of SAM attribute to place on both R1 and R2.
@@ -395,14 +406,14 @@ class SamBuilder:
         name = name if name is not None else self._next_name()
 
         # Setup R1
-        r1 = self._new_rec(name=name, chrom=chrom, start=start1, attrs=attrs)
+        r1 = self._new_rec(name=name, chrom=chrom, start=start1, mapq=mapq1, attrs=attrs)
         self._set_flags(r1, read_num=1, strand=strand1)
         self._set_length_dependent_fields(
             rec=r1, length=self.r1_len, bases=bases1, quals=quals1, cigar=cigar1
         )
 
         # Setup R2
-        r2 = self._new_rec(name=name, chrom=chrom, start=start2, attrs=attrs)
+        r2 = self._new_rec(name=name, chrom=chrom, start=start2, mapq=mapq2, attrs=attrs)
         self._set_flags(r2, read_num=2, strand=strand2)
         self._set_length_dependent_fields(
             rec=r2, length=self.r2_len, bases=bases2, quals=quals2, cigar=cigar2
@@ -424,6 +435,7 @@ class SamBuilder:
         chrom: str = sam.NO_REF_NAME,
         start: int = sam.NO_REF_POS,
         cigar: Optional[str] = None,
+        mapq: Optional[int] = None,
         strand: str = "+",
         secondary: bool = False,
         supplementary: bool = False,
@@ -459,6 +471,7 @@ class SamBuilder:
             chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
             start: The start position of the read. Defaults to the unmapped value.
             cigar: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
+            mapq: Mapping quality for the read. Default to self.mapping_quality if not given.
             strand: The strand for R1, either "+" or "-". Defaults to "+".
             secondary: If true the read will be flagged as secondary
             supplementary: If true the read will be flagged as supplementary
@@ -482,7 +495,7 @@ class SamBuilder:
 
         # Setup the read
         read_len = self.r1_len if read_num != 2 else self.r2_len
-        rec = self._new_rec(name=name, chrom=chrom, start=start, attrs=attrs)
+        rec = self._new_rec(name=name, chrom=chrom, start=start, mapq=mapq, attrs=attrs)
         self._set_flags(
             rec, read_num=read_num, strand=strand, secondary=secondary, supplementary=supplementary
         )

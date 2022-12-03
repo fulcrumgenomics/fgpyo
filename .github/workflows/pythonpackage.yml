@@ -2,14 +2,14 @@ name: Python package
 
 on: [push]
 env:
-  POETRY_VERSION: 1.1
+  POETRY_VERSION: 1.2
 
 jobs:
   testing:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        PYTHON_VERSION: [3.6]
+        PYTHON_VERSION: ["3.7", "3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v2
 

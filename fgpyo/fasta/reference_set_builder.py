@@ -9,6 +9,7 @@ from typing import Optional
 
 # pylint: disable=W0511
 
+
 class ReferenceSetBuilder:
     """
     Builder for constructing one or more fasta records.

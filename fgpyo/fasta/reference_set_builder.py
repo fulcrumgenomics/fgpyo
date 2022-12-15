@@ -1,6 +1,6 @@
 """
 Classes for generating Fasta files and records for testing
-----------------------------------------------------------------
+----------------------------------------------------------
 """
 # import hashlib
 import os
@@ -9,7 +9,6 @@ from tempfile import NamedTemporaryFile
 from typing import List
 from typing import Optional
 
-# pylint: disable=W0511
 
 
 class ReferenceSetBuilder:
@@ -18,10 +17,10 @@ class ReferenceSetBuilder:
     """
 
     # The default asssembly
-    DEFAULT_ASSEMBLY: str = "testassembly"
+    DEFAULT_ASSEMBLY: ClassVar[str] = "testassembly"
 
     # The default species
-    DEFAULT_SPECIES: str = "testspecies"
+    DEFAULT_SPECIES: ClassVar[str] = "testspecies"
 
     # Way to store instance of ReferenceBuilder
     # TODO make something better than a list... probably
@@ -35,7 +34,7 @@ class ReferenceSetBuilder:
     ):
         self.assembly: str = assembly if assembly is not None else self.DEFAULT_ASSEMBLY
         self.species: str = species if species is not None else self.DEFAULT_SPECIES
-        self.line_length = line_length
+        self.line_length: int = line_length
 
     def add(
         self,
@@ -45,20 +44,20 @@ class ReferenceSetBuilder:
         Returns instance of ReferenceBuilder
         """
 
-        builder = ReferenceBuilder(name=name, assembly=self.assembly, species=self.species)
+        builder: ReferenceBuilder = ReferenceBuilder(name=name, assembly=self.assembly, species=self.species)
         self.REF_BUILDERS.append(builder)
-        return self.REF_BUILDERS[-1]
+        return builder
 
     def writer_helper(
         self,
     ) -> None:
-        """ Place holder for helper funciton """
+        """ Place holder for helper function """
         return None
 
     def to_temp_file(
         self,
-        delete_on_exit: Optional[bool] = True,
-        calculate_md5_sum: Optional[bool] = False,
+        delete_on_exit:bool = True,
+        calculate_md5_sum:bool = False,
     ) -> None:
         """
         For each instance of ReferenceBuilder in REF_BUILDERS write record to temp file
@@ -71,18 +70,18 @@ class ReferenceSetBuilder:
             mode=("a+t"),
         )
 
-        for record in range(len(self.REF_BUILDERS)):
-            seq = self.REF_BUILDERS[record].sequences
-            assembly = self.REF_BUILDERS[record].assembly
-            species = self.REF_BUILDERS[record].species
-            name = self.REF_BUILDERS[record].name
+        for builder in self.REF_BUILDERS:
+            sequences = builder.sequences
+            assembly = builder.assembly
+            species = builder.species
+            name = builder.name
             header = f">{name}[{assembly}][{species}]\n"
             seq_format = "\n".join(textwrap.wrap(seq, self.line_length))
             try:
                 path.write(header)
                 path.write(f"{seq_format}\n\n")
             except OSError as error:
-                print(f"{error}\nCound not write to {path}")
+                raise Exception(f"Could not write to {path}") from error
 
         # if calculate_md5_sum:
         # pylint: disable=W0612

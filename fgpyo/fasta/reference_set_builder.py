@@ -2,11 +2,11 @@
 Classes for generating Fasta files and records for testing
 ----------------------------------------------------------------
 """
-import hashlib
+# import hashlib
 import os
 import textwrap
-
 from tempfile import NamedTemporaryFile
+from typing import List
 from typing import Optional
 
 # pylint: disable=W0511
@@ -25,10 +25,7 @@ class ReferenceSetBuilder:
 
     # Way to store instance of ReferenceBuilder
     # TODO make something better than a list... probably
-    REF_BUILDERS = []
-
-    # Sample name tuple
-    SAMPLE_NAMES = []
+    REF_BUILDERS: List["ReferenceBuilder"] = []
 
     def __init__(
         self,
@@ -43,7 +40,7 @@ class ReferenceSetBuilder:
     def add(
         self,
         name: str,
-    ):
+    ) -> "ReferenceBuilder":
         """
         Returns instance of ReferenceBuilder
         """
@@ -54,22 +51,18 @@ class ReferenceSetBuilder:
 
     def writer_helper(
         self,
-    ):
+    ) -> None:
         """ Place holder for helper funciton """
         return None
 
     def to_temp_file(
         self,
-        delete_on_exit: Optional[bool] = None,
-        calculate_md5_sum: Optional[bool] = None,
-    ):
+        delete_on_exit: Optional[bool] = True,
+        calculate_md5_sum: Optional[bool] = False,
+    ) -> None:
         """
         For each instance of ReferenceBuilder in REF_BUILDERS write record to temp file
         """
-        # Set defaults
-        delete_on_exit: bool = delete_on_exit if delete_on_exit is not None else True
-        calculate_md5_sum: bool = calculate_md5_sum if calculate_md5_sum is not None else False
-
         # Write temp file path
         path = NamedTemporaryFile(
             prefix=f"{self.assembly}_{self.species}",
@@ -79,8 +72,7 @@ class ReferenceSetBuilder:
         )
 
         # TODO clean and conver to map if possible
-        for record in enumerate(self.REF_BUILDERS):
-            record = record[0]
+        for record in range(len(self.REF_BUILDERS)):
             seq = self.REF_BUILDERS[record].sequences
             assembly = self.REF_BUILDERS[record].assembly
             species = self.REF_BUILDERS[record].species
@@ -93,11 +85,11 @@ class ReferenceSetBuilder:
             except OSError as error:
                 print(f"{error}\nCound not write to {path}")
 
-        if calculate_md5_sum:
-            # pylint: disable=W0612
-            with open(path.name, "rb") as path_to_read:
-                contents = path_to_read.read()
-                md5 = hashlib.md5(contents).hexdigest()
+        # if calculate_md5_sum:
+        # pylint: disable=W0612
+        # with open(path.name, "rb") as path_to_read:
+        # contents = path_to_read.read()
+        # md5 = hashlib.md5(contents).hexdigest()
 
         # Use md5 to write dict
         # Write .fai
@@ -107,21 +99,15 @@ class ReferenceSetBuilder:
     def to_file(
         self,
         path: str,
-        delete_on_exit: Optional[bool] = None,
-        calculate_md5_sum: Optional[bool] = None,
-    ):
+        delete_on_exit: Optional[bool] = True,
+        calculate_md5_sum: Optional[bool] = False,
+    ) -> None:
         """
         Same as to_temp_file() but user provides path
         """
-
-        # Set defaults
-        delete_on_exit: bool = delete_on_exit if delete_on_exit is not None else True
-        calculate_md5_sum: bool = calculate_md5_sum if calculate_md5_sum is not None else False
-
         # Refactor into map with helper function
         with open(path, "a+") as fasta_handle:
-            for record in enumerate(self.REF_BUILDERS):
-                record = record[0]
+            for record in range(len(self.REF_BUILDERS)):
                 seq = self.REF_BUILDERS[record].sequences
                 assembly = self.REF_BUILDERS[record].assembly
                 species = self.REF_BUILDERS[record].species
@@ -131,11 +117,10 @@ class ReferenceSetBuilder:
                 fasta_handle.writelines(header)
                 fasta_handle.writelines(f"{seq_format}\n\n")
 
-        if calculate_md5_sum:
-            # pylint: disable=W0612
-            with open(path, "rb") as path_to_read:
-                contents = path_to_read.read()
-                md5 = hashlib.md5(contents).hexdigest()
+        # if calculate_md5_sum:
+        # with open(path, "rb") as path_to_read:
+        # contents = path_to_read.read()
+        # md5 = hashlib.md5(contents).hexdigest()
 
         # Use md5 to write dict
         # Write .fai
@@ -155,25 +140,34 @@ class ReferenceBuilder:
         name: str,
         assembly: str,
         species: str,
-        sequences: Optional[str] = None,
+        sequences: Optional[str] = str(),
     ):
         self.name = name
         self.assembly = assembly
         self.species = species
         self.sequences = sequences
 
-    def add(self, seq: str, times: int) -> None:
+    def add(self, seq: str, times: int) -> "ReferenceBuilder":
         """
         "AAA"*3 = AAAAAAAAA
         """
         # add check that seq is not supplied via "AAA "*100
-        self.sequences = seq * times
+        self.sequences += str(seq * times)
+        return self
 
 
-### Scratch ###
+# Scratch
 # builder_ex = ReferenceSetBuilder()
 # builder_ex.add("chr10").add("NNNNNNNNNN", 1)
 # builder_ex.add("chr10").add("AAAAAAAAAA", 2)
 # builder_ex.add("chr3").add("GGGGGGGGGG", 10)
 # builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=True)
 # builder_ex.to_temp_file(calculate_md5_sum=True)
+
+
+# builder_ex = ReferenceSetBuilder()
+# b = builder_ex.add("chr10")
+# b.add("NNNNNNNNNN", 1)
+# b.add("ACGT", 1)
+# c = builder_ex.add("chrY").add("NNNNN", 10)
+# builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=False)

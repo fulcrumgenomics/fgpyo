@@ -5,6 +5,7 @@ Classes for generating Fasta files and records for testing
 # import hashlib
 import os
 import textwrap
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import ClassVar
 from typing import List
@@ -14,6 +15,13 @@ from typing import Optional
 class ReferenceSetBuilder:
     """
     Builder for constructing one or more fasta records.
+
+    Parameters:
+    assembly (str):
+
+    species (str):
+
+    line_length (str):
     """
 
     # The default asssembly
@@ -23,17 +31,16 @@ class ReferenceSetBuilder:
     DEFAULT_SPECIES: ClassVar[str] = "testspecies"
 
     # Way to store instance of ReferenceBuilder
-    # TODO make something better than a list... probably
     REF_BUILDERS: List["ReferenceBuilder"] = []
 
     def __init__(
         self,
-        assembly: Optional[str] = None,
-        species: Optional[str] = None,
+        assembly: str = DEFAULT_ASSEMBLY,
+        species: str = DEFAULT_SPECIES,
         line_length: int = 80,
     ):
-        self.assembly: str = assembly if assembly is not None else self.DEFAULT_ASSEMBLY
-        self.species: str = species if species is not None else self.DEFAULT_SPECIES
+        self.assembly: str = assembly
+        self.species: str = species
         self.line_length: int = line_length
 
     def add(
@@ -65,25 +72,25 @@ class ReferenceSetBuilder:
         For each instance of ReferenceBuilder in REF_BUILDERS write record to temp file
         """
         # Write temp file path
-        path = NamedTemporaryFile(
+        with NamedTemporaryFile(
             prefix=f"{self.assembly}_{self.species}",
             suffix=".fasta",
             delete=delete_on_exit,
             mode=("a+t"),
-        )
+        ) as writer:
 
-        for builder in self.REF_BUILDERS:
-            sequences = builder.sequences
-            assembly = builder.assembly
-            species = builder.species
-            name = builder.name
-            header = f">{name}[{assembly}][{species}]\n"
-            seq_format = "\n".join(textwrap.wrap(sequences, self.line_length))
-            try:
-                path.write(header)
-                path.write(f"{seq_format}\n\n")
-            except OSError as error:
-                raise Exception(f"Could not write to {path}") from error
+            for builder in self.REF_BUILDERS:
+                bases = builder.bases
+                assembly = builder.assembly
+                species = builder.species
+                name = builder.name
+                header = f">{name}[{assembly}][{species}]\n"
+                bases_format = "\n".join(textwrap.wrap(bases, self.line_length))
+                try:
+                    writer.write(header)
+                    writer.write(f"{bases_format}\n\n")
+                except OSError as error:
+                    raise Exception(f"Could not write to {writer}") from error
 
         # if calculate_md5_sum:
         # pylint: disable=W0612
@@ -94,30 +101,28 @@ class ReferenceSetBuilder:
         # Use md5 to write dict
         # Write .fai
 
-        path.close()
-
     def to_file(
         self,
-        path: str,
-        delete_on_exit: Optional[bool] = True,
-        calculate_md5_sum: Optional[bool] = False,
+        path: Path,
+        delete_on_exit: bool = True,
+        calculate_md5_sum: bool = False,
     ) -> None:
         """
         Same as to_temp_file() but user provides path
         """
-        with open(path, "a+") as fasta_handle:
+        with path.open("a+") as writer:
             for record in range(len(self.REF_BUILDERS)):
-                seq = self.REF_BUILDERS[record].sequences
+                bases = self.REF_BUILDERS[record].bases
                 assembly = self.REF_BUILDERS[record].assembly
                 species = self.REF_BUILDERS[record].species
                 name = self.REF_BUILDERS[record].name
                 header = f">{name}[{assembly}][{species}]\n"
-                seq_format = "\n".join(textwrap.wrap(seq, self.line_length))
+                bases_format = "\n".join(textwrap.wrap(bases, self.line_length))
                 try:
-                    fasta_handle.write(header)
-                    fasta_handle.write(f"{seq_format}\n\n")
+                    writer.write(header)
+                    writer.write(f"{bases_format}\n\n")
                 except OSError as error:
-                    print(f"{error}\nCound not write to {path}")
+                    print(f"{error}\nCound not write to {writer}")
 
         # if calculate_md5_sum:
         # with open(path, "rb") as path_to_read:
@@ -142,19 +147,19 @@ class ReferenceBuilder:
         name: str,
         assembly: str,
         species: str,
-        sequences: Optional[str] = str(),
+        bases: Optional[str] = str(),
     ):
         self.name = name
         self.assembly = assembly
         self.species = species
-        self.sequences = sequences
+        self.bases = bases
 
-    def add(self, seq: str, times: int) -> "ReferenceBuilder":
+    def add(self, bases: str, times: int) -> "ReferenceBuilder":
         """
         "AAA"*3 = AAAAAAAAA
         """
-        # add check that seq is not supplied via "AAA "*100
-        self.sequences += str(seq * times)
+        # add check that bases is not supplied via "AAA "*100
+        self.bases += str(bases * times)
         return self
 
 
@@ -172,4 +177,4 @@ class ReferenceBuilder:
 # b.add("NNNNNNNNNN", 1)
 # b.add("ACGT", 1)
 # c = builder_ex.add("chrY").add("NNNNN", 10)
-# builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=False)
+# builder_ex.to_temp_file(calculate_md5_sum=True, delete_on_exit=False)

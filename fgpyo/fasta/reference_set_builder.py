@@ -6,9 +6,9 @@ Classes for generating Fasta files and records for testing
 import os
 import textwrap
 from tempfile import NamedTemporaryFile
+from typing import ClassVar
 from typing import List
 from typing import Optional
-
 
 
 class ReferenceSetBuilder:
@@ -44,7 +44,9 @@ class ReferenceSetBuilder:
         Returns instance of ReferenceBuilder
         """
 
-        builder: ReferenceBuilder = ReferenceBuilder(name=name, assembly=self.assembly, species=self.species)
+        builder: ReferenceBuilder = ReferenceBuilder(
+            name=name, assembly=self.assembly, species=self.species
+        )
         self.REF_BUILDERS.append(builder)
         return builder
 
@@ -56,8 +58,8 @@ class ReferenceSetBuilder:
 
     def to_temp_file(
         self,
-        delete_on_exit:bool = True,
-        calculate_md5_sum:bool = False,
+        delete_on_exit: bool = True,
+        calculate_md5_sum: bool = False,
     ) -> None:
         """
         For each instance of ReferenceBuilder in REF_BUILDERS write record to temp file
@@ -76,7 +78,7 @@ class ReferenceSetBuilder:
             species = builder.species
             name = builder.name
             header = f">{name}[{assembly}][{species}]\n"
-            seq_format = "\n".join(textwrap.wrap(seq, self.line_length))
+            seq_format = "\n".join(textwrap.wrap(sequences, self.line_length))
             try:
                 path.write(header)
                 path.write(f"{seq_format}\n\n")

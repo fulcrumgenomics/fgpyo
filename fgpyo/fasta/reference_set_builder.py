@@ -48,9 +48,7 @@ class ReferenceSetBuilder:
         Returns instance of ReferenceBuilder
         """
 
-        builder = ReferenceBuilder(
-            name=name, assembly=self.assembly, species=self.species
-        )
+        builder = ReferenceBuilder(name=name, assembly=self.assembly, species=self.species)
         self.REF_BUILDERS.append(builder)
         return self.REF_BUILDERS[-1]
 
@@ -70,9 +68,7 @@ class ReferenceSetBuilder:
         """
         # Set defaults
         delete_on_exit: bool = delete_on_exit if delete_on_exit is not None else True
-        calculate_md5_sum: bool = (
-            calculate_md5_sum if calculate_md5_sum is not None else False
-        )
+        calculate_md5_sum: bool = calculate_md5_sum if calculate_md5_sum is not None else False
 
         # Write temp file path
         path = NamedTemporaryFile(
@@ -120,9 +116,7 @@ class ReferenceSetBuilder:
 
         # Set defaults
         delete_on_exit: bool = delete_on_exit if delete_on_exit is not None else True
-        calculate_md5_sum: bool = (
-            calculate_md5_sum if calculate_md5_sum is not None else False
-        )
+        calculate_md5_sum: bool = calculate_md5_sum if calculate_md5_sum is not None else False
 
         # Refactor into map with helper function
         with open(path, "a+") as fasta_handle:
@@ -177,9 +171,9 @@ class ReferenceBuilder:
 
 
 ### Scratch ###
-#builder_ex = ReferenceSetBuilder()
-#builder_ex.add("chr10").add("NNNNNNNNNN", 1)
+# builder_ex = ReferenceSetBuilder()
+# builder_ex.add("chr10").add("NNNNNNNNNN", 1)
 # builder_ex.add("chr10").add("AAAAAAAAAA", 2)
 # builder_ex.add("chr3").add("GGGGGGGGGG", 10)
-#builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=True)
+# builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=True)
 # builder_ex.to_temp_file(calculate_md5_sum=True)

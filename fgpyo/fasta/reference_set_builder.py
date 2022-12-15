@@ -71,7 +71,6 @@ class ReferenceSetBuilder:
             mode=("a+t"),
         )
 
-        # TODO clean and conver to map if possible
         for record in range(len(self.REF_BUILDERS)):
             seq = self.REF_BUILDERS[record].sequences
             assembly = self.REF_BUILDERS[record].assembly
@@ -105,7 +104,6 @@ class ReferenceSetBuilder:
         """
         Same as to_temp_file() but user provides path
         """
-        # Refactor into map with helper function
         with open(path, "a+") as fasta_handle:
             for record in range(len(self.REF_BUILDERS)):
                 seq = self.REF_BUILDERS[record].sequences
@@ -114,8 +112,11 @@ class ReferenceSetBuilder:
                 name = self.REF_BUILDERS[record].name
                 header = f">{name}[{assembly}][{species}]\n"
                 seq_format = "\n".join(textwrap.wrap(seq, self.line_length))
-                fasta_handle.writelines(header)
-                fasta_handle.writelines(f"{seq_format}\n\n")
+                try:
+                    fasta_handle.write(header)
+                    fasta_handle.write(f"{seq_format}\n\n")
+                except OSError as error:
+                    print(f"{error}\nCound not write to {path}")
 
         # if calculate_md5_sum:
         # with open(path, "rb") as path_to_read:

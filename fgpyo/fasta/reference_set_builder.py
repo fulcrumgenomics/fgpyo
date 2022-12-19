@@ -1,180 +1,230 @@
 """
-Classes for generating Fasta files and records for testing
+Classes for generating fasta files and records for testing
 ----------------------------------------------------------
+This module contains utility classes for creating fasta files, indexed fasta files (.fai), and
+sequence dictionaries (.dict).
+
+Examples of creating sets of contigs for writing to fasta
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Writing a FASTA with two contigs each with 100 bases.
+.. code-block:: python
+    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
+    >>> builder = ReferenceSetBuilder()
+    >>> builder.add("chr10").add("AAAAAAAAAA", 10)
+    >>> builder.add("chr11").add("GGGGGGGGGG", 10)
+    >>> builder.to_file(path = pathlib.Path("test.fasta"))
+Writing a FASTA with one contig with 100 A's and 50 T's
+    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
+    >>> builder = ReferenceSetBuilder()
+    >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
+    >>> builder.to_file(path = pathlib.Path("test.fasta"))
+Add bases to existing contig
+    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
+    >>> builder = ReferenceSetBuilder()
+    >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
+    >>> contig_one.add("NNN", 1)
+    >>> contig_one.bases
+    'AAAAAAAAAANNN'
 """
-# import hashlib
-import os
 import textwrap
 from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import ClassVar
-from typing import List
-from typing import Optional
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+
+""" Stubs for pysam imports """
+if TYPE_CHECKING:
+
+    def dict(*args: Any) -> None:
+        pass
 
 
-class ReferenceSetBuilder:
+else:
+    from pysam import dict
+
+
+def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
+    """Calls pysam.dict and writes the sequence dictionary to the provided output path
+
+    Args
+        assembly: Assembly
+        species: Species
+        output_path: File path to write dictionary to
+        input_path: Path to fasta file
     """
-    Builder for constructing one or more fasta records.
+    dict("-a", assembly, "-s", species, "-o", output_path, input_path)
 
-    Parameters:
-    assembly (str):
 
-    species (str):
+if TYPE_CHECKING:
 
-    line_length (str):
+    def faidx(*args: Any) -> None:
+        pass
+
+
+else:
+    from pysam import faidx
+
+
+def pysam_faidx(input_path: str) -> None:
+    """Calls pysam.faidx and writes fasta index in the same file location as the fasta file
+
+    Args
+        input_path: Path to fasta file
     """
-
-    # The default asssembly
-    DEFAULT_ASSEMBLY: ClassVar[str] = "testassembly"
-
-    # The default species
-    DEFAULT_SPECIES: ClassVar[str] = "testspecies"
-
-    # Way to store instance of ReferenceBuilder
-    REF_BUILDERS: List["ReferenceBuilder"] = []
-
-    def __init__(
-        self,
-        assembly: str = DEFAULT_ASSEMBLY,
-        species: str = DEFAULT_SPECIES,
-        line_length: int = 80,
-    ):
-        self.assembly: str = assembly
-        self.species: str = species
-        self.line_length: int = line_length
-
-    def add(
-        self,
-        name: str,
-    ) -> "ReferenceBuilder":
-        """
-        Returns instance of ReferenceBuilder
-        """
-
-        builder: ReferenceBuilder = ReferenceBuilder(
-            name=name, assembly=self.assembly, species=self.species
-        )
-        self.REF_BUILDERS.append(builder)
-        return builder
-
-    def writer_helper(
-        self,
-    ) -> None:
-        """ Place holder for helper function """
-        return None
-
-    def to_temp_file(
-        self,
-        delete_on_exit: bool = True,
-        calculate_md5_sum: bool = False,
-    ) -> None:
-        """
-        For each instance of ReferenceBuilder in REF_BUILDERS write record to temp file
-        """
-        # Write temp file path
-        with NamedTemporaryFile(
-            prefix=f"{self.assembly}_{self.species}",
-            suffix=".fasta",
-            delete=delete_on_exit,
-            mode=("a+t"),
-        ) as writer:
-
-            for builder in self.REF_BUILDERS:
-                bases = builder.bases
-                assembly = builder.assembly
-                species = builder.species
-                name = builder.name
-                header = f">{name}[{assembly}][{species}]\n"
-                bases_format = "\n".join(textwrap.wrap(bases, self.line_length))
-                try:
-                    writer.write(header)
-                    writer.write(f"{bases_format}\n\n")
-                except OSError as error:
-                    raise Exception(f"Could not write to {writer}") from error
-
-        # if calculate_md5_sum:
-        # pylint: disable=W0612
-        # with open(path.name, "rb") as path_to_read:
-        # contents = path_to_read.read()
-        # md5 = hashlib.md5(contents).hexdigest()
-
-        # Use md5 to write dict
-        # Write .fai
-
-    def to_file(
-        self,
-        path: Path,
-        delete_on_exit: bool = True,
-        calculate_md5_sum: bool = False,
-    ) -> None:
-        """
-        Same as to_temp_file() but user provides path
-        """
-        with path.open("a+") as writer:
-            for record in range(len(self.REF_BUILDERS)):
-                bases = self.REF_BUILDERS[record].bases
-                assembly = self.REF_BUILDERS[record].assembly
-                species = self.REF_BUILDERS[record].species
-                name = self.REF_BUILDERS[record].name
-                header = f">{name}[{assembly}][{species}]\n"
-                bases_format = "\n".join(textwrap.wrap(bases, self.line_length))
-                try:
-                    writer.write(header)
-                    writer.write(f"{bases_format}\n\n")
-                except OSError as error:
-                    print(f"{error}\nCound not write to {writer}")
-
-        # if calculate_md5_sum:
-        # with open(path, "rb") as path_to_read:
-        # contents = path_to_read.read()
-        # md5 = hashlib.md5(contents).hexdigest()
-
-        # Use md5 to write dict
-        # Write .fai
-
-        if delete_on_exit:
-            os.remove(path)
+    faidx(input_path)
 
 
-# pylint: disable=R0903
-class ReferenceBuilder:
-    """
-    Creates individiaul records
+class ContigBuilder:
+    """Builder for constructing new contigs, and adding bases to existing contigs.
+    Existing contigs cannot be overwritten, each contig name in ReferenceSetBuilder must
+    be unique. Assembly and species information can be overwritten at instantiation however
+    defaults are provided if 'assembly' an/or 'species' are not provided.
+
+    Attributes:
+        name: Unique contig ID, ie., "chr10"
+        assembly: Assembly information, if None default is 'testassembly'
+        species: Species information, if None default is 'testspecies'
+        bases:  The bases to be added to the contig ex "A"
+
     """
 
     def __init__(
         self,
         name: str,
-        assembly: str,
-        species: str,
-        bases: Optional[str] = str(),
+        assembly: str = "testassembly",
+        species: str = "testspecies",
+        bases: str = str(),
     ):
         self.name = name
         self.assembly = assembly
         self.species = species
         self.bases = bases
 
-    def add(self, bases: str, times: int) -> "ReferenceBuilder":
+    def add(self, bases: str, times: int) -> "ContigBuilder":
         """
-        "AAA"*3 = AAAAAAAAA
+        Method for adding bases to a new or existing instance of ContigBuilder.
+
+        Args:
+            bases: The bases to be added to the contig
+            times: The number of times the bases should be repeated
+
+        Example
+        add("AAA", 2) results in the following bases -> "AAAAAA"
         """
-        # add check that bases is not supplied via "AAA "*100
         self.bases += str(bases * times)
         return self
 
 
-# Scratch
-# builder_ex = ReferenceSetBuilder()
-# builder_ex.add("chr10").add("NNNNNNNNNN", 1)
-# builder_ex.add("chr10").add("AAAAAAAAAA", 2)
-# builder_ex.add("chr3").add("GGGGGGGGGG", 10)
-# builder_ex.to_file(path="some.fasta", calculate_md5_sum=True, delete_on_exit=True)
-# builder_ex.to_temp_file(calculate_md5_sum=True)
+class ReferenceSetBuilder:
+    """Builder for constructing sets of one or more contigs.
 
+    Provides the ability to manufacture sets of contigs from minimal input, and automatically
+    generates the information necessary for writing the FASAT file, index, and dictionary.
 
-# builder_ex = ReferenceSetBuilder()
-# b = builder_ex.add("chr10")
-# b.add("NNNNNNNNNN", 1)
-# b.add("ACGT", 1)
-# c = builder_ex.add("chrY").add("NNNNN", 10)
-# builder_ex.to_temp_file(calculate_md5_sum=True, delete_on_exit=False)
+    A builder is constructed from an assembly, species, and line length. All attributes have
+    defaults, however these can be overwritten.
+
+    Contigs are added to ReferenceSetBuilder using:
+    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.add`
+
+    Bases are added to existing contigs using:
+    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.add.add`
+
+    Once accumulated the contigs can be written to a file using:
+    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.to_file`
+
+    Calling to_file() will also generate the fasta index (.fai) and sequence dictionary (.dict).
+
+    Attributes:
+        assembly: Assembly information, if None default is 'testassembly'
+        species: Species, if None default is 'testspecies'
+        line_length: Desired line length, if None default is 80
+    """
+
+    def __init__(
+        self,
+        assembly: str = "testassembly",
+        species: str = "testspecies",
+        line_length: int = 80,
+        contig_builders: Dict[str, ContigBuilder] = {},
+    ):
+        self.assembly: str = assembly
+        self.species: str = species
+        self.line_length: int = line_length
+        self.__contig_builders: Dict[str, ContigBuilder] = contig_builders
+
+    def __getitem__(self, key: str) -> ContigBuilder:
+        """ Access instance of ContigBuilder by name """
+        return self.__contig_builders[key]
+
+    def add(
+        self,
+        name: str,
+        assembly: str = "testassembly",
+        species: str = "testspecies",
+    ) -> ContigBuilder:
+        """
+        Creates and returns a new ContigBuilder for a contig with the provided name.
+        Contig names must be unique, attempting to create two seperate contigs with the same
+        name will result in an error.
+
+        Args:
+            name: Unique contig ID, ie., "chr10"
+            assembly: Assembly information, if None default is 'testassembly'
+            species: Species information, if None default is 'testspecies'
+        """
+        # Check if name has already been used
+        # If name already exists raise exception
+        # Else create instance of ContigBuilder and add to self.__contig_builders
+        if name in self.__contig_builders:
+            raise Exception(
+                f"The contig {name} already exists, see docstring for methods on "
+                f"adding bases to existing contigs"
+            )
+        else:
+            builder: ContigBuilder = ContigBuilder(name=name, assembly=assembly, species=species)
+            self.__contig_builders[name] = builder
+        return builder
+
+    def to_file(
+        self,
+        path: Path,
+    ) -> None:
+        """
+        Writes out the set of accumulated contigs to a FASTA file at the `path` given.
+        Also generates the accompanying fasta index file (`.fa.fai`) and sequence
+        dictionary file (`.dict`).
+
+        Contigs are emitted in the order they were added to the builder.  Sequence
+        lines in the FASTA file are wrapped to the line length given when the builder
+        was constructed.
+
+        Args:
+            path: Path to write files to.
+
+        Example:
+        ReferenceSetBuilder.to_file(path = pathlib.Path("my_fasta.fa"))
+        """
+
+        with path.open("w") as writer:
+            for contig in self.__contig_builders.values():
+                try:
+                    writer.write(f">{contig.name}")
+                    writer.write("\n")
+                    for line in textwrap.wrap(contig.bases, self.line_length):
+                        writer.write(line)
+                        writer.write("\n")
+                except OSError as error:
+                    raise Exception(f"Could not write to {writer}") from error
+
+        # Index fasta
+        pysam_faidx(str(path))
+
+        # Write dictionary
+        pysam_dict(
+            assembly=self.assembly,
+            species=self.species,
+            output_path=str(f"{path}.dict"),
+            input_path=str(path),
+        )

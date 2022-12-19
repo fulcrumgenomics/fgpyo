@@ -9,18 +9,18 @@ Examples of creating sets of contigs for writing to fasta
 
 Writing a FASTA with two contigs each with 100 bases.
 .. code-block:: python
-    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10)
     >>> builder.add("chr11").add("GGGGGGGGGG", 10)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Writing a FASTA with one contig with 100 A's and 50 T's
-    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Add bases to existing contig
-    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
     >>> contig_one.add("NNN", 1)
@@ -126,13 +126,13 @@ class FastaBuilder:
     defaults, however these can be overwritten.
 
     Contigs are added to FastaBuilder using:
-    :func:`~fgpyo.reference_set_builder.FastaBuilder.add`
+    :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.add`
 
     Bases are added to existing contigs using:
-    :func:`~fgpyo.reference_set_builder.FastaBuilder.add.add`
+    :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.add.add`
 
     Once accumulated the contigs can be written to a file using:
-    :func:`~fgpyo.reference_set_builder.FastaBuilder.to_file`
+    :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.to_file`
 
     Calling to_file() will also generate the fasta index (.fai) and sequence dictionary (.dict).
 
@@ -140,6 +140,7 @@ class FastaBuilder:
         assembly: Assembly information, if None default is 'testassembly'
         species: Species, if None default is 'testspecies'
         line_length: Desired line length, if None default is 80
+        contig_builders: Private dictionary of contig names and instances of ContigBuilder
     """
 
     def __init__(
@@ -228,8 +229,3 @@ class FastaBuilder:
             output_path=str(f"{path}.dict"),
             input_path=str(path),
         )
-
-
-# b = FastaBuilder()
-# n = b.add("chr10").add("AAA", 1).add("NNN", 1)
-# print(n._bases)

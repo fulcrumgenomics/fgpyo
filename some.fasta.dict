@@ -1,0 +1,3 @@
+@HD	VN:1.0	SO:unsorted
+@SQ	SN:chr1	LN:200	M5:433a43862a924b17d3149d237e296267	UR:file:///Users/swhite/projects/FGPYO/fgpyo/some.fasta	AS:testassembly	SP:testspecies
+@SQ	SN:chr10	LN:100	M5:7dac25120491180bce99c4ad39e4eea3	UR:file:///Users/swhite/projects/FGPYO/fgpyo/some.fasta	AS:testassembly	SP:testspecies

@@ -9,19 +9,19 @@ Examples of creating sets of contigs for writing to fasta
 
 Writing a FASTA with two contigs each with 100 bases.
 .. code-block:: python
-    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
-    >>> builder = ReferenceSetBuilder()
+    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10)
     >>> builder.add("chr11").add("GGGGGGGGGG", 10)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Writing a FASTA with one contig with 100 A's and 50 T's
-    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
-    >>> builder = ReferenceSetBuilder()
+    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Add bases to existing contig
-    >>> from fgpyo.fasta.reference_set_builder import ReferenceSetBuilder
-    >>> builder = ReferenceSetBuilder()
+    >>> from fgpyo.fasta.reference_set_builder import FastaBuilder
+    >>> builder = FastaBuilder()
     >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
     >>> contig_one.add("NNN", 1)
     >>> contig_one.bases
@@ -77,7 +77,7 @@ def pysam_faidx(input_path: str) -> None:
 
 class ContigBuilder:
     """Builder for constructing new contigs, and adding bases to existing contigs.
-    Existing contigs cannot be overwritten, each contig name in ReferenceSetBuilder must
+    Existing contigs cannot be overwritten, each contig name in FastaBuilder must
     be unique. Assembly and species information can be overwritten at instantiation however
     defaults are provided if 'assembly' an/or 'species' are not provided.
 
@@ -99,7 +99,7 @@ class ContigBuilder:
         self.name = name
         self.assembly = assembly
         self.species = species
-        self.bases = bases
+        self._bases = bases
 
     def add(self, bases: str, times: int) -> "ContigBuilder":
         """
@@ -112,11 +112,11 @@ class ContigBuilder:
         Example
         add("AAA", 2) results in the following bases -> "AAAAAA"
         """
-        self.bases += str(bases * times)
+        self._bases += str(bases * times)
         return self
 
 
-class ReferenceSetBuilder:
+class FastaBuilder:
     """Builder for constructing sets of one or more contigs.
 
     Provides the ability to manufacture sets of contigs from minimal input, and automatically
@@ -125,14 +125,14 @@ class ReferenceSetBuilder:
     A builder is constructed from an assembly, species, and line length. All attributes have
     defaults, however these can be overwritten.
 
-    Contigs are added to ReferenceSetBuilder using:
-    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.add`
+    Contigs are added to FastaBuilder using:
+    :func:`~fgpyo.reference_set_builder.FastaBuilder.add`
 
     Bases are added to existing contigs using:
-    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.add.add`
+    :func:`~fgpyo.reference_set_builder.FastaBuilder.add.add`
 
     Once accumulated the contigs can be written to a file using:
-    :func:`~fgpyo.reference_set_builder.ReferenceSetBuilder.to_file`
+    :func:`~fgpyo.reference_set_builder.FastaBuilder.to_file`
 
     Calling to_file() will also generate the fasta index (.fai) and sequence dictionary (.dict).
 
@@ -204,7 +204,7 @@ class ReferenceSetBuilder:
             path: Path to write files to.
 
         Example:
-        ReferenceSetBuilder.to_file(path = pathlib.Path("my_fasta.fa"))
+        FastaBuilder.to_file(path = pathlib.Path("my_fasta.fa"))
         """
 
         with path.open("w") as writer:
@@ -212,7 +212,7 @@ class ReferenceSetBuilder:
                 try:
                     writer.write(f">{contig.name}")
                     writer.write("\n")
-                    for line in textwrap.wrap(contig.bases, self.line_length):
+                    for line in textwrap.wrap(contig._bases, self.line_length):
                         writer.write(line)
                         writer.write("\n")
                 except OSError as error:
@@ -228,3 +228,8 @@ class ReferenceSetBuilder:
             output_path=str(f"{path}.dict"),
             input_path=str(path),
         )
+
+
+# b = FastaBuilder()
+# n = b.add("chr10").add("AAA", 1).add("NNN", 1)
+# print(n._bases)

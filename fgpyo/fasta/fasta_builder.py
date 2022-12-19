@@ -94,12 +94,11 @@ class ContigBuilder:
         name: str,
         assembly: str = "testassembly",
         species: str = "testspecies",
-        bases: str = str(),
     ):
         self.name = name
         self.assembly = assembly
         self.species = species
-        self._bases = bases
+        self.bases = ""
 
     def add(self, bases: str, times: int) -> "ContigBuilder":
         """
@@ -112,7 +111,7 @@ class ContigBuilder:
         Example
         add("AAA", 2) results in the following bases -> "AAAAAA"
         """
-        self._bases += str(bases * times)
+        self.bases += str(bases * times)
         return self
 
 
@@ -213,7 +212,7 @@ class FastaBuilder:
                 try:
                     writer.write(f">{contig.name}")
                     writer.write("\n")
-                    for line in textwrap.wrap(contig._bases, self.line_length):
+                    for line in textwrap.wrap(contig.bases, self.line_length):
                         writer.write(line)
                         writer.write("\n")
                 except OSError as error:

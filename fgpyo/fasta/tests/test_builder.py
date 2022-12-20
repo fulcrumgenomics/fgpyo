@@ -10,6 +10,13 @@ from pytest import raises
 from fgpyo.fasta.builder import FastaBuilder
 
 
+def test_overrides_FastaBuilder() -> None:
+    """Checks that defaults can be overriden in FastaBuilder"""
+    builder = FastaBuilder(assembly = 'HG38', species = 'Human', line_length = 90)
+    assert builder.assembly == 'HG38'
+    assert builder.species == 'Human'
+    assert builder.line_length == 90
+
 @pytest.mark.parametrize(
     "name, bases, times, length_bases",
     [

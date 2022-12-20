@@ -9,18 +9,18 @@ Examples of creating sets of contigs for writing to fasta
 
 Writing a FASTA with two contigs each with 100 bases.
 .. code-block:: python
-    >>> from fgpyo.fasta import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10)
     >>> builder.add("chr11").add("GGGGGGGGGG", 10)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Writing a FASTA with one contig with 100 A's and 50 T's
-    >>> from fgpyo.fasta import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
 Add bases to existing contig
-    >>> from fgpyo.fasta import FastaBuilder
+    >>> from fgpyo.fasta.fasta_builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
     >>> contig_one.add("NNN", 1)
@@ -111,6 +111,8 @@ class ContigBuilder:
         Example
         add("AAA", 2) results in the following bases -> "AAAAAA"
         """
+        # Remove any spaces in string and enforce upper case format
+        bases = bases.replace(" ", "").upper()
         self.bases += str(bases * times)
         return self
 
@@ -128,7 +130,7 @@ class FastaBuilder:
     :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.add`
 
     Bases are added to existing contigs using:
-    :func:`~fgpyo.fasta.FastaBuilder.add.add`
+    :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.add.add`
 
     Once accumulated the contigs can be written to a file using:
     :func:`~fgpyo.fasta.fasta_builder.FastaBuilder.to_file`
@@ -147,12 +149,11 @@ class FastaBuilder:
         assembly: str = "testassembly",
         species: str = "testspecies",
         line_length: int = 80,
-        contig_builders: Dict[str, ContigBuilder] = {},
     ):
         self.assembly: str = assembly
         self.species: str = species
         self.line_length: int = line_length
-        self.__contig_builders: Dict[str, ContigBuilder] = contig_builders
+        self.__contig_builders: Dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
         """ Access instance of ContigBuilder by name """

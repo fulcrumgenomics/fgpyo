@@ -23,12 +23,14 @@ def test_bases_length_from_ContigBuilder_add(
     times: int,
     length_bases: int,
 ) -> None:
+    """Checks that the number of bases in each contig is correct"""
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
     assert len(builder.__getitem__(name).bases) == length_bases
 
 
 def test_override_existing_contig() -> None:
+    """Asserts than an exception is raised when an override is attempted"""
     with raises(Exception):
         builder = FastaBuilder()
         builder.add("contig_name")
@@ -36,6 +38,7 @@ def test_override_existing_contig() -> None:
 
 
 def test_contig_dict_is_not_accessable() -> None:
+    """Ensures that an AttributeError is raised if FastaBuilder.__contig_builders is called"""
     builder = FastaBuilder()
     with raises(AttributeError):
         builder.__contig_builders["test"] = builder.add("chr10")
@@ -55,6 +58,9 @@ def test_bases_string_from_ContigBuilder_add(
     expected: str,
     tmpdir: TmpDir,
 ) -> None:
+    """
+    Reads bases back from fasta and checks that extra spaces are removed and bases are uppercase
+    """
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
     with NamedTemp(suffix=".fa", dir=tmpdir, mode="w", delete=True) as fp:

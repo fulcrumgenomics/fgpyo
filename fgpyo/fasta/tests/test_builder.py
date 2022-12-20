@@ -7,7 +7,7 @@ import pytest
 from py._path.local import LocalPath as TmpDir
 from pytest import raises
 
-from fgpyo.fasta.fasta_builder import FastaBuilder
+from fgpyo.fasta.builder import FastaBuilder
 
 
 @pytest.mark.parametrize(

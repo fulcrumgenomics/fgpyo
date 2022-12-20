@@ -1,6 +1,6 @@
 """Basic tests for reference_set_builder"""
 
-from fgpyo.fasta.fasta_builder import FastaBuilder
+from fgpyo.fasta import FastaBuilder
 
 
 def test_add_bases_to_existing_contig() -> None:

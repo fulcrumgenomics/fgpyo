@@ -14,6 +14,7 @@ from array import array
 from pathlib import Path
 from random import Random
 from tempfile import NamedTemporaryFile
+from typing import IO
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -26,6 +27,7 @@ from pysam import AlignedSegment
 from pysam import AlignmentHeader
 
 from fgpyo import sam
+from fgpyo.sam import SamOrder
 
 
 class SamBuilder:
@@ -104,6 +106,7 @@ class SamBuilder:
         rg: Optional[Dict[str, str]] = None,
         extra_header: Optional[Dict[str, Any]] = None,
         seed: int = 42,
+        sort_order: SamOrder = SamOrder.Coordinate,
     ) -> None:
         """Initializes a new SamBuilder for generating alignment records and SAM/BAM files.
 
@@ -116,14 +119,20 @@ class SamBuilder:
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
                           `::class::~pysam.AlignmentHeader` for more details.
             seed: a seed value for random number/string generation
+            sort_order: Order to sort records when writing to file, or output of to_sorted_list()
         """
 
         self.r1_len: int = r1_len if r1_len is not None else self.DEFAULT_R1_LENGTH
         self.r2_len: int = r2_len if r2_len is not None else self.DEFAULT_R2_LENGTH
         self.base_quality: int = base_quality
         self.mapping_quality: int = mapping_quality
+
+        if not isinstance(sort_order, SamOrder):
+            raise ValueError(f"sort_order must be a SamOrder, got {type(sort_order)}")
+        self._sort_order = sort_order
+
         self._header: Dict[str, Any] = {
-            "HD": {"VN": "1.5", "SO": "coordinate"},
+            "HD": {"VN": "1.5", "SO": sort_order.value},
             "SQ": (sd if sd is not None else SamBuilder.default_sd()),
             "RG": [(rg if rg is not None else SamBuilder.default_rg())],
         }
@@ -554,7 +563,7 @@ class SamBuilder:
 
         Args:
             path: a path at which to write the file, otherwise a temp file is used.
-            index: if True an index is generated, otherwise not.
+            index: if True and `sort_order` is `Coordinate` index is generated, otherwise not.
             pred: optional predicate to specify which reads should be output
 
         Returns:
@@ -566,16 +575,30 @@ class SamBuilder:
                 path = Path(fp.name)
 
         with NamedTemporaryFile(suffix=".bam", delete=True) as fp:
+            file_handle: IO
+            if self._sort_order in {SamOrder.Unsorted, SamOrder.Unknown}:
+                file_handle = path.open("w")
+            else:
+                file_handle = fp.file
+
             with sam.writer(
-                fp.file, header=self._samheader, file_type=sam.SamFileType.BAM  # type: ignore
+                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM  # type: ignore
             ) as writer:
                 for rec in self._records:
                     if pred(rec):
                         writer.write(rec)
 
-            pysam.sort("-o", str(path), fp.name)  # type: ignore
-            if index:
-                pysam.index(str(path))  # type: ignore
+            samtools_sort_args = ["-o", str(path), fp.name]
+
+            file_handle.close()
+            if self._sort_order == SamOrder.QueryName:
+                # Ignore type hints for now until we have wrappers to use here.
+                pysam.sort("-n", *samtools_sort_args)  # type: ignore
+            elif self._sort_order == SamOrder.Coordinate:
+                # Ignore type hints for now until we have wrappers to use here.
+                if index:
+                    samtools_sort_args.insert(0, "--write-index")
+                pysam.sort(*samtools_sort_args)  # type: ignore
 
         return path
 

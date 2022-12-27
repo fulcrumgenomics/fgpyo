@@ -37,9 +37,13 @@ pysam = ">=0.22.0"
 docs = ["sphinx", "sphinx_rtd_theme"]
 
 [tool.poetry.dev-dependencies]
+setuptools = ">=68.0.0"
 pytest = ">=5.4.2"
 mypy = ">=0.770"
-flake8 = ">=3.8.1"
+flake8 = [
+	{ version = ">=3.8.1", python = "<3.12.0" },
+	{ version = ">=6.1.0", python = ">=3.12.0" },
+]
 black = ">=19.10b0"
 pytest-cov = ">=2.8.1"
 isort = ">=5.10.1"

@@ -121,7 +121,7 @@ class FastaBuilder:
     """Builder for constructing sets of one or more contigs.
 
     Provides the ability to manufacture sets of contigs from minimal input, and automatically
-    generates the information necessary for writing the FASAT file, index, and dictionary.
+    generates the information necessary for writing the FASTA file, index, and dictionary.
 
     A builder is constructed from an assembly, species, and line length. All attributes have
     defaults, however these can be overwritten.
@@ -178,11 +178,10 @@ class FastaBuilder:
         # Check if name has already been used
         # If name already exists raise exception
         # Else create instance of ContigBuilder and add to self.__contig_builders
-        if name in self.__contig_builders:
-            raise Exception(
-                f"The contig {name} already exists, see docstring for methods on "
-                f"adding bases to existing contigs"
-            )
+        assert name not in self.__contig_builders, (
+            f"The contig {name} already exists, see docstring for methods on "
+            f"adding bases to existing contigs"
+        )
         else:
             builder: ContigBuilder = ContigBuilder(name=name, assembly=assembly, species=species)
             self.__contig_builders[name] = builder

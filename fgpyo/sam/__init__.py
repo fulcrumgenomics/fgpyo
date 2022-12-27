@@ -198,13 +198,14 @@ class SamFileType(enum.Enum):
         ext (str): The standard file extension for this file type.
     """
 
-    def __init__(self, mode: str, ext: str) -> None:
+    def __init__(self, mode: str, ext: str, index_ext: Optional[str]) -> None:
         self.mode = mode
         self.extension = ext
+        self.index_extension = index_ext
 
-    SAM = ("", ".sam")
-    BAM = ("b", ".bam")
-    CRAM = ("c", ".cram")
+    SAM = ("", ".sam", None)
+    BAM = ("b", ".bam", ".bai")
+    CRAM = ("c", ".cram", ".crai")
 
     @classmethod
     def from_path(cls, path: Union[Path, str]) -> "SamFileType":

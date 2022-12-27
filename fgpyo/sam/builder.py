@@ -27,6 +27,7 @@ from pysam import AlignedSegment
 from pysam import AlignmentHeader
 
 from fgpyo import sam
+from fgpyo import samtools
 from fgpyo.sam import SamOrder
 
 
@@ -588,18 +589,14 @@ class SamBuilder:
                     if pred(rec):
                         writer.write(rec)
 
-            samtools_sort_args = ["-o", str(path), fp.name]
-
             file_handle.close()
-            if self._sort_order == SamOrder.QueryName:
-                # Ignore type hints for now until we have wrappers to use here.
-                pysam.sort("-n", *samtools_sort_args)  # type: ignore
-            elif self._sort_order == SamOrder.Coordinate:
-                # Ignore type hints for now until we have wrappers to use here.
-                if index:
-                    samtools_sort_args.insert(0, "--write-index")
-                pysam.sort(*samtools_sort_args)  # type: ignore
-
+            if self._sort_order not in {SamOrder.Unsorted, SamOrder.Unknown}:
+                samtools.sort(
+                    input=Path(fp.name),
+                    output=path,
+                    index_output=index,
+                    sort_order=self._sort_order,
+                )
         return path
 
     def __len__(self) -> int:

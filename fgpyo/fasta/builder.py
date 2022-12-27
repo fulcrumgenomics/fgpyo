@@ -32,16 +32,21 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 """ Stubs for pysam imports """
 if TYPE_CHECKING:
 
-    def dict(*args: Any) -> None:
+    def samtools_dict(*args: Any) -> None:
+        pass
+
+    def samtools_faidx(*args: Any) -> None:
         pass
 
 
 else:
-    from pysam import dict
+    from pysam import dict as samtools_dict
+    from pysam import faidx as samtools_faidx
 
 
 def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
@@ -53,17 +58,7 @@ def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -
         output_path: File path to write dictionary to
         input_path: Path to fasta file
     """
-    dict("-a", assembly, "-s", species, "-o", output_path, input_path)
-
-
-if TYPE_CHECKING:
-
-    def faidx(*args: Any) -> None:
-        pass
-
-
-else:
-    from pysam import faidx
+    samtools_dict("-a", assembly, "-s", species, "-o", output_path, input_path)
 
 
 def pysam_faidx(input_path: str) -> None:
@@ -72,14 +67,15 @@ def pysam_faidx(input_path: str) -> None:
     Args
         input_path: Path to fasta file
     """
-    faidx(input_path)
+    samtools_faidx(input_path)
 
 
 class ContigBuilder:
     """Builder for constructing new contigs, and adding bases to existing contigs.
     Existing contigs cannot be overwritten, each contig name in FastaBuilder must
-    be unique. Assembly and species information can be overwritten at instantiation however
-    defaults are provided if 'assembly' an/or 'species' are not provided.
+    be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
+    where species and assembly are optional parameters and will defualt to
+    FastaBuilder.assembly and FastaBuilder.species.
 
     Attributes:
         name: Unique contig ID, ie., "chr10"
@@ -92,8 +88,8 @@ class ContigBuilder:
     def __init__(
         self,
         name: str,
-        assembly: str = "testassembly",
-        species: str = "testspecies",
+        assembly: str,
+        species: str,
     ):
         self.name = name
         self.assembly = assembly
@@ -162,8 +158,8 @@ class FastaBuilder:
     def add(
         self,
         name: str,
-        assembly: str = "testassembly",
-        species: str = "testspecies",
+        assembly: Optional[str] = None,
+        species: Optional[str] = None,
     ) -> ContigBuilder:
         """
         Creates and returns a new ContigBuilder for a contig with the provided name.
@@ -175,16 +171,17 @@ class FastaBuilder:
             assembly: Assembly information, if None default is 'testassembly'
             species: Species information, if None default is 'testspecies'
         """
-        # Check if name has already been used
-        # If name already exists raise exception
-        # Else create instance of ContigBuilder and add to self.__contig_builders
+        # Asign self.species and self.assembly to assembly and species if parameter is None
+        assembly = assembly if assembly is not None else self.assembly
+        species = species if species is not None else self.species
+
+        # Assert that the provided name does not already exist
         assert name not in self.__contig_builders, (
             f"The contig {name} already exists, see docstring for methods on "
             f"adding bases to existing contigs"
         )
-        else:
-            builder: ContigBuilder = ContigBuilder(name=name, assembly=assembly, species=species)
-            self.__contig_builders[name] = builder
+        builder: ContigBuilder = ContigBuilder(name=name, assembly=assembly, species=species)
+        self.__contig_builders[name] = builder
         return builder
 
     def to_file(

@@ -170,10 +170,14 @@ def test_metric_values() -> None:
 def test_metric_parse() -> None:
     assert Person.parse(fields=["name", "42"]) == Person(name="name", age=42)
 
+def test_metric_parse_should_fail() -> None:
+    assert Person.parse(fields=["", "42"]) == Person(name=None, age=42)
 
 def test_metric_formatted_values() -> None:
     assert Person(name="name", age=42).formatted_values() == (["name", "42"])
 
+def test_metric_formatted_values_should_fail() -> None:
+    assert Person(name=None, age=42).formatted_values() == (["", "42"])
 
 def test_metric_custom_parser() -> None:
     assert NamedPerson.parse(fields=["john doe", "42"]) == (

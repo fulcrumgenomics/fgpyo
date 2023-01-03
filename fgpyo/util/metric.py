@@ -111,6 +111,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import TypeVar
 
 import attr
@@ -216,7 +217,10 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             value: the value to format.
         """
-        if value == "":
+        if value == None:
+            return ""
+
+        if len(str(value)) == 0:
             return None
 
         if issubclass(type(value), Enum):
@@ -226,19 +230,19 @@ class Metric(ABC, Generic[MetricType]):
             if len(value) == 0:
                 return "()"
             else:
-                return "(" + ",".join(str(cls.format_value(v)) for v in value) + ")"
+                return "(" + ",".join(cls.format_value(v) for v in value) + ")"
 
         if isinstance(value, (list)):
             if len(value) == 0:
                 return "[]"
             else:
-                return "[" + ",".join(str(cls.format_value(v)) for v in value) + "]"
+                return "[" + ",".join(cls.format_value(v) for v in value) + "]"
 
         if isinstance(value, (set)):
             if len(value) == 0:
                 return ""
             else:
-                return "{" + ",".join(str(cls.format_value(v)) for v in value) + "}"
+                return "{" + ",".join(cls.format_value(v) for v in value) + "}"
 
         elif isinstance(value, dict):
             if len(value) == 0:
@@ -247,8 +251,7 @@ class Metric(ABC, Generic[MetricType]):
                 return (
                     "{"
                     + ",".join(
-                        f"{str(cls.format_value(k))}" f";{str(cls.format_value(v))}"
-                        for k, v in value.items()
+                        f"{cls.format_value(k)};{cls.format_value(v)}" for k, v in value.items()
                     )
                     + "}"
                 )

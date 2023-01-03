@@ -216,23 +216,30 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             value: the value to format.
         """
+        if value == "":
+            return None
+
         if issubclass(type(value), Enum):
-            return cls.format_value(value.value)
+            return str(cls.format_value(value.value))
+
         if isinstance(value, (tuple)):
             if len(value) == 0:
                 return "()"
             else:
-                return "(" + ",".join(cls.format_value(v) for v in value) + ")"
+                return "(" + ",".join(str(cls.format_value(v)) for v in value) + ")"
+
         if isinstance(value, (list)):
             if len(value) == 0:
                 return "[]"
             else:
-                return "[" + ",".join(cls.format_value(v) for v in value) + "]"
+                return "[" + ",".join(str(cls.format_value(v)) for v in value) + "]"
+
         if isinstance(value, (set)):
             if len(value) == 0:
                 return ""
             else:
-                return "{" + ",".join(cls.format_value(v) for v in value) + "}"
+                return "{" + ",".join(str(cls.format_value(v)) for v in value) + "}"
+
         elif isinstance(value, dict):
             if len(value) == 0:
                 return "{}"
@@ -240,7 +247,8 @@ class Metric(ABC, Generic[MetricType]):
                 return (
                     "{"
                     + ",".join(
-                        f"{cls.format_value(k)};{cls.format_value(v)}" for k, v in value.items()
+                        f"{str(cls.format_value(k))}" f";{str(cls.format_value(v))}"
+                        for k, v in value.items()
                     )
                     + "}"
                 )

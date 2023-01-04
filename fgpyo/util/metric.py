@@ -175,7 +175,17 @@ class Metric(ABC, Generic[MetricType]):
         parsers = cls._parsers()
         header = cls.header()
         assert len(fields) == len(header)
-        return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
+        return inspect.attr_from(
+            cls=cls, kwargs=dict(zip(header, map(cls.parser_formatting, fields))), parsers=parsers
+        )
+
+    @classmethod
+    def parser_formatting(self, field: Optional[str]) -> Any:
+        """Returns None if a field value is an empty string"""
+        if field == "":
+            return None
+        else:
+            return field
 
     @classmethod
     def write(cls, path: Path, *values: MetricType) -> None:
@@ -217,11 +227,8 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             value: the value to format.
         """
-        if value == None:
+        if value is None:
             return ""
-
-        if len(str(value)) == 0:
-            return None
 
         if issubclass(type(value), Enum):
             return str(cls.format_value(value.value))

@@ -133,6 +133,7 @@ def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == 1
+    print(metrics[0])
     assert metrics[0] == metric
 
 
@@ -171,8 +172,8 @@ def test_metric_parse() -> None:
     assert Person.parse(fields=["name", "42"]) == Person(name="name", age=42)
 
 
-# def test_metric_parse_with_None() -> None:
-#    assert Person.parse(fields=[None, "40"]) == Person(name='', age=40)
+def test_metric_parse_with_None() -> None:
+    assert Person.parse(fields=["", "40"]) == Person(name="None", age=40)
 
 
 def test_metric_formatted_values() -> None:

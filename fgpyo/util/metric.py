@@ -182,7 +182,7 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     def parser_formatting(self, field: Optional[str]) -> Any:
         """Returns None if a field value is an empty string"""
-        if field == "":
+        if not field:
             return None
         else:
             return field
@@ -212,6 +212,10 @@ class Metric(ABC, Generic[MetricType]):
         return [a.name for a in attr.fields(cls)]
 
     @classmethod
+    def get_attribute_type(cls, name: Any) -> Any:
+        return type(cls.name)
+
+    @classmethod
     def format_value(cls, value: Any) -> str:
         """The default method to format values of a given type.
 
@@ -228,7 +232,7 @@ class Metric(ABC, Generic[MetricType]):
             value: the value to format.
         """
         if value is None:
-            return ""
+            return str("")
 
         if issubclass(type(value), Enum):
             return str(cls.format_value(value.value))

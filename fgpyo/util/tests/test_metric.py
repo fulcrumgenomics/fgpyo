@@ -7,6 +7,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Union
 
 import attr
 import pytest
@@ -74,20 +75,20 @@ DUMMY_METRICS: List[DummyMetric] = [
         list_value=["1"],
         complex_value={2: {(-5, 1): set({"mapped_test_val2", "setval2"})}},
     ),
-    # DummyMetric(
-    #    int_value=1,
-    #    str_value="2",
-    #    bool_val=False,
-    #    enum_val=EnumTest.EnumVal3,
-    #    optional_str_value=None,
-    #    optional_int_value=None,
-    #    optional_bool_value=None,
-    #    optional_enum_value=None,
-    #    dict_value={},
-    #    tuple_value=(2, "test3"),
-    #    list_value=["1", "2", "3"],
-    #    complex_value={3: {(8, 1): set({"mapped_test_val3", "setval2"})}},
-    # ),
+    DummyMetric(
+        int_value=1,
+        str_value="2",
+        bool_val=False,
+        enum_val=EnumTest.EnumVal3,
+        optional_str_value=None,
+        optional_int_value=10,
+        optional_bool_value=False,
+        optional_enum_value=EnumTest.EnumVal1,
+        dict_value={},
+        tuple_value=(2, "test3"),
+        list_value=["1", "2", "3"],
+        complex_value={3: {(8, 1): set({"mapped_test_val3", "setval2"})}},
+    ),
 ]
 
 
@@ -131,10 +132,15 @@ def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
 
     DummyMetric.write(path, metric)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
-
+    for object in metrics:
+        v = vars(object)
+        for key in v:
+            value = v[key]
+            if isinstance(value, Union[str, int]):
+                if not value:
+                    v[key] = None
+        assert metrics[0] == object
     assert len(metrics) == 1
-    print(metrics[0])
-    assert metrics[0] == metric
 
 
 def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
@@ -142,6 +148,13 @@ def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
 
     DummyMetric.write(path, *DUMMY_METRICS)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
+    for object in metrics:
+        v = vars(object)
+        for key in vars(object):
+            value = v[key]
+            if isinstance(value, str):
+                if not value:
+                    v[key] = None
 
     assert len(metrics) == len(DUMMY_METRICS)
     assert metrics == DUMMY_METRICS

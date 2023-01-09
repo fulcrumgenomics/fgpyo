@@ -183,6 +183,6 @@ def is_list_like(type_: T) -> bool:
 
 def none_parser(value: str) -> None:
     """Returns None if the value is 'None', else raises an error"""
-    if value == "None":
+    if value == "None" or value == "":  # Tim added TODO ask Nis
         return None
     raise ValueError(f"NoneType not a valid type for {value}")

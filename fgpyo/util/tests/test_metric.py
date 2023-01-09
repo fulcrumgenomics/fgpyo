@@ -80,9 +80,9 @@ DUMMY_METRICS: List[DummyMetric] = [
         bool_val=False,
         enum_val=EnumTest.EnumVal3,
         optional_str_value=None,
-        optional_int_value=10,
-        optional_bool_value=False,
-        optional_enum_value=EnumTest.EnumVal1,
+        optional_int_value=None,
+        optional_bool_value=None,
+        optional_enum_value=None,
         dict_value={},
         tuple_value=(2, "test3"),
         list_value=["1", "2", "3"],
@@ -135,8 +135,8 @@ def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
         v = vars(object)
         for key in v:
             value = v[key]
-            if isinstance(value, str):
-                if not value:
+            if isinstance(value, str):  # make sure value is string even empty string
+                if not value:  # make sure string is empty
                     v[key] = None
         assert metrics[0] == object
     assert len(metrics) == 1

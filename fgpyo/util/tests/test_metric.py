@@ -136,7 +136,7 @@ def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
         v = vars(object)
         for key in v:
             value = v[key]
-            if isinstance(value, Union[str, int]):
+            if isinstance(value, str):
                 if not value:
                     v[key] = None
         assert metrics[0] == object

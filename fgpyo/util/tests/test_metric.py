@@ -188,11 +188,14 @@ def test_metric_custom_formatter() -> None:
 
 def test_metric_parse_with_None() -> None:
     assert Person.parse(fields=["", "40"]) == Person(name=None, age=40)
+    assert Person.parse(fields=["Sally", ""]) == Person(name="Sally", age=None)
     assert Person.parse(fields=["", ""]) == Person(name=None, age=None)
 
 
 def test_metric_formatted_values_with_empty_string() -> None:
     assert Person(name=None, age=42).formatted_values() == (["", "42"])
+    assert Person(name='Sally', age=None).formatted_values() == (["Sally", ""])
+    assert Person(name=None, age=None).formatted_values() == (["", ""])
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -225,7 +228,7 @@ def test_metric_list_format_with_empty_string() -> None:
     )
 
 
-def test_metric_list_parse_with_empty_string() -> None:
+def test_metric_list_parse_with_None() -> None:
     assert ListPerson.parse(fields=[",Sally", "40, 30"]) == ListPerson(
         name=[None, "Sally"], age=[40, 30]
     )

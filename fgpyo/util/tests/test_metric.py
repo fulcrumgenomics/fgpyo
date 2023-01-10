@@ -186,8 +186,7 @@ def test_metric_custom_formatter() -> None:
     assert list(person.formatted_values()) == ["john doe", "42"]
 
 
-def test_metric_list_formatting_format_and_parse() -> None:
+def test_metric_list_formatting_format() -> None:
     assert Person(name=["Max", "Sally"], age=[43, 55]).formatted_values() == (
         ["Max,Sally", "43,55"]
     )
-    # TODO add parse

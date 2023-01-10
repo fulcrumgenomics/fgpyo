@@ -233,6 +233,10 @@ class Metric(ABC, Generic[MetricType]):
                 return ""
             else:
                 return "{" + ",".join(cls.format_value(v) for v in value) + "}"
+
+        if value is None:
+            return ""
+
         elif isinstance(value, dict):
             if len(value) == 0:
                 return "{}"

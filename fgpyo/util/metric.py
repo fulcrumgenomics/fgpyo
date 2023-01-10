@@ -234,9 +234,6 @@ class Metric(ABC, Generic[MetricType]):
             else:
                 return "{" + ",".join(cls.format_value(v) for v in value) + "}"
 
-        if value is None:
-            return ""
-
         elif isinstance(value, dict):
             if len(value) == 0:
                 return "{}"
@@ -250,6 +247,8 @@ class Metric(ABC, Generic[MetricType]):
                 )
         elif isinstance(value, float):
             return str(round(value, 5))
+        elif value is None:
+            return ""
         else:
             return str(value)
 

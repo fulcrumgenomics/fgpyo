@@ -118,10 +118,11 @@ def _get_parser(
                 return functools.partial(
                     lambda s: origin_type(
                         []
-                        if s == "[]"
+                        if s == ""
                         else [
                             subtype_parser(item)
-                            for item in origin_type(split_at_given_level(s[1:-1], split_delim=","))
+                            # Now returns full string not [1:-1]
+                            for item in origin_type(split_at_given_level(s, split_delim=","))
                         ]
                     )
                 )
@@ -270,6 +271,7 @@ def attr_from(
             # try setting by casting
             # Note that while bools *can* be cast from string, all non empty strings evaluate to
             # True, because python, so we need to check for that explicitly
+            # The logic below simplified - try will execute if not False and not False:
             if not set_value and attribute.type is not None and not attribute.type == bool:
                 try:
                     return_value = attribute.type(str_value)

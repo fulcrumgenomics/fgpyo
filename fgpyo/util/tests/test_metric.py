@@ -186,6 +186,7 @@ def test_metric_parse() -> None:
 
 def test_metric_parse_with_None() -> None:
     assert Person.parse(fields=["", "40"]) == Person(name="None", age=40)
+    # TODO why does parsing en empty string return a string instead of NoneType?
 
 
 def test_metric_formatted_values() -> None:
@@ -197,7 +198,7 @@ def test_metric_formatted_values_with_empty_string() -> None:
 
 
 def test_metric_formatted_values_list_with_empty_string() -> None:
-    assert Person(name=[None, "Sally"], age=43).formatted_values() == (["[" ",Sally]", "43"])
+    assert Person(name=[None, "Sally"], age=43).formatted_values() == ([",Sally", "43"])
 
 
 def test_metric_custom_parser() -> None:

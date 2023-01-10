@@ -175,6 +175,7 @@ class Metric(ABC, Generic[MetricType]):
         parsers = cls._parsers()
         header = cls.header()
         assert len(fields) == len(header)
+        # Replaced fields with map(cls.parser_formatting, fields) SW
         return inspect.attr_from(
             cls=cls, kwargs=dict(zip(header, map(cls.parser_formatting, fields))), parsers=parsers
         )
@@ -183,7 +184,9 @@ class Metric(ABC, Generic[MetricType]):
     def parser_formatting(self, field: Optional[str]) -> Any:
         """Returns None if a field value is an empty string"""
         if not field:
-            return None
+            ex = None
+            print(type(ex))
+            return ex
         else:
             return field
 
@@ -231,9 +234,6 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             value: the value to format.
         """
-        if value is None:
-            return str("")
-
         if issubclass(type(value), Enum):
             return str(cls.format_value(value.value))
 
@@ -245,15 +245,20 @@ class Metric(ABC, Generic[MetricType]):
 
         if isinstance(value, (list)):
             if len(value) == 0:
-                return "[]"
+                return ""  # Changed from []
             else:
-                return "[" + ",".join(cls.format_value(v) for v in value) + "]"
+                # Issue 10- remove square brackets from writing to disk
+                # return "[" + ",".join(cls.format_value(v) for v in value) + "]"
+                return ",".join(cls.format_value(v) for v in value)
 
         if isinstance(value, (set)):
             if len(value) == 0:
                 return ""
             else:
                 return "{" + ",".join(cls.format_value(v) for v in value) + "}"
+
+        if value is None:
+            return ""
 
         elif isinstance(value, dict):
             if len(value) == 0:

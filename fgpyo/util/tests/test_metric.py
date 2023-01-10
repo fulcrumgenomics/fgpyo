@@ -93,8 +93,8 @@ DUMMY_METRICS: List[DummyMetric] = [
 
 @attr.s(auto_attribs=True, frozen=True)
 class Person(Metric["Person"]):
-    name: str
-    age: int
+    name: Optional[str]
+    age: Optional[int]
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -186,10 +186,19 @@ def test_metric_custom_formatter() -> None:
     assert list(person.formatted_values()) == ["john doe", "42"]
 
 
+def test_metric_parse_with_None() -> None:
+    assert Person.parse(fields=["", "40"]) == Person(name=None, age=40)
+    assert Person.parse(fields=["", ""]) == Person(name=None, age=None)
+
+
+def test_metric_formatted_values_with_empty_string() -> None:
+    assert Person(name=None, age=42).formatted_values() == (["", "42"])
+
+
 @attr.s(auto_attribs=True, frozen=True)
 class ListPerson(Metric["ListPerson"]):
-    name: List[str]
-    age: List[int]
+    name: List[Optional[str]]
+    age: List[Optional[int]]
 
 
 def test_metric_list_format() -> None:
@@ -201,4 +210,28 @@ def test_metric_list_format() -> None:
 def test_metric_list_parse() -> None:
     assert ListPerson.parse(fields=["Max,Sally", "43, 55"]) == ListPerson(
         name=["Max", "Sally"], age=[43, 55]
+    )
+
+
+def test_metric_list_format_with_empty_string() -> None:
+    assert ListPerson(name=[None, "Sally"], age=[43, 55]).formatted_values() == (
+        [",Sally", "43,55"]
+    )
+    assert ListPerson(name=[None, "Sally"], age=[None, 55]).formatted_values() == (
+        [",Sally", ",55"]
+    )
+    assert ListPerson(name=["Max", "Sally"], age=[None, None]).formatted_values() == (
+        ["Max,Sally", ","]
+    )
+
+
+def test_metric_list_parse_with_empty_string() -> None:
+    assert ListPerson.parse(fields=[",Sally", "40, 30"]) == ListPerson(
+        name=[None, "Sally"], age=[40, 30]
+    )
+    assert ListPerson.parse(fields=[",Sally", ", 30"]) == ListPerson(
+        name=[None, "Sally"], age=[None, 30]
+    )
+    assert ListPerson.parse(fields=["Max,Sally", ","]) == ListPerson(
+        name=["Max", "Sally"], age=[None, None]
     )

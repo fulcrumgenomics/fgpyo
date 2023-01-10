@@ -194,7 +194,7 @@ def test_metric_parse_with_None() -> None:
 
 def test_metric_formatted_values_with_empty_string() -> None:
     assert Person(name=None, age=42).formatted_values() == (["", "42"])
-    assert Person(name='Sally', age=None).formatted_values() == (["Sally", ""])
+    assert Person(name="Sally", age=None).formatted_values() == (["Sally", ""])
     assert Person(name=None, age=None).formatted_values() == (["", ""])
 
 

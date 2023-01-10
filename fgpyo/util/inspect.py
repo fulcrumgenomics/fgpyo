@@ -118,10 +118,10 @@ def _get_parser(
                 return functools.partial(
                     lambda s: origin_type(
                         []
-                        if s == "[]"
+                        if s == ""
                         else [
                             subtype_parser(item)
-                            for item in origin_type(split_at_given_level(s[1:-1], split_delim=","))
+                            for item in origin_type(split_at_given_level(s, split_delim=","))
                         ]
                     )
                 )

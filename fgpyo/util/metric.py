@@ -225,9 +225,9 @@ class Metric(ABC, Generic[MetricType]):
                 return "(" + ",".join(cls.format_value(v) for v in value) + ")"
         if isinstance(value, (list)):
             if len(value) == 0:
-                return "[]"
+                return ""
             else:
-                return "[" + ",".join(cls.format_value(v) for v in value) + "]"
+                return ",".join(cls.format_value(v) for v in value)
         if isinstance(value, (set)):
             if len(value) == 0:
                 return ""

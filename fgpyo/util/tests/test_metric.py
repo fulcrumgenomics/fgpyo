@@ -184,3 +184,21 @@ def test_metric_custom_parser() -> None:
 def test_metric_custom_formatter() -> None:
     person = NamedPerson(name=Name(first="john", last="doe"), age=42)
     assert list(person.formatted_values()) == ["john doe", "42"]
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class ListPerson(Metric["ListPerson"]):
+    name: List[str]
+    age: List[int]
+
+
+def test_metric_list_format() -> None:
+    assert ListPerson(name=["Max", "Sally"], age=[43, 55]).formatted_values() == (
+        ["Max,Sally", "43,55"]
+    )
+
+
+def test_metric_list_parse() -> None:
+    assert ListPerson.parse(fields=["Max,Sally", "43, 55"]) == ListPerson(
+        name=["Max", "Sally"], age=[43, 55]
+    )

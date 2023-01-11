@@ -16,8 +16,8 @@ Defining a new IO class:
    >>> from fgpyo.io.io import IO
    >>> import attr
    >>> @attr.s(auto_attribs=True, frozen=True)
-   # TODO 
-   """
+   # TODO add code here
+"""
 
 import gzip
 import os

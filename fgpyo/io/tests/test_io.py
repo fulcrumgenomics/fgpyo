@@ -64,6 +64,26 @@ def test_reader(
     """Tests reader"""
     with NamedTemp(suffix=suffix, mode="r", delete=True) as read_file:
         test_io = IO([Path(read_file.name)])
-        file = test_io.reader()
+        file = test_io.reader(path=Path(read_file.name))
+        assert isinstance(file, expected)
+        file.close()
+
+
+@pytest.mark.parametrize(
+    "suffix, expected",
+    [
+        (".gz", gzip.GzipFile),
+        (".fa", io._io.TextIOWrapper),
+    ],
+)
+def test_writer(
+    suffix: str,
+    expected: Any,
+) -> None:
+    # TODO fix docstring
+    """Tests reader"""
+    with NamedTemp(suffix=suffix, mode="w", delete=True) as read_file:
+        test_io = IO([Path(read_file.name)])
+        file = test_io.writer()
         assert isinstance(file, expected)
         file.close()

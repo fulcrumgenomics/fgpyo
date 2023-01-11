@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 from typing import List
 from typing import Optional
+from typing import Set
 
 import attr
 
@@ -89,27 +90,31 @@ class IO:
                     else:
                         raise Exception(f"{parent_dir} and or {path.name} are not writeable")
 
-    def reader(self) -> Any:
+    def reader(self, path: Path) -> Any:
         """Opens a Path for reading and based on extension uses open() or gzip.open()"""
-        special_suffix: set[str] = {".gz", ".bgz"}
-        for path in self.paths:
-            if path.suffix in special_suffix:
-                return gzip.open(path, "r")
-            else:
-                return path.open("r")
+        special_suffix: Set[str] = {".gz", ".bgz"}
+        if path.suffix in special_suffix:
+            return gzip.open(path, "r")
+        else:
+            return path.open("r")
 
     def writer(self) -> Any:
         """Opens a Path for reading and based on extension uses open() or gzip.open()"""
-        special_suffix: set[str] = {".gz", ".bgz"}
+        special_suffix: Set[str] = {".gz", ".bgz"}
         for path in self.paths:
             if path.suffix in special_suffix:
                 return gzip.open(path, "w")
             else:
                 return path.open("w")
 
-
-# def reader(self) -> None:
+    def read_lines(self, path: Path) -> List[str]:
+        """Takes a path and reads it into a list of strings, removing line terminators
+        along the way. # TODO = With an option to strip lines"""
+        # TODO ask Tim/Nils about best practice to protect memory with large file
+        with self.reader(path=path) as input_file:
+            list_of_lines = input_file.readlines()
+            return [line.rstrip() for line in list_of_lines]
 
 
 # example = IO([Path("dummy.txt")])
-# example.paths_are_writeable()
+# example.read_lines(Path("dummy.txt"))

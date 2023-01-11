@@ -1,3 +1,4 @@
+# TODO make more like scala version
 """
 I/O
 -------
@@ -68,7 +69,8 @@ class IO:
             raise Exception(f"{path} is not writeable")
 
     def paths_are_writeable(self) -> None:
-        """Checks that each path is paths exist and are directories"""
+        """Checks that each path in paths is either a file or directory, and
+        is writeable, and if the path is a file the parent directory is also writeable"""
         for path in self.paths:
             # Is path a directory or a path?
             if self._file_exists(path=path):

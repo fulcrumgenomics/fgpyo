@@ -2,22 +2,32 @@
 """
 I/O
 -------
-# TODO fix examples section/desciptions
-Module for reading and writing
+Module for reading and writing files.
 
+# TODO add details
 The :class:`~fgpyo.io.io.IO` class makes it easy to...
 
 Examples
 ~~~~~~~~
 
-Defining a new IO class:
-
+Examples:
+.. code-block:: bash
+   >>> echo 'example\nfile' > example.txt
+   >>> cp example.txt example_gzip.txt
+   >>> gzip example_gzip.txt
 .. code-block:: python
-
    >>> from fgpyo.io.io import IO
-   >>> import attr
-   >>> @attr.s(auto_attribs=True, frozen=True)
-   # TODO add code here
+   >>> from pathlib import Path
+   >>> io = IO([Path("example.txt"), Path(("example_gzip.txt.gz"))])
+   Assert that paths exist and are readable
+   >>> io.paths_are_readable()
+   Assert that paths exist and are writeable
+   >>> io.paths_are_writeable()
+   Read lines from paths into a list of strings
+   >>> io.read_lines(path = Path("example.txt"))
+   ['example', 'file']
+   >>> io.read_lines(path = Path("example_gzip.txt.gz"))
+   ['example', 'file']
 """
 
 import gzip

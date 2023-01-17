@@ -130,6 +130,6 @@ def test_read_and_write_lines(
 ) -> None:
     """Test IO.read_lines"""
     with NamedTemp(suffix=suffix, mode="wb", delete=True) as read_file:
-        IO.write_lines(path=Path(read_file.name), to_write = list_to_write)
+        IO.write_lines(path=Path(read_file.name), to_write=list_to_write)
         read_back = IO.read_lines(path=Path(read_file.name))
         assert read_back == [str(item) for item in list_to_write]

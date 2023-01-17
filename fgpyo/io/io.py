@@ -161,7 +161,7 @@ class IO:
     def write_lines(path: Path, to_write: Iterable[Any]) -> None:
         """Writes a file with one line per item in to_write"""
         writer = IO.writer(path=path)
-        writer.writelines([str(item)+'\n' for item in to_write])
+        writer.writelines([str(item) + "\n" for item in to_write])
         writer.close()
 
 

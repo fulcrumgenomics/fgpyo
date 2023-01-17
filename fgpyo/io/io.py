@@ -12,8 +12,9 @@ Examples
 
 Examples:
 .. code-block:: bash
-   >>> echo 'example\nfile' > example.txt
-   >>> cp example.txt example_gzip.txt
+# TODO format bash section
+   >>> touch example.txt
+   >>> touch example_gzip.txt
    >>> gzip example_gzip.txt
 .. code-block:: python
    >>> from fgpyo.io.io import IO
@@ -23,11 +24,14 @@ Examples:
    >>> io.paths_are_readable()
    Assert that paths exist and are writeable
    >>> io.paths_are_writeable()
+   Write iterable to path
+   >>> IO.write_lines(path = Path("example.txt"), to_write = ["flat file", 10])
+   >>> IO.write_lines(path = Path("example_gzip.txt.gz"), to_write = ["gzip file", 10])
    Read lines from paths into a list of strings
-   >>> io.read_lines(path = Path("example.txt"))
-   ['example', 'file']
-   >>> io.read_lines(path = Path("example_gzip.txt.gz"))
-   ['example', 'file']
+   >>> IO.read_lines(path = Path("example.txt"))
+   ['flat file', '10']
+   >>> IO.read_lines(path = Path("example_gzip.txt.gz"))
+   ['gzip file', '10']
 """
 
 import gzip
@@ -35,9 +39,12 @@ import io
 import os
 from pathlib import Path
 from typing import Any
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import TextIO
+from typing import Union
 
 import attr
 
@@ -99,9 +106,8 @@ class IO:
         1) Parent exists and is writeable
         2) File exists and is writeable
         OR
-        3) File does not exist
+        3) TODO File does not exist
         """
-        # List of Paths:
         for path in self.paths:
             # Assert Path is a file and exists
             try:
@@ -124,39 +130,39 @@ class IO:
                 raise Exception(f"{path.name} is not writeable")
 
     @staticmethod
-    def reader(path: Path) -> io.IOBase:
+    def reader(path: Path) -> Union[io.TextIOBase, TextIO]:
         """Opens a Path for reading and based on extension uses open() or gzip.open()"""
         special_suffix: Set[str] = {".gz", ".bgz"}
         if path.suffix in special_suffix:
-            # with gzip.open(path, mode="rt") as gzip_reader:
-            # return gzip_reader
-            return gzip.open(path, "r")
+            return gzip.open(path, "rt")
         else:
             return path.open("rt")
 
     @staticmethod
-    def writer(path: Path) -> io.IOBase:
+    def writer(path: Path) -> Union[io.TextIOBase, TextIO]:
         """Opens a Path for reading and based on extension uses open() or gzip.open()"""
         special_suffix: Set[str] = {".gz", ".bgz"}
         if path.suffix in special_suffix:
-            return gzip.open(path, "w")
+            return gzip.open(path, "wt")
         else:
-            return path.open("w")
+            return path.open("wt")
 
-    def read_lines(self, path: Path) -> Any:
+    @staticmethod
+    def read_lines(path: Path) -> Any:
+        # TODO change -> Any to List[str] without list comprehension error
         """Takes a path and reads it into a list of strings, removing line terminators
         along the way. # TODO = With an option to strip lines"""
-        special_suffix: Set[str] = {".gz", ".bgz"}
-        # TODO ask Tim/Nils about best practice to protect memory with large file
-        if path.suffix in special_suffix:
-            with gzip.open(path, mode="rt") as gzip_input:
-                list_of_lines = gzip_input.readlines()
-                return [line.rstrip() for line in list_of_lines]
+        reader = IO.reader(path=path)
+        list_of_lines = reader.readlines()
+        reader.close()
+        return [line.rstrip() for line in list_of_lines]
 
-        else:
-            with open(file=path, mode="r") as input_file:
-                list_of_lines = input_file.readlines()
-                return [line.rstrip() for line in list_of_lines]
+    @staticmethod
+    def write_lines(path: Path, to_write: Iterable[Any]) -> None:
+        """Writes a file with one line per item in to_write"""
+        writer = IO.writer(path=path)
+        writer.writelines([str(item)+'\n' for item in to_write])
+        writer.close()
 
 
 # cl = IO([Path("example.txt.gz"), Path(("example2.txt"))])

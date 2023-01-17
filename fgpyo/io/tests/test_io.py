@@ -1,6 +1,5 @@
 """Basic tests for io module"""
 
-import gzip
 import io
 import os
 from pathlib import Path
@@ -85,7 +84,7 @@ def test_writeable_True() -> None:
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", gzip.GzipFile),
+        (".gz", io._io.TextIOWrapper),
         (".fa", io._io.TextIOWrapper),
     ],
 )
@@ -104,7 +103,7 @@ def test_reader(
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", gzip.GzipFile),
+        (".gz", io._io.TextIOWrapper),
         (".fa", io._io.TextIOWrapper),
     ],
 )
@@ -122,25 +121,15 @@ def test_writer(
 
 
 @pytest.mark.parametrize(
-    "suffix, expected",
-    [(".txt", ["1", "string"]), (".gz", ["Test with a gzip file", "string"])],
+    "suffix, list_to_write",
+    [(".txt", ["Test with a flat file", 10]), (".gz", ["Test with a gzip file", 10])],
 )
-def test_read_lines(
+def test_read_and_write_lines(
     suffix: str,
-    expected: List[str],
+    list_to_write: List[Any],
 ) -> None:
     """Test IO.read_lines"""
-
-    bytes_suffix = {".gz", ".bgz"}
-
     with NamedTemp(suffix=suffix, mode="wb", delete=True) as read_file:
-        test_IO = IO([Path(read_file.name)])
-        with IO.writer(path=Path(read_file.name)) as writer:
-            if suffix in bytes_suffix:
-                for element in expected:
-                    writer.write(bytes(f"{element}\n", "utf-8"))
-            else:
-                for element in expected:
-                    writer.write(f"{element}\n")
-        returned = test_IO.read_lines(path=Path(read_file.name))
-        assert returned == expected
+        IO.write_lines(path=Path(read_file.name), to_write = list_to_write)
+        read_back = IO.read_lines(path=Path(read_file.name))
+        assert read_back == [str(item) for item in list_to_write]

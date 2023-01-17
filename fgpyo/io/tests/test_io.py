@@ -22,6 +22,14 @@ def test_file_exists_error() -> None:
         test_io._file_exists(path)
 
 
+def test_file_exists_True() -> None:
+    """Asserts IO._file_exists() returns True when file exists"""
+    with NamedTemp(suffix=".txt", mode="w", delete=True) as write_file:
+        path = Path(write_file.name)
+        test_io = IO([path])
+        assert test_io._file_exists(path=path) is True
+
+
 def test_dir_exists_error() -> None:
     """Ensure OSError when directory does not exist"""
     path = Path("/non/existant/dir/")
@@ -30,9 +38,17 @@ def test_dir_exists_error() -> None:
         test_io._directory_exists(path)
 
 
-def test_readable_rrror() -> None:
-    """Error when permissions are write only by owner"""
+def test_dir_exists_True() -> None:
+    """Asserts IO._directory_exists() returns True when directory exists"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as write_file:
+        path = Path(write_file.name)
+        test_io = IO([path])
+        assert test_io._directory_exists(path=path.parent.absolute()) is True
+
+
+def test_readable_error() -> None:
+    """Error when permissions are write only by owner"""
+    with NamedTemp(suffix=".txt", mode="r", delete=True) as write_file:
         path = Path(write_file.name)
         test_io = IO([path])
         os.chmod(path, 0o00200)  # Write only permissions
@@ -40,14 +56,30 @@ def test_readable_rrror() -> None:
             test_io._readable(path=path)
 
 
+def test_readable_True() -> None:
+    """Error when permissions are write only by owner"""
+    with NamedTemp(suffix=".txt", mode="r", delete=True) as write_file:
+        path = Path(write_file.name)
+        test_io = IO([path])
+        assert test_io._readable(path=path) is True
+
+
 def test_writeable_error() -> None:
     """Error when permissions are read only by owner"""
-    with NamedTemp(suffix=".txt", mode="r", delete=True) as read_file:
+    with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
         test_io = IO([path])
         os.chmod(path, 0o00400)  # Read only permissions
         with raises(Exception):
             test_io._writable(path=path)
+
+
+def test_writeable_True() -> None:
+    """Error when permissions are read only by owner"""
+    with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
+        path = Path(read_file.name)
+        test_io = IO([path])
+        assert test_io._writeable(path=path) is True
 
 
 @pytest.mark.parametrize(
@@ -91,10 +123,7 @@ def test_writer(
 
 @pytest.mark.parametrize(
     "suffix, expected",
-    [
-        (".txt", ['1', "string"]),
-        (".gz", ["Test with a gzip file", "string"])
-    ],
+    [(".txt", ["1", "string"]), (".gz", ["Test with a gzip file", "string"])],
 )
 def test_read_lines(
     suffix: str,
@@ -104,16 +133,14 @@ def test_read_lines(
 
     bytes_suffix = {".gz", ".bgz"}
 
-    with NamedTemp(suffix=suffix, mode = 'wb', delete=True) as read_file:
+    with NamedTemp(suffix=suffix, mode="wb", delete=True) as read_file:
         test_IO = IO([Path(read_file.name)])
-        with IO.writer(path = Path(read_file.name)) as writer:
+        with IO.writer(path=Path(read_file.name)) as writer:
             if suffix in bytes_suffix:
                 for element in expected:
-                    writer.write(bytes(f'{element}\n', 'utf-8'))
+                    writer.write(bytes(f"{element}\n", "utf-8"))
             else:
                 for element in expected:
-                    writer.write(f'{element}\n')
-        returned = test_IO.read_lines(path = Path(read_file.name))
+                    writer.write(f"{element}\n")
+        returned = test_IO.read_lines(path=Path(read_file.name))
         assert returned == expected
-        
-        

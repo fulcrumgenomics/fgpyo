@@ -1,6 +1,5 @@
-# TODO make more like scala version
 """
-I/O
+IO
 -------
 Module for reading and writing files.
 
@@ -41,7 +40,6 @@ from pathlib import Path
 from typing import Any
 from typing import Iterable
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import TextIO
 from typing import Union
@@ -51,49 +49,94 @@ import attr
 
 @attr.s(frozen=True, auto_attribs=True)
 class IO:
-    """
-    Doc string place holder
+    """Builder for constructing new contigs, and adding bases to existing contigs.
+    Existing contigs cannot be overwritten, each contig name in FastaBuilder must
+    be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
+    where species and assembly are optional parameters and will defualt to
+    FastaBuilder.assembly and FastaBuilder.species.
+
+    Attributes:
+        paths: List of one or more pathlib Paths
     """
 
     paths: List[Path]
-    extension: Optional[str] = None
 
     def _file_exists(self, path: Path) -> bool:
-        """ Checks that file exists, else raises FileNotFOundError """
+        """Checks that file exists and returns True, else raises FileNotFOundError
+
+        Args:
+            path: Path to be investigated
+
+        Example:
+        IO._file_exists(path = Path("some_file.csv"))
+        """
         if path.is_file():
             return True
         else:
             raise FileNotFoundError
 
     def _directory_exists(self, path: Path) -> bool:
-        """ Checks that directory exists, else raises NotADirectoryError """
+        """Checks that directory exists and returns True, else raises NotADirectoryError
+
+        Args:
+            path: Path to be investigated
+
+        Example:
+        IO._directory_exists(path = Path("/example/directory/"))
+        """
         if path.is_dir():
             return True
         else:
             raise NotADirectoryError
 
     def _readable(self, path: Path) -> bool:
-        """ Checks path is readable, else raises an Exception """
+        """Checks path is readable and returns True, else raises an Exception
+
+        Args:
+            path: Path to be investigated
+
+        Example:
+        IO._readable(path = Path("example.txt")))
+        """
         if os.access(path, os.R_OK):
             return True
         else:
             raise Exception(f"{path} is not readable")
 
     def _writeable(self, path: Path) -> bool:
-        """ Checks that path is writable, else raises an Exception """
+        """Checks that path is writable and returns True, else raises an Exception
+        Args:
+            path: Path to be investigated
+        Example:
+        IO._writeable(path = Path("example.txt"))
+        """
         if os.access(path, os.W_OK):
             return True
         else:
             raise Exception(f"{path} is not writeable")
 
     def paths_are_readable(self) -> None:
-        """ Asserts that one or more Paths exist and are readable """
+        """Asserts that one or more Paths exist and are readable.
+        If there is no error then None is returned, else an error is thrown
+        # TODO convert to try and except t handle specific errors
+
+        Example:
+        IO.path_are_readable()
+        """
         for path in self.paths:
             # Assert path exists and is readable
             assert path.exists and self._readable(path=path)
 
-    def paths_are_directories(self, path: Path) -> bool:
-        """ Asserts that one or more Paths exist and are directories """
+    def path_is_directory(self, path: Path) -> bool:
+        """Asserts that one or more Paths exist and are directories
+        If no errors are thrown True is returned, else return False
+
+        Args:
+            path: Path to be investigated
+
+        Example:
+        IO.path_is_directory(path = Paht("/directory/path"))
+        """
         try:
             # Assert path exists and is a directory
             assert path.exists and self._directory_exists(path=path)
@@ -107,6 +150,9 @@ class IO:
         2) File exists and is writeable
         OR
         3) TODO File does not exist
+
+        Example:
+        IO.paths_are_writeable()
         """
         for path in self.paths:
             # Assert Path is a file and exists
@@ -117,7 +163,7 @@ class IO:
 
             # Assert parent exists and is writeable
             try:
-                assert self.paths_are_directories(path=path.parent.absolute()) and self._writeable(
+                assert self.path_is_directory(path=path.parent.absolute()) and self._writeable(
                     path=path.parent.absolute()
                 )
             except Exception:
@@ -131,7 +177,15 @@ class IO:
 
     @staticmethod
     def reader(path: Path) -> Union[io.TextIOBase, TextIO]:
-        """Opens a Path for reading and based on extension uses open() or gzip.open()"""
+        """Opens a Path for reading and based on extension uses open() or gzip.open()
+
+        Args:
+            path: Path to be read from
+
+        Example:
+        # TODO better example
+        IO.reader(path = Path("reader.txt"))
+        """
         special_suffix: Set[str] = {".gz", ".bgz"}
         if path.suffix in special_suffix:
             return gzip.open(path, "rt")
@@ -140,7 +194,15 @@ class IO:
 
     @staticmethod
     def writer(path: Path) -> Union[io.TextIOBase, TextIO]:
-        """Opens a Path for reading and based on extension uses open() or gzip.open()"""
+        """Opens a Path for reading and based on extension uses open() or gzip.open()
+
+        Args:
+            path: Path to write to
+
+        Example:
+        # TODO Better example
+        IO.writer(path = Path("writer.txt"))
+        """
         special_suffix: Set[str] = {".gz", ".bgz"}
         if path.suffix in special_suffix:
             return gzip.open(path, "wt")
@@ -149,9 +211,16 @@ class IO:
 
     @staticmethod
     def read_lines(path: Path) -> Any:
-        # TODO change -> Any to List[str] without list comprehension error
         """Takes a path and reads it into a list of strings, removing line terminators
-        along the way. # TODO = With an option to strip lines"""
+        along the way.
+        # TODO Make line strip optional
+
+        Args:
+            path: Path to read from
+
+        Example:
+        # TODO Add example
+        """
         reader = IO.reader(path=path)
         list_of_lines = reader.readlines()
         reader.close()
@@ -159,7 +228,14 @@ class IO:
 
     @staticmethod
     def write_lines(path: Path, to_write: Iterable[Any]) -> None:
-        """Writes a file with one line per item in to_write"""
+        """Writes a file with one line per item in provided iterable
+
+        Args:
+            path: PAth to write to
+
+        Example:
+        # TODO Add example
+        """
         writer = IO.writer(path=path)
         writer.writelines([str(item) + "\n" for item in to_write])
         writer.close()

@@ -76,7 +76,7 @@ def test_reader(
     suffix: str,
     expected: Any,
 ) -> None:
-    """Tests io.to_reader"""
+    """Tests fgpyo.io.io.to_reader"""
     with NamedTemp(suffix=suffix, mode="r", delete=True) as read_file:
         reader = IO.to_reader(path=Path(read_file.name))
         assert isinstance(reader, expected)
@@ -109,7 +109,7 @@ def test_read_and_write_lines(
     suffix: str,
     list_to_write: List[Any],
 ) -> None:
-    """Test io.read_lines and write_lines"""
+    """Test fgpyo.io.io.read_lines and write_lines"""
     with NamedTemp(suffix=suffix, mode="wb", delete=True) as read_file:
         IO.write_lines(path=Path(read_file.name), lines_to_write=list_to_write)
         read_back = IO.read_lines(path=Path(read_file.name))

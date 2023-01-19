@@ -3,248 +3,168 @@ IO
 -------
 Module for reading and writing files.
 
-# TODO add details
-The :class:`~fgpyo.io.io.IO` class makes it easy to...
-
-Examples
+The functions in this module make is easy to:
+    check if a file exists and is writeable
+    check if a file and its parent directories exist and are writeable
+    check if a file exists and is readable
+    check if a path exists and is a directory
+    open an appropriate reader or writer based on the file extenison
+    writitng items to a file
+    reading lines from a file
 ~~~~~~~~
-
 Examples:
-.. code-block:: bash
-# TODO format bash section
-   >>> touch example.txt
-   >>> touch example_gzip.txt
-   >>> gzip example_gzip.txt
 .. code-block:: python
-   >>> from fgpyo.io.io import IO
+   >>> import fgpyo.io.io as IO
    >>> from pathlib import Path
-   >>> io = IO([Path("example.txt"), Path(("example_gzip.txt.gz"))])
    Assert that paths exist and are readable
-   >>> io.paths_are_readable()
-   Assert that paths exist and are writeable
-   >>> io.paths_are_writeable()
-   Write iterable to path
-   >>> IO.write_lines(path = Path("example.txt"), to_write = ["flat file", 10])
-   >>> IO.write_lines(path = Path("example_gzip.txt.gz"), to_write = ["gzip file", 10])
+   >>> path_flath: Path = Path("example.txt")
+   >>> path_compressed: Path = Path("example.txt.gz")
+   >>> IO.paths_are_readable(path_flat)
+   AssertionError: Cannot read non-existant path: example.txt
+   >>> IO.paths_are_readable(compressed_file)
+   AssertionError: Cannot read non-existant path: example.txt.gz
+   Write to and read from path
+   >>> write_lines(path = path_flat, lines_to_write=["flat file", 10])
+   >>> write_lines(path = path_compressed, lines_to_write=["gzip file", 10])
    Read lines from paths into a list of strings
-   >>> IO.read_lines(path = Path("example.txt"))
+   >>> read_lines(path = path_flat)
    ['flat file', '10']
-   >>> IO.read_lines(path = Path("example_gzip.txt.gz"))
+   >>> read_lines(path = path_compressed)
    ['gzip file', '10']
 """
 
 import gzip
-import io
 import os
 from pathlib import Path
 from typing import Any
 from typing import Iterable
-from typing import List
 from typing import Set
-from typing import TextIO
-from typing import Union
 
-import attr
+COMPRESSED: Set[str] = {".gz", ".bgz"}
 
 
-@attr.s(frozen=True, auto_attribs=True)
-class IO:
-    """Builder for constructing new contigs, and adding bases to existing contigs.
-    Existing contigs cannot be overwritten, each contig name in FastaBuilder must
-    be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
-    where species and assembly are optional parameters and will defualt to
-    FastaBuilder.assembly and FastaBuilder.species.
+def paths_are_readable(path: Path) -> None:
+    """Checks that file exists and returns True, else raises FileNotFOundError
 
-    Attributes:
-        paths: List of one or more pathlib Paths
+    Args:
+        paths: a list of one or more Paths to be investigated
+
+    Example:
+    _file_exists(path = Path("some_file.csv"))
     """
-
-    paths: List[Path]
-
-    def _file_exists(self, path: Path) -> bool:
-        """Checks that file exists and returns True, else raises FileNotFOundError
-
-        Args:
-            path: Path to be investigated
-
-        Example:
-        IO._file_exists(path = Path("some_file.csv"))
-        """
-        if path.is_file():
-            return True
-        else:
-            raise FileNotFoundError
-
-    def _directory_exists(self, path: Path) -> bool:
-        """Checks that directory exists and returns True, else raises NotADirectoryError
-
-        Args:
-            path: Path to be investigated
-
-        Example:
-        IO._directory_exists(path = Path("/example/directory/"))
-        """
-        if path.is_dir():
-            return True
-        else:
-            raise NotADirectoryError
-
-    def _readable(self, path: Path) -> bool:
-        """Checks path is readable and returns True, else raises an Exception
-
-        Args:
-            path: Path to be investigated
-
-        Example:
-        IO._readable(path = Path("example.txt")))
-        """
-        if os.access(path, os.R_OK):
-            return True
-        else:
-            raise Exception(f"{path} is not readable")
-
-    def _writeable(self, path: Path) -> bool:
-        """Checks that path is writable and returns True, else raises an Exception
-        Args:
-            path: Path to be investigated
-        Example:
-        IO._writeable(path = Path("example.txt"))
-        """
-        if os.access(path, os.W_OK):
-            return True
-        else:
-            raise Exception(f"{path} is not writeable")
-
-    def paths_are_readable(self) -> None:
-        """Asserts that one or more Paths exist and are readable.
-        If there is no error then None is returned, else an error is thrown
-        # TODO convert to try and except t handle specific errors
-
-        Example:
-        IO.path_are_readable()
-        """
-        for path in self.paths:
-            # Assert path exists and is readable
-            assert path.exists and self._readable(path=path)
-
-    def path_is_directory(self, path: Path) -> bool:
-        """Asserts that one or more Paths exist and are directories
-        If no errors are thrown True is returned, else return False
-
-        Args:
-            path: Path to be investigated
-
-        Example:
-        IO.path_is_directory(path = Paht("/directory/path"))
-        """
-        try:
-            # Assert path exists and is a directory
-            assert path.exists and self._directory_exists(path=path)
-            return True
-        except FileNotFoundError or NotADirectoryError:
-            return False
-
-    def paths_are_writeable(self) -> None:
-        """Asserts that one or more Paths pass the following criteria:
-        1) Parent exists and is writeable
-        2) File exists and is writeable
-        OR
-        3) TODO File does not exist
-
-        Example:
-        IO.paths_are_writeable()
-        """
-        for path in self.paths:
-            # Assert Path is a file and exists
-            try:
-                assert self._file_exists(path=path)
-            except FileNotFoundError as error:
-                (f"{error}: The provided path {self.paths} is not a file or does not exist")
-
-            # Assert parent exists and is writeable
-            try:
-                assert self.path_is_directory(path=path.parent.absolute()) and self._writeable(
-                    path=path.parent.absolute()
-                )
-            except Exception:
-                raise Exception(f"{path.parent.absolute()} does not exist and or is not writeable")
-
-            # Finally assert that file is writeabe
-            try:
-                assert self._writeable(path=path)
-            except Exception:
-                raise Exception(f"{path.name} is not writeable")
-
-    @staticmethod
-    def reader(path: Path) -> Union[io.TextIOBase, TextIO]:
-        """Opens a Path for reading and based on extension uses open() or gzip.open()
-
-        Args:
-            path: Path to be read from
-
-        Example:
-        # TODO better example
-        IO.reader(path = Path("reader.txt"))
-        """
-        special_suffix: Set[str] = {".gz", ".bgz"}
-        if path.suffix in special_suffix:
-            return gzip.open(path, "rt")
-        else:
-            return path.open("rt")
-
-    @staticmethod
-    def writer(path: Path) -> Union[io.TextIOBase, TextIO]:
-        """Opens a Path for reading and based on extension uses open() or gzip.open()
-
-        Args:
-            path: Path to write to
-
-        Example:
-        # TODO Better example
-        IO.writer(path = Path("writer.txt"))
-        """
-        special_suffix: Set[str] = {".gz", ".bgz"}
-        if path.suffix in special_suffix:
-            return gzip.open(path, "wt")
-        else:
-            return path.open("wt")
-
-    @staticmethod
-    def read_lines(path: Path) -> Any:
-        """Takes a path and reads it into a list of strings, removing line terminators
-        along the way.
-        # TODO Make line strip optional
-
-        Args:
-            path: Path to read from
-
-        Example:
-        # TODO Add example
-        """
-        reader = IO.reader(path=path)
-        list_of_lines = reader.readlines()
-        reader.close()
-        return [line.rstrip() for line in list_of_lines]
-
-    @staticmethod
-    def write_lines(path: Path, to_write: Iterable[Any]) -> None:
-        """Writes a file with one line per item in provided iterable
-
-        Args:
-            path: PAth to write to
-
-        Example:
-        # TODO Add example
-        """
-        writer = IO.writer(path=path)
-        writer.writelines([str(item) + "\n" for item in to_write])
-        writer.close()
+    assert path.exists() is True, f"Cannot read non-existant path: {path}"
+    assert path.is_dir() is False, f"Cannot read path becasue it is a directory: {path}"
+    assert os.access(path, os.R_OK) is True, f"Path exists but is not readable: {path}"
 
 
-# cl = IO([Path("example.txt.gz"), Path(("example2.txt"))])
-# cl.paths_are_readable()
-# cl = IO([Path("example2.txt")])
-# x = cl.read_lines(path=Path("example.txt.gz"))
-# x = cl.read_lines(path=Path("example2.txt"))
-# print(x)
-# y = IO.reader(path = Path("example.txt.gz"))
+def directory_exists(path: Path) -> None:
+    """Asserts one or more Paths exist and are directories
+
+    Args:
+        paths: list of one or more Paths to be investigated
+
+    Example:
+    _directory_exists(path = Path("/example/directory/"))
+    """
+    assert path.exists() is True, f"Path does not exist: {path}"
+    assert path.is_dir() is True, f"Path exists but is not a directory: {path}"
+
+
+def paths_are_writeable(path: Path, parent_must_exist: bool = True) -> None:
+    """Checks that path is writable and returns True, else raises an Exception
+    Args:
+         path: Path to be investigated
+    Example:
+    _writeable(path = Path("example.txt"))
+    """
+    assert path.exists() is True, f"Cannot write file because path is non-existantant: {path}"
+    assert path.is_file() is True, f"Cannot write file because path is a directory: {path}"
+    assert os.access(path, os.W_OK) is True, f"File exists but is not writebale: {path}"
+
+    if parent_must_exist:
+        parent: str = f"{path.parent.absolute()}"
+        assert (
+            Path(parent).exists() is True
+        ), f"Cannot write file because parent diretory does not exist: {path}"
+        assert (
+            Path(parent).is_dir() is True
+        ), f"Cannot write file because parent exists and is not a directory: {path}"
+        assert (
+            os.access(parent, os.W_OK) is True
+        ), f"Cannot write file because parent directory is not writeable: {path}"
+
+
+def to_reader(path: Path, mode: str = "rt") -> Any:
+    # TODO find compatible return type
+    """Opens a Path for reading with a specifeied mode or default 'rt'.
+
+    Args:
+        path: Path to be read from
+        mode: Mode to open reader, default 'rt'
+
+    Example:
+    >>> reader = io.to_reader(path = Path("reader.txt"))
+    >>> reader.readlines()
+    >>> reader.close()
+    """
+    if path.suffix in COMPRESSED:
+        return gzip.open(path, mode=mode)
+    else:
+        return path.open(mode=mode)
+
+
+def to_writer(path: Path, mode: str = "wt") -> Any:
+    # TODO find compatible return type
+    """Opens a Path for reading and based on extension uses open() or gzip.open()
+
+    Args:
+        path: Path to write to
+        mode: Mode to open writer, default 'wt'
+
+    Example:
+    >>> writer = io.to_writer(path = Path("writer.txt"))
+    >>> writer.write(f"{something}\n")
+    >>> writer.close()
+    """
+    if path.suffix in COMPRESSED:
+        return gzip.open(path, mode=mode)
+    else:
+        return path.open(mode=mode)
+
+
+def read_lines(path: Path, strip: bool = True) -> Any:
+    """Takes a path and reads it into a list of strings, removing line terminators
+    along the way.
+    # TODO Make line strip optional
+
+    Args:
+        path: Path to read from
+        strip: Boolean to strip lines or not
+
+    Example:
+    >>> read_back: List[str] = io.read_lines(path)
+    """
+    reader = to_reader(path=path)
+    list_of_lines = reader.readlines()
+    reader.close()
+    if strip:
+        return [line.strip() for line in list_of_lines]
+    else:
+        return [line.replace("\n", "") for line in list_of_lines]
+
+
+def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
+    """Writes a file with one line per item in provided iterable
+
+    Args:
+        path: Path to write to
+        lines_to_write: items to write to file
+
+    Example:
+    >>> lines: List[Any] = ["things to write", 100]
+    >>> path: Path = Path("file_to_write_to.txt")
+    >>> io.write_lines(path = path, lines_to_write = lines)
+    """
+    writer = to_writer(path=path)
+    writer.writelines([f"{item}\n" for item in lines_to_write])
+    writer.close()

@@ -48,6 +48,9 @@ from typing import Callable
 from typing import Optional
 from typing import Union
 
+import pysam
+from pysam import AlignedSegment
+
 # Global that is set to True once logging initialization is run to prevent running > once.
 __FGPYO_LOGGING_SETUP: bool = False
 
@@ -130,6 +133,7 @@ class ProgressLogger(AbstractContextManager):
         self,
         reference_name: Optional[str] = None,
         position: Optional[int] = None,
+        rec: Optional[pysam.AlignedSegment] = None
     ) -> bool:
         """Record an item at a given genomic coordinate.
 
@@ -140,6 +144,13 @@ class ProgressLogger(AbstractContextManager):
         Returns:
             true if a message was logged, false otherwise
         """
+        if reference_name and position == None and rec != None:
+            position = rec.reference_start + 1
+            reference_name = rec.reference_name
+        else:
+            position = position
+            reference_name = reference_name
+
         self.count += 1
         self._count_mod_unit += 1
         self._last_reference_name = reference_name
@@ -150,6 +161,8 @@ class ProgressLogger(AbstractContextManager):
             return True
         else:
             return False
+
+            
 
     def _log(
         self,

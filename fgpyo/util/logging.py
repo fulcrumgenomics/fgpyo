@@ -48,7 +48,6 @@ from typing import Callable
 from typing import Optional
 from typing import Union
 
-import pysam
 from pysam import AlignedSegment
 
 # Global that is set to True once logging initialization is run to prevent running > once.
@@ -133,7 +132,7 @@ class ProgressLogger(AbstractContextManager):
         self,
         reference_name: Optional[str] = None,
         position: Optional[int] = None,
-        rec: Optional[pysam.AlignedSegment] = None
+        rec: Optional[AlignedSegment] = None,
     ) -> bool:
         """Record an item at a given genomic coordinate.
 
@@ -162,8 +161,6 @@ class ProgressLogger(AbstractContextManager):
             return True
         else:
             return False
-
-            
 
     def _log(
         self,

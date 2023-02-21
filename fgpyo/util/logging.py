@@ -144,10 +144,11 @@ class ProgressLogger(AbstractContextManager):
         Returns:
             true if a message was logged, false otherwise
         """
-        if reference_name and position == None and rec != None:
+        try:
+            assert reference_name is None and position is None and rec is not None
             position = rec.reference_start + 1
             reference_name = rec.reference_name
-        else:
+        except AssertionError:
             position = position
             reference_name = reference_name
 

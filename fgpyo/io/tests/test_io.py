@@ -38,7 +38,7 @@ def test_paths_are_readable_pass() -> None:
 
 def test_directory_exists_error() -> None:
     """Ensure OSError when directory does not exist"""
-    path = Path("/non/existant/dir/")
+    path = Path("/non/existent/dir/")
     with raises(AssertionError):
         IO.directory_exists(path)
 

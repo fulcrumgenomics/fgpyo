@@ -8,7 +8,7 @@ The functions in this module make is easy to:
     check if a file and its parent directories exist and are writeable
     check if a file exists and is readable
     check if a path exists and is a directory
-    open an appropriate reader or writer based on the file extenison
+    open an appropriate reader or writer based on the file extension
     writitng items to a file
     reading lines from a file
 ~~~~~~~~
@@ -20,9 +20,9 @@ Examples:
    >>> path_flath: Path = Path("example.txt")
    >>> path_compressed: Path = Path("example.txt.gz")
    >>> IO.paths_are_readable(path_flat)
-   AssertionError: Cannot read non-existant path: example.txt
+   AssertionError: Cannot read non-existent path: example.txt
    >>> IO.paths_are_readable(compressed_file)
-   AssertionError: Cannot read non-existant path: example.txt.gz
+   AssertionError: Cannot read non-existent path: example.txt.gz
    Write to and read from path
    >>> write_lines(path = path_flat, lines_to_write=["flat file", 10])
    >>> write_lines(path = path_compressed, lines_to_write=["gzip file", 10])
@@ -44,7 +44,7 @@ COMPRESSED: Set[str] = {".gz", ".bgz"}
 
 
 def paths_are_readable(path: Path) -> None:
-    """Checks that file exists and returns True, else raises FileNotFOundError
+    """Checks that file exists and returns True, else raises FileNotFoundError
 
     Args:
         paths: a list of one or more Paths to be investigated
@@ -52,7 +52,7 @@ def paths_are_readable(path: Path) -> None:
     Example:
     _file_exists(path = Path("some_file.csv"))
     """
-    assert path.exists() is True, f"Cannot read non-existant path: {path}"
+    assert path.exists() is True, f"Cannot read non-existent path: {path}"
     assert path.is_dir() is False, f"Cannot read path becasue it is a directory: {path}"
     assert os.access(path, os.R_OK) is True, f"Path exists but is not readable: {path}"
 
@@ -77,7 +77,7 @@ def paths_are_writeable(path: Path, parent_must_exist: bool = True) -> None:
     Example:
     _writeable(path = Path("example.txt"))
     """
-    assert path.exists() is True, f"Cannot write file because path is non-existantant: {path}"
+    assert path.exists() is True, f"Cannot write file because path is non-existent: {path}"
     assert path.is_file() is True, f"Cannot write file because path is a directory: {path}"
     assert os.access(path, os.W_OK) is True, f"File exists but is not writebale: {path}"
 

@@ -34,11 +34,16 @@ Examples:
 """
 
 import gzip
+import io
 import os
 from pathlib import Path
+from typing import IO
 from typing import Any
 from typing import Iterable
 from typing import Set
+from typing import TextIO
+from typing import Union
+from typing import cast
 
 COMPRESSED: Set[str] = {".gz", ".bgz"}
 
@@ -94,8 +99,9 @@ def paths_are_writeable(path: Path, parent_must_exist: bool = True) -> None:
         ), f"Cannot write file because parent directory is not writeable: {path}"
 
 
-def to_reader(path: Path, mode: str = "rt") -> Any:
-    # TODO find compatible return type
+def to_reader(
+    path: Path, mode: str = "rt"
+) -> Union[gzip.GzipFile, io.TextIOWrapper, TextIO, IO[Any]]:
     """Opens a Path for reading with a specifeied mode or default 'rt'.
 
     Args:
@@ -113,7 +119,7 @@ def to_reader(path: Path, mode: str = "rt") -> Any:
         return path.open(mode=mode)
 
 
-def to_writer(path: Path, mode: str = "wt") -> Any:
+def to_writer(path: Path, mode: str = "wt") -> Union[gzip.GzipFile, IO[Any], io.TextIOWrapper]:
     # TODO find compatible return type
     """Opens a Path for reading and based on extension uses open() or gzip.open()
 
@@ -148,9 +154,9 @@ def read_lines(path: Path, strip: bool = True) -> Any:
     list_of_lines = reader.readlines()
     reader.close()
     if strip:
-        return [line.strip() for line in list_of_lines]
+        return [str(line).strip() for line in list_of_lines]
     else:
-        return [line.replace("\n", "") for line in list_of_lines]
+        return [str(line).replace("\n", "") for line in list_of_lines]
 
 
 def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
@@ -166,5 +172,7 @@ def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
     >>> io.write_lines(path = path, lines_to_write = lines)
     """
     writer = to_writer(path=path)
-    writer.writelines([f"{item}\n" for item in lines_to_write])
+    # cast is needed to pass mypy
+    lines = cast(list, [f"{item}\n" for item in lines_to_write])
+    writer.writelines(lines)
     writer.close()

@@ -45,21 +45,21 @@ from typing import TextIO
 from typing import Union
 from typing import cast
 
-COMPRESSED: Set[str] = {".gz", ".bgz"}
+COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
 
 
 def paths_are_readable(path: Path) -> None:
     """Checks that file exists and returns True, else raises FileNotFoundError
 
     Args:
-        paths: a list of one or more Paths to be investigated
+        path: a Path to be investigated
 
     Example:
     _file_exists(path = Path("some_file.csv"))
     """
-    assert path.exists() is True, f"Cannot read non-existent path: {path}"
-    assert path.is_dir() is False, f"Cannot read path becasue it is a directory: {path}"
-    assert os.access(path, os.R_OK) is True, f"Path exists but is not readable: {path}"
+    assert path.exists(), f"Cannot read non-existent path: {path}"
+    assert not path.is_dir(), f"Cannot read path becasue it is a directory: {path}"
+    assert os.access(path, os.R_OK), f"Path exists but is not readable: {path}"
 
 
 def directory_exists(path: Path) -> None:
@@ -71,8 +71,8 @@ def directory_exists(path: Path) -> None:
     Example:
     _directory_exists(path = Path("/example/directory/"))
     """
-    assert path.exists() is True, f"Path does not exist: {path}"
-    assert path.is_dir() is True, f"Path exists but is not a directory: {path}"
+    assert path.exists(), f"Path does not exist: {path}"
+    assert path.is_dir(), f"Path exists but is not a directory: {path}"
 
 
 def paths_are_writeable(path: Path, parent_must_exist: bool = True) -> None:
@@ -82,20 +82,20 @@ def paths_are_writeable(path: Path, parent_must_exist: bool = True) -> None:
     Example:
     _writeable(path = Path("example.txt"))
     """
-    assert path.exists() is True, f"Cannot write file because path is non-existent: {path}"
-    assert path.is_file() is True, f"Cannot write file because path is a directory: {path}"
-    assert os.access(path, os.W_OK) is True, f"File exists but is not writebale: {path}"
+    assert path.exists(), f"Cannot write file because path is non-existent: {path}"
+    assert path.is_file(), f"Cannot write file because path is a directory: {path}"
+    assert os.access(path, os.W_OK), f"File exists but is not writebale: {path}"
 
     if parent_must_exist:
         parent: str = f"{path.parent.absolute()}"
-        assert (
-            Path(parent).exists() is True
-        ), f"Cannot write file because parent diretory does not exist: {path}"
-        assert (
-            Path(parent).is_dir() is True
-        ), f"Cannot write file because parent exists and is not a directory: {path}"
-        assert (
-            os.access(parent, os.W_OK) is True
+        assert Path(
+            parent
+        ).exists(), f"Cannot write file because parent diretory does not exist: {path}"
+        assert Path(
+            parent
+        ).is_dir(), f"Cannot write file because parent exists and is not a directory: {path}"
+        assert os.access(
+            parent, os.W_OK
         ), f"Cannot write file because parent directory is not writeable: {path}"
 
 
@@ -113,7 +113,7 @@ def to_reader(
     >>> reader.readlines()
     >>> reader.close()
     """
-    if path.suffix in COMPRESSED:
+    if path.suffix in COMPRESSED_FILE_EXTENSIONS:
         return gzip.open(path, mode=mode)
     else:
         return path.open(mode=mode)
@@ -132,7 +132,7 @@ def to_writer(path: Path, mode: str = "wt") -> Union[gzip.GzipFile, IO[Any], io.
     >>> writer.write(f"{something}\n")
     >>> writer.close()
     """
-    if path.suffix in COMPRESSED:
+    if path.suffix in COMPRESSED_FILE_EXTENSIONS:
         return gzip.open(path, mode=mode)
     else:
         return path.open(mode=mode)

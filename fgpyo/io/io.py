@@ -4,13 +4,13 @@ IO
 Module for reading and writing files.
 
 The functions in this module make is easy to:
-    check if a file exists and is writeable
-    check if a file and its parent directories exist and are writeable
-    check if a file exists and is readable
-    check if a path exists and is a directory
-    open an appropriate reader or writer based on the file extension
-    writitng items to a file
-    reading lines from a file
+* check if a file exists and is writeable
+* check if a file and its parent directories exist and are writeable
+* check if a file exists and is readable
+* check if a path exists and is a directory
+* open an appropriate reader or writer based on the file extension
+* writitng items to a file
+* reading lines from a file
 ~~~~~~~~
 Examples:
 .. code-block:: python

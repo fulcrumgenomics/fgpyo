@@ -132,25 +132,14 @@ class ProgressLogger(AbstractContextManager):
         self,
         reference_name: Optional[str] = None,
         position: Optional[int] = None,
-        rec: Optional[AlignedSegment] = None,
     ) -> bool:
         """Record an item at a given genomic coordinate.
-
         Args:
             reference_name: the reference name of the item
             position: the 1-based start position of the item
-
         Returns:
             true if a message was logged, false otherwise
         """
-        try:
-            assert reference_name is None and position is None and rec is not None
-            position = rec.reference_start + 1
-            reference_name = rec.reference_name
-        except AssertionError:
-            position = position
-            reference_name = reference_name
-
         self.count += 1
         self._count_mod_unit += 1
         self._last_reference_name = reference_name
@@ -161,6 +150,23 @@ class ProgressLogger(AbstractContextManager):
             return True
         else:
             return False
+
+    def record_alignment(
+        self,
+        rec: AlignedSegment,
+    ) -> bool:
+        """Record an item at a given genomic coordinate.
+
+        Args:
+            rec: pysam.AlignedSegment object
+
+        Returns:
+            true if a message was logged, false otherwise
+        """
+        position_from_rec = rec.reference_start + 1
+        reference_name_from_rec = rec.reference_name
+
+        self.record(position=position_from_rec, reference_name=reference_name_from_rec)
 
     def _log(
         self,

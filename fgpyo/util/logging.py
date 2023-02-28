@@ -155,7 +155,7 @@ class ProgressLogger(AbstractContextManager):
         self,
         rec: AlignedSegment,
     ) -> bool:
-        """Record an item at a given genomic coordinate.
+        """Cerrectly record pysam.AlignedSegments (zero-based coordinates).
 
         Args:
             rec: pysam.AlignedSegment object
@@ -165,7 +165,6 @@ class ProgressLogger(AbstractContextManager):
         """
         position_from_rec = rec.reference_start + 1
         reference_name_from_rec = rec.reference_name
-
         self.record(position=position_from_rec, reference_name=reference_name_from_rec)
 
     def _log(

@@ -13,27 +13,27 @@ from pytest import raises
 import fgpyo.io.io as IO
 
 
-def test_paths_are_readable_missing_file_error() -> None:
+def test_path_is_readable_missing_file_error() -> None:
     """Error when file does not exist"""
     path = Path("error.txt")
     with raises(AssertionError):
-        IO.paths_are_readable(path=path)
+        IO.path_is_readable(path=path)
 
 
-def test_paths_are_readable_mode_error() -> None:
+def test_path_is_readable_mode_error() -> None:
     """Error when permissions are write only by owner"""
     with NamedTemp(suffix=".txt", mode="r", delete=True) as write_file:
         path = Path(write_file.name)
         os.chmod(path, 0o00200)  # Write only permissions
         with raises(AssertionError):
-            IO.paths_are_readable(path=path)
+            IO.path_is_readable(path=path)
 
 
-def test_paths_are_readable_pass() -> None:
+def test_path_is_readable_pass() -> None:
     """Returns none when no assertions are violated"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as write_file:
         path = Path(write_file.name)
-        IO.paths_are_readable(path=path)
+        IO.path_is_readable(path=path)
 
 
 def test_directory_exists_error() -> None:
@@ -50,19 +50,19 @@ def test_directory_exists_pass() -> None:
         IO.directory_exists(path=path.parent.absolute())
 
 
-def test_paths_are_writeable_mode_error() -> None:
+def test_path_is_writeable_mode_error() -> None:
     """Error when permissions are read only by owner"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
         os.chmod(path, 0o00400)  # Read only permissions
-        raises(AssertionError, IO.paths_are_writeable, path)
+        raises(AssertionError, IO.path_is_writeable, path)
 
 
-def test_paths_are_writeable_pass() -> None:
+def test_path_is_writeable_pass() -> None:
     """Error when permissions are read only by owner"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
-        IO.paths_are_writeable(path=path) is True
+        IO.path_is_writeable(path=path) is True
 
 
 @pytest.mark.parametrize(
@@ -78,9 +78,8 @@ def test_reader(
 ) -> None:
     """Tests fgpyo.io.io.to_reader"""
     with NamedTemp(suffix=suffix, mode="r", delete=True) as read_file:
-        reader = IO.to_reader(path=Path(read_file.name))
-        assert isinstance(reader, expected)
-        reader.close()
+        with IO.to_reader(path=Path(read_file.name)) as reader:
+            assert isinstance(reader, expected)
 
 
 @pytest.mark.parametrize(
@@ -96,9 +95,8 @@ def test_writer(
 ) -> None:
     """Tests fgpyo.io.io.to_writer()"""
     with NamedTemp(suffix=suffix, mode="w", delete=True) as write_file:
-        writer = IO.to_writer(path=Path(write_file.name))
-        assert isinstance(writer, expected)
-        writer.close()
+        with IO.to_writer(path=Path(write_file.name)) as writer:
+            assert isinstance(writer, expected)
 
 
 @pytest.mark.parametrize(
@@ -110,7 +108,8 @@ def test_read_and_write_lines(
     list_to_write: List[Any],
 ) -> None:
     """Test fgpyo.io.io.read_lines and write_lines"""
-    with NamedTemp(suffix=suffix, mode="wb", delete=True) as read_file:
+    with NamedTemp(suffix=suffix, mode="w", delete=True) as read_file:
         IO.write_lines(path=Path(read_file.name), lines_to_write=list_to_write)
         read_back = IO.read_lines(path=Path(read_file.name))
-        assert read_back == [str(item) for item in list_to_write]
+        assert next(read_back) == list_to_write[0]
+        assert int(next(read_back)) == list_to_write[1]

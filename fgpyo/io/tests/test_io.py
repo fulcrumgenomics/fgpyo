@@ -10,7 +10,7 @@ from typing import List
 import pytest
 from pytest import raises
 
-import fgpyo.io.io as IO
+import fgpyo.io as IO
 
 
 def test_path_is_readable_missing_file_error() -> None:

@@ -9,7 +9,7 @@ The functions in this module make is easy to:
 * check if a file exists and is readable
 * check if a path exists and is a directory
 * open an appropriate reader or writer based on the file extension
-* writitng items to a file
+* write lines to a file
 * reading lines from a file
 ~~~~~~~~
 Examples:

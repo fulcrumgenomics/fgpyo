@@ -4,7 +4,7 @@ from fgpyo.util.string import column_it
 
 
 def test_columnit_unequal_number_of_columns() -> None:
-    with pytest.assert_raises(IndexError):
+    with pytest.raises(IndexError):
         column_it(rows=[["1,1", "1,2"], ["2,1"]])
 
 

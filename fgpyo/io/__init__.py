@@ -50,62 +50,83 @@ from typing import cast
 COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
 
 
-def path_is_readable(path: Path) -> None:
-    """Checks that file exists and returns True, else raises FileNotFoundError
+def assert_path_is_readable(path: Path) -> None:
+    """Checks that file exists and returns True, else raises AssertionError
 
     Args:
         path: a Path to check
 
     Example:
-    _file_exists(path = Path("some_file.csv"))
+    >>> assert_file_exists(path = Path("some_file.csv"))
     """
     assert path.exists(), f"Cannot read non-existent path: {path}"
     assert not path.is_dir(), f"Cannot read path becasue it is a directory: {path}"
     assert os.access(path, os.R_OK), f"Path exists but is not readable: {path}"
 
 
-def directory_exists(path: Path) -> None:
+def assert_directory_exists(path: Path) -> None:
     """Asserts that a path exist and is a directory
 
     Args:
         path: Path to check
 
     Example:
-    _directory_exists(path = Path("/example/directory/"))
+    >>> assert_directory_exists(path = Path("/example/directory/"))
     """
     assert path.exists(), f"Path does not exist: {path}"
     assert path.is_dir(), f"Path exists but is not a directory: {path}"
 
 
-def path_is_writeable(path: Path, parent_must_exist: bool = True) -> None:
-    """Checks that path is writable and returns True, else raises an Exception
+def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
+    """Asserts the following:
+    If the file exists then it must also be writeable. Else if the path is not a file and
+    parent_must_exist is true then assert that the parent directory exists and is writeable.
+    Else if the path is not a directory and parent_must_exist is false then look at each parent
+    directory until one is found that exists and is writeable.
+
+    In each scenario if a writeable file/directory is found the path is returned if not an
+    AssertionError is raised.
+
     Args:
          path: Path to check
          parent_must_exist: True/False the parent directory must exist, the default is True
+
     Example:
-    _writeable(path = Path("example.txt"))
+    >>> assert_path_is_writeable(path = Path("example.txt"))
+    // Assuming example.txt exists and is writeable
+    >>> example.txt
     """
-    assert path.exists(), f"Cannot write file because path is non-existent: {path}"
-    assert path.is_file(), f"Cannot write file because path is a directory: {path}"
-    assert os.access(path, os.W_OK), f"File exists but is not writebale: {path}"
+    # If file exists, it must be writeable
+    if path.is_file():
+        assert os.access(path, os.W_OK), f"File exists but is not writebale: {path}"
+        return path
 
-    if not parent_must_exist:
-        return None
+    # Else if file doesnt exist and parent_must_exist is True then check
+    # that path.absolute().parent exists, is a directory and is writeable
+    elif path.is_file() is False & parent_must_exist is True:
+        assert (
+            path.absolute().parent.exists()
+            & path.absolute().parent.is_dir()
+            & os.access(path.absolute().parent, os.W_OK)
+        ), f"File does not have a writeable parent directory: {path}"
+        return path.absolute().parent
 
-    parent: str = f"{path.parent.absolute()}"
-    assert Path(
-        parent
-    ).exists(), f"Cannot write file because parent diretory does not exist: {path}"
-    assert Path(
-        parent
-    ).is_dir(), f"Cannot write file because parent exists and is not a directory: {path}"
-    assert os.access(
-        parent, os.W_OK
-    ), f"Cannot write file because parent directory is not writeable: {path}"
+    # Else if file doesn't exist and parent_must_exist is False, recursively call parent until
+    # you find the first extent path, and check that it is a directory and is writeable.
+    elif path.is_dir() & parent_must_exist is False:
+        for directory in list(path.parents):
+            try:
+                assert (
+                    directory.is_dir() & directory.exists() & os.access(directory, os.W_OK)
+                ), f"File does not have a writeable parent directory: {path}"
+                return directory
+            except AssertionError:
+                pass
+        raise AssertionError(f"No parent directories of the path provided are writeable: {path}")
 
 
 def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
-    """Opens a Path for reading with a specified mode or default 'rt'.
+    """Opens a Path for reading.
 
     Args:
         path: Path to read from

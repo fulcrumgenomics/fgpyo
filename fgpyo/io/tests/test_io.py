@@ -13,56 +13,56 @@ from pytest import raises
 import fgpyo.io as IO
 
 
-def test_path_is_readable_missing_file_error() -> None:
+def test_assert_path_is_readable_missing_file_error() -> None:
     """Error when file does not exist"""
     path = Path("error.txt")
     with raises(AssertionError):
-        IO.path_is_readable(path=path)
+        IO.assert_path_is_readable(path=path)
 
 
-def test_path_is_readable_mode_error() -> None:
+def test_assert_path_is_readable_mode_error() -> None:
     """Error when permissions are write only by owner"""
     with NamedTemp(suffix=".txt", mode="r", delete=True) as write_file:
         path = Path(write_file.name)
         os.chmod(path, 0o00200)  # Write only permissions
         with raises(AssertionError):
-            IO.path_is_readable(path=path)
+            IO.assert_path_is_readable(path=path)
 
 
-def test_path_is_readable_pass() -> None:
+def test_assert_path_is_readable_pass() -> None:
     """Returns none when no assertions are violated"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as write_file:
         path = Path(write_file.name)
-        IO.path_is_readable(path=path)
+        IO.assert_path_is_readable(path=path)
 
 
-def test_directory_exists_error() -> None:
+def test_assert_directory_exists_error() -> None:
     """Ensure OSError when directory does not exist"""
     path = Path("/non/existent/dir/")
     with raises(AssertionError):
-        IO.directory_exists(path)
+        IO.assert_directory_exists(path)
 
 
-def test_directory_exists_pass() -> None:
-    """Asserts IO._directory_exists() returns True when directory exists"""
+def test_assert_directory_exists_pass() -> None:
+    """Asserts IO._assert_directory_exists() returns True when directory exists"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as write_file:
         path = Path(write_file.name)
-        IO.directory_exists(path=path.parent.absolute())
+        IO.assert_directory_exists(path=path.parent.absolute())
 
 
-def test_path_is_writeable_mode_error() -> None:
+def test_assert_path_is_writeable_mode_error() -> None:
     """Error when permissions are read only by owner"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
         os.chmod(path, 0o00400)  # Read only permissions
-        raises(AssertionError, IO.path_is_writeable, path)
+        raises(AssertionError, IO.assert_path_is_writeable, path)
 
 
-def test_path_is_writeable_pass() -> None:
-    """Error when permissions are read only by owner"""
+def test_assert_path_is_writeable_pass() -> None:
+    """Should return the correct writeable path"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
-        IO.path_is_writeable(path=path) is True
+        assert IO.assert_path_is_writeable(path=path) == path
 
 
 @pytest.mark.parametrize(

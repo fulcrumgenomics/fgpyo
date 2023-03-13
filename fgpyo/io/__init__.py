@@ -111,7 +111,7 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
         ), f"File does not have a writeable parent directory: {path}"
         return path.absolute().parent
 
-    # Else if file doesn't exist and parent_must_exist is False, recursively call parent until
+    # Else if file doesn't exist and parent_must_exist is False, test parent until
     # you find the first extent path, and check that it is a directory and is writeable.
     elif path.is_dir() & parent_must_exist is False:
         for directory in list(path.parents):

@@ -1,7 +1,6 @@
 """
-fio
--------
-Module for reading and writing files.
+Module for reading and writing files
+------------------------------------
 
 The functions in this module make it easy to:
 * check if a file exists and is writeable
@@ -106,10 +105,11 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None
     # Else if file doesnt exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writeable
     elif parent_must_exist:
+        parent = path.absolute().parent
         assert (
-            path.absolute().parent.exists()
-            & path.absolute().parent.is_dir()
-            & os.access(path.absolute().parent, os.W_OK)
+            parent.exists()
+            & parent.is_dir()
+            & os.access(parent, os.W_OK)
         ), f"Path does not exist and parent isn't extent/writable: {path}"
         # return None
 
@@ -118,9 +118,8 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None
     else:
         for parent in path.parents:
             if parent.exists():
-                assert parent.exists() & os.access(
-                    parent, os.W_OK
-                ), f"File does not have a writeable parent directory: {path}"
+                assert os.access(parent, os.W_OK), \
+                    f"File does not have a writeable parent directory: {path}"
             return
         raise AssertionError(f"No parent directories exist for: {path}")
 
@@ -161,9 +160,8 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
 
 def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
     """Takes a path and reads each line into a generator, removing line terminators
-    along the way. Trailing characters are stripped by default
-    however, there is an option to strip both leading and trailing characters using the argument
-    `strip = True`.
+    along the way. By default only line terminators (CR/LF) are stripped.  The `strip`
+    parameter may be used to strip both leading and trailing whitespace from each line.
 
     Args:
         path: Path to read from

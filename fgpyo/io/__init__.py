@@ -1,5 +1,5 @@
 """
-IO
+fio
 -------
 Module for reading and writing files.
 
@@ -14,23 +14,29 @@ The functions in this module make it easy to:
 ~~~~~~~~
 Examples:
 .. code-block:: python
-   >>> import fgpyo.io.io as IO
+   >>> import fgpyo.io as fio
    >>> from pathlib import Path
-   Assert that a path exist and are readable
-   >>> path_flath: Path = Path("example.txt")
+   Assert that a path exists and is readable
+   >>> path_flat: Path = Path("example.txt")
    >>> path_compressed: Path = Path("example.txt.gz")
-   >>> IO.path_is_readable(path_flat)
+   >>> fio.path_is_readable(path_flat)
    AssertionError: Cannot read non-existent path: example.txt
-   >>> IO.path_is_readable(compressed_file)
+   >>> fio.path_is_readable(compressed_file)
    AssertionError: Cannot read non-existent path: example.txt.gz
    Write to and read from path
    >>> write_lines(path = path_flat, lines_to_write=["flat file", 10])
    >>> write_lines(path = path_compressed, lines_to_write=["gzip file", 10])
    Read lines from a path into a generator
-   >>> read_lines(path = path_flat)
-   ['flat file', '10']
-   >>> read_lines(path = path_compressed)
-   ['gzip file', '10']
+   >>> lines = read_lines(path = path_flat)
+   >>> next(lines)
+   "flat file"
+   >>> next(lines)
+   "10"
+   >>> lines = read_lines(path = path_compressed)
+   >>> next(lines)
+   "gzip file"
+   >>> next(lines)
+   "10"
 """
 
 import gzip
@@ -39,7 +45,6 @@ import os
 from pathlib import Path
 from typing import IO
 from typing import Any
-from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import Set
@@ -77,15 +82,12 @@ def assert_directory_exists(path: Path) -> None:
     assert path.is_dir(), f"Path exists but is not a directory: {path}"
 
 
-def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
+def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None:
     """Asserts the following:
     If the file exists then it must also be writeable. Else if the path is not a file and
     parent_must_exist is true then assert that the parent directory exists and is writeable.
     Else if the path is not a directory and parent_must_exist is false then look at each parent
     directory until one is found that exists and is writeable.
-
-    In each scenario if a writeable file/directory is found the path is returned if not an
-    AssertionError is raised.
 
     Args:
          path: Path to check
@@ -93,13 +95,13 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
 
     Example:
     >>> assert_path_is_writeable(path = Path("example.txt"))
-    // Assuming example.txt exists and is writeable
-    >>> example.txt
     """
     # If file exists, it must be writeable
-    if path.is_file():
-        assert os.access(path, os.W_OK), f"File exists but is not writebale: {path}"
-        return path
+    if path.exists():
+        assert path.is_file() and os.access(
+            path, os.W_OK
+        ), f"File exists but is not writebale: {path}"
+        # return None
 
     # Else if file doesnt exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writeable
@@ -109,20 +111,18 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
             & path.absolute().parent.is_dir()
             & os.access(path.absolute().parent, os.W_OK)
         ), f"Path does not exist and parent isn't extent/writable: {path}"
-        return path.absolute().parent
+        # return None
 
     # Else if file doesn't exist and parent_must_exist is False, test parent until
     # you find the first extent path, and check that it is a directory and is writeable.
-    elif path.is_dir() & parent_must_exist is False:
-        for directory in list(path.parents):
-            try:
-                assert (
-                    directory.is_dir() & directory.exists() & os.access(directory, os.W_OK)
+    else:
+        for parent in path.parents:
+            if parent.exists():
+                assert parent.exists() & os.access(
+                    parent, os.W_OK
                 ), f"File does not have a writeable parent directory: {path}"
-                return directory
-            except AssertionError:
-                pass
-        raise AssertionError(f"No parent directories of the path provided are writeable: {path}")
+            return
+        raise AssertionError(f"No parent directories exist for: {path}")
 
 
 def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
@@ -132,7 +132,7 @@ def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
         path: Path to read from
 
     Example:
-    >>> reader = io.to_reader(path = Path("reader.txt"))
+    >>> reader = fio.to_reader(path = Path("reader.txt"))
     >>> reader.readlines()
     >>> reader.close()
     """
@@ -149,7 +149,7 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
         path: Path to write to
 
     Example:
-    >>> writer = io.to_writer(path = Path("writer.txt"))
+    >>> writer = fio.to_writer(path = Path("writer.txt"))
     >>> writer.write(f'{something}\n')
     >>> writer.close()
     """
@@ -159,11 +159,11 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
         return path.open(mode="w")
 
 
-def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator[str, None, None]]:
+def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
     """Takes a path and reads each line into a generator, removing line terminators
-    along the way. Trailing and leading whitespace is stripped by default
-    however, there is an option to only strip trailing characters using the argument
-    `strip = False`.
+    along the way. Trailing characters are stripped by default
+    however, there is an option to strip both leading and trailing characters using the argument
+    `strip = True`.
 
     Args:
         path: Path to read from
@@ -171,15 +171,15 @@ def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator
         False to only remove trailing CR/LF characters.
 
     Example:
-    >>> read_back = io.read_lines(path)
+    >>> read_back = fio.read_lines(path)
     """
     with to_reader(path=path) as reader:
         if strip:
             for line in reader:
-                yield (f"{line!s}").strip()
+                yield line.strip()
         else:
             for line in reader:
-                yield f"{line!s}".rstrip("\r\n")
+                yield line.rstrip("\r\n")
 
 
 def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
@@ -192,7 +192,7 @@ def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
     Example:
     >>> lines: List[Any] = ["things to write", 100]
     >>> path_to_write_to: Path = Path("file_to_write_to.txt")
-    >>> io.write_lines(path = path_to_write_to, lines_to_write = lines)
+    >>> fio.write_lines(path = path_to_write_to, lines_to_write = lines)
     """
     with to_writer(path=path) as writer:
         for line in lines_to_write:

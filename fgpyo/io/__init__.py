@@ -167,7 +167,8 @@ def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator
 
     Args:
         path: Path to read from
-        strip: True to strip lines of all leading and trailing whitespace, False to only remove trailing CR/LF characters.
+        strip: True to strip lines of all leading and trailing whitespace,
+        False to only remove trailing CR/LF characters.
 
     Example:
     >>> read_back = io.read_lines(path)

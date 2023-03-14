@@ -165,7 +165,8 @@ class ProgressLogger(AbstractContextManager):
         """
         position_from_rec = rec.reference_start + 1
         reference_name_from_rec = rec.reference_name
-        self.record(position=position_from_rec, reference_name=reference_name_from_rec)
+        logged = self.record(position=position_from_rec, reference_name=reference_name_from_rec)
+        return logged
 
     def _log(
         self,

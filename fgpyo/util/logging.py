@@ -155,7 +155,7 @@ class ProgressLogger(AbstractContextManager):
         self,
         rec: AlignedSegment,
     ) -> bool:
-        """Cerrectly record pysam.AlignedSegments (zero-based coordinates).
+        """Correctly record pysam.AlignedSegments (zero-based coordinates).
 
         Args:
             rec: pysam.AlignedSegment object

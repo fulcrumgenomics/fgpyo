@@ -161,7 +161,7 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
 
 def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator[str, None, None]]:
     """Takes a path and reads each line into a generator, removing line terminators
-    along the way. Trailing and leading characters characters are stripped by default
+    along the way. Trailing and leading characters are stripped by default
     however, there is an option to only strip trailing characters using the argument
     `strip = False`.
 
@@ -170,7 +170,7 @@ def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator
         strip: Boolean to strip lines or not
 
     Example:
-    >>> read_back: List[str] = io.read_lines(path)
+    >>> read_back = io.read_lines(path)
     """
     with to_reader(path=path) as reader:
         if strip:

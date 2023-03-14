@@ -52,10 +52,22 @@ def test_assert_directory_exists_pass() -> None:
 
 def test_assert_path_is_writeable_mode_error() -> None:
     """Error when permissions are read only by owner"""
-    with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
+    with NamedTemp(suffix=".txt", mode="r", delete=True) as read_file:
         path = Path(read_file.name)
         os.chmod(path, 0o00400)  # Read only permissions
         raises(AssertionError, fio.assert_path_is_writeable, path)
+
+
+def test_assert_path_is_writeable_no_existing_parent() -> None:
+    """Error when parent_must_exist is false and no parent directory exists"""
+    path = Path("/no/parent/exists/")
+    raises(AssertionError, fio.assert_path_is_writeable, path, False)
+
+
+def test_assert_path_is_writeable_file_does_not_exist() -> None:
+    """Error when file does not exist"""
+    path = Path("example/non_existant_file.txt")
+    raises(AssertionError, fio.assert_path_is_writeable, path)
 
 
 def test_assert_path_is_writeable_pass() -> None:

@@ -163,7 +163,10 @@ class ProgressLogger(AbstractContextManager):
         Returns:
             true if a message was logged, false otherwise
         """
-        position_from_rec = rec.reference_start + 1
+        if rec.reference_start is None:
+            position_from_rec = 0
+        else:
+            position_from_rec = rec.reference_start + 1
         reference_name_from_rec = rec.reference_name
         logged = self.record(position=position_from_rec, reference_name=reference_name_from_rec)
         return logged

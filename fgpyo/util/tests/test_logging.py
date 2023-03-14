@@ -7,8 +7,6 @@ from fgpyo import sam
 from fgpyo.sam.builder import SamBuilder
 from fgpyo.util.logging import ProgressLogger
 
-CHROM = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
-
 
 def test_progress_logger() -> None:
     logger = logging.getLogger(__name__)
@@ -40,17 +38,16 @@ def test_progress_logger_as_context_manager() -> None:
 
 
 builder = SamBuilder()
-record_mapped = builder.add_single(bases=CHROM[10:40], chrom="chr1", start=10, cigar="30M")
-r1_unmapped_v1, r2_unmapped_v1 = builder.add_pair(chrom="chr1", start1=1000)
-r1_unmapped_v2, r2_unmapped_v2 = builder.add_pair(chrom=sam.NO_REF_NAME)
+r1_mapped_named, r2_unmapped_named = builder.add_pair(chrom="chr1", start1=1000)
+r1_mapped_un_named, r2_unmapped_un_named = builder.add_pair(chrom=sam.NO_REF_NAME)
 
 
 @pytest.mark.parametrize(
     "record",
     [
-        (record_mapped),
-        (r2_unmapped_v1),
-        (r2_unmapped_v2),
+        (r1_mapped_named),
+        (r2_unmapped_named),
+        (r2_unmapped_un_named),
     ],
 )
 def test_record_alignment_mapped_record(record: pysam.AlignedSegment) -> None:

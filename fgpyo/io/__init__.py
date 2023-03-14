@@ -3,14 +3,14 @@ IO
 -------
 Module for reading and writing files.
 
-The functions in this module make is easy to:
+The functions in this module make it easy to:
 * check if a file exists and is writeable
 * check if a file and its parent directories exist and are writeable
 * check if a file exists and is readable
 * check if a path exists and is a directory
 * open an appropriate reader or writer based on the file extension
-* writitng items to a file
-* reading lines from a file
+* write items to a file, one per line
+* read lines from a file
 ~~~~~~~~
 Examples:
 .. code-block:: python
@@ -103,12 +103,12 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> Any:
 
     # Else if file doesnt exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writeable
-    elif path.is_file() is False & parent_must_exist is True:
+    elif parent_must_exist:
         assert (
             path.absolute().parent.exists()
             & path.absolute().parent.is_dir()
             & os.access(path.absolute().parent, os.W_OK)
-        ), f"File does not have a writeable parent directory: {path}"
+        ), f"Path does not exist and parent isn't extent/writable: {path}"
         return path.absolute().parent
 
     # Else if file doesn't exist and parent_must_exist is False, test parent until
@@ -161,13 +161,13 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
 
 def read_lines(path: Path, strip: bool = True) -> Union[Iterator[str], Generator[str, None, None]]:
     """Takes a path and reads each line into a generator, removing line terminators
-    along the way. Trailing and leading characters are stripped by default
+    along the way. Trailing and leading whitespace is stripped by default
     however, there is an option to only strip trailing characters using the argument
     `strip = False`.
 
     Args:
         path: Path to read from
-        strip: Boolean to strip lines or not
+        strip: True to strip lines of all leading and trailing whitespace, False to only remove trailing CR/LF characters.
 
     Example:
     >>> read_back = io.read_lines(path)
@@ -195,4 +195,5 @@ def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
     """
     with to_writer(path=path) as writer:
         for line in lines_to_write:
-            writer.write(f"{line}" + "\n")
+            writer.write(str(line))
+            writer.write("\n")

@@ -52,22 +52,28 @@ def test_assert_directory_exists_pass() -> None:
 
 def test_assert_path_is_writeable_mode_error() -> None:
     """Error when permissions are read only by owner"""
-    with NamedTemp(suffix=".txt", mode="r", delete=True) as read_file:
+    with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
         os.chmod(path, 0o00400)  # Read only permissions
-        raises(AssertionError, fio.assert_path_is_writeable, path)
+        with raises(AssertionError, match=f"File exists but is not writeable: {path}"):
+            fio.assert_path_is_writeable(path=path)
 
 
-def test_assert_path_is_writeable_no_existing_parent() -> None:
-    """Error when parent_must_exist is false and no parent directory exists"""
+def test_assert_path_is_writeable_parent_not_writeable() -> None:
+    """Error when parent_must_exist is false and no writeable parent directory exists"""
     path = Path("/no/parent/exists/")
-    raises(AssertionError, fio.assert_path_is_writeable, path, False)
+    with raises(AssertionError, match=f"File does not have a writeable parent directory: {path}"):
+        fio.assert_path_is_writeable(path=path, parent_must_exist=False)
 
 
 def test_assert_path_is_writeable_file_does_not_exist() -> None:
     """Error when file does not exist"""
     path = Path("example/non_existant_file.txt")
-    raises(AssertionError, fio.assert_path_is_writeable, path)
+    with raises(
+        AssertionError,
+        match="Path does not exist and parent isn't extent/writable: example/non_existant_file.txt",
+    ):
+        fio.assert_path_is_writeable(path=path)
 
 
 def test_assert_path_is_writeable_pass() -> None:

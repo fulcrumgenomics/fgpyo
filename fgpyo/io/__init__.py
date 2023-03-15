@@ -102,7 +102,7 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None
     if path.exists():
         assert path.is_file() and os.access(
             path, os.W_OK
-        ), f"File exists but is not writebale: {path}"
+        ), f"File exists but is not writeable: {path}"
 
     # Else if file doesnt exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writeable

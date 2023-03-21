@@ -171,20 +171,20 @@ from pysam import AlignmentHeader as SamHeader
 
 from fgpyo.collections import PeekableIterator
 
-"""The valid base classes for opening a SAM/BAM/CRAM file."""
 SamPath = Union[IO[Any], Path, str]
+"""The valid base classes for opening a SAM/BAM/CRAM file."""
 
-"""The reference index to use to indicate no reference in SAM/BAM."""
 NO_REF_INDEX: int = -1
+"""The reference index to use to indicate no reference in SAM/BAM."""
 
-"""The reference name to use to indicate no reference in SAM/BAM."""
 NO_REF_NAME: str = "*"
+"""The reference name to use to indicate no reference in SAM/BAM."""
 
-"""The reference position to use to indicate no position in SAM/BAM."""
 NO_REF_POS: int = -1
+"""The reference position to use to indicate no position in SAM/BAM."""
 
-"""The classes that should be treated as file-like classes"""
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
+"""The classes that should be treated as file-like classes"""
 
 
 @enum.unique

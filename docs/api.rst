@@ -32,3 +32,9 @@ Logging
 
 .. automodule:: fgpyo.util.logging
    :members:
+
+IO
+=======
+
+.. automodule:: fgpyo.io
+   :members:

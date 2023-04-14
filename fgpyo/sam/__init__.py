@@ -228,6 +228,7 @@ def _pysam_open(
         open_for_reading: True to open for reading, false otherwise.
         file_type: the file type to assume when opening the file.  If None, then the file type
             will be auto-detected for reading and must be a path-like object for writing.
+        unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
         kwargs: any keyword arguments to be passed to
         :class:`~pysam.AlignmentFile`; may not include "mode".
     """

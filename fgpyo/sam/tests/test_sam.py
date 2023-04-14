@@ -59,6 +59,11 @@ def valid_bam(valid_sam: Path) -> Generator[Path, None, None]:
     bam.unlink()
 
 
+@pytest.fixture
+def unmapped_sam() -> Path:
+    return Path(__file__).parent / "data" / "unmapped.sam"
+
+
 @pytest.fixture(scope="function")
 def in_path(request: Any, valid_sam: Path, valid_bam: Path) -> Path:
     """A fixture for test_sam_file_open_reading to modify in_path prior to executing.
@@ -99,6 +104,11 @@ def test_sam_file_open_reading_autorecognize(valid_sam: Path) -> None:
 def test_sam_file_open_reading_with_reader(valid_sam: Path) -> None:
     with sam.reader(path=valid_sam, file_type=None) as samfile:
         assert sum(1 for _ in samfile) == 8
+
+
+def test_unmapped_sam_file_open_reading_with_reader(unmapped_sam: Path) -> None:
+    with sam.reader(path=unmapped_sam, unmapped=True) as samfile:
+        assert samfile is not None
 
 
 @pytest.fixture

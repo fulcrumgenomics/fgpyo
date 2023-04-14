@@ -267,6 +267,7 @@ def reader(path: SamPath, file_type: Optional[SamFileType] = None, unmapped: boo
         path: a file handle or path to the SAM/BAM/CRAM to read or write.
         file_type: the file type to assume when opening the file.  If None, then the file
             type will be auto-detected.
+        unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
     """
     return _pysam_open(
         path=path, open_for_reading=True, file_type=file_type, unmapped=unmapped

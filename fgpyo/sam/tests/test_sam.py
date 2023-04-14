@@ -108,7 +108,7 @@ def test_sam_file_open_reading_with_reader(valid_sam: Path) -> None:
 
 def test_unmapped_sam_file_open_reading_with_reader(unmapped_sam: Path) -> None:
     with sam.reader(path=unmapped_sam, unmapped=True) as samfile:
-        assert samfile is not None
+        assert len([read for read in samfile.fetch() if read.is_unmapped]) == 1
 
 
 @pytest.fixture

@@ -298,7 +298,7 @@ def writer(
     key = "text" if isinstance(header, str) else "header"
     kwargs = {key: header}
 
-    return _pysam_open(path=path, open_for_reading=False, file_type=file_type, **kwargs)
+    return _pysam_open(path=path, open_for_reading=False, file_type=file_type, unmapped=False, **kwargs)
 
 
 class _CigarOpUtil:

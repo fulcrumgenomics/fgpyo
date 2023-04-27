@@ -219,8 +219,12 @@ class SamFileType(enum.Enum):
 
 
 def _pysam_open(
-    path: SamPath, open_for_reading: bool, file_type: Optional[SamFileType] = None, 
-    unmapped: bool = False, **kwargs: Any) -> SamFile:
+    path: SamPath,
+    open_for_reading: bool,
+    file_type: Optional[SamFileType] = None,
+    unmapped: bool = False,
+    **kwargs: Any,
+) -> SamFile:
     """Opens a SAM/BAM/CRAM for reading or writing.
 
     Args:
@@ -259,7 +263,8 @@ def _pysam_open(
     return pysam.AlignmentFile(path, **kwargs)
 
 
-def reader(path: SamPath, file_type: Optional[SamFileType] = None, unmapped: bool = False
+def reader(
+    path: SamPath, file_type: Optional[SamFileType] = None, unmapped: bool = False
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for reading.
 
@@ -269,9 +274,7 @@ def reader(path: SamPath, file_type: Optional[SamFileType] = None, unmapped: boo
             type will be auto-detected.
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
     """
-    return _pysam_open(
-        path=path, open_for_reading=True, file_type=file_type, unmapped=unmapped
-    )
+    return _pysam_open(path=path, open_for_reading=True, file_type=file_type, unmapped=unmapped)
 
 
 def writer(
@@ -295,7 +298,9 @@ def writer(
     key = "text" if isinstance(header, str) else "header"
     kwargs = {key: header}
 
-    return _pysam_open(path=path, open_for_reading=False, file_type=file_type, **kwargs)
+    return _pysam_open(
+        path=path, open_for_reading=False, file_type=file_type, unmapped=False, **kwargs
+    )
 
 
 class _CigarOpUtil:

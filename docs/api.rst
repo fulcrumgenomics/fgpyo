@@ -44,8 +44,8 @@ Read Structures
 
        The fgbio wiki for an explanation of Read Structures.
 
-Utility Functions for Manipulating DNA and RNA sequences
-========================================================
+Manipulating DNA and RNA Sequences
+==================================
 
 .. automodule:: fgpyo.sequence
    :members:
@@ -68,8 +68,8 @@ IO
 .. automodule:: fgpyo.io
    :members:
 
-Utility Functions for Manipulating DNA and RNA sequences
-========================================================
+Utility Functions
+=================
 
 .. automodule:: fgpyo.util.inspect
    :members:

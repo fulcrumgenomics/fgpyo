@@ -332,7 +332,7 @@ class CigarOp(enum.Enum):
         code (int): The :py:mod:`~pysam` cigar operator code.
         character (int): The single character cigar operator.
         consumes_query (bool): True if this operator consumes query bases, False otherwise.
-        consumes_target (bool): True if this operator consumes target bases, False otherwise.
+        consumes_reference (bool): True if this operator consumes target bases, False otherwise.
     """
 
     M = (0, "M", True, True)  #: Match or Mismatch the reference

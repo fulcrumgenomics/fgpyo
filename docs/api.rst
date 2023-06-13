@@ -12,10 +12,16 @@ SAM/BAM/CRAM files
 .. automodule:: fgpyo.sam
    :members:
 
+.. automodule:: fgpyo.sam.builder
+   :members:
+   
+.. automodule:: fgpyo.sam.clipping
+   :members:
+
 FASTA files
 ===========
 
-.. automodule:: fgpyo.fasta
+.. automodule:: fgpyo.fasta.builder
    :members:
 
 Metric files
@@ -53,7 +59,7 @@ Manipulating DNA and RNA Sequences
 Collections
 ===========
 
-.. automodule:: fgpyo.c
+.. automodule:: fgpyo.collections
    :members:
 
 Logging

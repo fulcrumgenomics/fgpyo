@@ -48,8 +48,6 @@ The variants may also be retrieved in the order they were added via the
 order via the :func:`~VariantBuilder.to_sorted_list()` method.
 
 """
-import os
-import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
@@ -61,28 +59,10 @@ from pysam import VariantFile as VcfReader
 from pysam import VariantFile as VcfWriter
 from pysam import VariantHeader
 
+import fgpyo.io
+
 """The valid base classes for opening a VCF file."""
 VcfPath = Union[Path, str, TextIO]
-
-
-@contextmanager
-def redirect_dev_null(file_num: int = sys.stderr.fileno()) -> Generator[None, None, None]:
-    """A context manager that redirects output of file handle to /dev/null
-
-    Args:
-        file_num: number of filehandle to redirect. Uses stderr by default
-    """
-    # open /dev/null for writing
-    f_devnull = os.open(os.devnull, os.O_RDWR)
-    # save old file descriptor and redirect stderr to /dev/null
-    save_stderr = os.dup(file_num)
-    os.dup2(f_devnull, file_num)
-
-    yield
-
-    # restore file descriptor and close devnull
-    os.dup2(save_stderr, file_num)
-    os.close(f_devnull)
 
 
 @contextmanager
@@ -92,13 +72,16 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
     Args:
         path: the path to a VCF, or an open file handle
     """
-    with redirect_dev_null():
-        # to avoid spamming log about index older than vcf, redirect stderr to /dev/null: only
-        # when first opening the file
-        _reader = VariantFile(path, mode="r")  # type: ignore
-    # now stderr is back, so any later stderr messages will go through
-    yield _reader
-    _reader.close()
+    if isinstance(path, (str, Path, TextIO)):
+        with fgpyo.io.suppress_stderr():
+            # to avoid spamming log about index older than vcf, redirect stderr to /dev/null: only
+            # when first opening the file
+            _reader = VariantFile(path, mode="r")  # type: ignore
+        # now stderr is back, so any later stderr messages will go through
+        yield _reader
+        _reader.close()
+    else:
+        raise TypeError(f"Cannot open '{type(path)}' for VCF reading.")
 
 
 @contextmanager

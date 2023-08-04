@@ -148,18 +148,25 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path) -> Iterator[Any]:
+    def read(cls, path: Path, skip_extra: bool = True) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
 
         Args:
             path: the path to the metrics file.
+            skip_extra: True to ignore any extra columns, False to raise an exception.
         """
         parsers = cls._parsers()
         with path.open("r") as reader:
             header: List[str] = reader.readline().rstrip("\r\n").split("\t")
-            assert header == cls.header(), "Header did not match"
+            cls_header = cls.header()
+            # check the header
+            for field in cls_header:
+                assert field in header, f"Missing field '{field}' in file: {path}"
+            if not skip_extra:
+                for field in header:
+                    assert field in cls_header, f"Extra field '{field}' in file: {path}"
             for line in reader:
                 fields: List[str] = line.rstrip("\r\n").split("\t")
                 instance: Metric[MetricType] = inspect.attr_from(
@@ -208,7 +215,7 @@ class Metric(ABC, Generic[MetricType]):
         `str` to all others.
 
         Dictionaries / mappings will have keys and vals separated by semicolons, and key val pairs
-        pairs delimited by commas.
+        delimited by commas.
 
         In addition, lists will be flanked with '[]', tuples with '()' and sets and dictionaries
         with '{}'

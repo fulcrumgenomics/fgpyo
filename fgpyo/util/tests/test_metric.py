@@ -146,6 +146,21 @@ def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
     assert metrics == DUMMY_METRICS
 
 
+def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
+    person = Person(name="Max", age=42)
+    path = Path(tmpdir) / "metrics.txt"
+    with path.open("w") as writer:
+        header = Person.header()
+        header.append("foo")
+        writer.write("\t".join(header) + "\n")
+        writer.write(f"{person.name}\t{person.age}\tbar\n")
+
+    assert list(Person.read(path=path)) == [person]
+    assert list(Person.read(path=path, skip_extra=True)) == [person]
+    with pytest.raises(AssertionError):
+        list(Metric.read(path=path, skip_extra=False))
+
+
 def test_metric_header() -> None:
     assert DummyMetric.header() == [
         "int_value",
@@ -186,7 +201,7 @@ def test_metric_custom_formatter() -> None:
     assert list(person.formatted_values()) == ["john doe", "42"]
 
 
-def test_metric_parse_with_None() -> None:
+def test_metric_parse_with_none() -> None:
     assert Person.parse(fields=["", "40"]) == Person(name=None, age=40)
     assert Person.parse(fields=["Sally", ""]) == Person(name="Sally", age=None)
     assert Person.parse(fields=["", ""]) == Person(name=None, age=None)
@@ -228,7 +243,7 @@ def test_metric_list_format_with_empty_string() -> None:
     )
 
 
-def test_metric_list_parse_with_None() -> None:
+def test_metric_list_parse_with_none() -> None:
     assert ListPerson.parse(fields=[",Sally", "40, 30"]) == ListPerson(
         name=[None, "Sally"], age=[40, 30]
     )

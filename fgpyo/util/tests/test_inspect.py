@@ -1,9 +1,10 @@
-from fgpyo.util.inspect import attribute_is_optional
-from fgpyo.util.inspect import attr_from
-from fgpyo.util.inspect import attribute_has_default
+from typing import Optional
 
 import attr
-from typing import Optional
+
+from fgpyo.util.inspect import attr_from
+from fgpyo.util.inspect import attribute_has_default
+from fgpyo.util.inspect import attribute_is_optional
 
 
 @attr.s(auto_attribs=True, frozen=True)

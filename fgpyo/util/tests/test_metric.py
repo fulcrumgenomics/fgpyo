@@ -125,6 +125,12 @@ class NamedPerson(Metric["NamedPerson"]):
             return super().format_value(value=value)
 
 
+@attr.s(auto_attribs=True, frozen=True)
+class PersonMaybeAge(Metric["PersonMaybeAge"]):
+    name: str
+    age: Optional[int]
+
+
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
 def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
@@ -158,7 +164,23 @@ def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
     assert list(Person.read(path=path)) == [person]
     assert list(Person.read(path=path, ignore_extra_fields=True)) == [person]
     with pytest.raises(ValueError):
-        list(Metric.read(path=path, ignore_extra_fields=False))
+        list(Person.read(path=path, ignore_extra_fields=False))
+
+
+def test_metrics_read_missing_optional_columns(tmpdir: TmpDir) -> None:
+    person = PersonMaybeAge(name="Max", age=None)
+    path = Path(tmpdir) / "metrics.txt"
+
+    # The "age" column is optional, and not in the file, but that's ok
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+    assert list(PersonMaybeAge.read(path=path)) == [person]
+
+    # The "age" column is not optional, and not in the file on line 3, and that's not ok
+    with path.open("w") as writer:
+        writer.write("name\tage\nMax\t42\nMax\n")
+    with pytest.raises(ValueError):
+        list(PersonMaybeAge.read(path=path))
 
 
 def test_metric_header() -> None:

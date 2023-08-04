@@ -153,6 +153,9 @@ class Metric(ABC, Generic[MetricType]):
 
         The metric file must contain a matching header.
 
+        Columns that are not present in the file but are optional in the metric class will
+        be default values.
+
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
@@ -165,21 +168,49 @@ class Metric(ABC, Generic[MetricType]):
             file_fields = set(header)
             missing_from_class = file_fields.difference(class_fields)
             missing_from_file = class_fields.difference(file_fields)
+
+            # ignore optional class fields that are missing from the file (via header), they'll get
+            # a default of None
+            if len(missing_from_file) > 0:
+                field_name_to_attribute = attr.fields_dict(cls)
+                missing_from_file_optionals = [
+                    field
+                    for field in missing_from_file
+                    if inspect.attribute_is_optional(field_name_to_attribute[field])
+                ]
+                # remove optional class fields from the fields
+                missing_from_file = missing_from_file.difference(missing_from_file_optionals)
+
+            # raise an exception if there are non-optional class fields missing from the file
             if len(missing_from_file) > 0:
                 raise ValueError(
-                    f"In file: {path}, fields in file missing from class '{cls.__class__}': "
-                    ", ".join(missing_from_file)
+                    f"In file: {path}, fields in file missing from class '{cls.__name__}': "
+                    + ", ".join(missing_from_file)
                 )
+
+            # raise an exception if there are fields in the file not in the header, unless they
+            # should be ignored.
             if not ignore_extra_fields and len(missing_from_class) > 0:
                 raise ValueError(
-                    f"In file: {path}, extra fields in file missing from class '{cls.__class__}': "
+                    f"In file: {path}, extra fields in file missing from class '{cls.__name__}': "
                     ", ".join(missing_from_file)
                 )
+
             # read the metric lines
-            for line in reader:
-                fields: List[str] = line.rstrip("\r\n").split("\t")
+            for lineno, line in enumerate(reader, 2):
+                # parse the raw values
+                values: List[str] = line.rstrip("\r\n").split("\t")
+
+                # raise an exception if there aren't the same number of values as the header
+                if len(header) != len(values):
+                    raise ValueError(
+                        f"In file: {path}, expected {len(header)} columns, got {len(values)} on "
+                        f"line {lineno}: {line}"
+                    )
+
+                # build the metric
                 instance: Metric[MetricType] = inspect.attr_from(
-                    cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers
+                    cls=cls, kwargs=dict(zip(header, values)), parsers=parsers
                 )
                 yield instance
 

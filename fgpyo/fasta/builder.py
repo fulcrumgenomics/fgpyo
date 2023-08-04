@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     def samtools_faidx(*args: Any) -> None:
         pass
 
-
 else:
     from pysam import dict as samtools_dict
     from pysam import faidx as samtools_faidx
@@ -152,7 +151,7 @@ class FastaBuilder:
         self.__contig_builders: Dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
-        """Access instance of ContigBuilder by name """
+        """Access instance of ContigBuilder by name"""
         return self.__contig_builders[key]
 
     def add(

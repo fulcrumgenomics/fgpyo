@@ -156,9 +156,9 @@ def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
         writer.write(f"{person.name}\t{person.age}\tbar\n")
 
     assert list(Person.read(path=path)) == [person]
-    assert list(Person.read(path=path, skip_extra=True)) == [person]
-    with pytest.raises(AssertionError):
-        list(Metric.read(path=path, skip_extra=False))
+    assert list(Person.read(path=path, ignore_extra_fields=True)) == [person]
+    with pytest.raises(ValueError):
+        list(Metric.read(path=path, ignore_extra_fields=False))
 
 
 def test_metric_header() -> None:

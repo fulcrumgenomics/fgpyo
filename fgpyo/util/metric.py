@@ -148,25 +148,34 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, skip_extra: bool = True) -> Iterator[Any]:
+    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
 
         Args:
             path: the path to the metrics file.
-            skip_extra: True to ignore any extra columns, False to raise an exception.
+            ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
         """
         parsers = cls._parsers()
         with path.open("r") as reader:
             header: List[str] = reader.readline().rstrip("\r\n").split("\t")
-            cls_header = cls.header()
             # check the header
-            for field in cls_header:
-                assert field in header, f"Missing field '{field}' in file: {path}"
-            if not skip_extra:
-                for field in header:
-                    assert field in cls_header, f"Extra field '{field}' in file: {path}"
+            class_fields = set(cls.header())
+            file_fields = set(header)
+            missing_from_class = file_fields.difference(class_fields)
+            missing_from_file = class_fields.difference(file_fields)
+            if len(missing_from_file) > 0:
+                raise ValueError(
+                    f"In file: {path}, fields in file missing from class '{cls.__class__}': "
+                    ", ".join(missing_from_file)
+                )
+            if not ignore_extra_fields and len(missing_from_class) > 0:
+                raise ValueError(
+                    f"In file: {path}, extra fields in file missing from class '{cls.__class__}': "
+                    ", ".join(missing_from_file)
+                )
+            # read the metric lines
             for line in reader:
                 fields: List[str] = line.rstrip("\r\n").split("\t")
                 instance: Metric[MetricType] = inspect.attr_from(

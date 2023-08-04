@@ -315,3 +315,8 @@ def attribute_is_optional(attribute: attr.Attribute) -> bool:
     return types.get_origin_type(attribute.type) is Union and isinstance(
         None, types.get_arg_types(attribute.type)
     )
+
+
+def attribute_has_default(attribute: attr.Attribute) -> bool:
+    """Returns True if the attribute has a default value, False otherwise"""
+    return attribute.default != attr.NOTHING or attribute_is_optional(attribute)

@@ -169,17 +169,18 @@ class Metric(ABC, Generic[MetricType]):
             missing_from_class = file_fields.difference(class_fields)
             missing_from_file = class_fields.difference(file_fields)
 
-            # ignore optional class fields that are missing from the file (via header), they'll get
-            # a default of None
+            field_name_to_attribute = attr.fields_dict(cls)
+
+            # ignore class fields that are missing from the file (via header) if they're optional
+            # or have a default
             if len(missing_from_file) > 0:
-                field_name_to_attribute = attr.fields_dict(cls)
-                missing_from_file_optionals = [
+                fields_with_defaults = [
                     field
                     for field in missing_from_file
-                    if inspect.attribute_is_optional(field_name_to_attribute[field])
+                    if inspect.attribute_has_default(field_name_to_attribute[field])
                 ]
                 # remove optional class fields from the fields
-                missing_from_file = missing_from_file.difference(missing_from_file_optionals)
+                missing_from_file = missing_from_file.difference(fields_with_defaults)
 
             # raise an exception if there are non-optional class fields missing from the file
             if len(missing_from_file) > 0:

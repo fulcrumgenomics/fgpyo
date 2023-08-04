@@ -131,6 +131,12 @@ class PersonMaybeAge(Metric["PersonMaybeAge"]):
     age: Optional[int]
 
 
+@attr.s(auto_attribs=True, frozen=True)
+class PersonDefault(Metric["PersonDefault"]):
+    name: str
+    age: int = 0
+
+
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
 def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
@@ -181,6 +187,27 @@ def test_metrics_read_missing_optional_columns(tmpdir: TmpDir) -> None:
         writer.write("name\tage\nMax\t42\nMax\n")
     with pytest.raises(ValueError):
         list(PersonMaybeAge.read(path=path))
+
+
+def test_metric_read_missing_column_with_default(tmpdir: TmpDir) -> None:
+    person = PersonDefault(name="Max")
+    path = Path(tmpdir) / "metrics.txt"
+
+    # The "age" column hs a default, and not in the file, but that's ok
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+    assert list(PersonDefault.read(path=path)) == [person]
+
+    # All fields specified
+    with path.open("w") as writer:
+        writer.write("name\tage\nMax\t42\n")
+    assert list(PersonDefault.read(path=path)) == [PersonDefault(name="Max", age=42)]
+
+    # Just age specified, but not the required name column!
+    with path.open("w") as writer:
+        writer.write("age\n42\n")
+    with pytest.raises(ValueError):
+        list(PersonDefault.read(path=path))
 
 
 def test_metric_header() -> None:

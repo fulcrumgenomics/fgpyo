@@ -1,5 +1,6 @@
 from fgpyo.util.inspect import attribute_is_optional
 from fgpyo.util.inspect import attr_from
+from fgpyo.util.inspect import attribute_has_default
 
 import attr
 from typing import Optional
@@ -30,6 +31,16 @@ def test_attr_from() -> None:
 def test_attribute_is_optional() -> None:
     fields_dict = attr.fields_dict(Name)
     assert not attribute_is_optional(fields_dict["required"])
+    assert not attribute_is_optional(fields_dict["custom_parser"])
     assert attribute_is_optional(fields_dict["optional_no_default"])
     assert attribute_is_optional(fields_dict["optional_with_default_none"])
     assert attribute_is_optional(fields_dict["optional_with_default_some"])
+
+
+def test_attribute_has_default() -> None:
+    fields_dict = attr.fields_dict(Name)
+    assert not attribute_has_default(fields_dict["required"])
+    assert not attribute_has_default(fields_dict["custom_parser"])
+    assert attribute_has_default(fields_dict["optional_no_default"])
+    assert attribute_has_default(fields_dict["optional_with_default_none"])
+    assert attribute_has_default(fields_dict["optional_with_default_some"])

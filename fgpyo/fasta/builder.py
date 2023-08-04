@@ -34,7 +34,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
-""" Stubs for pysam imports """
+"""Stubs for pysam imports """
 if TYPE_CHECKING:
 
     def samtools_dict(*args: Any) -> None:
@@ -152,7 +152,7 @@ class FastaBuilder:
         self.__contig_builders: Dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
-        """ Access instance of ContigBuilder by name """
+        """Access instance of ContigBuilder by name """
         return self.__contig_builders[key]
 
     def add(

@@ -11,7 +11,7 @@ from fgpyo.sam.builder import SamBuilder
 
 
 def r(start: Optional[int], cigar: Optional[str], strand: Optional[str] = "+") -> AlignedSegment:
-    """ "Constructs a read for testing."""
+    """Constructs a read for testing."""
     builder = SamBuilder()
     if start:
         r1, r2 = builder.add_pair(chrom="chr1", start1=start, cigar1=cigar, strand1=strand)

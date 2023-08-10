@@ -164,7 +164,7 @@ def _get_parser(
                     unpaired '{', or '}' characters
                     """
                     assert tuple_string[0] == "(", "Tuple val improperly formatted"
-                    assert tuple_string[-1] == ")", "Tuple val improprly formatted"
+                    assert tuple_string[-1] == ")", "Tuple val improperly formatted"
                     tuple_string = tuple_string[1:-1]
                     if len(tuple_string) == 0:
                         return ()
@@ -254,7 +254,13 @@ def _get_parser(
 def attr_from(
     cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> Any:
-    """Builds an attr class from key-word arguments"""
+    """Builds an attr class from key-word arguments
+
+    Args:
+        cls: the attr class to be built
+        kwargs: a dictionary of keyword arguments
+        parsers: a dictionary of parser functions to apply to specific types
+    """
     return_values: Dict[str, Any] = {}
     for attribute in attr.fields(cls):
         return_value: Any
@@ -267,16 +273,6 @@ def attr_from(
                 return_value = attribute.converter(str_value)
                 set_value = True
 
-            # try setting by casting
-            # Note that while bools *can* be cast from string, all non empty strings evaluate to
-            # True, because python, so we need to check for that explicitly
-            if not set_value and attribute.type is not None and not attribute.type == bool:
-                try:
-                    return_value = attribute.type(str_value)
-                    set_value = True
-                except (ValueError, TypeError):
-                    pass
-
             # try getting a known parser
             if not set_value:
                 try:
@@ -286,17 +282,41 @@ def attr_from(
                 except ParserNotFoundException:
                     pass
 
+            # try setting by casting
+            # Note that while bools *can* be cast from string, all non-empty strings evaluate to
+            # True, because python, so we need to check for that explicitly
+            if not set_value and attribute.type is not None and not attribute.type == bool:
+                try:
+                    return_value = attribute.type(str_value)
+                    set_value = True
+                except (ValueError, TypeError):
+                    pass
+
             # fail otherwise
             assert (
                 set_value
             ), f"Do not know how to convert string to {attribute.type} for value: {str_value}"
         else:  # no value, check for a default
-            assert attribute.default is not None or (
-                types.get_origin_type(attribute.type) is Union
-                and isinstance(None, types.get_arg_types(attribute.type))
+            assert attribute.default is not None or attribute_is_optional(
+                attribute
             ), f"No value given and no default for attribute `{attribute.name}`"
             return_value = attribute.default
+            # when the default is attr.NOTHING, just use None
+            if return_value is attr.NOTHING:
+                return_value = None
 
         return_values[attribute.name] = return_value
 
     return cls(**return_values)
+
+
+def attribute_is_optional(attribute: attr.Attribute) -> bool:
+    """Returns True if the attribute is optional, False otherwise"""
+    return types.get_origin_type(attribute.type) is Union and isinstance(
+        None, types.get_arg_types(attribute.type)
+    )
+
+
+def attribute_has_default(attribute: attr.Attribute) -> bool:
+    """Returns True if the attribute has a default value, False otherwise"""
+    return attribute.default != attr.NOTHING or attribute_is_optional(attribute)

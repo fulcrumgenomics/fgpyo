@@ -125,6 +125,18 @@ class NamedPerson(Metric["NamedPerson"]):
             return super().format_value(value=value)
 
 
+@attr.s(auto_attribs=True, frozen=True)
+class PersonMaybeAge(Metric["PersonMaybeAge"]):
+    name: str
+    age: Optional[int]
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class PersonDefault(Metric["PersonDefault"]):
+    name: str
+    age: int = 0
+
+
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
 def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
@@ -144,6 +156,58 @@ def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
 
     assert len(metrics) == len(DUMMY_METRICS)
     assert metrics == DUMMY_METRICS
+
+
+def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
+    person = Person(name="Max", age=42)
+    path = Path(tmpdir) / "metrics.txt"
+    with path.open("w") as writer:
+        header = Person.header()
+        header.append("foo")
+        writer.write("\t".join(header) + "\n")
+        writer.write(f"{person.name}\t{person.age}\tbar\n")
+
+    assert list(Person.read(path=path)) == [person]
+    assert list(Person.read(path=path, ignore_extra_fields=True)) == [person]
+    with pytest.raises(ValueError):
+        list(Person.read(path=path, ignore_extra_fields=False))
+
+
+def test_metrics_read_missing_optional_columns(tmpdir: TmpDir) -> None:
+    person = PersonMaybeAge(name="Max", age=None)
+    path = Path(tmpdir) / "metrics.txt"
+
+    # The "age" column is optional, and not in the file, but that's ok
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+    assert list(PersonMaybeAge.read(path=path)) == [person]
+
+    # The "age" column is not optional, and not in the file on line 3, and that's not ok
+    with path.open("w") as writer:
+        writer.write("name\tage\nMax\t42\nMax\n")
+    with pytest.raises(ValueError):
+        list(PersonMaybeAge.read(path=path))
+
+
+def test_metric_read_missing_column_with_default(tmpdir: TmpDir) -> None:
+    person = PersonDefault(name="Max")
+    path = Path(tmpdir) / "metrics.txt"
+
+    # The "age" column hs a default, and not in the file, but that's ok
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+    assert list(PersonDefault.read(path=path)) == [person]
+
+    # All fields specified
+    with path.open("w") as writer:
+        writer.write("name\tage\nMax\t42\n")
+    assert list(PersonDefault.read(path=path)) == [PersonDefault(name="Max", age=42)]
+
+    # Just age specified, but not the required name column!
+    with path.open("w") as writer:
+        writer.write("age\n42\n")
+    with pytest.raises(ValueError):
+        list(PersonDefault.read(path=path))
 
 
 def test_metric_header() -> None:
@@ -186,7 +250,7 @@ def test_metric_custom_formatter() -> None:
     assert list(person.formatted_values()) == ["john doe", "42"]
 
 
-def test_metric_parse_with_None() -> None:
+def test_metric_parse_with_none() -> None:
     assert Person.parse(fields=["", "40"]) == Person(name=None, age=40)
     assert Person.parse(fields=["Sally", ""]) == Person(name="Sally", age=None)
     assert Person.parse(fields=["", ""]) == Person(name=None, age=None)
@@ -228,7 +292,7 @@ def test_metric_list_format_with_empty_string() -> None:
     )
 
 
-def test_metric_list_parse_with_None() -> None:
+def test_metric_list_parse_with_none() -> None:
     assert ListPerson.parse(fields=[",Sally", "40, 30"]) == ListPerson(
         name=[None, "Sally"], age=[40, 30]
     )

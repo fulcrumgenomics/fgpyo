@@ -1,4 +1,5 @@
 import enum
+import gzip
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -152,6 +153,20 @@ def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
     path: Path = Path(tmpdir) / "metrics.txt"
 
     DummyMetric.write(path, *DUMMY_METRICS)
+    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
+
+    assert len(metrics) == len(DUMMY_METRICS)
+    assert metrics == DUMMY_METRICS
+
+
+def test_metrics_roundtrip_gzip(tmp_path: Path) -> None:
+    path: Path = Path(tmp_path) / "metrics.txt.gz"
+
+    DummyMetric.write(path, *DUMMY_METRICS)
+
+    with gzip.open(path, "r") as handle:
+        handle.read(1)  # Will raise an exception if not a GZIP file.
+
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == len(DUMMY_METRICS)

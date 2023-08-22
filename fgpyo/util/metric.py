@@ -115,6 +115,7 @@ from typing import TypeVar
 
 import attr
 
+from fgpyo import io
 from fgpyo.util import inspect
 
 MetricType = TypeVar("MetricType")
@@ -161,7 +162,7 @@ class Metric(ABC, Generic[MetricType]):
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
         """
         parsers = cls._parsers()
-        with path.open("r") as reader:
+        with io.to_reader(path) as reader:
             header: List[str] = reader.readline().rstrip("\r\n").split("\t")
             # check the header
             class_fields = set(cls.header())
@@ -234,7 +235,7 @@ class Metric(ABC, Generic[MetricType]):
             path: path to the output file
             values: zero or more metrics.
         """
-        with path.open("w") as writer:
+        with io.to_writer(path) as writer:
             writer.write("\t".join(cls.header()))
             writer.write("\n")
             for value in values:

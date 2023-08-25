@@ -157,6 +157,21 @@ def to_writer(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
     else:
         return path.open(mode="w")
 
+def to_appender(path: Path) -> Union[IO[Any], io.TextIOWrapper]:
+    """Opens a Path for reading and based on extension uses open() or gzip.open()
+
+    Args:
+        path: Path to append to
+
+    Example:
+        appender = fio.to_appender(path = Path("appender.txt"))
+        appender.write(f'{something}\n')
+        appender.close()
+    """
+    if path.suffix in COMPRESSED_FILE_EXTENSIONS:
+        return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="ab")), encoding="utf-8")
+    else:
+        return path.open(mode="a")
 
 def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
     """Takes a path and reads each line into a generator, removing line terminators
@@ -179,7 +194,6 @@ def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
             for line in reader:
                 yield line.rstrip("\r\n")
 
-
 def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
     """Writes a file with one line per item in provided iterable
 
@@ -196,3 +210,20 @@ def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
         for line in lines_to_write:
             writer.write(str(line))
             writer.write("\n")
+
+def append_lines(path: Path, lines_to_append: Iterable[Any]) -> None:
+    """Appends a file with one line per item in provided iterable
+
+    Args:
+        path: Path to append to
+        lines_to_write: items to append to file
+
+    Example:
+        lines: List[Any] = ["things to append", 100]
+        path_to_append_to: Path = Path("file_to_append_to.txt")
+        fio.append_lines(path = path_to_append_to, lines_to_append = lines)
+    """
+    with to_appender(path=path) as appender:
+        for line in lines_to_append:
+            appender.write(str(line))
+            appender.write("\n")

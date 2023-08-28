@@ -280,6 +280,9 @@ def test_is_indel() -> None:
     indels = [op for op in CigarOp if op.is_indel]
     assert indels == [CigarOp.I, CigarOp.D]
 
+def test_is_clipping() -> None:
+    clips = [op for op in CigarOp if op.is_clipping]
+    assert clips == [CigarOp.S, CigarOp.H]
 
 def test_isize() -> None:
     builder = SamBuilder()

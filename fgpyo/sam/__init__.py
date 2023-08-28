@@ -374,6 +374,11 @@ class CigarOp(enum.Enum):
         """Returns true if the operator is an indel, false otherwise."""
         return self == CigarOp.I or self == CigarOp.D
 
+    @property
+    def is_clipping(self) -> bool:
+        """Returns true if the operator is a soft/hard clip, false otherwise."""
+        return self == CigarOp.S or self == CigarOp.H
+
 
 @attr.s(frozen=True, slots=True)
 class CigarElement:

@@ -124,7 +124,6 @@ def test_read_structure_variable_once_and_only_once_last_segment_exception(strin
 def test_read_structure_from_segments_reset_offset(
     segments: Tuple[ReadSegment, ...], expected: Tuple[ReadSegment, ...]
 ) -> None:
-
     read_structure = ReadStructure.from_segments(segments=segments, reset_offsets=True)
     assert read_structure.segments == expected
 

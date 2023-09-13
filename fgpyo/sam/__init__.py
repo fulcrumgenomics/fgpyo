@@ -169,6 +169,7 @@ from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 
+import fgpyo.io
 from fgpyo.collections import PeekableIterator
 
 SamPath = Union[IO[Any], Path, str]
@@ -259,8 +260,11 @@ def _pysam_open(
     if unmapped and open_for_reading:
         kwargs["check_sq"] = False
 
-    # Open it!
-    return pysam.AlignmentFile(path, **kwargs)
+    # Open it alignment file, suppressing stderr in case index files are older than SAM file
+    with fgpyo.io.suppress_stderr():
+        alignment_file = pysam.AlignmentFile(path, **kwargs)
+    # now restore stderr and return the alignment file
+    return alignment_file
 
 
 def reader(

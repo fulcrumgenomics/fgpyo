@@ -44,9 +44,12 @@ fgpyo.io Examples:
 import gzip
 import io
 import os
+import sys
+from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
 from typing import Any
+from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import Set
@@ -196,3 +199,30 @@ def write_lines(path: Path, lines_to_write: Iterable[Any]) -> None:
         for line in lines_to_write:
             writer.write(str(line))
             writer.write("\n")
+
+
+@contextmanager
+def redirect_to_dev_null(file_num: int) -> Generator[None, None, None]:
+    """A context manager that redirects output of file handle to /dev/null
+
+    Args:
+        file_num: number of filehandle to redirect.
+    """
+    # open /dev/null for writing
+    f_devnull = os.open(os.devnull, os.O_RDWR)
+    # save old file descriptor and redirect stderr to /dev/null
+    save_stderr = os.dup(file_num)
+    os.dup2(f_devnull, file_num)
+
+    yield
+
+    # restore file descriptor and close devnull
+    os.dup2(save_stderr, file_num)
+    os.close(f_devnull)
+
+
+@contextmanager
+def suppress_stderr() -> Generator[None, None, None]:
+    """A context manager that redirects output of stderr to /dev/null"""
+    with redirect_to_dev_null(file_num=sys.stderr.fileno()):
+        yield

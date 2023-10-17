@@ -441,7 +441,7 @@ class SamBuilder:
         elif chrom2 is None:
             # require chrom2 if start2 is specified
             if start2 != sam.NO_REF_POS:
-                raise ValueError("start2 cannot be used on its own - use with chrom or chrom2.")
+                raise ValueError("start2 cannot be used on its own - use with chrom2.")
             # permit add_pair(chrom1, start1), making R2 unmapped
             else:
                 chrom2 = sam.NO_REF_NAME
@@ -449,7 +449,7 @@ class SamBuilder:
         elif chrom1 is None:
             # require chrom1 if start1 is specified
             if start1 != sam.NO_REF_POS:
-                raise ValueError("start1 cannot be used on its own - use with chrom or chrom1.")
+                raise ValueError("start1 cannot be used on its own - use with chrom1.")
             # permit add_pair(chrom2, start2), making R1 unmapped
             else:
                 chrom1 = sam.NO_REF_NAME

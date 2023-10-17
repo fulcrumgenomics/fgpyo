@@ -179,6 +179,14 @@ def test_chrom1_chrom2() -> None:
     assert not r1.is_reverse
     assert r2.is_reverse
 
+    r1, r2 = builder.add_pair(chrom1="chr1", start1=1000)
+    assert r1.is_mapped
+    assert r2.is_unmapped
+
+    r1, r2 = builder.add_pair(chrom2="chr1", start2=1000)
+    assert r2.is_mapped
+    assert r1.is_unmapped
+
     with pytest.raises(ValueError, match="When using chrom1 or chrom2, both must be specified."):
         r1, r2 = builder.add_pair(chrom1="chr1", start1=1000, start2=1000)
 

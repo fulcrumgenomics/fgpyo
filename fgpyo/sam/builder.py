@@ -357,13 +357,24 @@ class SamBuilder:
 
         Most fields are optional.
 
+        Mapped pairs can be created by specifying both `start1` and `start2` and either `chrom`, for
+        pairs where both reads map to the same contig, or both `chrom1` and `chrom2`, for pairs
+        where reads map to different contigs. i.e.:
+            - `add_pair(chrom, start1, start2)` will create a mapped pair where both reads map to
+            the same contig (`chrom`).
+            - `add_pair(chrom1, start1, chrom2, start2)` will create a mapped pair where the reads
+            map to different contigs (`chrom1` and `chrom2`).
+
+        A pair with only one of the two reads mapped can be created by setting only one start
+        position. Flags will automatically be set correctly for the unmapped mate.
+            - `add_pair(chrom, start1)`
+            - `add_pair(chrom1, start1)`
+            - `add_pair(chrom, start2)`
+            - `add_pair(chrom2, start2)`
+
         An unmapped pair can be created by calling the method with no parameters (specifically,
-        not setting chrom, start1 or start2).  If either cigar is provided, it will be ignored.
-
-        A pair with only one of the two reads mapped is created by setting e.g. chrom and start1.
-        The values will be automaticaly transferred to the unmapped mate, and flags set correctly.
-
-        A mapped pair is created by providing all three of chrom, start1 and start2.
+        not setting `chrom`, `chrom1`, `start1`, `chrom2`, or `start2`). If either cigar is
+        provided, it will be ignored.
 
         For a given read (i.e. R1 or R2) the length of the read is determined based on the presence
         or absence of bases, quals, and cigar.  If values are provided for one or more of these
@@ -409,11 +420,29 @@ class SamBuilder:
 
         name = name if name is not None else self._next_name()
 
+        # Valid parameterizations for contig mapping (backward compatible):
+        # - chrom, start1, start2
+        # - chrom, start1
+        # - chrom, start2
+        # Valid parameterizations for contig mapping (new):
+        # - chrom1, start1, chrom2, start2
+        # - chrom1, start1
+        # - chrom2, start2
         # Use `chrom` for both reads if `chrom1` and `chrom2` are not specified.
         if chrom1 is None and chrom2 is None:
             chrom1 = chrom2 = chrom
-        elif chrom1 is None or chrom2 is None:
-            raise ValueError("When using chrom1 or chrom2, both must be specified.")
+        elif chrom2 is None:
+            # permit adding pair with R1 mapped and R2 unmapped, using `chrom1` syntax
+            if start2 == sam.NO_REF_POS and start1 != sam.NO_REF_POS:
+                chrom2 = sam.NO_REF_NAME
+            else:
+                raise ValueError("When using chrom1 or chrom2, both must be specified.")
+        elif chrom1 is None:
+            # permit adding pair with R2 mapped and R1 unmapped, using `chrom2` syntax
+            if start1 == sam.NO_REF_POS and start2 != sam.NO_REF_POS:
+                chrom1 = sam.NO_REF_NAME
+            else:
+                raise ValueError("When using chrom1 or chrom2, both must be specified.")
 
         # Setup R1
         r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)

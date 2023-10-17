@@ -1,4 +1,9 @@
+from pathlib import Path
+
 from fgpyo.sam import Template
+from fgpyo.sam import TemplateIterator
+from fgpyo.sam import reader
+from fgpyo.sam import writer
 from fgpyo.sam.builder import SamBuilder
 
 
@@ -64,3 +69,29 @@ def test_to_templates() -> None:
     assert len(template2.r2_secondaries) == 0
     assert len(list(template2.primary_recs())) == 1
     assert len(list(template2.all_recs())) == 2
+
+
+def test_write_template(tmp_path: Path,) -> None:
+    builder = SamBuilder()
+    template = Template.build([
+        *builder.add_pair(name="r1", chrom="chr1", start1=100, start2=200),
+        builder.add_single(name="r1", chrom="chr1", start=350, supplementary=True),
+    ])
+
+    bam_path = tmp_path / "test.bam"
+
+    # Test writing of all records
+    with writer(bam_path, header=builder._samheader) as bam_writer:
+        template.write_to(bam_writer)
+
+    with reader(bam_path) as bam_reader:
+        template = next(TemplateIterator(bam_reader))
+        assert len([r for r in template.all_recs()]) == 3
+
+    # Test primary-only
+    with writer(bam_path, header=builder._samheader) as bam_writer:
+        template.write_to(bam_writer, primary_only=True)
+
+    with reader(bam_path) as bam_reader:
+        template = next(TemplateIterator(bam_reader))
+        assert len([r for r in template.all_recs()]) == 2

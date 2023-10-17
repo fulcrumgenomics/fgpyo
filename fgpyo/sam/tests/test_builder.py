@@ -187,10 +187,10 @@ def test_chrom1_chrom2() -> None:
     assert not r2.is_unmapped
     assert r1.is_unmapped
 
-    with pytest.raises(ValueError, match="When using chrom1 or chrom2, both must be specified."):
+    with pytest.raises(ValueError, match="start2 cannot be used on its own"):
         r1, r2 = builder.add_pair(chrom1="chr1", start1=1000, start2=1000)
 
-    with pytest.raises(ValueError, match="When using chrom1 or chrom2, both must be specified."):
+    with pytest.raises(ValueError, match="start1 cannot be used on its own"):
         r1, r2 = builder.add_pair(chrom2="chr1", start1=1000, start2=1000)
 
 

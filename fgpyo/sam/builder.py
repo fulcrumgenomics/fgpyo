@@ -433,16 +433,16 @@ class SamBuilder:
             chrom1 = chrom2 = chrom
         elif chrom2 is None:
             # permit adding pair with R1 mapped and R2 unmapped, using `chrom1` syntax
-            if start2 == sam.NO_REF_POS and start1 != sam.NO_REF_POS:
-                chrom2 = sam.NO_REF_NAME
+            if start2 != sam.NO_REF_POS:
+                raise ValueError("start2 cannot be used on its own - use with chrom or chrom2.")
             else:
-                raise ValueError("When using chrom1 or chrom2, both must be specified.")
+                chrom2 = sam.NO_REF_NAME
         elif chrom1 is None:
             # permit adding pair with R2 mapped and R1 unmapped, using `chrom2` syntax
-            if start1 == sam.NO_REF_POS and start2 != sam.NO_REF_POS:
-                chrom1 = sam.NO_REF_NAME
+            if start1 != sam.NO_REF_POS:
+                raise ValueError("start1 cannot be used on its own - use with chrom or chrom1.")
             else:
-                raise ValueError("When using chrom1 or chrom2, both must be specified.")
+                chrom1 = sam.NO_REF_NAME
 
         # Setup R1
         r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)

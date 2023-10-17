@@ -71,12 +71,16 @@ def test_to_templates() -> None:
     assert len(list(template2.all_recs())) == 2
 
 
-def test_write_template(tmp_path: Path,) -> None:
+def test_write_template(
+    tmp_path: Path,
+) -> None:
     builder = SamBuilder()
-    template = Template.build([
-        *builder.add_pair(name="r1", chrom="chr1", start1=100, start2=200),
-        builder.add_single(name="r1", chrom="chr1", start=350, supplementary=True),
-    ])
+    template = Template.build(
+        [
+            *builder.add_pair(name="r1", chrom="chr1", start1=100, start2=200),
+            builder.add_single(name="r1", chrom="chr1", start=350, supplementary=True),
+        ]
+    )
 
     bam_path = tmp_path / "test.bam"
 

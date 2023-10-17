@@ -340,7 +340,8 @@ class SamBuilder:
         bases2: Optional[str] = None,
         quals1: Optional[List[int]] = None,
         quals2: Optional[List[int]] = None,
-        chrom1: str = sam.NO_REF_NAME,
+        chrom: str = sam.NO_REF_NAME,
+        chrom1: Optional[str] = None,
         chrom2: Optional[str] = None,
         start1: int = sam.NO_REF_POS,
         start2: int = sam.NO_REF_POS,
@@ -380,8 +381,9 @@ class SamBuilder:
             bases2: The bases for R2. If None is given a random sequence is generated.
             quals1: The list of int qualities for R1. If None, the default base quality is used.
             quals2: The list of int qualities for R2. If None, the default base quality is used.
-            chrom1: The chromosome to which R1 is mapped. Defaults to the unmapped value.
-            chrom2: The chromosome to which R2 is mapped. If None, `chrom1` is used.
+            chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
+            chrom1: The chromosome to which R1 is mapped. If None, `chrom` is used.
+            chrom2: The chromosome to which R2 is mapped. If None, `chrom` is used.
             start1: The start position of R1. Defaults to the unmapped value.
             start2: The start position of R2. Defaults to the unmapped value.
             cigar1: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
@@ -406,7 +408,12 @@ class SamBuilder:
             raise ValueError(f"Invalid value for strand2: {strand2}")
 
         name = name if name is not None else self._next_name()
-        chrom2 = chrom2 if chrom2 is not None else chrom1
+
+        # Use `chrom` for both reads if `chrom1` and `chrom2` are not specified.
+        if chrom1 is None and chrom2 is None:
+            chrom1 = chrom2 = chrom
+        elif chrom1 is None or chrom2 is None:
+            raise ValueError("When using chrom1 or chrom2, both must be specified.")
 
         # Setup R1
         r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)

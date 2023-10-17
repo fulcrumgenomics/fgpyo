@@ -288,7 +288,7 @@ def test_is_clipping() -> None:
 
 def test_isize() -> None:
     builder = SamBuilder()
-    r1, r2 = builder.add_pair(chrom1="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     assert sam.isize(r1, r2) == 190
     assert sam.isize(r2, r1) == -190
 

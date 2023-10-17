@@ -843,6 +843,26 @@ class Template:
             for rec in recs:
                 yield rec
 
+    def write_to(
+        self,
+        writer: SamFile,
+        primary_only: bool = False,
+    ) -> None:
+        """Write the records associated with the template to file.
+
+        Args:
+            writer: An open, writable AlignmentFile.
+            primary_only: If True, only write primary alignments.
+        """
+
+        if primary_only:
+            rec_iter = self.primary_recs()
+        else:
+            rec_iter = self.all_recs()
+
+        for rec in rec_iter:
+            writer.write(rec)
+
 
 class TemplateIterator(Iterator[Template]):
     """

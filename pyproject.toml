@@ -33,7 +33,7 @@ sphinx = {version = "4.3.1", optional = true}
 pysam = ">=0.20.0"
 
 [tool.poetry.extras]
-docs = ["sphinx"]
+docs = ["sphinx", "sphinx_rtd_theme"]
 
 [tool.poetry.dev-dependencies]
 pytest = ">=5.4.2"

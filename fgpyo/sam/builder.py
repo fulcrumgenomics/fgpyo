@@ -340,7 +340,8 @@ class SamBuilder:
         bases2: Optional[str] = None,
         quals1: Optional[List[int]] = None,
         quals2: Optional[List[int]] = None,
-        chrom: str = sam.NO_REF_NAME,
+        chrom1: str = sam.NO_REF_NAME,
+        chrom2: Optional[str] = None,
         start1: int = sam.NO_REF_POS,
         start2: int = sam.NO_REF_POS,
         cigar1: Optional[str] = None,
@@ -379,7 +380,8 @@ class SamBuilder:
             bases2: The bases for R2. If None is given a random sequence is generated.
             quals1: The list of int qualities for R1. If None, the default base quality is used.
             quals2: The list of int qualities for R2. If None, the default base quality is used.
-            chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
+            chrom1: The chromosome to which R1 is mapped. Defaults to the unmapped value.
+            chrom2: The chromosome to which R2 is mapped. If None, `chrom1` is used.
             start1: The start position of R1. Defaults to the unmapped value.
             start2: The start position of R2. Defaults to the unmapped value.
             cigar1: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
@@ -404,16 +406,17 @@ class SamBuilder:
             raise ValueError(f"Invalid value for strand2: {strand2}")
 
         name = name if name is not None else self._next_name()
+        chrom2 = chrom2 if chrom2 is not None else chrom1
 
         # Setup R1
-        r1 = self._new_rec(name=name, chrom=chrom, start=start1, mapq=mapq1, attrs=attrs)
+        r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)
         self._set_flags(r1, read_num=1, strand=strand1)
         self._set_length_dependent_fields(
             rec=r1, length=self.r1_len, bases=bases1, quals=quals1, cigar=cigar1
         )
 
         # Setup R2
-        r2 = self._new_rec(name=name, chrom=chrom, start=start2, mapq=mapq2, attrs=attrs)
+        r2 = self._new_rec(name=name, chrom=chrom2, start=start2, mapq=mapq2, attrs=attrs)
         self._set_flags(r2, read_num=2, strand=strand2)
         self._set_length_dependent_fields(
             rec=r2, length=self.r2_len, bases=bases2, quals=quals2, cigar=cigar2

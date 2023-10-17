@@ -38,8 +38,8 @@ def test_progress_logger_as_context_manager() -> None:
 
 
 builder = SamBuilder()
-r1_mapped_named, r2_unmapped_named = builder.add_pair(chrom="chr1", start1=1000)
-r1_unmapped_un_named, r2_unmapped_un_named = builder.add_pair(chrom=sam.NO_REF_NAME)
+r1_mapped_named, r2_unmapped_named = builder.add_pair(chrom1="chr1", start1=1000)
+r1_unmapped_un_named, r2_unmapped_un_named = builder.add_pair(chrom1=sam.NO_REF_NAME)
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ from fgpyo.sam.builder import SamBuilder
 
 def test_template_init_function() -> None:
     builder: SamBuilder = SamBuilder()
-    builder.add_pair(name="x", chrom="chr1", start1=1, start2=2)
+    builder.add_pair(name="x", chrom1="chr1", start1=1, start2=2)
     r1 = builder.to_sorted_list()[0]
     r2 = builder.to_sorted_list()[1]
     template = Template(
@@ -26,7 +26,7 @@ def test_to_templates() -> None:
     builder = SamBuilder()
 
     # Series of alignments for one template
-    builder.add_pair(name="q1", chrom="chr1", start1=1, start2=2)
+    builder.add_pair(name="q1", chrom1="chr1", start1=1, start2=2)
     builder.add_single(name="q1", read_num=1, chrom="chr1", start=1, supplementary=True)
     builder.add_single(name="q1", read_num=1, chrom="chr1", start=11, supplementary=True)
     builder.add_single(name="q1", read_num=2, chrom="chr1", start=2, supplementary=True)

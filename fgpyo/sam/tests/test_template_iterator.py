@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from fgpyo.sam import Template
 from fgpyo.sam import TemplateIterator
 from fgpyo.sam import reader

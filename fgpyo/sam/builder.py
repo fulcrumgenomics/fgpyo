@@ -558,3 +558,8 @@ class SamBuilder:
             path = self.to_path(path=Path(filename), index=False)
             bam = sam.reader(path)
             return list(bam)
+
+    @property
+    def header(self) -> AlignmentHeader:
+        """Returns the builder's SAM header."""
+        return self._samheader

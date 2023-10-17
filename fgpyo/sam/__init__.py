@@ -863,6 +863,25 @@ class Template:
         for rec in rec_iter:
             writer.write(rec)
 
+    def set_tag(
+        self,
+        tag: str,
+        value: Union[str, int, float, None],
+    ) -> None:
+        """Add a tag to all records associated with the template.
+
+        Setting a tag to `None` will remove the tag.
+
+        Args:
+            tag: The name of the tag.
+            value: The value of the tag.
+        """
+
+        assert len(tag) == 2, f"Tags must be 2 characters: {tag}."
+
+        for rec in self.all_recs():
+            rec.set_tag(tag, value)
+
 
 class TemplateIterator(Iterator[Template]):
     """

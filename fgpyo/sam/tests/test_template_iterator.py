@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 from fgpyo.sam import Template
 from fgpyo.sam import TemplateIterator
 from fgpyo.sam import reader
@@ -99,3 +100,31 @@ def test_write_template(
     with reader(bam_path) as bam_reader:
         template = next(TemplateIterator(bam_reader))
         assert len([r for r in template.all_recs()]) == 2
+
+
+def test_set_tag() -> None:
+    builder = SamBuilder()
+    template = Template.build(builder.add_pair(chrom="chr1", start1=100, start2=200))
+
+    TAG = "XF"
+    VALUE = "value"
+
+    for read in template.all_recs():
+        with pytest.raises(KeyError):
+            read.get_tag(TAG)
+
+    # test setting
+    template.set_tag(TAG, VALUE)
+    assert template.r1.get_tag(TAG) == VALUE
+    assert template.r2.get_tag(TAG) == VALUE
+
+    # test removal
+    template.set_tag(TAG, None)
+    for read in template.all_recs():
+        with pytest.raises(KeyError):
+            read.get_tag(TAG)
+
+    # test tags that aren't two characters
+    for bad_tag in ["", "A", "ABC", "ABCD"]:
+        with pytest.raises(AssertionError, match="Tags must be 2 characters"):
+            template.set_tag(bad_tag, VALUE)

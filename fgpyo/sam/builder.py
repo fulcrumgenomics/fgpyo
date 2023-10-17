@@ -428,19 +428,29 @@ class SamBuilder:
         # - chrom1, start1, chrom2, start2
         # - chrom1, start1
         # - chrom2, start2
-        # Use `chrom` for both reads if `chrom1` and `chrom2` are not specified.
+
+        # Fail if chrom is specified with chrom1 or chrom2
+        if chrom != sam.NO_REF_NAME and (chrom1 is not None or chrom2 is not None):
+            raise ValueError("chrom cannot be specified together with chrom1 or chrom2.")
+
+        # Backwards compatibility
+        # Use `chrom` for both reads if neither `chrom1` nor `chrom2` are specified.
         if chrom1 is None and chrom2 is None:
             chrom1 = chrom2 = chrom
+        # New syntax - chrom1 is specified but chrom2 and chrom are not
         elif chrom2 is None:
-            # permit adding pair with R1 mapped and R2 unmapped, using `chrom1` syntax
+            # require chrom2 if start2 is specified
             if start2 != sam.NO_REF_POS:
                 raise ValueError("start2 cannot be used on its own - use with chrom or chrom2.")
+            # permit add_pair(chrom1, start1), making R2 unmapped
             else:
                 chrom2 = sam.NO_REF_NAME
+        # New syntax - chrom2 is specified but chrom1 and chrom are not
         elif chrom1 is None:
-            # permit adding pair with R2 mapped and R1 unmapped, using `chrom2` syntax
+            # require chrom1 if start1 is specified
             if start1 != sam.NO_REF_POS:
                 raise ValueError("start1 cannot be used on its own - use with chrom or chrom1.")
+            # permit add_pair(chrom2, start2), making R1 unmapped
             else:
                 chrom1 = sam.NO_REF_NAME
 

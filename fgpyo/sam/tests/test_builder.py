@@ -193,6 +193,12 @@ def test_chrom1_chrom2() -> None:
     with pytest.raises(ValueError, match="start1 cannot be used on its own"):
         r1, r2 = builder.add_pair(chrom2="chr1", start1=1000, start2=1000)
 
+    with pytest.raises(ValueError, match="chrom cannot be specified together with"):
+        r1, r2 = builder.add_pair(chrom="chr1", chrom1="chr1", start1=1000, start2=1000)
+
+    with pytest.raises(ValueError, match="chrom cannot be specified together with"):
+        r1, r2 = builder.add_pair(chrom="chr1", chrom2="chr1", start1=1000, start2=1000)
+
 
 def test_add_single() -> None:
     builder = SamBuilder(r1_len=25, r2_len=50)

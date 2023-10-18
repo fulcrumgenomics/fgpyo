@@ -45,6 +45,11 @@ jobs:
       shell: bash
       run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
+    - name: Check that the lock file is up to date
+      shell: bash
+      run: |
+        poetry lock --check
+
     - name: Install deps
       shell: bash
       run: |

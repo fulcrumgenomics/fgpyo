@@ -4,7 +4,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
 
 import pytest
-from py._path.local import LocalPath as TmpDir
 from pytest import raises
 
 from fgpyo.fasta.builder import FastaBuilder
@@ -64,14 +63,14 @@ def test_bases_string_from_ContigBuilder_add(
     bases: str,
     times: int,
     expected: str,
-    tmpdir: TmpDir,
+    tmp_path: Path,
 ) -> None:
     """
     Reads bases back from fasta and checks that extra spaces are removed and bases are uppercase
     """
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
-    with NamedTemp(suffix=".fa", dir=tmpdir, mode="w", delete=True) as fp:
+    with NamedTemp(suffix=".fa", dir=tmp_path, mode="w", delete=True) as fp:
         builder.to_file(Path(fp.name))
         with open(fp.name, "r") as read_fp:
             for line in read_fp.readlines():

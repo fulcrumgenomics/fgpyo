@@ -340,7 +340,7 @@ class SamBuilder:
         bases2: Optional[str] = None,
         quals1: Optional[List[int]] = None,
         quals2: Optional[List[int]] = None,
-        chrom: str = sam.NO_REF_NAME,
+        chrom: Optional[str] = None,
         chrom1: Optional[str] = None,
         chrom2: Optional[str] = None,
         start1: int = sam.NO_REF_POS,
@@ -428,31 +428,18 @@ class SamBuilder:
         # - chrom1, start1, chrom2, start2
         # - chrom1, start1
         # - chrom2, start2
+        if chrom is not None and (chrom1 is not None or chrom2 is not None):
+            raise ValueError("Cannot use chrom in combination with chrom1 or chrom2")
 
-        # Fail if chrom is specified with chrom1 or chrom2
-        if chrom != sam.NO_REF_NAME and (chrom1 is not None or chrom2 is not None):
-            raise ValueError("chrom cannot be specified together with chrom1 or chrom2.")
+        chrom = sam.NO_REF_NAME if chrom is None else chrom
+        chrom1 = next(c for c in (chrom1, chrom) if c is not None)
+        chrom2 = next(c for c in (chrom2, chrom) if c is not None)
 
-        # Backwards compatibility
-        # Use `chrom` for both reads if neither `chrom1` nor `chrom2` are specified.
-        if chrom1 is None and chrom2 is None:
-            chrom1 = chrom2 = chrom
-        # New syntax - chrom1 is specified but chrom2 and chrom are not
-        elif chrom2 is None:
-            # require chrom2 if start2 is specified
-            if start2 != sam.NO_REF_POS:
-                raise ValueError("start2 cannot be used on its own - use with chrom2.")
-            # permit add_pair(chrom1, start1), making R2 unmapped
-            else:
-                chrom2 = sam.NO_REF_NAME
-        # New syntax - chrom2 is specified but chrom1 and chrom are not
-        elif chrom1 is None:
-            # require chrom1 if start1 is specified
-            if start1 != sam.NO_REF_POS:
-                raise ValueError("start1 cannot be used on its own - use with chrom1.")
-            # permit add_pair(chrom2, start2), making R1 unmapped
-            else:
-                chrom1 = sam.NO_REF_NAME
+        if chrom1 == sam.NO_REF_NAME and start1 != sam.NO_REF_POS:
+            raise ValueError("start1 cannot be used on its own - specify chrom or chrom1")
+
+        if chrom2 == sam.NO_REF_NAME and start2 != sam.NO_REF_POS:
+            raise ValueError("start2 cannot be used on its own - specify chrom or chrom2")
 
         # Setup R1
         r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)

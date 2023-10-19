@@ -30,7 +30,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.todo', 
               'sphinx.ext.ifconfig',
               'sphinx.ext.intersphinx',
-              'sphinx.ext.napoleon']
+              'sphinx.ext.napoleon',
+              'sphinx_rtd_theme']
 
 intersphinx_mapping = {'python': ('http://docs.python.org/3.6', None)}
 
@@ -118,7 +119,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

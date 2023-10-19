@@ -11,7 +11,6 @@ from typing import Tuple
 
 import attr
 import pytest
-from py._path.local import LocalPath as TmpDir
 
 from fgpyo.util.metric import Metric
 
@@ -139,8 +138,11 @@ class PersonDefault(Metric["PersonDefault"]):
 
 
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
-def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
-    path: Path = Path(tmpdir) / "metrics.txt"
+def test_metric_roundtrip(
+    tmp_path: Path,
+    metric: DummyMetric,
+) -> None:
+    path: Path = tmp_path / "metrics.txt"
 
     DummyMetric.write(path, metric)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
@@ -149,8 +151,8 @@ def test_metric_roundtrip(tmpdir: TmpDir, metric: DummyMetric) -> None:
     assert metrics[0] == metric
 
 
-def test_metrics_roundtrip(tmpdir: TmpDir) -> None:
-    path: Path = Path(tmpdir) / "metrics.txt"
+def test_metrics_roundtrip(tmp_path: Path) -> None:
+    path: Path = tmp_path / "metrics.txt"
 
     DummyMetric.write(path, *DUMMY_METRICS)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
@@ -173,9 +175,9 @@ def test_metrics_roundtrip_gzip(tmp_path: Path) -> None:
     assert metrics == DUMMY_METRICS
 
 
-def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
+def test_metrics_read_extra_columns(tmp_path: Path) -> None:
     person = Person(name="Max", age=42)
-    path = Path(tmpdir) / "metrics.txt"
+    path = tmp_path / "metrics.txt"
     with path.open("w") as writer:
         header = Person.header()
         header.append("foo")
@@ -188,9 +190,9 @@ def test_metrics_read_extra_columns(tmpdir: TmpDir) -> None:
         list(Person.read(path=path, ignore_extra_fields=False))
 
 
-def test_metrics_read_missing_optional_columns(tmpdir: TmpDir) -> None:
+def test_metrics_read_missing_optional_columns(tmp_path: Path) -> None:
     person = PersonMaybeAge(name="Max", age=None)
-    path = Path(tmpdir) / "metrics.txt"
+    path = tmp_path / "metrics.txt"
 
     # The "age" column is optional, and not in the file, but that's ok
     with path.open("w") as writer:
@@ -204,9 +206,9 @@ def test_metrics_read_missing_optional_columns(tmpdir: TmpDir) -> None:
         list(PersonMaybeAge.read(path=path))
 
 
-def test_metric_read_missing_column_with_default(tmpdir: TmpDir) -> None:
+def test_metric_read_missing_column_with_default(tmp_path: Path) -> None:
     person = PersonDefault(name="Max")
-    path = Path(tmpdir) / "metrics.txt"
+    path = tmp_path / "metrics.txt"
 
     # The "age" column hs a default, and not in the file, but that's ok
     with path.open("w") as writer:

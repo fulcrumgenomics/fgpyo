@@ -10,7 +10,6 @@ from typing import Union
 
 import pysam
 import pytest
-from py._path.local import LocalPath as TmpDir
 from pysam import AlignmentHeader
 
 import fgpyo.sam as sam
@@ -141,10 +140,10 @@ def test_sam_file_open_writing(
     file_type: SamFileType,
     expected_records: List[pysam.AlignedSegment],
     header_dict: AlignmentHeader,
-    tmpdir: TmpDir,
+    tmp_path: Path,
 ) -> None:
     # use header as a keyword argument
-    with NamedTemp(suffix=file_type.extension, dir=tmpdir, mode="w", delete=False) as fp:
+    with NamedTemp(suffix=file_type.extension, dir=tmp_path, mode="w", delete=False) as fp:
         kwargs = {"header": header_dict}
         with sam._pysam_open(
             path=fp.file, open_for_reading=False, file_type=file_type, **kwargs  # type: ignore
@@ -155,11 +154,13 @@ def test_sam_file_open_writing(
 
 
 def test_sam_file_open_writing_header_keyword(
-    expected_records: List[pysam.AlignedSegment], header_dict: AlignmentHeader, tmpdir: TmpDir
+    expected_records: List[pysam.AlignedSegment],
+    header_dict: AlignmentHeader,
+    tmp_path: Path,
 ) -> None:
     # Use SamWriter
     # use header as a keyword argument
-    with NamedTemp(suffix=".sam", dir=tmpdir, mode="w", delete=False) as fp:
+    with NamedTemp(suffix=".sam", dir=tmp_path, mode="w", delete=False) as fp:
         with sam.writer(path=fp.name, header=header_dict, file_type=SamFileType.SAM) as sam_writer:
             for r in expected_records:
                 sam_writer.write(r)

@@ -167,6 +167,39 @@ def test_proper_pair() -> None:
         assert not rec.is_proper_pair
 
 
+def test_chrom1_chrom2() -> None:
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom1="chr1", start1=1000, chrom2="chr2", start2=1000)
+
+    assert r1.query_name == r2.query_name
+    assert r1.reference_name == "chr1"
+    assert r2.reference_name == "chr2"
+    assert r1.reference_start == 1000
+    assert r2.reference_start == 1000
+    assert not r1.is_reverse
+    assert r2.is_reverse
+
+    r1, r2 = builder.add_pair(chrom1="chr1", start1=1000)
+    assert not r1.is_unmapped
+    assert r2.is_unmapped
+
+    r1, r2 = builder.add_pair(chrom2="chr1", start2=1000)
+    assert not r2.is_unmapped
+    assert r1.is_unmapped
+
+    with pytest.raises(ValueError, match="start2 cannot be used on its own"):
+        r1, r2 = builder.add_pair(chrom1="chr1", start1=1000, start2=1000)
+
+    with pytest.raises(ValueError, match="start1 cannot be used on its own"):
+        r1, r2 = builder.add_pair(chrom2="chr1", start1=1000, start2=1000)
+
+    with pytest.raises(ValueError, match="Cannot use chrom in combination with"):
+        r1, r2 = builder.add_pair(chrom="chr1", chrom1="chr1", start1=1000, start2=1000)
+
+    with pytest.raises(ValueError, match="Cannot use chrom in combination with"):
+        r1, r2 = builder.add_pair(chrom="chr1", chrom2="chr1", start1=1000, start2=1000)
+
+
 def test_add_single() -> None:
     builder = SamBuilder(r1_len=25, r2_len=50)
 

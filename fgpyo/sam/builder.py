@@ -340,7 +340,9 @@ class SamBuilder:
         bases2: Optional[str] = None,
         quals1: Optional[List[int]] = None,
         quals2: Optional[List[int]] = None,
-        chrom: str = sam.NO_REF_NAME,
+        chrom: Optional[str] = None,
+        chrom1: Optional[str] = None,
+        chrom2: Optional[str] = None,
         start1: int = sam.NO_REF_POS,
         start2: int = sam.NO_REF_POS,
         cigar1: Optional[str] = None,
@@ -355,13 +357,24 @@ class SamBuilder:
 
         Most fields are optional.
 
+        Mapped pairs can be created by specifying both `start1` and `start2` and either `chrom`, for
+        pairs where both reads map to the same contig, or both `chrom1` and `chrom2`, for pairs
+        where reads map to different contigs. i.e.:
+            - `add_pair(chrom, start1, start2)` will create a mapped pair where both reads map to
+            the same contig (`chrom`).
+            - `add_pair(chrom1, start1, chrom2, start2)` will create a mapped pair where the reads
+            map to different contigs (`chrom1` and `chrom2`).
+
+        A pair with only one of the two reads mapped can be created by setting only one start
+        position. Flags will automatically be set correctly for the unmapped mate.
+            - `add_pair(chrom, start1)`
+            - `add_pair(chrom1, start1)`
+            - `add_pair(chrom, start2)`
+            - `add_pair(chrom2, start2)`
+
         An unmapped pair can be created by calling the method with no parameters (specifically,
-        not setting chrom, start1 or start2).  If either cigar is provided, it will be ignored.
-
-        A pair with only one of the two reads mapped is created by setting e.g. chrom and start1.
-        The values will be automaticaly transferred to the unmapped mate, and flags set correctly.
-
-        A mapped pair is created by providing all three of chrom, start1 and start2.
+        not setting `chrom`, `chrom1`, `start1`, `chrom2`, or `start2`). If either cigar is
+        provided, it will be ignored.
 
         For a given read (i.e. R1 or R2) the length of the read is determined based on the presence
         or absence of bases, quals, and cigar.  If values are provided for one or more of these
@@ -380,6 +393,8 @@ class SamBuilder:
             quals1: The list of int qualities for R1. If None, the default base quality is used.
             quals2: The list of int qualities for R2. If None, the default base quality is used.
             chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
+            chrom1: The chromosome to which R1 is mapped. If None, `chrom` is used.
+            chrom2: The chromosome to which R2 is mapped. If None, `chrom` is used.
             start1: The start position of R1. Defaults to the unmapped value.
             start2: The start position of R2. Defaults to the unmapped value.
             cigar1: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.
@@ -405,15 +420,36 @@ class SamBuilder:
 
         name = name if name is not None else self._next_name()
 
+        # Valid parameterizations for contig mapping (backward compatible):
+        # - chrom, start1, start2
+        # - chrom, start1
+        # - chrom, start2
+        # Valid parameterizations for contig mapping (new):
+        # - chrom1, start1, chrom2, start2
+        # - chrom1, start1
+        # - chrom2, start2
+        if chrom is not None and (chrom1 is not None or chrom2 is not None):
+            raise ValueError("Cannot use chrom in combination with chrom1 or chrom2")
+
+        chrom = sam.NO_REF_NAME if chrom is None else chrom
+        chrom1 = next(c for c in (chrom1, chrom) if c is not None)
+        chrom2 = next(c for c in (chrom2, chrom) if c is not None)
+
+        if chrom1 == sam.NO_REF_NAME and start1 != sam.NO_REF_POS:
+            raise ValueError("start1 cannot be used on its own - specify chrom or chrom1")
+
+        if chrom2 == sam.NO_REF_NAME and start2 != sam.NO_REF_POS:
+            raise ValueError("start2 cannot be used on its own - specify chrom or chrom2")
+
         # Setup R1
-        r1 = self._new_rec(name=name, chrom=chrom, start=start1, mapq=mapq1, attrs=attrs)
+        r1 = self._new_rec(name=name, chrom=chrom1, start=start1, mapq=mapq1, attrs=attrs)
         self._set_flags(r1, read_num=1, strand=strand1)
         self._set_length_dependent_fields(
             rec=r1, length=self.r1_len, bases=bases1, quals=quals1, cigar=cigar1
         )
 
         # Setup R2
-        r2 = self._new_rec(name=name, chrom=chrom, start=start2, mapq=mapq2, attrs=attrs)
+        r2 = self._new_rec(name=name, chrom=chrom2, start=start2, mapq=mapq2, attrs=attrs)
         self._set_flags(r2, read_num=2, strand=strand2)
         self._set_length_dependent_fields(
             rec=r2, length=self.r2_len, bases=bases2, quals=quals2, cigar=cigar2

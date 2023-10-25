@@ -188,10 +188,10 @@ NO_REF_POS: int = -1
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
-_STDIN_PATHS = ["-", "stdin", "/dev/stdin"]
+_STDIN_PATHS: List[str] = ["-", "stdin", "/dev/stdin"]
 """Paths that should be opened as stdin."""
 
-_STDOUT_PATHS = ["-", "stdout", "/dev/stdout"]
+_STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
 """Paths that should be opened as stdout."""
 
 

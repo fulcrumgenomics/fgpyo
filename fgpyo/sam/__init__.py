@@ -152,6 +152,7 @@ The module contains the following methods:
 
 import enum
 import io
+import sys
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -186,6 +187,12 @@ NO_REF_POS: int = -1
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
+
+_STDIN_PATHS = ["-", "stdin", "/dev/stdin"]
+"""Paths that should be opened as stdin."""
+
+_STDOUT_PATHS = ["-", "stdout", "/dev/stdout"]
+"""Paths that should be opened as stdout."""
 
 
 @enum.unique
@@ -238,7 +245,12 @@ def _pysam_open(
         :class:`~pysam.AlignmentFile`; may not include "mode".
     """
 
-    if isinstance(path, (str, Path)):  # type: ignore
+    if isinstance(path, str) and open_for_reading and path in _STDIN_PATHS:
+        path = sys.stdin
+    elif isinstance(path, str) and not open_for_reading and path in _STDOUT_PATHS:
+        file_type = SamFileType.SAM if file_type is None else file_type
+        path = sys.stdout
+    elif isinstance(path, (str, Path)):  # type: ignore
         file_type = file_type or SamFileType.from_path(path)
         path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore

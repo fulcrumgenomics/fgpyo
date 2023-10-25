@@ -245,14 +245,15 @@ def _pysam_open(
         :class:`~pysam.AlignmentFile`; may not include "mode".
     """
 
-    if isinstance(path, str) and open_for_reading and path in _STDIN_PATHS:
-        path = sys.stdin
-    elif isinstance(path, str) and not open_for_reading and path in _STDOUT_PATHS:
-        file_type = SamFileType.SAM if file_type is None else file_type
-        path = sys.stdout
-    elif isinstance(path, (str, Path)):  # type: ignore
-        file_type = file_type or SamFileType.from_path(path)
-        path = str(path)
+    if isinstance(path, (str, Path)):  # type: ignore
+        if str(path) in _STDIN_PATHS and open_for_reading:
+            path = sys.stdin
+        elif str(path) in _STDOUT_PATHS and not open_for_reading:
+            assert file_type is not None, "Must specify file_type when writing to stdout"
+            path = sys.stdout
+        else:
+            file_type = file_type or SamFileType.from_path(path)
+            path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")

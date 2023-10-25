@@ -153,6 +153,7 @@ The module contains the following methods:
 
 import enum
 import io
+import sys
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -188,6 +189,12 @@ NO_REF_POS: int = -1
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
+
+_STDIN_PATHS: List[str] = ["-", "stdin", "/dev/stdin"]
+"""Paths that should be opened as stdin."""
+
+_STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
+"""Paths that should be opened as stdout."""
 
 
 @enum.unique
@@ -230,6 +237,12 @@ def _pysam_open(
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for reading or writing.
 
+    This function permits reading from standard input and writing to standard output. The specified
+    path may be the UNIX conventional `"-"`, the more explicit `"stdin"` or `"stdout"`, or an
+    absolute path to either of the standard streams `"/dev/stdin"` or `"/dev/stdout"`.
+
+    When writing to standard output, the file type must be specified.
+
     Args:
         path: a file handle or path to the SAM/BAM/CRAM to read or write.
         open_for_reading: True to open for reading, false otherwise.
@@ -241,8 +254,14 @@ def _pysam_open(
     """
 
     if isinstance(path, (str, Path)):  # type: ignore
-        file_type = file_type or SamFileType.from_path(path)
-        path = str(path)
+        if str(path) in _STDIN_PATHS and open_for_reading:
+            path = sys.stdin
+        elif str(path) in _STDOUT_PATHS and not open_for_reading:
+            assert file_type is not None, "Must specify file_type when writing to standard output"
+            path = sys.stdout
+        else:
+            file_type = file_type or SamFileType.from_path(path)
+            path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")
@@ -274,6 +293,9 @@ def reader(
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for reading.
 
+    To read from standard input, provide any of `"-"`, `"stdin"`, or `"/dev/stdin"` as the input
+    `path`.
+
     Args:
         path: a file handle or path to the SAM/BAM/CRAM to read or write.
         file_type: the file type to assume when opening the file.  If None, then the file
@@ -290,6 +312,9 @@ def writer(
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for writing.
 
+    To write to standard output, provide any of `"-"`, `"stdout"`, or `"/dev/stdout"` as the output
+    `path`. **Note**: When writing to `stdout`, the `file_type` _must_ be given.
+
     Args:
         path: a file handle or path to the SAM/BAM/CRAM to read or write.
         header: Either a string to use for the header or a multi-level dictionary.  The
@@ -297,8 +322,9 @@ def writer(
             types (‘HD’, ‘SQ’, ...). The second level are a list of lines, with each line being
             a list of tag-value pairs. The header is constructed first from all the defined
             fields, followed by user tags in alphabetical order.
-        file_type: the file type to assume when opening the file.  If None, then the
-            filetype will be auto-detected and must be a path-like object.
+        file_type: the file type to assume when opening the file.  If `None`, then the
+            filetype will be auto-detected and must be a path-like object. This argument is required
+            when writing to standard output.
     """
     # Set the header for pysam's AlignmentFile
     key = "text" if isinstance(header, str) else "header"

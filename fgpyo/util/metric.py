@@ -308,14 +308,12 @@ class Metric(ABC, Generic[MetricType]):
 
     @staticmethod
     def fast_concat(*inputs: Path, output: Path) -> None:
-        headers = []
-        for input_path in inputs:
-            header = next(io.read_lines(input_path))
-            headers.append(header)
+        if len(inputs) == 0:
+            raise ValueError("No inputs provided")
 
-        assert len(headers) > 0
-        assert len(set(headers)) == 1
-
+        headers = [next(io.read_lines(input_path)) for input_path in inputs]
+        assert len(set(headers)) == 1, "Input headers do not match"
         io.write_lines(path = output, lines_to_write = set(headers))
+
         for input_path in inputs:
             io.write_lines(path = output, lines_to_write = list(io.read_lines(input_path))[1:], append = True)

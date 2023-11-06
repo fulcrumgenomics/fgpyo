@@ -318,4 +318,4 @@ class Metric(ABC, Generic[MetricType]):
 
         io.write_lines(path = output, lines_to_write = set(headers))
         for input_path in inputs:
-            io.append_lines(path = output, lines_to_append = list(io.read_lines(input_path))[1:])
+            io.write_lines(path = output, lines_to_write = list(io.read_lines(input_path))[1:], append = True)

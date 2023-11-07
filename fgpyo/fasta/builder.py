@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     def samtools_faidx(*args: Any) -> None:
         pass
 
+
 else:
     from pysam import dict as samtools_dict
     from pysam import faidx as samtools_faidx

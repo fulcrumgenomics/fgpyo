@@ -305,3 +305,17 @@ class Metric(ABC, Generic[MetricType]):
     def to_list(cls, value: str) -> List[Any]:
         """Returns a list value split on comma delimeter."""
         return [] if value == "" else value.split(",")
+
+    @staticmethod
+    def fast_concat(*inputs: Path, output: Path) -> None:
+        if len(inputs) == 0:
+            raise ValueError("No inputs provided")
+
+        headers = [next(io.read_lines(input_path)) for input_path in inputs]
+        assert len(set(headers)) == 1, "Input headers do not match"
+        io.write_lines(path=output, lines_to_write=set(headers))
+
+        for input_path in inputs:
+            io.write_lines(
+                path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
+            )

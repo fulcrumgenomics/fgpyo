@@ -321,12 +321,13 @@ def test_metric_list_parse_with_none() -> None:
     )
 
 
-def test_metrics_fast_concat(tmpdir: TmpDir) -> None:
-    path_input = []
-    path_input.append(Path(tmpdir) / "metrics_1.txt")
-    path_input.append(Path(tmpdir) / "metrics_2.txt")
-    path_input.append(Path(tmpdir) / "metrics_3.txt")
-    path_output: Path = Path(tmpdir) / "metrics_concat.txt"
+def test_metrics_fast_concat(tmp_path: Path) -> None:
+    path_input = [
+        tmp_path / "metrics_1.txt",
+        tmp_path / "metrics_2.txt",
+        tmp_path / "metrics_3.txt",
+    ]
+    path_output: Path = tmp_path / "metrics_concat.txt"
 
     DummyMetric.write(path_input[0], DUMMY_METRICS[0])
     DummyMetric.write(path_input[1], DUMMY_METRICS[1])

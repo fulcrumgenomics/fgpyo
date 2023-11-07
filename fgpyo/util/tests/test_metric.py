@@ -318,6 +318,7 @@ def test_metric_list_parse_with_none() -> None:
         name=["Max", "Sally"], age=[None, None]
     )
 
+
 def test_metrics_fast_concat(tmpdir: TmpDir) -> None:
     path_input = []
     path_input.append(Path(tmpdir) / "metrics_1.txt")
@@ -329,7 +330,7 @@ def test_metrics_fast_concat(tmpdir: TmpDir) -> None:
     DummyMetric.write(path_input[1], DUMMY_METRICS[1])
     DummyMetric.write(path_input[2], DUMMY_METRICS[2])
 
-    Metric.fast_concat(*path_input, output = path_output)
+    Metric.fast_concat(*path_input, output=path_output)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path_output))
 
     assert len(metrics) == len(DUMMY_METRICS)

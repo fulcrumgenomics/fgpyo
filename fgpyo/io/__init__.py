@@ -136,9 +136,9 @@ def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
         reader.close()
     """
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
-        return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode = "rb")), encoding = "utf-8")
+        return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="rb")), encoding="utf-8")
     else:
-        return path.open(mode = "r")
+        return path.open(mode="r")
 
 
 def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapper]:
@@ -157,9 +157,11 @@ def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapp
         mode_prefix = "a"
 
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
-        return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode = mode_prefix + "b")), encoding = "utf-8")
+        return io.TextIOWrapper(
+            cast(IO[bytes], gzip.open(path, mode=mode_prefix + "b")), encoding="utf-8"
+        )
     else:
-        return path.open(mode = mode_prefix)
+        return path.open(mode=mode_prefix)
 
 
 def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
@@ -175,7 +177,7 @@ def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
     Example:
         read_back = fio.read_lines(path)
     """
-    with to_reader(path = path) as reader:
+    with to_reader(path=path) as reader:
         if strip:
             for line in reader:
                 yield line.strip()
@@ -196,7 +198,7 @@ def write_lines(path: Path, lines_to_write: Iterable[Any], append: bool = False)
         path_to_write_to: Path = Path("file_to_write_to.txt")
         fio.write_lines(path = path_to_write_to, lines_to_write = lines)
     """
-    with to_writer(path = path, append = append) as writer:
+    with to_writer(path=path, append=append) as writer:
         for line in lines_to_write:
             writer.write(str(line))
             writer.write("\n")

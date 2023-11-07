@@ -530,7 +530,6 @@ class SamBuilder:
                 path = Path(fp.name)
 
         with NamedTemporaryFile(suffix=".bam", delete=True) as fp:
-
             with sam.writer(
                 fp.file, header=self._samheader, file_type=sam.SamFileType.BAM  # type: ignore
             ) as writer:

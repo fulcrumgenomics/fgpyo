@@ -313,7 +313,9 @@ class Metric(ABC, Generic[MetricType]):
 
         headers = [next(io.read_lines(input_path)) for input_path in inputs]
         assert len(set(headers)) == 1, "Input headers do not match"
-        io.write_lines(path = output, lines_to_write = set(headers))
+        io.write_lines(path=output, lines_to_write=set(headers))
 
         for input_path in inputs:
-            io.write_lines(path = output, lines_to_write = list(io.read_lines(input_path))[1:], append = True)
+            io.write_lines(
+                path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
+            )

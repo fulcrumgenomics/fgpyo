@@ -136,6 +136,7 @@ The module contains the following public classes:
     - :class:`~fgpyo.sam.SupplementaryAlignment` -- Stores a supplementary alignment record
         produced by BWA and stored in the SA SAM tag.
     - :class:`~fgpyo.sam.SamFileType` -- Enumeration of valid SAM/BAM/CRAM file types.
+    - :class:`~fgpyo.sam.SamOrder` -- Enumeration of possible SAM/BAM/CRAM sort orders.
     - :class:`~fgpyo.sam.CigarOp` -- Enumeration of operators that can appear in a Cigar string.
     - :class:`~fgpyo.sam.CigarElement` -- Class representing an element in a Cigar string.
     - :class:`~fgpyo.sam.CigarParsingException` -- The exception raised specific to parsing a
@@ -899,3 +900,14 @@ class TemplateIterator(Iterator[Template]):
         name = self._iter.peek().query_name
         recs = self._iter.takewhile(lambda r: r.query_name == name)
         return Template.build(recs, validate=False)
+
+
+class SamOrder(enum.Enum):
+    """
+    Enumerations of possible sort orders for a SAM file.
+    """
+
+    Unsorted = "unsorted"  #: the SAM / BAM / CRAM is unsorted
+    Coordinate = "coordinate"  #: coordinate sorted
+    QueryName = "queryname"  #: queryname sorted
+    Unknown = "unknown"  # Unknown SAM / BAM / CRAM sort order

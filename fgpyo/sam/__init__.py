@@ -912,3 +912,5 @@ class SamOrder(enum.Enum):
     Coordinate = "coordinate"  #: coordinate sorted
     QueryName = "queryname"  #: queryname sorted
     Unknown = "unknown"  # Unknown SAM / BAM / CRAM sort order
+    # Sort by template-coordinate, SO is unsorted, GO is query, SS is template-coordinate:
+    TemplateCoordinate = "unsorted"

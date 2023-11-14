@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 from typing import Optional
 
-import bgzip
+import pysam
 import pytest
 from pysam.utils import SamtoolsError
 
@@ -65,7 +65,7 @@ def test_dict_produces_sequence_dict(
 ) -> None:
     output_access = tmp_path / "example.dict"
     assert not output_access.exists()
-    samtools.dict(input=example_dict_fasta, output=output_access, uri="consistent_location")
+    samtools.dict(fasta_file=example_dict_fasta, output=output_access, uri="consistent_location")
     assert output_access.exists()
 
     output_contents: str
@@ -82,7 +82,10 @@ def test_dict_no_header_works(
     output_access = tmp_path / "example.dict"
     assert not output_access.exists()
     samtools.dict(
-        input=example_dict_fasta, output=output_access, no_header=True, uri="consistent_location"
+        fasta_file=example_dict_fasta,
+        output=output_access,
+        no_header=True,
+        uri="consistent_location",
     )
     assert output_access.exists()
 
@@ -117,7 +120,7 @@ def test_dict_other_tags_work(
     output_access = tmp_path / "example.dict"
     assert not output_access.exists()
     samtools.dict(
-        input=example_dict_fasta,
+        fasta_file=example_dict_fasta,
         output=output_access,
         alias=True,
         assembly="test1",
@@ -177,13 +180,13 @@ def test_faidx_produces_functional_index(
 
     # Make sure we're producing the index
     assert not output_index_expected.exists()
-    samtools.faidx(input=example_faidx_fasta)
+    samtools.faidx(sequence_file=example_faidx_fasta)
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta, output=output_access, regions=["chr1:1-7", "chr2:8-13"]
+        sequence_file=example_faidx_fasta, output=output_access, regions=["chr1:1-7", "chr2:8-13"]
     )
 
     output_contents: str
@@ -202,13 +205,15 @@ def test_faidx_fails_if_non_existent_region_requested(
 
         # Make sure we're producing the index
         assert not output_index_expected.exists()
-        samtools.faidx(input=example_faidx_fasta)
+        samtools.faidx(sequence_file=example_faidx_fasta)
         assert output_index_expected.exists()
 
         output_access = tmp_path / "output_subset.fa"
         # Make sure the index is functional
         samtools.faidx(
-            input=example_faidx_fasta, output=output_access, regions=["chr3:1-4", "chr1:1-7"]
+            sequence_file=example_faidx_fasta,
+            output=output_access,
+            regions=["chr3:1-4", "chr1:1-7"],
         )
 
 
@@ -219,12 +224,12 @@ def test_faidx_passes_if_non_existent_region_requested_when_continue_passed(
     output_index_expected = Path(f"{example_faidx_fasta}.fai")
 
     assert not output_index_expected.exists()
-    samtools.faidx(input=example_faidx_fasta)
+    samtools.faidx(sequence_file=example_faidx_fasta)
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         continue_if_non_existent=True,
         regions=["chr3:1-4", "chr1:1-7"],
@@ -239,7 +244,7 @@ def test_faidx_regions_and_regions_file_result_in_same_thing(
 
     # Make sure we're producing the index
     assert not output_index_expected.exists()
-    samtools.faidx(input=example_faidx_fasta)
+    samtools.faidx(sequence_file=example_faidx_fasta)
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
@@ -251,13 +256,15 @@ def test_faidx_regions_and_regions_file_result_in_same_thing(
     with region_file.open("w") as region_fh:
         region_fh.writelines([f"{region}\n" for region in regions])
 
-    samtools.faidx(input=example_faidx_fasta, output=output_access, regions=regions)
+    samtools.faidx(sequence_file=example_faidx_fasta, output=output_access, regions=regions)
 
     manually_passed_output_contents: str
     with output_access.open("r") as subset_fasta:
         manually_passed_output_contents = subset_fasta.read()
 
-    samtools.faidx(input=example_faidx_fasta, output=output_access, region_file=region_file)
+    samtools.faidx(
+        sequence_file=example_faidx_fasta, output=output_access, region_file=region_file
+    )
 
     file_passed_output_contents: str
     with output_access.open("r") as subset_fasta:
@@ -275,14 +282,14 @@ def test_length_parameter(
     # Make sure we're producing the index
     assert not output_index_expected.exists()
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
     )
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         regions=["chr1:1-7", "chr2:8-13"],
         length=5,
@@ -312,14 +319,14 @@ def test_rc_parameter(
     # Make sure we're producing the index
     assert not output_index_expected.exists()
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
     )
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         reverse_complement=True,
         regions=["chr1:1-7", "chr2:8-13"],
@@ -355,14 +362,14 @@ def test_mark_strand_parameters(
     # Make sure we're producing the index
     assert not output_index_expected.exists()
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
     )
     assert output_index_expected.exists()
 
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         reverse_complement=False,
         mark_strand=mark_strand,
@@ -376,7 +383,7 @@ def test_mark_strand_parameters(
     assert output_contents == SUBSET_FASTA_TEMPLATE.format(mark_strand=expected_fwd_mark_strand)
 
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         reverse_complement=True,
         mark_strand=mark_strand,
@@ -432,7 +439,7 @@ def test_fastq_parameter(
     # Make sure we're producing the index
     assert not output_index_expected.exists()
     samtools.faidx(
-        input=example_fastq,
+        sequence_file=example_fastq,
         fastq=True,
     )
     assert output_index_expected.exists()
@@ -440,7 +447,7 @@ def test_fastq_parameter(
     output_access = tmp_path / "output_subset.fq"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_fastq,
+        sequence_file=example_fastq,
         output=output_access,
         regions=["chr1:1-7", "chr2:8-13"],
         fastq=True,
@@ -457,9 +464,8 @@ def test_fastq_parameter(
 def example_faidx_fasta_gz(tmp_path: Path) -> Path:
     outfile = tmp_path / "example.fa.gz"
 
-    with outfile.open(mode="wb") as out_fh:
-        with bgzip.BGZipWriter(out_fh) as fh:
-            fh.write(bytes(EXAMPLE_FAIDX_FASTA, "Utf-8"))
+    with pysam.BGZFile(f"{outfile}", mode="wb", index=None) as fh:
+        fh.write(bytes(EXAMPLE_FAIDX_FASTA, "Utf-8"))
 
     return outfile
 
@@ -474,7 +480,7 @@ def test_index_outputs(
     # Make sure we're producing the index
     assert not example_fai.exists()
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         fai_idx=example_fai,
     )
     assert example_fai.exists()
@@ -482,7 +488,7 @@ def test_index_outputs(
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         regions=["chr1:1-7", "chr2:8-13"],
         fai_idx=example_fai,
@@ -496,7 +502,7 @@ def test_index_outputs(
     example_gzi = Path(f"{example_faidx_fasta_gz}.gzi")
     assert not example_gzi.exists()
     samtools.faidx(
-        input=example_faidx_fasta_gz,
+        sequence_file=example_faidx_fasta_gz,
         gzi_idx=example_gzi,
     )
     assert example_gzi.exists()
@@ -504,7 +510,7 @@ def test_index_outputs(
     output_access = tmp_path / "output_subset.fa"
     # Make sure the index is functional
     samtools.faidx(
-        input=example_faidx_fasta,
+        sequence_file=example_faidx_fasta,
         output=output_access,
         regions=["chr1:1-7", "chr2:8-13"],
         gzi_idx=example_gzi,
@@ -537,7 +543,7 @@ def test_index_works_with_one_input(
     builder.add_pair(name="test3", chrom="chr2", start1=4000, start2=4300)
     builder.add_pair(name="test4", chrom="chr5", start1=4000, start2=4300)
 
-    # At the moment sam builder doesnt support generating CRAM and SAM formats, so for now we're
+    # At the moment sam builder doesn't support generating CRAM and SAM formats, so for now we're
     # only testing on BAMs
     input_file = tmp_path / "test_input.bam"
     builder.to_path(input_file)
@@ -547,53 +553,51 @@ def test_index_works_with_one_input(
     # Make sure we're producing the index
     assert not output_index_expected.exists()
     # samtools.index(inputs=[input_file], index_type=index_type)
-    samtools.index(input=input_file, index_type=index_type)
+    samtools.index(alignment_file=input_file, index_type=index_type)
     assert output_index_expected.exists()
 
 
-# Can't accept multiple inputs at the moment.
-# See https://github.com/pysam-developers/pysam/issues/1155
-# @pytest.mark.parametrize(
-#     argnames=["index_type"],
-#     argvalues=[
-#         (SamIndexType.BAI,),
-#         (SamIndexType.CSI,),
-#     ],
-#     ids=["BAI", "CSI"],
-# )
-# def test_index_works_with_multiple_inputs(
-#     tmp_path: Path,
-#     index_type: SamIndexType,
-# ) -> None:
-#     builder = SamBuilder(sort_order=SamOrder.Coordinate)
-#     builder.add_pair(name="test1", chrom="chr1", start1=4000, start2=4300)
-#     builder.add_pair(
-#         name="test2", chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+"
-#     )
-#     builder.add_pair(name="test3", chrom="chr2", start1=4000, start2=4300)
-#     builder.add_pair(name="test4", chrom="chr5", start1=4000, start2=4300)
+@pytest.mark.parametrize(
+    argnames=["index_type"],
+    argvalues=[
+        (SamIndexType.BAI,),
+        (SamIndexType.CSI,),
+    ],
+    ids=["BAI", "CSI"],
+)
+def test_index_works_with_multiple_inputs(
+    tmp_path: Path,
+    index_type: SamIndexType,
+) -> None:
+    builder = SamBuilder(sort_order=SamOrder.Coordinate)
+    builder.add_pair(name="test1", chrom="chr1", start1=4000, start2=4300)
+    builder.add_pair(
+        name="test2", chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+"
+    )
+    builder.add_pair(name="test3", chrom="chr2", start1=4000, start2=4300)
+    builder.add_pair(name="test4", chrom="chr5", start1=4000, start2=4300)
 
-#     # At the moment sam builder doesnt support generating CRAM and SAM formats, so for now we're
-#     # only testing on BAMs
-#     input_file1 = tmp_path / "test_input1.bam"
-#     builder.to_path(input_file1)
-#     input_file2 = tmp_path / "test_input2.bam"
-#     builder.to_path(input_file2)
+    # At the moment sam builder doesn't support generating CRAM and SAM formats, so for now we're
+    # only testing on BAMs
+    input_file1 = tmp_path / "test_input1.bam"
+    builder.to_path(input_file1)
+    input_file2 = tmp_path / "test_input2.bam"
+    builder.to_path(input_file2)
 
-#     inputs = [
-#         input_file1,
-#         input_file2,
-#     ]
+    inputs = [
+        input_file1,
+        input_file2,
+    ]
 
-#     # Make sure we're producing the indices
-#     for input in inputs:
-#         output_index_expected = Path(f"{input}.{index_type._name_.lower()}")
-#         assert not output_index_expected.exists()
+    # Make sure we're producing the indices
+    for alignment_file in inputs:
+        output_index_expected = Path(f"{alignment_file}.{index_type._name_.lower()}")
+        assert not output_index_expected.exists()
 
-#     samtools.index(inputs=inputs, index_type=index_type)
-#     for input in inputs:
-#         output_index_expected = Path(f"{input}.{index_type._name_.lower()}")
-#         assert output_index_expected.exists()
+    samtools.index(alignment_file=inputs, index_type=index_type)
+    for alignment_file in inputs:
+        output_index_expected = Path(f"{alignment_file}.{index_type._name_.lower()}")
+        assert output_index_expected.exists()
 
 
 @pytest.mark.parametrize(
@@ -629,7 +633,6 @@ def test_sort_types(
     sort_order: Optional[SamOrder],
     expected_name_order: List[str],
 ) -> None:
-
     builder = SamBuilder(sort_order=SamOrder.Unsorted)
     builder.add_pair(
         name="test3", chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+"
@@ -644,7 +647,7 @@ def test_sort_types(
     builder.to_path(input_file)
 
     samtools.sort(
-        input=input_file,
+        alignment_file=input_file,
         output=output_file,
         index_output=index_output,
         sort_order=sort_order,

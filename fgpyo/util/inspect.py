@@ -1,3 +1,4 @@
+import sys
 from typing import Any
 from typing import Dict
 from typing import List
@@ -5,9 +6,9 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-try:  # py>=38
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:  # py<38
+else:
     from typing_extensions import Literal
 
 import functools

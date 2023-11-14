@@ -137,6 +137,11 @@ class SamBuilder:
             "SQ": (sd if sd is not None else SamBuilder.default_sd()),
             "RG": [(rg if rg is not None else SamBuilder.default_rg())],
         }
+        if sort_order == SamOrder.TemplateCoordinate:
+            self._header["HD"] = {
+                **self._header["HD"],
+                **{"GO": "query", "SS": "template-coordinate"},
+            }
         if extra_header is not None:
             self._header = {**self._header, **extra_header}
         self._samheader = AlignmentHeader.from_dict(self._header)
@@ -592,7 +597,7 @@ class SamBuilder:
             file_handle.close()
             if self._sort_order not in {SamOrder.Unsorted, SamOrder.Unknown}:
                 samtools.sort(
-                    input=Path(fp.name),
+                    alignment_file=Path(fp.name),
                     output=path,
                     index_output=index,
                     sort_order=self._sort_order,

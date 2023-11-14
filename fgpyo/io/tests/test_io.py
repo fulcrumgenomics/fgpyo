@@ -86,8 +86,8 @@ def test_assert_path_is_writeable_pass() -> None:
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", io._io.TextIOWrapper),
-        (".fa", io._io.TextIOWrapper),
+        (".gz", io.TextIOWrapper),
+        (".fa", io.TextIOWrapper),
     ],
 )
 def test_reader(
@@ -103,8 +103,8 @@ def test_reader(
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", io._io.TextIOWrapper),
-        (".fa", io._io.TextIOWrapper),
+        (".gz", io.TextIOWrapper),
+        (".fa", io.TextIOWrapper),
     ],
 )
 def test_writer(

@@ -44,6 +44,7 @@ if [[ "$1" == "--check" ]]; then
 fi
 
 banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory ${root}"
+run "Checking poetry" "poetry check"
 run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
 run "Import Sorting" "isort --force-single-line-imports --profile black fgpyo"
 run "Style Checking" "black --line-length 99 $black_extra_args fgpyo"

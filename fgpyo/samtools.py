@@ -11,9 +11,9 @@ Examples
    >>> from fgpyo import samtools
    >>> Path("example1.sorted.bam.bai").exists()
    False
-   >>> samtools.sort(input=Path("example1.bam"), output=Path("example1.sorted.bam"))
+   >>> samtools.sort(alignment_file=Path("example1.bam"), output=Path("example1.sorted.bam"))
    ''
-   >>> samtools.index(input=Path("example1.sorted.bam"))
+   >>> samtools.index(alignment_file=Path("example1.sorted.bam"))
    ''
    >>> Path("example1.sorted.bam.bai").exists()
    True
@@ -35,7 +35,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
+from typing import Union
 
 from fgpyo.sam import SamFileType
 from fgpyo.sam import SamOrder
@@ -61,7 +63,7 @@ else:
 
 
 def dict(
-    input: Path,
+    fasta_file: Path,
     output: Path,
     no_header: bool = False,
     alias: bool = False,
@@ -72,6 +74,7 @@ def dict(
 ) -> str:
     """
     Calls the `samtools` function `dict` using the pysam samtools dispatcher.
+    Create a dictionary file from an input FASTA file.
 
     Arguments will be formatted into the appropriate command-line call which will be invoked
     using the pysam dispatcher.
@@ -79,7 +82,7 @@ def dict(
     Returns the stdout of the resulting call to pysam.dict()
 
     Args:
-        input: Path to the FASTA files to generate a sequence dictionary for.
+        fasta_file: Path to the FASTA files to generate a sequence dictionary for.
         output: Path to the file to write output to.
         no_header: If true will not print the @HD header line.
         assembly: The assembly for the AS tag.
@@ -114,7 +117,7 @@ def dict(
     if uri is not None:
         args.extend(["--uri", uri])
 
-    args.append(str(input))
+    args.append(str(fasta_file))
 
     return _pysam_dict(*args)
 
@@ -128,7 +131,7 @@ class FaidxMarkStrand(enum.Enum):
 
 
 def faidx(
-    input: Path,
+    sequence_file: Path,
     output: Optional[Path] = None,
     length: int = 60,
     regions: Optional[List[str]] = None,
@@ -143,6 +146,7 @@ def faidx(
 ) -> str:
     """
     Calls the `samtools` function `faidx` using the pysam samtools dispatcher.
+    Index an input FASTA or FASTQ file.
 
     Arguments will be formatted into the appropriate command-line call which will be invoked
     using the pysam dispatcher.
@@ -150,8 +154,8 @@ def faidx(
     Returns the stdout of the resulting call to pysam.faidx()
 
     Args:
-        input: Path to the FAIDX files to index / read from.
-        output: Path to the file to write FASTA output.
+        sequence_file: Path to the FASTA/FASTQ file to index.
+        output: Path to the file to write output index file.
         length: Length of FASTA sequence line.
         regions: regions to extract from the FASTA file in samtools region format
             (<chrom>:<1-based start>-<1-based end>)
@@ -159,7 +163,7 @@ def faidx(
             region format (<chrom>:<1-based start>-<1-based end>). 1 region descriptor per line.
         fai_idx: Read/Write to specified FAI index file.
         gzi_idx: Read/Write to specified compressed file index (used with .gz files).
-        continue_if_non_existent: If true continue qorking if a non-existent region is requested.
+        continue_if_non_existent: If true continue working if a non-existent region is requested.
         fastq: Read FASTQ files and output extracted sequences in FASTQ format. Same as using
             samtools fqidx.
         reverse_complement: Output the sequence as the reverse complement. When this option is
@@ -215,7 +219,7 @@ def faidx(
     if region_file is not None:
         args.extend(["--region-file", str(region_file)])
 
-    args.append(str(input))
+    args.append(str(sequence_file))
 
     if regions is not None:
         args.extend(regions)
@@ -230,9 +234,7 @@ class SamIndexType(enum.Enum):
 
 
 def index(
-    input: Path,
-    # See https://github.com/pysam-developers/pysam/issues/1155
-    # inputs: List[Path], Cant currently accept multiple
+    alignment_file: Union[Path, Sequence[Path]],
     output: Optional[Path] = None,
     threads: int = 0,
     index_type: SamIndexType = SamIndexType.BAI,
@@ -247,7 +249,7 @@ def index(
     Returns the stdout of the resulting call to pysam.index()
 
     Args:
-        input: Path to the SAM/BAM/CRAM file to index.
+        alignment_file: Path to the SAM/BAM/CRAM file to index.
         output: Path to the file to write output. (Currently may only be used when exactly one
             alignment file is being indexed.)
         threads: Number of input/output compression threads to use in addition to main thread.
@@ -255,16 +257,12 @@ def index(
         csi_index_size: Sets the minimum interval size of CSI indices to 2^INT.
     """
 
-    # assert len(inputs) >= 1, "Must provide at least one input to samtools index."
+    if isinstance(alignment_file, Path):
+        alignment_file = [alignment_file]
+    if output is not None and len(alignment_file) != 1:
+        raise ValueError("Only one output may be specified, for indexing only one alignment file")
 
-    # if len(inputs) != 1:
-    #     assert (
-    #         output is None
-    #     ), "Output currently can only be used if there is exactly one input file being indexed"
-    #     args = ["-M"]
-    # else:
-    #     args = []
-    args = []
+    args = [] if len(alignment_file) == 1 else ["-M"]
 
     if index_type != SamIndexType.BAI:
         args.append(index_type.value)
@@ -272,7 +270,7 @@ def index(
     if index_type == SamIndexType.CSI:
         args.extend(["-m", str(csi_index_size)])
     args.extend(["-@", str(threads)])
-    args.append(str(input))
+    args.extend(f"{input_path}" for input_path in alignment_file)
     if output is not None:
         args.extend(["-o", str(output)])
 
@@ -280,7 +278,7 @@ def index(
 
 
 def sort(
-    input: Path,
+    alignment_file: Path,
     output: Path,
     index_output: bool = True,
     sort_unmapped_reads: bool = False,
@@ -303,7 +301,7 @@ def sort(
     Returns the stdout of the resulting call to pysam.sort()
 
     Args:
-        input: Path to the SAM/BAM/CRAM file to sort.
+        alignment_file: Path to the SAM/BAM/CRAM file to sort.
         output: Path to the file to write output.
         index_output: If true, creates an index for the output file.
         sort_unmapped_reads: If true, sort unmapped reads by their sequence minimizer, reverse
@@ -372,6 +370,6 @@ def sort(
     if no_pg:
         args.append("--no-PG")
 
-    args.extend(["-o", output_string, str(input)])
+    args.extend(["-o", output_string, str(alignment_file)])
 
     return _pysam_sort(*args)

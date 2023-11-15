@@ -1,5 +1,6 @@
 import collections
 import inspect
+import sys
 import typing
 from enum import Enum
 from functools import partial
@@ -9,20 +10,19 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
-
-
 # `get_origin_type` is a method that gets the outer type (ex list in a List[str])
-if hasattr(typing, "get_origin"):  # py>=38
+# `get_arg_types` is a method that gets the inner type (ex str in a List[str])
+if sys.version_info >= (3, 8):
+    from typing import Literal
+
     get_origin_type = typing.get_origin
-else:  # py<38
+    get_arg_types = typing.get_args
+else:
+    import typing_inspect
+    from typing_extensions import Literal
 
     def get_origin_type(tp: Type) -> Type:
         """Returns the outer type of a Typing object (ex list in a List[T])"""
-        import typing_inspect
 
         if type(tp) is type(Literal):  # Py<=3.6.
             return Literal
@@ -37,15 +37,8 @@ else:  # py<38
             typing.Dict: dict,
         }.get(origin, origin)
 
-
-# `get_origin_type` is a method that gets the inner type (ex str in a List[str])
-if hasattr(typing, "get_args"):  # py>=38
-    get_arg_types = typing.get_args
-else:  # py<38
-
     def get_arg_types(tp: Type) -> Type:
         """Gets the inner types of a Typing object (ex T in a List[T])"""
-        import typing_inspect
 
         if type(tp) is type(Literal):  # Py<=3.6.
             return tp.__values__
@@ -122,7 +115,7 @@ def _make_union_parser_worker(
     union: Type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
-) -> T:
+) -> UnionType:
     """Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise raises an error if none
     work"""

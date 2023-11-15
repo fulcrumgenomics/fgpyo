@@ -137,7 +137,7 @@ class Metric(ABC, Generic[MetricType]):
         """An iterator over attribute values in the same order as the header."""
         return iter(attr.astuple(self, recurse=False))
 
-    def formatted_values(self) -> Iterator[str]:
+    def formatted_values(self) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [self.format_value(value) for value in self.values()]
 
@@ -226,7 +226,7 @@ class Metric(ABC, Generic[MetricType]):
         return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType) -> None:
+    def write(cls, path: Path, *values: "Metric") -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.

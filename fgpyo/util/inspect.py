@@ -1,14 +1,20 @@
+import sys
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Tuple
 from typing import Type
 from typing import Union
 
-try:  # py>=38
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:  # py<38
+else:
     from typing_extensions import Literal
+if sys.version_info >= (3, 12):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 import functools
 from enum import Enum
@@ -29,8 +35,8 @@ class ParserNotFoundException(Exception):
 def split_at_given_level(
     field: str,
     split_delim: str = ",",
-    increase_depth_chars: List[str] = ["{", "(", "["],
-    decrease_depth_chars: List[str] = ["}", ")", "]"],
+    increase_depth_chars: Iterable[str] = ("{", "(", "["),
+    decrease_depth_chars: Iterable[str] = ("}", ")", "]"),
 ) -> List[str]:
     """
     Splits a nested field by its outer-most level
@@ -65,7 +71,7 @@ def split_at_given_level(
 
 
 def _get_parser(
-    cls: Type, type_: Type, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -114,14 +120,13 @@ def _get_parser(
                     subtypes[0],
                     parsers,
                 )
-                origin_type = types.get_origin_type(type_)
                 return functools.partial(
-                    lambda s: origin_type(
+                    lambda s: list(
                         []
                         if s == ""
                         else [
                             subtype_parser(item)
-                            for item in origin_type(split_at_given_level(s, split_delim=","))
+                            for item in list(split_at_given_level(s, split_delim=","))
                         ]
                     )
                 )
@@ -135,14 +140,13 @@ def _get_parser(
                     subtypes[0],
                     parsers,
                 )
-                origin_type = types.get_origin_type(type_)
                 return functools.partial(
-                    lambda s: origin_type(
+                    lambda s: set(
                         set({})
                         if s == "{}"
                         else [
                             subtype_parser(item)
-                            for item in origin_type(split_at_given_level(s[1:-1], split_delim=","))
+                            for item in set(split_at_given_level(s[1:-1], split_delim=","))
                         ]
                     )
                 )
@@ -155,7 +159,6 @@ def _get_parser(
                     )
                     for subtype in types.get_arg_types(type_)
                 ]
-                origin_type = types.get_origin_type(type_)
 
                 def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
                     """
@@ -247,7 +250,7 @@ def _get_parser(
     # Set the name that the user expects to see in error messages (we always
     # return a temporary partial object so it's safe to set its __name__).
     # Unions and Literals don't have a __name__, but their str is fine.
-    parser.__name__ = getattr(type_, "__name__", str(type_))
+    setattr(parser, "__name__", getattr(type_, "__name__", str(type_)))
     return parser
 
 

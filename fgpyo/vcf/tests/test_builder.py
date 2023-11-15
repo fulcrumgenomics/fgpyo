@@ -5,6 +5,7 @@ from types import MappingProxyType
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Mapping
 from typing import Tuple
 
@@ -33,7 +34,7 @@ def sequence_dict() -> Dict[str, Dict[str, Any]]:
 
 def _get_random_contig(
     random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
-) -> (str, int):
+) -> Tuple[str, int]:
     """Randomly select a contig from the sequence dictionary and return its name and length."""
     contig = random_generator.choice(list(sequence_dict.values()))
     return contig["ID"], contig["length"]
@@ -102,7 +103,7 @@ def _get_random_variant_inputs(
 @pytest.fixture(scope="function")
 def zero_sample_record_inputs(
     random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
-) -> Tuple[Mapping[str, Any]]:
+) -> Tuple[Mapping[str, Any], ...]:
     """
     Fixture with inputs to create test Variant records for zero-sample VCFs (no genotypes).
     Make them MappingProxyType so that they are immutable.
@@ -174,7 +175,7 @@ def test_minimal_inputs() -> None:
 
 def test_sort_order(random_generator: random.Random) -> None:
     """Test if the VariantBuilder sorts the Variant records in the correct order."""
-    sorted_inputs = [
+    sorted_inputs: List[Dict[str, Any]] = [
         {"contig": "chr1", "pos": 100},
         {"contig": "chr1", "pos": 500},
         {"contig": "chr2", "pos": 1000},
@@ -183,7 +184,9 @@ def test_sort_order(random_generator: random.Random) -> None:
         {"contig": "chr10", "pos": 20},
         {"contig": "chr11", "pos": 5},
     ]
-    scrambled_inputs = random_generator.sample(sorted_inputs, k=len(sorted_inputs))
+    scrambled_inputs: List[Dict[str, Any]] = random_generator.sample(
+        sorted_inputs, k=len(sorted_inputs)
+    )
     assert scrambled_inputs != sorted_inputs  # there should be something to actually sort
     variant_builder = VariantBuilder()
     for record_input in scrambled_inputs:
@@ -223,7 +226,7 @@ def _get_is_compressed(input_file: Path) -> bool:
 @pytest.mark.parametrize("compress", (True, False))
 def test_zero_sample_vcf_round_trip(
     temp_path: Path,
-    zero_sample_record_inputs,
+    zero_sample_record_inputs: Tuple[Mapping[str, Any], ...],
     compress: bool,
 ) -> None:
     """

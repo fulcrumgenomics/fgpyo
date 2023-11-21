@@ -386,7 +386,7 @@ class CigarOp(enum.Enum):
         return self == CigarOp.S or self == CigarOp.H
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class CigarElement:
     """Represents an element in a Cigar
 
@@ -395,14 +395,13 @@ class CigarElement:
         - operator (CigarOp): the operator of the element
     """
 
-    length: int = attr.ib()
-    operator: CigarOp = attr.ib()
+    length: int
+    operator: CigarOp
 
-    @length.validator
-    def _validate_length(self, attribute: Any, value: int) -> None:
+    def __attrs_post_init__(self) -> None:
         """Validates the length attribute is greater than zero."""
-        if value <= 0:
-            raise ValueError(f"Cigar element must have a length > 0, found {value}")
+        if self.length <= 0:
+            raise ValueError(f"Cigar element must have a length > 0, found {self.length}")
 
     @property
     def length_on_query(self) -> int:
@@ -424,7 +423,7 @@ class CigarParsingException(Exception):
     pass
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class Cigar:
     """Class representing a cigar string.
 
@@ -432,7 +431,7 @@ class Cigar:
         - elements (Tuple[CigarElement, ...]): zero or more cigar elements
     """
 
-    elements: Tuple[CigarElement, ...] = attr.ib(default=())
+    elements: Tuple[CigarElement, ...] = ()
 
     @classmethod
     def from_cigartuples(cls, cigartuples: Optional[List[Tuple[int, int]]]) -> "Cigar":
@@ -519,7 +518,7 @@ class Cigar:
         return sum([elem.length_on_target for elem in self.elements])
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(frozen=True, auto_attribs=True)
 class SupplementaryAlignment:
     """Stores a supplementary alignment record produced by BWA and stored in the SA SAM tag.
 
@@ -532,12 +531,12 @@ class SupplementaryAlignment:
         nm: the number of edits
     """
 
-    reference_name: str = attr.ib()
-    start: int = attr.ib()
-    is_forward: bool = attr.ib()
-    cigar: Cigar = attr.ib()
-    mapq: int = attr.ib()
-    nm: int = attr.ib()
+    reference_name: str
+    start: int
+    is_forward: bool
+    cigar: Cigar
+    mapq: int
+    nm: int
 
     def __str__(self) -> str:
         return ",".join(
@@ -639,7 +638,7 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     r2.template_length = -insert_size
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(frozen=True, auto_attribs=True)
 class ReadEditInfo:
     """
     Counts various stats about how a read compares to a reference sequence.
@@ -728,7 +727,7 @@ def calculate_edit_info(
     )
 
 
-@attr.s(auto_attribs=True, frozen=True)
+@attr.s(frozen=True, auto_attribs=True)
 class Template:
     """A container for alignment records corresponding to a single sequenced template
     or insert.

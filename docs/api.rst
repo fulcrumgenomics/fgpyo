@@ -51,6 +51,9 @@ Metric files
 
 .. seealso::
 
+   https://docs.python.org/3/library/dataclasses.html
+       Documentation for the dataclasses standard module
+
    https://www.attrs.org/en/stable/examples.html
 
        The attrs website for bringing back the joy to writing classes.

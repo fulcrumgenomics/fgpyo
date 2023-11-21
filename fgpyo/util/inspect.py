@@ -14,15 +14,82 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
-
+from typing import Literal
+from typing import Protocol
 if sys.version_info >= (3, 12):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
 
-import attr
+import dataclasses
+import functools
+from dataclasses import MISSING as DATACLASSES_MISSING
+from dataclasses import fields as get_dataclasses_fields
+from dataclasses import is_dataclass as is_dataclasses_class
+from enum import Enum
+from functools import partial
+from pathlib import PurePath
+from typing import TYPE_CHECKING
+from typing import Callable
+from typing import Optional
+from typing import TypeVar
 
 import fgpyo.util.types as types
+
+try:
+    import attr
+
+    _use_attr = True
+    from attr import NOTHING as ATTR_NOTHING
+    from attr import fields as get_attr_fields
+    from attr import fields_dict as get_attr_fields_dict
+
+    Attribute = attr.Attribute
+
+    MISSING = {DATACLASSES_MISSING, ATTR_NOTHING}
+except ImportError:
+    _use_attr = False
+    attr = None
+    ATTR_NOTHING = None
+    Attribute = TypeVar("Attribute", bound=object)  # type: ignore
+
+    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:  # type: ignore
+        return ()
+
+    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:  # type: ignore
+        return {}
+
+    MISSING = {DATACLASSES_MISSING}
+
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance as DataclassesProtocol
+else:
+
+    class DataclassesProtocol(Protocol):
+        __dataclasses_fields__: Dict[str, dataclasses.Field]
+
+
+if TYPE_CHECKING and _use_attr:
+    from attr import AttrsInstance
+else:
+
+    class AttrsInstance(Protocol):  # type: ignore
+        __attrs_attrs__: Dict[str, Any]
+
+
+def is_attr_class(cls: type) -> bool:  # type: ignore
+    return hasattr(cls, "__attrs_attrs__")
+
+
+MISSING_OR_NONE = {*MISSING, None}
+DataclassesOrAttrClass = Union[DataclassesProtocol, AttrsInstance]
+FieldType: TypeAlias = Union[dataclasses.Field, attr.Attribute]
+
+
+def get_dataclasses_fields_dict(
+    class_or_instance: Union[DataclassesProtocol, Type[DataclassesProtocol]],
+) -> Dict[str, dataclasses.Field]:
+    return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
 
 
 class ParserNotFoundException(Exception):
@@ -305,9 +372,36 @@ def _get_parser(
     return parser
 
 
+def get_fields_dict(cls: Type[DataclassesOrAttrClass]) -> Dict[str, FieldType]:
+    """
+    Get the fields dict from either a dataclasses or attr dataclass.
+
+    Combine results in case someone chooses to mix them through inheritance.
+    """
+    if not (is_dataclasses_class(cls) or is_attr_class(cls)):
+        raise ValueError("cls must a dataclasses or attr class")
+    return {
+        **(get_dataclasses_fields_dict(cls) if is_dataclasses_class(cls) else {}),
+        **(get_attr_fields_dict(cls) if is_attr_class(cls) else {}),  # type: ignore
+    }
+
+
+def get_fields(cls: Type[DataclassesOrAttrClass]) -> Tuple[FieldType, ...]:
+    if not (is_dataclasses_class(cls) or is_attr_class(cls)):
+        raise ValueError("cls must a dataclasses or attr class")
+    return (get_dataclasses_fields(cls) if is_dataclasses_class(cls) else ()) + (
+        get_attr_fields(cls) if is_attr_class(cls) else ()  # type: ignore
+    )
+
+
+AttrFromType = TypeVar("AttrFromType")
+
+
 def attr_from(
-    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Any:
+    cls: Type[AttrFromType],
+    kwargs: Dict[str, str],
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+) -> AttrFromType:
     """Builds an attr class from key-word arguments
 
     Args:
@@ -317,15 +411,16 @@ def attr_from(
 
     """
     return_values: Dict[str, Any] = {}
-    for attribute in attr.fields(cls):
+    for attribute in get_fields(cls):  # type: ignore
         return_value: Any
         if attribute.name in kwargs:
             str_value: str = kwargs[attribute.name]
             set_value: bool = False
 
             # Use the converter if provided
-            if attribute.converter is not None:
-                return_value = attribute.converter(str_value)
+            converter = getattr(attribute, "converter", None)
+            if converter is not None:
+                return_value = converter(str_value)
                 set_value = True
 
             # try getting a known parser
@@ -357,7 +452,7 @@ def attr_from(
             ), f"No value given and no default for attribute `{attribute.name}`"
             return_value = attribute.default
             # when the default is attr.NOTHING, just use None
-            if return_value is attr.NOTHING:
+            if return_value in MISSING:
                 return_value = None
 
         return_values[attribute.name] = return_value
@@ -365,13 +460,13 @@ def attr_from(
     return cls(**return_values)
 
 
-def attribute_is_optional(attribute: attr.Attribute) -> bool:
+def attribute_is_optional(attribute: FieldType) -> bool:
     """Returns True if the attribute is optional, False otherwise"""
     return typing.get_origin(attribute.type) is Union and isinstance(
         None, typing.get_args(attribute.type)
     )
 
 
-def attribute_has_default(attribute: attr.Attribute) -> bool:
+def attribute_has_default(attribute: FieldType) -> bool:
     """Returns True if the attribute has a default value, False otherwise"""
-    return attribute.default != attr.NOTHING or attribute_is_optional(attribute)
+    return attribute.default not in MISSING_OR_NONE or attribute_is_optional(attribute)

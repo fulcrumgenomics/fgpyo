@@ -5,9 +5,10 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-try:  # py>=38
+import sys
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:  # py<38
+else:
     from typing_extensions import Literal
 
 import functools

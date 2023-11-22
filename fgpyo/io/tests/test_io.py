@@ -80,14 +80,14 @@ def test_assert_path_is_writeable_pass() -> None:
     """Should return the correct writeable path"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
-        assert fio.assert_path_is_writeable(path=path) is None
+        fio.assert_path_is_writeable(path=path)
 
 
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", io._io.TextIOWrapper),
-        (".fa", io._io.TextIOWrapper),
+        (".gz", io.TextIOWrapper),
+        (".fa", io.TextIOWrapper),
     ],
 )
 def test_reader(
@@ -103,8 +103,8 @@ def test_reader(
 @pytest.mark.parametrize(
     "suffix, expected",
     [
-        (".gz", io._io.TextIOWrapper),
-        (".fa", io._io.TextIOWrapper),
+        (".gz", io.TextIOWrapper),
+        (".fa", io.TextIOWrapper),
     ],
 )
 def test_writer(

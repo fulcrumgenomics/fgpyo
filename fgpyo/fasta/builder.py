@@ -96,7 +96,7 @@ class ContigBuilder:
         self.species = species
         self.bases = ""
 
-    def add(self, bases: str, times: int) -> "ContigBuilder":
+    def add(self, bases: str, times: int = 1) -> "ContigBuilder":
         """
         Method for adding bases to a new or existing instance of ContigBuilder.
 

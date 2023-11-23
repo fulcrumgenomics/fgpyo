@@ -17,6 +17,13 @@ def test_overrides_FastaBuilder() -> None:
     assert builder.line_length == 90
 
 
+def test_bases_length_from_ContigBuilder_add_default() -> None:
+    """Checks that the default addition of bases is a single addition."""
+    builder = FastaBuilder()
+    builder.add("chr10").add("AAAA")
+    assert len(builder.__getitem__("chr10").bases) == 4
+
+
 @pytest.mark.parametrize(
     "name, bases, times, length_bases",
     [

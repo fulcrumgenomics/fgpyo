@@ -1,0 +1,94 @@
+"""
+Examples of Zipping FASTX Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Zipping a set of FASTA/FASTQ files into a single stream of data is a common task in bioinformatics
+and can be achieved with the :class:`~fgpyo.fastx.FastxZipped` context manager. The context manager
+facilitates opening of all input FASTA/FASTQ files and closing them after iteration is complete.
+For every iteration of :class:`~fgpyo.fastx.FastxZipped`, a tuple of the next FASTX records are
+returned (of type :class:`~pysam.FastxRecord`). An exception will be raised if any of the input
+files are malformed or truncated and if record names are not equivalent and in sync.
+
+Importantly, this context manager is optimized for fast streaming read-only usage and, by default,
+any previous records saved while advancing the iterator will not be correct as the underlying
+pointer in memory will refer to the most recent record only, and not any past records. To preserve
+the state of all previously iterated records, set the parameter ``persist`` to :py:obj:`True`.
+
+.. code-block:: python
+
+   >>> from fgpyo.fastx import FastxZipped
+   >>> with FastxZipped("r1.fq", "r2.fq", persist=False) as zipped:
+   ...    for (r1, r2) in zipped:
+   ...         print(f"{r1.name}: {r1.sequence}, {r2.name}: {r2.sequence}")
+   seq1: AAAA, seq1: CCCC
+   seq2: GGGG, seq2: TTTT
+
+"""
+from contextlib import AbstractContextManager
+from pathlib import Path
+from types import TracebackType
+from typing import cast
+from typing import Iterator
+from typing import Optional
+from typing import Union
+from typing import Tuple
+from typing import Type
+
+from pysam import FastxFile, FastxRecord
+
+
+class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
+    """A context manager that will lazily zip over any number of FASTA/FASTQ files.
+
+    Args:
+        paths: Paths to the FASTX files to zip over.
+        persist: Whether to persit the state of previous records during iteration.
+
+    """
+
+    def __init__(self, *paths: Union[Path, str], persist: bool = False) -> None:
+        """Insantiate a :class:`FastxZipped` context manager and iterator."""
+        if len(paths) <= 0:
+            raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
+        self._persist: bool = persist
+        self._paths: Tuple[Union[Path, str], ...] = paths
+        self._fastx: Tuple[FastxFile, ...] = tuple()
+
+    def __enter__(self) -> "FastxZipped":
+        """Enter the :class:`FastxZipped` context manager by opening all FASTX files."""
+        self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
+        return self
+
+    def _next_record_safe(self, fastx: FastxFile) -> Optional[FastxRecord]:
+        """Return the next record from a FASTX file or :py:obj:`None` if there are none left."""
+        try:
+            return next(fastx)
+        except StopIteration:
+            return None
+
+    def __next__(self) -> Tuple[FastxRecord, ...]:
+        """Return the next set of FASTX records from the zipped FASTX files."""
+        records = tuple(self._next_record_safe(handle) for handle in self._fastx)
+        if all(record is None for record in records):
+            raise StopIteration
+        elif any(record is None for record in records):
+            raise ValueError("One or more of the FASTX files is truncated!")
+        else:
+            records = cast(Tuple[FastxRecord, ...], records)
+            record_names = {record.name for record in records}
+            if len(record_names) != 1:
+                raise ValueError(f"FASTX record names do not all match: {record_names}")
+            return records
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> Optional[bool]:
+        """Exit the :class:`FastxZipped` context manager by closing all FASTX files."""
+        for fastx in self._fastx:
+            fastx.close()
+        if exc_type is not None:
+            raise exc_type(exc_val).with_traceback(exc_tb)
+        return None

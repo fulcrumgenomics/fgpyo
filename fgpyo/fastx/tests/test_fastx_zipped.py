@@ -1,3 +1,5 @@
+import gzip
+
 from pathlib import Path
 
 import pytest
@@ -31,6 +33,27 @@ def test_fastx_zipped_iterates_over_a_single_fasta(tmp_path: Path) -> None:
     input.mkdir()
     fasta = input / "input.fasta"
     fasta.write_text(">seq1\nACGT\n>seq2\nTGCA\n")
+
+    context_manager = FastxZipped(fasta)
+    with context_manager as handle:
+        (record1,) = next(handle)
+        assert record1.name == "seq1"
+        assert record1.sequence == "ACGT"
+        (record2,) = next(handle)
+        assert record2.name == "seq2"
+        assert record2.sequence == "TGCA"
+
+    assert all(fastx.closed for fastx in context_manager._fastx)
+
+
+def test_fastx_zipped_iterates_over_a_single_fasta_gzipped(tmp_path: Path) -> None:
+    """Test that :class:`FastxZipped` can iterate over a single gzipped FASTA file."""
+    input = tmp_path / "input"
+    input.mkdir()
+    fasta = input / "input.fasta.gz"
+
+    with gzip.open(fasta, "wt") as handle:
+        handle.write(">seq1\nACGT\n>seq2\nTGCA\n")
 
     context_manager = FastxZipped(fasta)
     with context_manager as handle:

@@ -263,6 +263,7 @@ def attr_from(
         cls: the attr class to be built
         kwargs: a dictionary of keyword arguments
         parsers: a dictionary of parser functions to apply to specific types
+
     """
     return_values: Dict[str, Any] = {}
     for attribute in attr.fields(cls):

@@ -18,6 +18,15 @@ SAM/BAM/CRAM files
 .. automodule:: fgpyo.sam.clipping
    :members:
 
+VCF/BCF files
+=============
+
+.. automodule:: fgpyo.vcf
+   :members:
+
+.. automodule:: fgpyo.vcf.builder
+   :members:
+
 FASTA files
 ===========
 
@@ -31,6 +40,7 @@ Metric files
    :members:
 
 .. autofunction:: fgpyo.util.inspect.attr_from
+   :noindex:
 
 .. seealso::
 
@@ -69,7 +79,7 @@ Logging
    :members:
 
 IO
-=======
+==
 
 .. automodule:: fgpyo.io
    :members:

@@ -142,16 +142,12 @@ class ReadSegment:
         return self.length
 
     def extract(self, bases: str) -> SubReadWithoutQuals:
-        """Gets the bases associated with this read segment.  If strict is false then only return
-        the sub-sequence for which we have bases in `bases`, otherwise throw an exception.
-        """
+        """Gets the bases associated with this read segment."""
         end = self._calculate_end(bases)
         return SubReadWithoutQuals(bases=bases[self.offset : end], segment=self._resized(end))
 
     def extract_with_quals(self, bases: str, quals: str) -> SubReadWithQuals:
-        """Gets the bases and qualities associated with this read segment.  If strict is false then
-        only return the sub-sequence for which we have bases in `bases`, otherwise throw an
-        exception."""
+        """Gets the bases and qualities associated with this read segment."""
         assert len(bases) == len(quals), f"Bases and quals differ in length: {bases} {quals}"
         end = self._calculate_end(bases)
         return SubReadWithQuals(
@@ -162,7 +158,7 @@ class ReadSegment:
 
     def _calculate_end(self, bases: str) -> int:
         """Checks some requirements and then calculates the end position for the segment for the
-        given read"""
+        given read."""
         bases_len = len(bases)
         assert bases_len >= self.offset, f"Read ends before the segment starts: {self}"
         assert (

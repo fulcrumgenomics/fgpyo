@@ -106,7 +106,7 @@ def tests_fastx_zipped_raises_exception_on_truncated_fastx(tmp_path: Path) -> No
         assert record1.sequence == "AAAA"
         assert record2.name == "seq1"
         assert record2.sequence == "CCCC"
-        with pytest.raises(ValueError, match=r"One or more of the FASTX files is truncated!"):
+        with pytest.raises(ValueError, match=r"One or more of the FASTX files is truncated.*"):
             next(handle)
 
     assert all(fastx.closed for fastx in context_manager._fastx)
@@ -118,7 +118,7 @@ def tests_fastx_zipped_raises_exception_on_truncated_fastx(tmp_path: Path) -> No
         assert record1.sequence == "CCCC"
         assert record2.name == "seq1"
         assert record2.sequence == "AAAA"
-        with pytest.raises(ValueError, match=r"One or more of the FASTX files is truncated!"):
+        with pytest.raises(ValueError, match=r"One or more of the FASTX files is truncated.*"):
             next(handle)
 
     assert all(fastx.closed for fastx in context_manager._fastx)
@@ -164,3 +164,35 @@ def tests_fastx_zipped_raises_exception_on_mismatched_sequence_names(tmp_path: P
             next(handle)
 
     assert all(fastx.closed for fastx in context_manager._fastx)
+
+
+def tests_fastx_zipped_handles_sequence_names_with_suffixes(tmp_path: Path) -> None:
+    """Test that :class:`FastxZipped` does not use sequence name suffixes in equality tests."""
+    input = tmp_path / "input"
+    input.mkdir()
+    fasta1 = input / "input1.fasta"
+    fasta2 = input / "input2.fasta"
+    fasta1.write_text(">seq1/1\nAAAA\n")
+    fasta2.write_text(">seq1/2\nCCCC\n")
+
+    context_manager = FastxZipped(fasta1, fasta2)
+    with context_manager as handle:
+        (record1, record2) = next(handle)
+        assert record1.name == "seq1/1"
+        assert record1.sequence == "AAAA"
+        assert record2.name == "seq1/2"
+        assert record2.sequence == "CCCC"
+
+    assert all(fastx.closed for fastx in context_manager._fastx)
+
+
+def tests_fastx_zipped__name_minus_ordinal_works_with_r1_and_r2_ordinals() -> None:
+    assert FastxZipped._name_minus_ordinal("seq1") == "seq1"
+    assert FastxZipped._name_minus_ordinal("seq1/1") == "seq1"
+    assert FastxZipped._name_minus_ordinal("seq1/2") == "seq1"
+    assert FastxZipped._name_minus_ordinal("1") == "1"
+    assert FastxZipped._name_minus_ordinal("1/1") == "1"
+    assert FastxZipped._name_minus_ordinal("1/2") == "1"
+    assert FastxZipped._name_minus_ordinal("") == ""
+    assert FastxZipped._name_minus_ordinal("/1") == ""
+    assert FastxZipped._name_minus_ordinal("/2") == ""

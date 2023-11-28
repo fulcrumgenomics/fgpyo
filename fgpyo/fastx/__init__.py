@@ -1,6 +1,6 @@
 """
-Examples of Zipping FASTX Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Zipping FASTX Files
+~~~~~~~~~~~~~~~~~~~
 
 Zipping a set of FASTA/FASTQ files into a single stream of data is a common task in bioinformatics
 and can be achieved with the :class:`~fgpyo.fastx.FastxZipped` context manager. The context manager
@@ -31,6 +31,7 @@ from typing import cast
 from typing import Iterator
 from typing import Optional
 from typing import Union
+from typing import Set
 from typing import Tuple
 from typing import Type
 
@@ -59,23 +60,27 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
         return self
 
-    def _next_record_safe(self, fastx: FastxFile) -> Optional[FastxRecord]:
-        """Return the next record from a FASTX file or :py:obj:`None` if there are none left."""
-        try:
-            return next(fastx)
-        except StopIteration:
-            return None
+    @staticmethod
+    def _name_minus_ordinal(name: str) -> str:
+        """Return the name of the FASTX record minus its ordinal suffix (e.g. "/1" or "/2")."""
+        return name[: len(name) - 2] if len(name) >= 2 and name[-2] == "/" else name
 
     def __next__(self) -> Tuple[FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
-        records = tuple(self._next_record_safe(handle) for handle in self._fastx)
+        records = tuple(next(handle, None) for handle in self._fastx)
         if all(record is None for record in records):
             raise StopIteration
         elif any(record is None for record in records):
-            raise ValueError("One or more of the FASTX files is truncated!")
+            sequence_name: str = [record.name for record in records if record is not None][0]
+            raise ValueError(
+                f"One or more of the FASTX files is truncated for sequence {sequence_name}:\n\t"
+                + "\n\t".join(
+                    str(self._paths[i]) for i, record in enumerate(records) if record is None
+                )
+            )
         else:
             records = cast(Tuple[FastxRecord, ...], records)
-            record_names = {record.name for record in records}
+            record_names: Set[str] = {self._name_minus_ordinal(record.name) for record in records}
             if len(record_names) != 1:
                 raise ValueError(f"FASTX record names do not all match: {record_names}")
             return records

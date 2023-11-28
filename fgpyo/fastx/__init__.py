@@ -73,7 +73,8 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         elif any(record is None for record in records):
             sequence_name: str = [record.name for record in records if record is not None][0]
             raise ValueError(
-                f"One or more of the FASTX files is truncated for sequence {sequence_name}:\n\t"
+                "One or more of the FASTX files is truncated for sequence "
+                + f"{self._name_minus_ordinal(sequence_name)}:\n\t"
                 + "\n\t".join(
                     str(self._paths[i]) for i, record in enumerate(records) if record is None
                 )

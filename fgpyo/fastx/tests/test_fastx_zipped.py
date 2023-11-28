@@ -187,12 +187,13 @@ def tests_fastx_zipped_handles_sequence_names_with_suffixes(tmp_path: Path) -> N
 
 
 def tests_fastx_zipped__name_minus_ordinal_works_with_r1_and_r2_ordinals() -> None:
+    """Test that :class:`FastxZipped._name_minus_ordinal` works with none, R1, and R2 ordinals."""
+    assert FastxZipped._name_minus_ordinal("") == ""
+    assert FastxZipped._name_minus_ordinal("/1") == ""
+    assert FastxZipped._name_minus_ordinal("/2") == ""
     assert FastxZipped._name_minus_ordinal("seq1") == "seq1"
     assert FastxZipped._name_minus_ordinal("seq1/1") == "seq1"
     assert FastxZipped._name_minus_ordinal("seq1/2") == "seq1"
     assert FastxZipped._name_minus_ordinal("1") == "1"
     assert FastxZipped._name_minus_ordinal("1/1") == "1"
     assert FastxZipped._name_minus_ordinal("1/2") == "1"
-    assert FastxZipped._name_minus_ordinal("") == ""
-    assert FastxZipped._name_minus_ordinal("/1") == ""
-    assert FastxZipped._name_minus_ordinal("/2") == ""

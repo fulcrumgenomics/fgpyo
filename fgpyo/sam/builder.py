@@ -369,13 +369,15 @@ class SamBuilder:
         Mapped pairs can be created by specifying both `start1` and `start2` and either `chrom`, for
         pairs where both reads map to the same contig, or both `chrom1` and `chrom2`, for pairs
         where reads map to different contigs. i.e.:
+
             - `add_pair(chrom, start1, start2)` will create a mapped pair where both reads map to
-            the same contig (`chrom`).
+              the same contig (`chrom`).
             - `add_pair(chrom1, start1, chrom2, start2)` will create a mapped pair where the reads
-            map to different contigs (`chrom1` and `chrom2`).
+              map to different contigs (`chrom1` and `chrom2`).
 
         A pair with only one of the two reads mapped can be created by setting only one start
         position. Flags will automatically be set correctly for the unmapped mate.
+
             - `add_pair(chrom, start1)`
             - `add_pair(chrom1, start1)`
             - `add_pair(chrom, start2)`

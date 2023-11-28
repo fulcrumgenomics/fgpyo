@@ -7,17 +7,17 @@ in testing.
 
 The module contains the following public classes:
 
-    - :class:`~VariantBuilder` -- A builder class that allows the
+    - :class:`~fgpyo.vcf.builder.VariantBuilder` -- A builder class that allows the
         accumulation of variant records and access as a list and writing to file.
 
 Examples
 ~~~~~~~~
 
 Typically, we have :class:`~pysam.VariantRecord` records obtained from reading from a VCF file.
-The :class:`~VariantBuilder` class builds such records.
+The :class:`~fgpyo.vcf.builder.VariantBuilder` class builds such records.
 
-Variants are added with the :func:`~VariantBuilder.add()` method, which
-returns a `Variant`.
+Variants are added with the :func:`~fgpyo.vcf.builder.VariantBuilder.add()` method, which
+returns a :class:`pysam.VariantRecord`.
 
     >>> import pysam
     >>> from fgpyo.vcf.builder import VariantBuilder
@@ -44,8 +44,8 @@ The variants stored in the builder can be retrieved as a coordinate sorted VCF f
     >>>     path_to_vcf: Path = builder.to_path()
 
 The variants may also be retrieved in the order they were added via the
-:func:`~VariantBuilder.to_unsorted_list()` method and in coordinate sorted
-order via the :func:`~VariantBuilder.to_sorted_list()` method.
+:func:`~fgpyo.vcf.builder.VariantBuilder.to_unsorted_list()` method and in coordinate sorted
+order via the :func:`~fgpyo.vcf.builder.VariantBuilder.to_sorted_list()` method.
 
 """
 from contextlib import contextmanager
@@ -87,6 +87,7 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
 @contextmanager
 def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, None]:
     """Opens the given path for VCF writing.
+
     Args:
         path: the path to a VCF, or an open filehandle
         header: the source for the output VCF header. If you are modifying a VCF file that you are

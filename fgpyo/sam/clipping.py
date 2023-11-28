@@ -69,15 +69,13 @@ TAGS_TO_INVALIDATE: Iterable[str] = ("MD", "NM", "UQ")
 
 
 class ClippingInfo(NamedTuple):
-    """Named tuple holding the number of bases clipped on the query and reference respectively.
-
-    Attributes:
-        query_bases_clipped (int): the number of query bases in the alignment that were clipped.
-        ref_bases_clipped (int): the number of reference bases in the alignment that were clipped.
-    """
+    """Named tuple holding the number of bases clipped on the query and reference respectively."""
 
     query_bases_clipped: int
+    """The number of query bases in the alignment that were clipped."""
+
     ref_bases_clipped: int
+    """The number of reference bases in the alignment that were clipped."""
 
 
 def softclip_start_of_alignment_by_query(

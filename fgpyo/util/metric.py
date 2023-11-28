@@ -129,8 +129,8 @@ class Metric(ABC, Generic[MetricType]):
     makes it easy for them to be read in languages like `R`.
 
     Sub-classes of :class:`~fgpyo.util.metric.Metric` can support parsing and formatting custom
-    types with :func::`~fgpyo.util.metric.Metric._parsers` and
-    :func::`~fgpyo.util.metric.Metric.format_value`.
+    types with :func:`~fgpyo.util.metric.Metric._parsers` and
+    :func:`~fgpyo.util.metric.Metric.format_value`.
     """
 
     def values(self) -> Iterator[Any]:
@@ -219,7 +219,9 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     def parse(cls, fields: List[str]) -> Any:
         """Parses the string-representation of this metric.  One string per attribute should be
-        given."""
+        given.
+
+        """
         parsers = cls._parsers()
         header = cls.header()
         assert len(fields) == len(header)
@@ -232,8 +234,9 @@ class Metric(ABC, Generic[MetricType]):
         The header will always be written.
 
         Args:
-            path: path to the output file
-            values: zero or more metrics.
+            path: Path to the output file.
+            values: Zero or more metrics.
+
         """
         with io.to_writer(path) as writer:
             writer.write("\t".join(cls.header()))

@@ -40,6 +40,7 @@ fgpyo.io Examples:
     "gzip file"
     >>> next(lines)
     "10"
+
 """
 import gzip
 import io
@@ -134,9 +135,10 @@ def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
         path: Path to read from
 
     Example:
-        reader = fio.to_reader(path = Path("reader.txt"))
-        reader.readlines()
-        reader.close()
+        >>> reader = fio.to_reader(path = Path("reader.txt"))
+        >>> reader.readlines()
+        >>> reader.close()
+
     """
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
         return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="rb")), encoding="utf-8")
@@ -151,9 +153,10 @@ def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapp
         path: Path to write (or append) to
 
     Example:
-        writer = fio.to_writer(path = Path("writer.txt"))
-        writer.write(f'{something}\n')
-        writer.close()
+        >>> writer = fio.to_writer(path = Path("writer.txt"))
+        >>> writer.write(f'{something}\\n')
+        >>> writer.close()
+
     """
     mode_prefix = "w"
     if append:

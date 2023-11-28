@@ -15,7 +15,6 @@ See more at: https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures
 
 Examples
 ~~~~~~~~
-.. code-block:: python
 
    >>> from fgpyo.read_structure import ReadStructure
    >>> rs = ReadStructure.from_string("75T8B75T")
@@ -53,13 +52,14 @@ Module Contents
 The module contains the following public classes:
     - :class:`~fgpyo.read_structure.ReadStructure` -- Describes the structure of a give read
     - :class:`~fgpyo.read_structure.ReadSegment` -- Describes all the information about a segment
-        within a read structure
+      within a read structure
     - :class:`~fgpyo.read_structure.SegmentType` -- The type of segments that can show up in a read
-        structure
+      structure
     - :class:`~fgpyo.read_structure.SubReadWithoutQuals` -- Contains the bases that correspond to
-        the given read segment
+      the given read segment
     - :class:`~fgpyo.read_structure.SubReadWithQuals` -- Contains the bases and qualities that
-        correspond to the given read segment
+      correspond to the given read segment
+
 """
 import enum
 from typing import Iterable
@@ -70,8 +70,10 @@ from typing import Tuple
 
 import attr
 
-# A character that can be put in place of a number in a read structure to mean "0 or more bases".
+
 ANY_LENGTH_CHAR: str = "+"
+"""A character that can be put in place of a number in a read structure to mean "0 or more bases".
+"""
 
 
 @enum.unique
@@ -79,9 +81,16 @@ class SegmentType(enum.Enum):
     """The type of segments that can show up in a read structure"""
 
     Template = "T"
+    """The segment type for template bases."""
+
     SampleBarcode = "B"
+    """The segment type for sample barcode bases."""
+
     MolecularBarcode = "M"
+    """The segment type for molecular barcode bases."""
+
     Skip = "S"
+    """The segment type for bases that need to be skipped."""
 
     def __str__(self) -> str:
         return self.value
@@ -89,13 +98,17 @@ class SegmentType(enum.Enum):
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
 class SubReadWithoutQuals:
-    """Contains the bases that correspond to the given read segment"""
+    """Contains the bases that correspond to the given read segment."""
 
     bases: str
+    """The sub-read bases that correspond to the given read segment."""
+
     segment: "ReadSegment"
+    """The segment of the read structure that describes this sub-read."""
 
     @property
     def kind(self) -> SegmentType:
+        """The kind of read segment that corresponds to this sub-read."""
         return self.segment.kind
 
 
@@ -104,11 +117,17 @@ class SubReadWithQuals:
     """Contains the bases and qualities that correspond to the given read segment"""
 
     bases: str
+    """The sub-read bases that correspond to the given read segment."""
+
     quals: str
+    """The sub-read base qualities that correspond to the given read segment."""
+
     segment: "ReadSegment"
+    """The segment of the read structure that describes this sub-read."""
 
     @property
     def kind(self) -> SegmentType:
+        """The kind of read segment that corresponds to this sub-read."""
         return self.segment.kind
 
 
@@ -119,9 +138,10 @@ class ReadSegment:
     (can be any length, 0 or more) in which case length must be None.
 
     Attributes:
-        offset: the offset of the read segment in the read
-        length: the length of the segment, or None if it is variable length
-        kind: the kind of read segment
+        offset: The offset of the read segment in the read.
+        length: The length of the segment, or None if it is variable length.
+        kind: The kind of read segment.
+
     """
 
     offset: int
@@ -142,16 +162,12 @@ class ReadSegment:
         return self.length
 
     def extract(self, bases: str) -> SubReadWithoutQuals:
-        """Gets the bases associated with this read segment.  If strict is false then only return
-        the sub-sequence for which we have bases in `bases`, otherwise throw an exception.
-        """
+        """Gets the bases associated with this read segment."""
         end = self._calculate_end(bases)
         return SubReadWithoutQuals(bases=bases[self.offset : end], segment=self._resized(end))
 
     def extract_with_quals(self, bases: str, quals: str) -> SubReadWithQuals:
-        """Gets the bases and qualities associated with this read segment.  If strict is false then
-        only return the sub-sequence for which we have bases in `bases`, otherwise throw an
-        exception."""
+        """Gets the bases and qualities associated with this read segment."""
         assert len(bases) == len(quals), f"Bases and quals differ in length: {bases} {quals}"
         end = self._calculate_end(bases)
         return SubReadWithQuals(
@@ -162,7 +178,7 @@ class ReadSegment:
 
     def _calculate_end(self, bases: str) -> int:
         """Checks some requirements and then calculates the end position for the segment for the
-        given read"""
+        given read."""
         bases_len = len(bases)
         assert bases_len >= self.offset, f"Read ends before the segment starts: {self}"
         assert (
@@ -194,7 +210,8 @@ class ReadStructure(Iterable[ReadSegment]):
     length and some offset from the start of the read.
 
     Attributes:
-         segments: the segments composing the read structure
+         segments: The segments composing the read structure
+
     """
 
     segments: Tuple[ReadSegment, ...]

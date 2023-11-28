@@ -7,25 +7,30 @@ sequence dictionaries (.dict).
 Examples of creating sets of contigs for writing to fasta
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Writing a FASTA with two contigs each with 100 bases.
-.. code-block:: python
+Writing a FASTA with two contigs each with 100 bases:
+
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10)
     >>> builder.add("chr11").add("GGGGGGGGGG", 10)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
-Writing a FASTA with one contig with 100 A's and 50 T's
+
+Writing a FASTA with one contig with 100 A's and 50 T's:
+
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
-Add bases to existing contig
+
+Add bases to existing contig:
+
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
     >>> contig_one.add("NNN", 1)
     >>> contig_one.bases
     'AAAAAAAAAANNN'
+
 """
 import textwrap
 from pathlib import Path

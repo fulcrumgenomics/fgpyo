@@ -72,7 +72,8 @@ import attr
 
 
 ANY_LENGTH_CHAR: str = "+"
-"""A character that can be put in place of a number in a read structure to mean "0 or more bases"."""
+"""A character that can be put in place of a number in a read structure to mean "0 or more bases".
+"""
 
 
 @enum.unique

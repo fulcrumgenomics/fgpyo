@@ -398,7 +398,7 @@ class CigarElement:
     length: int
     operator: CigarOp
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         """Validates the length attribute is greater than zero."""
         if self.length <= 0:
             raise ValueError(f"Cigar element must have a length > 0, found {self.length}")

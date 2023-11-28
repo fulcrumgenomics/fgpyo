@@ -58,7 +58,7 @@ def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
 
 
 class DataBuilder:
-    """Holds classes and data for testing, either usting attr- or dataclasses-style dataclass"""
+    """Holds classes and data for testing, either using attr- or dataclasses-style dataclass"""
 
     def __init__(self, use_attr: bool) -> None:
         self.use_attr = use_attr

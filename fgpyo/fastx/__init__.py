@@ -53,12 +53,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
         self._paths: Tuple[Union[Path, str], ...] = paths
-        self._fastx: Tuple[FastxFile, ...] = tuple()
-
-    def __enter__(self) -> "FastxZipped":
-        """Enter the :class:`FastxZipped` context manager by opening all FASTX files."""
         self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
-        return self
 
     @staticmethod
     def _name_minus_ordinal(name: str) -> str:
@@ -93,8 +88,12 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         exc_tb: Optional[TracebackType],
     ) -> Optional[bool]:
         """Exit the :class:`FastxZipped` context manager by closing all FASTX files."""
-        for fastx in self._fastx:
-            fastx.close()
+        self.close()
         if exc_type is not None:
             raise exc_type(exc_val).with_traceback(exc_tb)
         return None
+
+    def close(self) -> None:
+        """Close the :class:`FastxZipped` context manager by closing all FASTX files."""
+        for fastx in self._fastx:
+            fastx.close()

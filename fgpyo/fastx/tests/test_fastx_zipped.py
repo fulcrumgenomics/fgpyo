@@ -71,10 +71,10 @@ def test_fastx_zipped_iterates_over_a_single_fastq(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over a single FASTQ file."""
     input = tmp_path / "input"
     input.mkdir()
-    fasta = input / "input.fasta"
-    fasta.write_text("@seq1\tcomment1\nACGT\n+\nFFFF\n" + "@seq2\tcomment2\nTGCA\n+\n!!!!\n")
+    fastq = input / "input.fastq"
+    fastq.write_text("@seq1\tcomment1\nACGT\n+\nFFFF\n" + "@seq2\tcomment2\nTGCA\n+\n!!!!\n")
 
-    context_manager = FastxZipped(fasta)
+    context_manager = FastxZipped(fastq)
     with context_manager as handle:
         (record1,) = next(handle)
         assert record1.name == "seq1"
@@ -197,3 +197,32 @@ def tests_fastx_zipped__name_minus_ordinal_works_with_r1_and_r2_ordinals() -> No
     assert FastxZipped._name_minus_ordinal("1") == "1"
     assert FastxZipped._name_minus_ordinal("1/1") == "1"
     assert FastxZipped._name_minus_ordinal("1/2") == "1"
+
+
+def test_fastx_zipped_accidentally_used_as_iterator_only(tmp_path: Path) -> None:
+    """Test that :class:`FastxZipped` can also be used as an interator outside a context manager."""
+    input = tmp_path / "input"
+    input.mkdir()
+    fasta1 = input / "input1.fasta"
+    fasta2 = input / "input2.fasta"
+    fasta1.write_text(">seq1\nAAAA\n>seq2\nCCCC\n")
+    fasta2.write_text(">seq1\nGGGG\n>seq2\nTTTT\n")
+
+    zipped = FastxZipped(fasta1, fasta2)
+    (record1, record2) = next(zipped)
+    assert record1.name == "seq1"
+    assert record1.sequence == "AAAA"
+    assert record2.name == "seq1"
+    assert record2.sequence == "GGGG"
+    (record1, record2) = next(zipped)
+    assert record1.name == "seq2"
+    assert record1.sequence == "CCCC"
+    assert record2.name == "seq2"
+    assert record2.sequence == "TTTT"
+
+    with pytest.raises(StopIteration):
+        next(zipped)
+
+    assert all(not fastx.closed for fastx in zipped._fastx)
+    zipped.close()
+    assert all(fastx.closed for fastx in zipped._fastx)

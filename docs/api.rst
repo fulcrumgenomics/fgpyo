@@ -33,6 +33,13 @@ FASTA files
 .. automodule:: fgpyo.fasta.builder
    :members:
 
+
+FASTX files
+===========
+
+.. automodule:: fgpyo.fastx
+   :members:
+
 Metric files
 ============
 

@@ -109,6 +109,12 @@ class Name:
 
 
 @attr.s(auto_attribs=True, frozen=True)
+class NameMetric(Metric["NameMetric"]):
+    first: str
+    last: str
+
+
+@attr.s(auto_attribs=True, frozen=True)
 class NamedPerson(Metric["NamedPerson"]):
     name: Name
     age: int
@@ -348,13 +354,13 @@ def test_metrics_fast_concat(tmp_path: Path) -> None:
 def test_metric_columns_out_of_order(tmp_path: Path) -> None:
     path = tmp_path / "metrics.txt"
 
-    name = Name(first="jon", last="Doe")
+    name = NameMetric(first="jon", last="Doe")
 
     # Write the columns out of order (last then first)
     with path.open("w") as writer:
         writer.write("last\tfirst\n")
         writer.write(f"{name.last}\t{name.first}\n")
     
-    names = Name.read(path=path)
+    names = NameMetric.read(path=path)
     assert len(names) == 1
     assert names[0] == name

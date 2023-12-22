@@ -360,7 +360,7 @@ def test_metric_columns_out_of_order(tmp_path: Path) -> None:
     with path.open("w") as writer:
         writer.write("last\tfirst\n")
         writer.write(f"{name.last}\t{name.first}\n")
-    
+
     names = list(NameMetric.read(path=path))
     assert len(names) == 1
     assert names[0] == name

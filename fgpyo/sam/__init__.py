@@ -153,6 +153,7 @@ The module contains the following methods:
 
 import enum
 import io
+import sys
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -187,6 +188,12 @@ NO_REF_POS: int = -1
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
+
+_STDIN_PATHS: List[str] = ["-", "stdin", "/dev/stdin"]
+"""Paths that should be opened as stdin."""
+
+_STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
+"""Paths that should be opened as stdout."""
 
 
 @enum.unique
@@ -240,8 +247,14 @@ def _pysam_open(
     """
 
     if isinstance(path, (str, Path)):  # type: ignore
-        file_type = file_type or SamFileType.from_path(path)
-        path = str(path)
+        if str(path) in _STDIN_PATHS and open_for_reading:
+            path = sys.stdin
+        elif str(path) in _STDOUT_PATHS and not open_for_reading:
+            assert file_type is not None, "Must specify file_type when writing to stdout"
+            path = sys.stdout
+        else:
+            file_type = file_type or SamFileType.from_path(path)
+            path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")

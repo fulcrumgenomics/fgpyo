@@ -27,6 +27,7 @@ from pysam import AlignedSegment
 from pysam import AlignmentHeader
 
 from fgpyo import sam
+from fgpyo import samtools
 from fgpyo.sam import SamOrder
 
 
@@ -136,6 +137,11 @@ class SamBuilder:
             "SQ": (sd if sd is not None else SamBuilder.default_sd()),
             "RG": [(rg if rg is not None else SamBuilder.default_rg())],
         }
+        if sort_order == SamOrder.TemplateCoordinate:
+            self._header["HD"] = {
+                **self._header["HD"],
+                **{"GO": "query", "SS": "template-coordinate"},
+            }
         if extra_header is not None:
             self._header = {**self._header, **extra_header}
         self._samheader = AlignmentHeader.from_dict(self._header)
@@ -590,18 +596,14 @@ class SamBuilder:
                     if pred(rec):
                         writer.write(rec)
 
-            samtools_sort_args = ["-o", str(path), fp.name]
-
             file_handle.close()
-            if self._sort_order == SamOrder.QueryName:
-                # Ignore type hints for now until we have wrappers to use here.
-                pysam.sort("-n", *samtools_sort_args)  # type: ignore
-            elif self._sort_order == SamOrder.Coordinate:
-                # Ignore type hints for now until we have wrappers to use here.
-                if index:
-                    samtools_sort_args.insert(0, "--write-index")
-                pysam.sort(*samtools_sort_args)  # type: ignore
-
+            if self._sort_order not in {SamOrder.Unsorted, SamOrder.Unknown}:
+                samtools.sort(
+                    alignment_file=Path(fp.name),
+                    output=path,
+                    index_output=index,
+                    sort_order=self._sort_order,
+                )
         return path
 
     def __len__(self) -> int:

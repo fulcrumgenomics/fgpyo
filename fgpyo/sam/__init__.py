@@ -581,7 +581,7 @@ class SupplementaryAlignment:
         """Returns a list of SupplementaryAlignments for a given pysam.AlignedSegment."""
         if read.has_tag("SA"):
             sa_tag: str = cast(str, read.get_tag("SA"))
-            return SupplementaryAlignment.parse_sa_tag(sa_tag)
+            return cls.parse_sa_tag(sa_tag)
         else:
             return []
 

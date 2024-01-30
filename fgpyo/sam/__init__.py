@@ -163,6 +163,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
+from typing import cast
 
 import attr
 import pysam
@@ -574,6 +575,15 @@ class SupplementaryAlignment:
         be returned.
         """
         return [SupplementaryAlignment.parse(a) for a in tag.split(";") if len(a) > 0]
+
+    @classmethod
+    def from_read(cls, read: pysam.AlignedSegment) -> List["SupplementaryAlignment"]:
+        """Returns a list of SupplementaryAlignments for a given pysam.AlignedSegment."""
+        if read.has_tag("SA"):
+            sa_tag: str = cast(str, read.get_tag("SA"))
+            return SupplementaryAlignment.parse_sa_tag(sa_tag)
+        else:
+            return []
 
 
 def isize(r1: AlignedSegment, r2: AlignedSegment) -> int:

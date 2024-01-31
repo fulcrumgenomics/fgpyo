@@ -27,15 +27,16 @@ the state of all previously iterated records, set the parameter ``persist`` to :
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
-from typing import cast
 from typing import Iterator
 from typing import Optional
-from typing import Union
 from typing import Set
 from typing import Tuple
 from typing import Type
+from typing import Union
+from typing import cast
 
-from pysam import FastxFile, FastxRecord
+from pysam import FastxFile
+from pysam import FastxRecord
 
 
 class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):

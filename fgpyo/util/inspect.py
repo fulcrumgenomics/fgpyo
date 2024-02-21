@@ -60,18 +60,24 @@ def split_at_given_level(
             decrease_in_depth += high_level_split.count(char)
         outer_depth_of_split += increase_in_depth - decrease_in_depth
 
-        assert outer_depth_of_split >= 0, "Unpaired depth character! Likely incorrect output"
+        assert (
+            outer_depth_of_split >= 0
+        ), "Unpaired depth character! Likely incorrect output"
 
         current_outer_splits.append(high_level_split)
         if outer_depth_of_split == 0:
             out_vals.append(split_delim.join(current_outer_splits))
             current_outer_splits = []
-    assert outer_depth_of_split == 0, "Unpaired depth character! Likely incorrect output!"
+    assert (
+        outer_depth_of_split == 0
+    ), "Unpaired depth character! Likely incorrect output!"
     return out_vals
 
 
 def _get_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type,
+    type_: TypeAlias,
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -146,7 +152,9 @@ def _get_parser(
                         if s == "{}"
                         else [
                             subtype_parser(item)
-                            for item in set(split_at_given_level(s[1:-1], split_delim=","))
+                            for item in set(
+                                split_at_given_level(s[1:-1], split_delim=",")
+                            )
                         ]
                     )
                 )
@@ -172,7 +180,9 @@ def _get_parser(
                     if len(tuple_string) == 0:
                         return ()
                     else:
-                        val_strings = split_at_given_level(tuple_string, split_delim=",")
+                        val_strings = split_at_given_level(
+                            tuple_string, split_delim=","
+                        )
                         return tuple(
                             parser(val_str)
                             for parser, val_str in zip(subtype_parsers, val_strings)
@@ -208,10 +218,14 @@ def _get_parser(
                     if len(dict_string) == 0:
                         return {}
                     else:
-                        outer_splits = split_at_given_level(dict_string, split_delim=",")
+                        outer_splits = split_at_given_level(
+                            dict_string, split_delim=","
+                        )
                         out_dict = {}
                         for outer_split in outer_splits:
-                            inner_splits = split_at_given_level(outer_split, split_delim=";")
+                            inner_splits = split_at_given_level(
+                                outer_split, split_delim=";"
+                            )
                             assert (
                                 len(inner_splits) % 2 == 0
                             ), "Inner splits of dict didn't have matched key val pairs"
@@ -226,17 +240,23 @@ def _get_parser(
                 return types.make_enum_parser(type_)
             elif types.is_constructible_from_str(type_):
                 return functools.partial(type_)
-            elif isinstance(type_, type(type(None))):
+            elif isinstance(type_, type(None)):
                 return functools.partial(types.none_parser)
             elif types.get_origin_type(type_) is Union:
                 return types.make_union_parser(
                     union=type_,
-                    parsers=[_get_parser(cls, arg, parsers) for arg in types.get_arg_types(type_)],
+                    parsers=[
+                        _get_parser(cls, arg, parsers)
+                        for arg in types.get_arg_types(type_)
+                    ],
                 )
             elif types.get_origin_type(type_) is Literal:  # Py>=3.7.
                 return types.make_literal_parser(
                     type_,
-                    [_get_parser(cls, type(arg), parsers) for arg in types.get_arg_types(type_)],
+                    [
+                        _get_parser(cls, type(arg), parsers)
+                        for arg in types.get_arg_types(type_)
+                    ],
                 )
             else:
                 raise ParserNotFoundException(
@@ -255,7 +275,9 @@ def _get_parser(
 
 
 def attr_from(
-    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type,
+    kwargs: Dict[str, str],
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> Any:
     """Builds an attr class from key-word arguments
 
@@ -289,7 +311,11 @@ def attr_from(
             # try setting by casting
             # Note that while bools *can* be cast from string, all non-empty strings evaluate to
             # True, because python, so we need to check for that explicitly
-            if not set_value and attribute.type is not None and not attribute.type == bool:
+            if (
+                not set_value
+                and attribute.type is not None
+                and not attribute.type == bool
+            ):
                 try:
                     return_value = attribute.type(str_value)
                     set_value = True

@@ -39,7 +39,7 @@ docs = ["sphinx", "sphinx_rtd_theme"]
 setuptools = ">=68.0.0"
 pytest = ">=5.4.2"
 mypy = [
-	{ version = ">=0.770", python = "<3.8" },
+	{ version = ">=1.4.0", python = "<3.8" },
 	{ version = ">=1.7.0", python = ">=3.8" },
 ]
 flake8 = [

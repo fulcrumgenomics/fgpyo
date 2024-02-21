@@ -32,6 +32,7 @@ Add bases to existing contig:
     'AAAAAAAAAANNN'
 
 """
+
 import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING

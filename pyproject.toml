@@ -23,7 +23,7 @@ classifiers = [
 include = ["LICENSE"]
 
 [tool.poetry.dependencies]
-python = ">=3.7.0,<3.12"
+python = ">=3.7.0,<4.0"
 attrs = ">=19.3.0"
 typing_extensions = { version = ">=3.7.4", python = "<3.8" } # Literal support
 typing_inspect = { version = ">=0.3.1", python = "<3.8" }    # inspecting types
@@ -51,5 +51,5 @@ pytest-cov = ">=2.8.1"
 isort = ">=5.10.1"
 
 [build-system]
-requires = ["poetry>=1.5"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

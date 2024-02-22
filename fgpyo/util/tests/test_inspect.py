@@ -1,6 +1,7 @@
 from typing import Optional
 
 import attr
+import pytest
 
 from fgpyo.util.inspect import attr_from
 from fgpyo.util.inspect import attribute_has_default
@@ -45,3 +46,23 @@ def test_attribute_has_default() -> None:
     assert attribute_has_default(fields_dict["optional_no_default"])
     assert attribute_has_default(fields_dict["optional_with_default_none"])
     assert attribute_has_default(fields_dict["optional_with_default_some"])
+
+
+class Foo:
+    pass
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class Bar:
+    foo: Foo
+
+
+# Test for regression #94 - the call to attr_from succeeds when the check for None type
+# in inspect._get_parser is done incorrectly.
+def test_attr_from_custom_type_without_parser_fails() -> None:
+    with pytest.raises(AssertionError):
+        attr_from(
+            cls=Bar,
+            kwargs={"foo": ""},
+            parsers={},
+        )

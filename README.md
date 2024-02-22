@@ -37,7 +37,7 @@
 
 `pip install fgpyo`
 
-**Requires python 3.7+**
+**Requires python 3.8+**
 
 See documentation on [fgpyo.readthedocs.org][rtd-link].
 

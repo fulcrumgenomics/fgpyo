@@ -233,7 +233,7 @@ def _get_parser(
                     union=type_,
                     parsers=[_get_parser(cls, arg, parsers) for arg in typing.get_args(type_)],
                 )
-            elif typing.get_origin(type_) is Literal:  # Py>=3.7.
+            elif typing.get_origin(type_) is Literal:
                 return types.make_literal_parser(
                     type_,
                     [_get_parser(cls, type(arg), parsers) for arg in typing.get_args(type_)],

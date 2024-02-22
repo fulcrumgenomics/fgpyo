@@ -70,6 +70,9 @@ def split_at_given_level(
     return out_vals
 
 
+NoneType = type(None)
+
+
 def _get_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
@@ -226,7 +229,7 @@ def _get_parser(
                 return types.make_enum_parser(type_)
             elif types.is_constructible_from_str(type_):
                 return functools.partial(type_)
-            elif isinstance(type_, type(type(None))):
+            elif type_ == NoneType:
                 return functools.partial(types.none_parser)
             elif types.get_origin_type(type_) is Union:
                 return types.make_union_parser(

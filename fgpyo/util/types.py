@@ -139,11 +139,7 @@ def make_literal_parser(
 
 def is_list_like(type_: type) -> bool:
     """Returns true if the value is a list or list like object"""
-    return typing.get_origin(type_) in [
-        list,
-        collections.abc.Iterable,
-        collections.abc.Sequence,
-    ]
+    return typing.get_origin(type_) in [list, collections.abc.Iterable, collections.abc.Sequence]
 
 
 def none_parser(value: str) -> Literal[None]:

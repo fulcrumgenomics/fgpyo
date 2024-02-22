@@ -42,6 +42,7 @@ fgpyo.io Examples:
     "10"
 
 """
+
 import gzip
 import io
 import os

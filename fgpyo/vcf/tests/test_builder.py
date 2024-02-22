@@ -81,9 +81,11 @@ def _get_random_variant_inputs(
         key: (
             random_generator.randint(0, 100)
             if value_type == VcfFieldType.INTEGER
-            else random_generator.uniform(0, 1)
-            if value_type == VcfFieldType.FLOAT
-            else random_generator.choice(["Up", "Down"])
+            else (
+                random_generator.uniform(0, 1)
+                if value_type == VcfFieldType.FLOAT
+                else random_generator.choice(["Up", "Down"])
+            )
         )
         for key, value_type in _INFO_FIELD_TYPES.items()
     }

@@ -1,27 +1,24 @@
+import functools
 import sys
+import typing
+from enum import Enum
+from functools import partial
+from pathlib import PurePath
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Literal
+from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 if sys.version_info >= (3, 12):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
-
-import functools
-from enum import Enum
-from functools import partial
-from pathlib import PurePath
-from typing import Callable
-from typing import Optional
 
 import attr
 
@@ -60,13 +57,17 @@ def split_at_given_level(
             decrease_in_depth += high_level_split.count(char)
         outer_depth_of_split += increase_in_depth - decrease_in_depth
 
-        assert outer_depth_of_split >= 0, "Unpaired depth character! Likely incorrect output"
+        assert (
+            outer_depth_of_split >= 0
+        ), "Unpaired depth character! Likely incorrect output"
 
         current_outer_splits.append(high_level_split)
         if outer_depth_of_split == 0:
             out_vals.append(split_delim.join(current_outer_splits))
             current_outer_splits = []
-    assert outer_depth_of_split == 0, "Unpaired depth character! Likely incorrect output!"
+    assert (
+        outer_depth_of_split == 0
+    ), "Unpaired depth character! Likely incorrect output!"
     return out_vals
 
 
@@ -74,7 +75,9 @@ NoneType = type(None)
 
 
 def _get_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type,
+    type_: TypeAlias,
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -112,8 +115,8 @@ def _get_parser(
                 raise ValueError("Unable to parse set (try typing.Set[type])")
             elif type_ == dict:
                 raise ValueError("Unable to parse dict (try typing.Mapping[type])")
-            elif types.get_origin_type(type_) == list:
-                subtypes = types.get_arg_types(type_)
+            elif typing.get_origin(type_) == list:
+                subtypes = typing.get_args(type_)
 
                 assert (
                     len(subtypes) == 1
@@ -133,8 +136,8 @@ def _get_parser(
                         ]
                     )
                 )
-            elif types.get_origin_type(type_) == set:
-                subtypes = types.get_arg_types(type_)
+            elif typing.get_origin(type_) == set:
+                subtypes = typing.get_args(type_)
                 assert (
                     len(subtypes) == 1
                 ), "Sets are allowed only one subtype per PEP specification!"
@@ -149,18 +152,20 @@ def _get_parser(
                         if s == "{}"
                         else [
                             subtype_parser(item)
-                            for item in set(split_at_given_level(s[1:-1], split_delim=","))
+                            for item in set(
+                                split_at_given_level(s[1:-1], split_delim=",")
+                            )
                         ]
                     )
                 )
-            elif types.get_origin_type(type_) == tuple:
+            elif typing.get_origin(type_) == tuple:
                 subtype_parsers = [
                     _get_parser(
                         cls,
                         subtype,
                         parsers,
                     )
-                    for subtype in types.get_arg_types(type_)
+                    for subtype in typing.get_args(type_)
                 ]
 
                 def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
@@ -175,7 +180,9 @@ def _get_parser(
                     if len(tuple_string) == 0:
                         return ()
                     else:
-                        val_strings = split_at_given_level(tuple_string, split_delim=",")
+                        val_strings = split_at_given_level(
+                            tuple_string, split_delim=","
+                        )
                         return tuple(
                             parser(val_str)
                             for parser, val_str in zip(subtype_parsers, val_strings)
@@ -183,8 +190,8 @@ def _get_parser(
 
                 return functools.partial(tuple_parse)
 
-            elif types.get_origin_type(type_) == dict:
-                subtypes = types.get_arg_types(type_)
+            elif typing.get_origin(type_) == dict:
+                subtypes = typing.get_args(type_)
                 assert (
                     len(subtypes) == 2
                 ), "Dict object must have exactly 2 subtypes per PEP specification!"
@@ -211,10 +218,14 @@ def _get_parser(
                     if len(dict_string) == 0:
                         return {}
                     else:
-                        outer_splits = split_at_given_level(dict_string, split_delim=",")
+                        outer_splits = split_at_given_level(
+                            dict_string, split_delim=","
+                        )
                         out_dict = {}
                         for outer_split in outer_splits:
-                            inner_splits = split_at_given_level(outer_split, split_delim=";")
+                            inner_splits = split_at_given_level(
+                                outer_split, split_delim=";"
+                            )
                             assert (
                                 len(inner_splits) % 2 == 0
                             ), "Inner splits of dict didn't have matched key val pairs"
@@ -231,15 +242,21 @@ def _get_parser(
                 return functools.partial(type_)
             elif type_ == NoneType:
                 return functools.partial(types.none_parser)
-            elif types.get_origin_type(type_) is Union:
+            elif typing.get_origin(type_) is Union:
                 return types.make_union_parser(
                     union=type_,
-                    parsers=[_get_parser(cls, arg, parsers) for arg in types.get_arg_types(type_)],
+                    parsers=[
+                        _get_parser(cls, arg, parsers)
+                        for arg in typing.get_args(type_)
+                    ],
                 )
-            elif types.get_origin_type(type_) is Literal:  # Py>=3.7.
+            elif typing.get_origin(type_) is Literal:  # Py>=3.7.
                 return types.make_literal_parser(
                     type_,
-                    [_get_parser(cls, type(arg), parsers) for arg in types.get_arg_types(type_)],
+                    [
+                        _get_parser(cls, type(arg), parsers)
+                        for arg in typing.get_args(type_)
+                    ],
                 )
             else:
                 raise ParserNotFoundException(
@@ -258,7 +275,9 @@ def _get_parser(
 
 
 def attr_from(
-    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type,
+    kwargs: Dict[str, str],
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> Any:
     """Builds an attr class from key-word arguments
 
@@ -292,7 +311,11 @@ def attr_from(
             # try setting by casting
             # Note that while bools *can* be cast from string, all non-empty strings evaluate to
             # True, because python, so we need to check for that explicitly
-            if not set_value and attribute.type is not None and not attribute.type == bool:
+            if (
+                not set_value
+                and attribute.type is not None
+                and not attribute.type == bool
+            ):
                 try:
                     return_value = attribute.type(str_value)
                     set_value = True
@@ -319,8 +342,8 @@ def attr_from(
 
 def attribute_is_optional(attribute: attr.Attribute) -> bool:
     """Returns True if the attribute is optional, False otherwise"""
-    return types.get_origin_type(attribute.type) is Union and isinstance(
-        None, types.get_arg_types(attribute.type)
+    return typing.get_origin(attribute.type) is Union and isinstance(
+        None, typing.get_args(attribute.type)
     )
 
 

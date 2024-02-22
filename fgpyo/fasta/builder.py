@@ -32,6 +32,7 @@ Add bases to existing contig:
     'AAAAAAAAAANNN'
 
 """
+
 import textwrap
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -47,7 +48,6 @@ if TYPE_CHECKING:
 
     def samtools_faidx(*args: Any) -> None:
         pass
-
 
 else:
     from pysam import dict as samtools_dict

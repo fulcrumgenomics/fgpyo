@@ -34,19 +34,13 @@ records.  Logging can be written to :class:`logging.Logger` as well as custom pr
 """
 
 import logging
-import sys
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 import socket
 from contextlib import AbstractContextManager
 from logging import Logger
 from threading import RLock
 from typing import Any
 from typing import Callable
+from typing import Literal
 from typing import Optional
 from typing import Union
 

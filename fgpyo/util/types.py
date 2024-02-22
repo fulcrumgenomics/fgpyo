@@ -10,7 +10,6 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-
 UnionType = TypeVar("UnionType", bound="Union")
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
@@ -103,9 +102,7 @@ def _make_union_parser_worker(
     raise ValueError(f"{value} could not be parsed as any of {union}")
 
 
-def make_union_parser(
-    union: Type[UnionType], parsers: Iterable[Callable[[str], type]]
-) -> partial:
+def make_union_parser(union: Type[UnionType], parsers: Iterable[Callable[[str], type]]) -> partial:
     """Generates a parser function for a union type object and set of parsers for the possible
     parsers to that union type object
     """

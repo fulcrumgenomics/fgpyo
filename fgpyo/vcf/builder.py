@@ -363,11 +363,7 @@ class VariantBuilder:
         header_line += ">"
         self.add_header_line(header_line)
 
-    def add_filter_header(
-        self,
-        name: str,
-        description: Optional[str] = None,
-    ) -> None:
+    def add_filter_header(self, name: str, description: Optional[str] = None,) -> None:
         """
         Add a FILTER header field to the VCF header.
 

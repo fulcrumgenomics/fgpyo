@@ -34,13 +34,7 @@ class DummyMetric(Metric["DummyMetric"]):
     dict_value: Dict[int, str] = attr.ib()
     tuple_value: Tuple[int, str] = attr.ib()
     list_value: List[str] = attr.ib()
-    complex_value: Dict[
-        int,
-        Dict[
-            Tuple[int, int],
-            Set[str],
-        ],
-    ] = attr.ib()
+    complex_value: Dict[int, Dict[Tuple[int, int], Set[str],],] = attr.ib()
 
 
 DUMMY_METRICS: List[DummyMetric] = [
@@ -53,9 +47,7 @@ DUMMY_METRICS: List[DummyMetric] = [
         optional_int_value=-5,
         optional_bool_value=True,
         optional_enum_value=EnumTest.EnumVal3,
-        dict_value={
-            1: "test1",
-        },
+        dict_value={1: "test1",},
         tuple_value=(0, "test1"),
         list_value=[],
         complex_value={1: {(5, 1): set({"mapped_test_val1", "setval2"})}},
@@ -138,10 +130,7 @@ class PersonDefault(Metric["PersonDefault"]):
 
 
 @pytest.mark.parametrize("metric", DUMMY_METRICS)
-def test_metric_roundtrip(
-    tmp_path: Path,
-    metric: DummyMetric,
-) -> None:
+def test_metric_roundtrip(tmp_path: Path, metric: DummyMetric,) -> None:
     path: Path = tmp_path / "metrics.txt"
 
     DummyMetric.write(path, metric)

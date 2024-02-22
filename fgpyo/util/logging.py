@@ -125,9 +125,7 @@ class ProgressLogger(AbstractContextManager):
         return False
 
     def record(
-        self,
-        reference_name: Optional[str] = None,
-        position: Optional[int] = None,
+        self, reference_name: Optional[str] = None, position: Optional[int] = None,
     ) -> bool:
         """Record an item at a given genomic coordinate.
         Args:
@@ -147,10 +145,7 @@ class ProgressLogger(AbstractContextManager):
         else:
             return False
 
-    def record_alignment(
-        self,
-        rec: AlignedSegment,
-    ) -> bool:
+    def record_alignment(self, rec: AlignedSegment,) -> bool:
         """Correctly record pysam.AlignedSegments (zero-based coordinates).
 
         Args:
@@ -164,11 +159,7 @@ class ProgressLogger(AbstractContextManager):
         else:
             return self.record(rec.reference_name, rec.reference_start + 1)
 
-    def _log(
-        self,
-        refname: Optional[str] = None,
-        position: Optional[int] = None,
-    ) -> None:
+    def _log(self, refname: Optional[str] = None, position: Optional[int] = None,) -> None:
         """Helper method to print the log message.
 
         Args:
@@ -187,9 +178,7 @@ class ProgressLogger(AbstractContextManager):
 
         self.printer(f"{self.verb} {self.count:,d} {self.noun}: {coordinate}")
 
-    def log_last(
-        self,
-    ) -> bool:
+    def log_last(self,) -> bool:
         """Force logging the last record, for example when progress has completed."""
         if self._count_mod_unit != 0:
             self._log(refname=self._last_reference_name, position=self._last_position)

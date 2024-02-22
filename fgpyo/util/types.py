@@ -78,9 +78,7 @@ def _is_optional(type_: type) -> bool:
 
 
 def _make_union_parser_worker(
-    union: Type[UnionType],
-    parsers: Iterable[Callable[[str], UnionType]],
-    value: str,
+    union: Type[UnionType], parsers: Iterable[Callable[[str], UnionType]], value: str,
 ) -> UnionType:
     """Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise raises an error if none
@@ -110,9 +108,7 @@ def make_union_parser(union: Type[UnionType], parsers: Iterable[Callable[[str], 
 
 
 def _make_literal_parser_worker(
-    literal: Type[LiteralType],
-    parsers: Iterable[Callable[[str], LiteralType]],
-    value: str,
+    literal: Type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]], value: str,
 ) -> LiteralType:
     """Worker function behind literal parsing. Iterates through possible literals and
     returns the value produced by the first literal that matches expectation.

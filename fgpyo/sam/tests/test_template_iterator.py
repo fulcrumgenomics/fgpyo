@@ -73,9 +73,7 @@ def test_to_templates() -> None:
     assert len(list(template2.all_recs())) == 2
 
 
-def test_write_template(
-    tmp_path: Path,
-) -> None:
+def test_write_template(tmp_path: Path,) -> None:
     builder = SamBuilder()
     template = Template.build(
         [

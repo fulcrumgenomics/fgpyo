@@ -31,24 +31,9 @@ def _S(off: int, len: int) -> ReadSegment:
         ("1M", (_M(0, 1),)),
         ("1S", (_S(0, 1),)),
         ("101T", (_T(0, 101),)),
-        (
-            "5B101T",
-            (
-                _B(0, 5),
-                _T(5, 101),
-            ),
-        ),
+        ("5B101T", (_B(0, 5), _T(5, 101),),),
         ("123456789T", (_T(0, 123456789),)),
-        (
-            "10T10B10B10S10M",
-            (
-                _T(0, 10),
-                _B(10, 10),
-                _B(20, 10),
-                _S(30, 10),
-                _M(40, 10),
-            ),
-        ),
+        ("10T10B10B10S10M", (_T(0, 10), _B(10, 10), _B(20, 10), _S(30, 10), _M(40, 10),),),
     ],
 )
 def test_read_structure_from_string(string: str, segments: Tuple[ReadSegment, ...]) -> None:
@@ -58,24 +43,8 @@ def test_read_structure_from_string(string: str, segments: Tuple[ReadSegment, ..
 @pytest.mark.parametrize(
     "string,segments",
     [
-        (
-            "75T 8B 8B 75T",
-            (
-                _T(0, 75),
-                _B(75, 8),
-                _B(83, 8),
-                _T(91, 75),
-            ),
-        ),
-        (
-            " 75T  8B   8B     75T  ",
-            (
-                _T(0, 75),
-                _B(75, 8),
-                _B(83, 8),
-                _T(91, 75),
-            ),
-        ),
+        ("75T 8B 8B 75T", (_T(0, 75), _B(75, 8), _B(83, 8), _T(91, 75),),),
+        (" 75T  8B   8B     75T  ", (_T(0, 75), _B(75, 8), _B(83, 8), _T(91, 75),),),
     ],
 )
 def test_read_structure_from_string_with_whitespace(
@@ -98,8 +67,7 @@ def test_read_structure_variable_once_and_only_once_last_segment_ok(
 
 
 @pytest.mark.parametrize(
-    "string",
-    ["++M", "5M++T", "5M70+T", "+M+T", "+M70T"],
+    "string", ["++M", "5M++T", "5M70+T", "+M+T", "+M70T"],
 )
 def test_read_structure_variable_once_and_only_once_last_segment_exception(string: str) -> None:
     with pytest.raises(Exception):

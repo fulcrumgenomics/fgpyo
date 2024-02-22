@@ -84,16 +84,9 @@ def test_assert_path_is_writeable_pass() -> None:
 
 
 @pytest.mark.parametrize(
-    "suffix, expected",
-    [
-        (".gz", io.TextIOWrapper),
-        (".fa", io.TextIOWrapper),
-    ],
+    "suffix, expected", [(".gz", io.TextIOWrapper), (".fa", io.TextIOWrapper),],
 )
-def test_reader(
-    suffix: str,
-    expected: Any,
-) -> None:
+def test_reader(suffix: str, expected: Any,) -> None:
     """Tests fgpyo.io.to_reader"""
     with NamedTemp(suffix=suffix, mode="r", delete=True) as read_file:
         with fio.to_reader(path=Path(read_file.name)) as reader:
@@ -101,16 +94,9 @@ def test_reader(
 
 
 @pytest.mark.parametrize(
-    "suffix, expected",
-    [
-        (".gz", io.TextIOWrapper),
-        (".fa", io.TextIOWrapper),
-    ],
+    "suffix, expected", [(".gz", io.TextIOWrapper), (".fa", io.TextIOWrapper),],
 )
-def test_writer(
-    suffix: str,
-    expected: Any,
-) -> None:
+def test_writer(suffix: str, expected: Any,) -> None:
     """Tests fgpyo.io.to_writer()"""
     with NamedTemp(suffix=suffix, mode="w", delete=True) as write_file:
         with fio.to_writer(path=Path(write_file.name)) as writer:
@@ -121,10 +107,7 @@ def test_writer(
     "suffix, list_to_write",
     [(".txt", ["Test with a flat file", 10]), (".gz", ["Test with a gzip file", 10])],
 )
-def test_read_and_write_lines(
-    suffix: str,
-    list_to_write: List[Any],
-) -> None:
+def test_read_and_write_lines(suffix: str, list_to_write: List[Any],) -> None:
     """Test fgpyo.fio.read_lines and write_lines"""
     with NamedTemp(suffix=suffix, mode="w", delete=True) as read_file:
         fio.write_lines(path=Path(read_file.name), lines_to_write=list_to_write)

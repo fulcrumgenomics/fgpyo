@@ -154,9 +154,7 @@ def test_sam_file_open_writing(
 
 
 def test_sam_file_open_writing_header_keyword(
-    expected_records: List[pysam.AlignedSegment],
-    header_dict: AlignmentHeader,
-    tmp_path: Path,
+    expected_records: List[pysam.AlignedSegment], header_dict: AlignmentHeader, tmp_path: Path,
 ) -> None:
     # Use SamWriter
     # use header as a keyword argument

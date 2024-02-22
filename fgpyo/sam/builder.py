@@ -10,7 +10,6 @@ The module contains the following public classes:
     - :class:`~fgpyo.sam.builder.SamBuilder` -- A builder class that allows the accumulation
         of alignment records and access as a list and writing to file.
 """
-
 from array import array
 from pathlib import Path
 from random import Random

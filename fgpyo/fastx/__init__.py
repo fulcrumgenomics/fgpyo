@@ -24,7 +24,6 @@ the state of all previously iterated records, set the parameter ``persist`` to :
    seq2: GGGG, seq2: TTTT
 
 """
-
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType

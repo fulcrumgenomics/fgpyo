@@ -48,7 +48,6 @@ The variants may also be retrieved in the order they were added via the
 order via the :func:`~fgpyo.vcf.builder.VariantBuilder.to_sorted_list()` method.
 
 """
-
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator

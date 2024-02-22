@@ -71,9 +71,7 @@ NoneType = type(None)
 
 
 def _get_parser(
-    cls: Type,
-    type_: TypeAlias,
-    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -257,9 +255,7 @@ def _get_parser(
 
 
 def attr_from(
-    cls: Type,
-    kwargs: Dict[str, str],
-    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> Any:
     """Builds an attr class from key-word arguments
 

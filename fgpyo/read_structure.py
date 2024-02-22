@@ -61,7 +61,6 @@ The module contains the following public classes:
       correspond to the given read segment
 
 """
-
 import enum
 from typing import Iterable
 from typing import Iterator

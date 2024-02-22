@@ -92,7 +92,10 @@ class ContigBuilder:
     """
 
     def __init__(
-        self, name: str, assembly: str, species: str,
+        self,
+        name: str,
+        assembly: str,
+        species: str,
     ):
         self.name = name
         self.assembly = assembly
@@ -144,7 +147,10 @@ class FastaBuilder:
     """
 
     def __init__(
-        self, assembly: str = "testassembly", species: str = "testspecies", line_length: int = 80,
+        self,
+        assembly: str = "testassembly",
+        species: str = "testspecies",
+        line_length: int = 80,
     ):
         self.assembly: str = assembly
         self.species: str = species
@@ -156,7 +162,10 @@ class FastaBuilder:
         return self.__contig_builders[key]
 
     def add(
-        self, name: str, assembly: Optional[str] = None, species: Optional[str] = None,
+        self,
+        name: str,
+        assembly: Optional[str] = None,
+        species: Optional[str] = None,
     ) -> ContigBuilder:
         """
         Creates and returns a new ContigBuilder for a contig with the provided name.
@@ -181,7 +190,10 @@ class FastaBuilder:
         self.__contig_builders[name] = builder
         return builder
 
-    def to_file(self, path: Path,) -> None:
+    def to_file(
+        self,
+        path: Path,
+    ) -> None:
         """
         Writes out the set of accumulated contigs to a FASTA file at the `path` given.
         Also generates the accompanying fasta index file (`.fa.fai`) and sequence

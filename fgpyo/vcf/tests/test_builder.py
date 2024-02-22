@@ -51,7 +51,8 @@ _INFO_FIELD_TYPES = MappingProxyType(
 
 
 def _get_random_variant_inputs(
-    random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]],
+    random_generator: random.Random,
+    sequence_dict: Dict[str, Dict[str, Any]],
 ) -> Mapping[str, Any]:
     """
     Randomly generate inputs that should produce a valid Variant. Don't include format fields.
@@ -226,7 +227,9 @@ def _get_is_compressed(input_file: Path) -> bool:
 
 @pytest.mark.parametrize("compress", (True, False))
 def test_zero_sample_vcf_round_trip(
-    temp_path: Path, zero_sample_record_inputs: Tuple[Mapping[str, Any], ...], compress: bool,
+    temp_path: Path,
+    zero_sample_record_inputs: Tuple[Mapping[str, Any], ...],
+    compress: bool,
 ) -> None:
     """
     Test if zero-sample VCF (no genotypes) output records match the records read in from the
@@ -249,13 +252,24 @@ def test_zero_sample_vcf_round_trip(
 
 
 def _add_random_genotypes(
-    random_generator: random.Random, record_input: Mapping[str, Any], sample_ids: Iterable[str],
+    random_generator: random.Random,
+    record_input: Mapping[str, Any],
+    sample_ids: Iterable[str],
 ) -> Mapping[str, Any]:
     """Add random genotypes to the record input."""
     genotypes = {
         sample_id: {
             "GT": random_generator.choice(
-                [(None,), (0, 0), (0, 1), (1, 0), (1, 1), (None, 0), (0, None), (1, None),]
+                [
+                    (None,),
+                    (0, 0),
+                    (0, 1),
+                    (1, 0),
+                    (1, 1),
+                    (None, 0),
+                    (0, None),
+                    (1, None),
+                ]
             )
         }
         for sample_id in sample_ids

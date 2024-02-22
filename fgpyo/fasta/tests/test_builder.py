@@ -25,10 +25,17 @@ def test_bases_length_from_ContigBuilder_add_default() -> None:
 
 
 @pytest.mark.parametrize(
-    "name, bases, times, length_bases", [("chr1", "AAA", 3, 9), ("chr2", "TTT", 10, 30),],
+    "name, bases, times, length_bases",
+    [
+        ("chr1", "AAA", 3, 9),
+        ("chr2", "TTT", 10, 30),
+    ],
 )
 def test_bases_length_from_ContigBuilder_add(
-    name: str, bases: str, times: int, length_bases: int,
+    name: str,
+    bases: str,
+    times: int,
+    length_bases: int,
 ) -> None:
     """Checks that the number of bases in each contig is correct"""
     builder = FastaBuilder()
@@ -53,10 +60,17 @@ def test_contig_dict_is_not_accessable() -> None:
 
 @pytest.mark.parametrize(
     "name, bases, times, expected",
-    [("chr3", "AAA a", 3, ("AAAA" * 3)), ("chr2", "TT T gT", 10, ("TTTGT" * 10)),],
+    [
+        ("chr3", "AAA a", 3, ("AAAA" * 3)),
+        ("chr2", "TT T gT", 10, ("TTTGT" * 10)),
+    ],
 )
 def test_bases_string_from_ContigBuilder_add(
-    name: str, bases: str, times: int, expected: str, tmp_path: Path,
+    name: str,
+    bases: str,
+    times: int,
+    expected: str,
+    tmp_path: Path,
 ) -> None:
     """
     Reads bases back from fasta and checks that extra spaces are removed and bases are uppercase

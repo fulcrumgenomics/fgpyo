@@ -43,7 +43,12 @@ r1_unmapped_un_named, r2_unmapped_un_named = builder.add_pair(chrom=sam.NO_REF_N
 
 
 @pytest.mark.parametrize(
-    "record", [(r1_mapped_named), (r2_unmapped_named), (r2_unmapped_un_named),],
+    "record",
+    [
+        (r1_mapped_named),
+        (r2_unmapped_named),
+        (r2_unmapped_un_named),
+    ],
 )
 def test_record_alignment_mapped_record(record: pysam.AlignedSegment) -> None:
     # Define instance of ProgressLogger

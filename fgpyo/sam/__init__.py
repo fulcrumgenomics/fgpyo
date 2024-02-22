@@ -863,7 +863,11 @@ class Template:
             for rec in recs:
                 yield rec
 
-    def write_to(self, writer: SamFile, primary_only: bool = False,) -> None:
+    def write_to(
+        self,
+        writer: SamFile,
+        primary_only: bool = False,
+    ) -> None:
         """Write the records associated with the template to file.
 
         Args:
@@ -879,7 +883,11 @@ class Template:
         for rec in rec_iter:
             writer.write(rec)
 
-    def set_tag(self, tag: str, value: Union[str, int, float, None],) -> None:
+    def set_tag(
+        self,
+        tag: str,
+        value: Union[str, int, float, None],
+    ) -> None:
         """Add a tag to all records associated with the template.
 
         Setting a tag to `None` will remove the tag.

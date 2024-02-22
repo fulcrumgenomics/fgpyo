@@ -71,7 +71,9 @@ NoneType = type(None)
 
 
 def _get_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    cls: Type,
+    type_: TypeAlias,
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -115,7 +117,11 @@ def _get_parser(
                 assert (
                     len(subtypes) == 1
                 ), "Lists are allowed only one subtype per PEP specification!"
-                subtype_parser = _get_parser(cls, subtypes[0], parsers,)
+                subtype_parser = _get_parser(
+                    cls,
+                    subtypes[0],
+                    parsers,
+                )
                 return functools.partial(
                     lambda s: list(
                         []
@@ -131,7 +137,11 @@ def _get_parser(
                 assert (
                     len(subtypes) == 1
                 ), "Sets are allowed only one subtype per PEP specification!"
-                subtype_parser = _get_parser(cls, subtypes[0], parsers,)
+                subtype_parser = _get_parser(
+                    cls,
+                    subtypes[0],
+                    parsers,
+                )
                 return functools.partial(
                     lambda s: set(
                         set({})
@@ -144,7 +154,12 @@ def _get_parser(
                 )
             elif typing.get_origin(type_) == tuple:
                 subtype_parsers = [
-                    _get_parser(cls, subtype, parsers,) for subtype in typing.get_args(type_)
+                    _get_parser(
+                        cls,
+                        subtype,
+                        parsers,
+                    )
+                    for subtype in typing.get_args(type_)
                 ]
 
                 def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
@@ -173,8 +188,16 @@ def _get_parser(
                     len(subtypes) == 2
                 ), "Dict object must have exactly 2 subtypes per PEP specification!"
                 (key_parser, val_parser) = (
-                    _get_parser(cls, subtypes[0], parsers,),
-                    _get_parser(cls, subtypes[1], parsers,),
+                    _get_parser(
+                        cls,
+                        subtypes[0],
+                        parsers,
+                    ),
+                    _get_parser(
+                        cls,
+                        subtypes[1],
+                        parsers,
+                    ),
                 )
 
                 def dict_parse(dict_string: str) -> Dict[Any, Any]:
@@ -234,7 +257,9 @@ def _get_parser(
 
 
 def attr_from(
-    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    cls: Type,
+    kwargs: Dict[str, str],
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> Any:
     """Builds an attr class from key-word arguments
 

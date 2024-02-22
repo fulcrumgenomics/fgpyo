@@ -35,7 +35,7 @@ typing_extensions = { version = ">=3.7.4", python = "<3.12" }
 docs = ["sphinx", "sphinx_rtd_theme"]
 
 [tool.poetry.dev-dependencies]
-black = "19.10b0"
+black = "20.8b1"
 click = "<8.1.0"
 flake8 = [
 	{ version = ">=5.0.0", python = "<3.12.0" },

@@ -1,49 +1,14 @@
 import collections
 import inspect
-import sys
 import typing
 from enum import Enum
 from functools import partial
 from typing import Callable
 from typing import Iterable
+from typing import Literal
 from typing import Type
 from typing import TypeVar
 from typing import Union
-
-# `get_origin_type` is a method that gets the outer type (ex list in a List[str])
-# `get_arg_types` is a method that gets the inner type (ex str in a List[str])
-if sys.version_info >= (3, 8):
-    from typing import Literal
-
-    get_origin_type = typing.get_origin
-    get_arg_types = typing.get_args
-else:
-    import typing_inspect
-    from typing_extensions import Literal
-
-    def get_origin_type(tp: Type) -> Type:
-        """Returns the outer type of a Typing object (ex list in a List[T])"""
-
-        if type(tp) is type(Literal):  # Py<=3.6.
-            return Literal
-        origin = typing_inspect.get_origin(tp)
-        return {
-            typing.List: list,
-            typing.Iterable: collections.abc.Iterable,
-            typing.Sequence: collections.abc.Sequence,
-            typing.Tuple: tuple,
-            typing.Set: set,
-            typing.Mapping: dict,
-            typing.Dict: dict,
-        }.get(origin, origin)
-
-    def get_arg_types(tp: Type) -> Type:
-        """Gets the inner types of a Typing object (ex T in a List[T])"""
-
-        if type(tp) is type(Literal):  # Py<=3.6.
-            return tp.__values__
-        return typing_inspect.get_args(tp, evaluate=True)  # evaluate=True default on Py>=3.7.
-
 
 UnionType = TypeVar("UnionType", bound="Union")
 EnumType = TypeVar("EnumType", bound="Enum")
@@ -109,7 +74,7 @@ def is_constructible_from_str(type_: type) -> bool:
 
 def _is_optional(type_: type) -> bool:
     """Returns true if type_ is optional"""
-    return get_origin_type(type_) is Union and type(None) in get_arg_types(type_)
+    return typing.get_origin(type_) is Union and type(None) in typing.get_args(type_)
 
 
 def _make_union_parser_worker(
@@ -150,7 +115,7 @@ def _make_literal_parser_worker(
     """Worker function behind literal parsing. Iterates through possible literals and
     returns the value produced by the first literal that matches expectation.
     Otherwise raises an error if none work"""
-    for arg, p in zip(get_arg_types(literal), parsers):
+    for arg, p in zip(typing.get_args(literal), parsers):
         try:
             if p(value) == arg:
                 return arg
@@ -158,7 +123,7 @@ def _make_literal_parser_worker(
             pass
     raise InspectException(
         "invalid choice: {!r} (choose from {})".format(
-            value, ", ".join(map(repr, map(str, get_arg_types(literal))))
+            value, ", ".join(map(repr, map(str, typing.get_args(literal))))
         )
     )
 
@@ -174,7 +139,7 @@ def make_literal_parser(
 
 def is_list_like(type_: type) -> bool:
     """Returns true if the value is a list or list like object"""
-    return get_origin_type(type_) in [list, collections.abc.Iterable, collections.abc.Sequence]
+    return typing.get_origin(type_) in [list, collections.abc.Iterable, collections.abc.Sequence]
 
 
 def none_parser(value: str) -> Literal[None]:

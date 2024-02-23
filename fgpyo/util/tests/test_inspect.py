@@ -1,4 +1,8 @@
+from typing import Dict
+from typing import List
 from typing import Optional
+from typing import Set
+from typing import Tuple
 
 import attr
 import pytest
@@ -6,6 +10,10 @@ import pytest
 from fgpyo.util.inspect import attr_from
 from fgpyo.util.inspect import attribute_has_default
 from fgpyo.util.inspect import attribute_is_optional
+from fgpyo.util.inspect import list_parser
+from fgpyo.util.inspect import set_parser
+from fgpyo.util.inspect import tuple_parser
+from fgpyo.util.inspect import dict_parser
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -66,3 +74,23 @@ def test_attr_from_custom_type_without_parser_fails() -> None:
             kwargs={"foo": ""},
             parsers={},
         )
+
+
+def test_list_parser() -> None:
+    parser = list_parser(Foo, List[int], {})
+    assert parser("1,2,3") == [1, 2, 3]
+
+
+def test_set_parser() -> None:
+    parser = set_parser(Foo, Set[int], {})
+    assert parser("{1,2,3}") == {1, 2, 3}
+
+
+def test_tuple_parser() -> None:
+    parser = tuple_parser(Foo, Tuple[int, str], {})
+    assert parser("(1,a)") == (1, "a")
+
+
+def test_dict_parser() -> None:
+    parser = dict_parser(Foo, Dict[int, str], {})
+    assert parser("{123;a}") == {123: "a"}

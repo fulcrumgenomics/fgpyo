@@ -11,7 +11,6 @@ from typing import Iterable
 from typing import List
 from typing import Literal
 from typing import Optional
-from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -73,7 +72,7 @@ NoneType = type(None)
 
 def list_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Callable[[str], List[Any]]:
+) -> partial:
     """
     Returns a function that parses a stringified list into a `List` of the correct type.
 
@@ -102,7 +101,7 @@ def list_parser(
 
 def set_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Callable[[str], Set[Any]]:
+) -> partial:
     """
     Returns a function that parses a stringified set into a `Set` of the correct type.
 
@@ -134,7 +133,7 @@ def set_parser(
 
 def tuple_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Callable[[str], Tuple[Any, ...]]:
+) -> partial:
     """
     Returns a function that parses a stringified tuple into a `Tuple` of the correct type.
 
@@ -174,7 +173,7 @@ def tuple_parser(
 
 def dict_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Callable[[str], Dict[Any, Any]]:
+) -> partial:
     """
     Returns a function that parses a stringified dict into a `Dict` of the correct type.
 

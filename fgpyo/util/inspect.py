@@ -217,7 +217,10 @@ def dict_parser(
                     len(inner_splits) % 2 == 0
                 ), "Inner splits of dict didn't have matched key val pairs"
                 for i in range(0, len(inner_splits), 2):
-                    out_dict[key_parser(inner_splits[i])] = val_parser(inner_splits[i + 1])
+                    key = key_parser(inner_splits[i])
+                    if key in out_dict:
+                        raise ValueError("Duplicate key found in dict: {}".format(key))
+                    out_dict[key] = val_parser(inner_splits[i + 1])
             return out_dict
 
     return functools.partial(dict_parse)

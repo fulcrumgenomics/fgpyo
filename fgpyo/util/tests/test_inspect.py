@@ -10,10 +10,10 @@ import pytest
 from fgpyo.util.inspect import attr_from
 from fgpyo.util.inspect import attribute_has_default
 from fgpyo.util.inspect import attribute_is_optional
+from fgpyo.util.inspect import dict_parser
 from fgpyo.util.inspect import list_parser
 from fgpyo.util.inspect import set_parser
 from fgpyo.util.inspect import tuple_parser
-from fgpyo.util.inspect import dict_parser
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -86,6 +86,7 @@ def test_set_parser() -> None:
     parser = set_parser(Foo, Set[int], {})
     assert parser("{}") == set()
     assert parser("{1,2,3}") == {1, 2, 3}
+    assert parser("{1,1,2,3}") == {1, 2, 3}
 
 
 def test_tuple_parser() -> None:
@@ -98,3 +99,9 @@ def test_dict_parser() -> None:
     parser = dict_parser(Foo, Dict[int, str], {})
     assert parser("{}") == {}
     assert parser("{123;a}") == {123: "a"}
+
+
+def test_dict_parser_with_duplicate_keys() -> None:
+    parser = dict_parser(Foo, Dict[int, str], {})
+    with pytest.raises(ValueError):
+        parser("{123;a,123;b}")

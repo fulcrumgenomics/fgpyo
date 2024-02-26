@@ -78,19 +78,23 @@ def test_attr_from_custom_type_without_parser_fails() -> None:
 
 def test_list_parser() -> None:
     parser = list_parser(Foo, List[int], {})
+    assert parser("") == []
     assert parser("1,2,3") == [1, 2, 3]
 
 
 def test_set_parser() -> None:
     parser = set_parser(Foo, Set[int], {})
+    assert parser("{}") == set()
     assert parser("{1,2,3}") == {1, 2, 3}
 
 
 def test_tuple_parser() -> None:
     parser = tuple_parser(Foo, Tuple[int, str], {})
+    assert parser("()") == ()
     assert parser("(1,a)") == (1, "a")
 
 
 def test_dict_parser() -> None:
     parser = dict_parser(Foo, Dict[int, str], {})
+    assert parser("{}") == {}
     assert parser("{123;a}") == {123: "a"}

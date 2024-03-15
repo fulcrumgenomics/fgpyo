@@ -210,7 +210,12 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(
+        cls,
+        path: Path,
+        ignore_extra_fields: bool = True,
+        comment_prefix: str = "#",
+    ) -> Iterator["Metric[MetricType]"]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
@@ -221,13 +226,23 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
+            comment_prefix: Any lines beginning with this string will be ignored before parsing the
+                header.
+
+        Raises:
+            ValueError: if the file does not contain a header.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            header: List[str] = reader.readline().rstrip("\r\n").split("\t")
+            try:
+                header = cls._read_header(reader, comment_prefix=comment_prefix)
+                fieldnames: List[str] = header.fieldnames
+            except ValueError:
+                raise ValueError(f"No header found in file: {path}")
+
             # check the header
             class_fields = set(cls.header())
-            file_fields = set(header)
+            file_fields = set(fieldnames)
             missing_from_class = file_fields.difference(class_fields)
             missing_from_file = class_fields.difference(file_fields)
 
@@ -265,15 +280,15 @@ class Metric(ABC, Generic[MetricType]):
                 values: List[str] = line.rstrip("\r\n").split("\t")
 
                 # raise an exception if there aren't the same number of values as the header
-                if len(header) != len(values):
+                if len(fieldnames) != len(values):
                     raise ValueError(
-                        f"In file: {path}, expected {len(header)} columns, got {len(values)} on "
-                        f"line {lineno}: {line}"
+                        f"In file: {path}, expected {len(fieldnames)} columns, "
+                        f"got {len(values)} on line {lineno}: {line}"
                     )
 
                 # build the metric
                 instance: Metric[MetricType] = inspect.attr_from(
-                    cls=cls, kwargs=dict(zip(header, values)), parsers=parsers
+                    cls=cls, kwargs=dict(zip(fieldnames, values)), parsers=parsers
                 )
                 yield instance
 

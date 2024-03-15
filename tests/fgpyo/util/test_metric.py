@@ -896,3 +896,30 @@ def test_assert_file_header_matches_metric_raises(
 
     with pytest.raises(ValueError, match="The provided file does not have the same field names"):
         _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        [],
+        [""],
+        ["# comment"],
+        ["", "# comment"],
+    ],
+)
+def test_read_validates_no_header(tmp_path: Path, lines: List[str]) -> None:
+    """
+    Test our handling of a file with no header.
+
+    1. The helper `Metric._read_header` returns None
+    2. `Metric.read` raises `ValueError`
+    """
+
+    metrics_path = tmp_path / "bad_metrics"
+
+    with metrics_path.open("w") as metrics_file:
+        metrics_file.writelines(lines)
+
+    with pytest.raises(ValueError, match="No header found"):
+        [m for m in dataclasses_data_and_classes.DummyMetric.read(metrics_path)]
+

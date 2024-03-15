@@ -111,6 +111,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import TypeVar
 
 import attr
@@ -169,10 +170,15 @@ class Metric(ABC, Generic[MetricType]):
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
             header_comment_char: Any lines beginning with this character will be ignored before
                 parsing the header.
+
+        Raises:
+            ValueError: if the file does not contain a header.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            header: List[str] = Metric.read_header(reader, comment_char=header_comment_char)
+            header = Metric._read_header(reader, comment_char=header_comment_char)
+            if header is None:
+                raise ValueError(f"No header found in file: {path}")
 
             # check the header
             class_fields = set(cls.header())
@@ -334,14 +340,18 @@ class Metric(ABC, Generic[MetricType]):
             )
 
     @staticmethod
-    def read_header(
+    def _read_header(
         reader: io.Reader,
         comment_char: str = DEFAULT_HEADER_COMMENT_CHAR,
-    ) -> List[str]:
+    ) -> Optional[List[str]]:
         """
         Read the header from an open file.
 
         Comment and empty lines will be ignored.
+
+        NB: This function returns `Optional` instead of raising an error because the name of the
+        source file is not in scope, making it difficult to provide a helpful error message. It is
+        the responsibility of the caller to raise an error if the file is empty.
 
         Args:
             reader: An open, readable file
@@ -349,12 +359,13 @@ class Metric(ABC, Generic[MetricType]):
 
         Returns:
             A list of field names found in the header line.
+            None if the file was empty or contained only comments or empty lines.
         """
 
         for line in reader:
             if not line.startswith(comment_char) and not line.strip() == "":
                 break
         else:
-            raise ValueError("No header found")
+            return None
 
         return line.rstrip("\r\n").split("\t")

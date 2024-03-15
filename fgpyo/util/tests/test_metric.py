@@ -362,6 +362,35 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
         metrics_file.write("SAMPLE\tFOO\tBAR\n")
 
     with metrics_path.open("r") as metrics_file:
-        header = Metric.read_header(metrics_file)
+        header = Metric._read_header(metrics_file)
 
     assert header == ["SAMPLE", "FOO", "BAR"]
+
+
+@pytest.mark.parametrize(
+    "lines",
+    [
+        [],
+        [""],
+        ["# comment"],
+        ["", "# comment"],
+    ],
+)
+def test_read_validates_no_header(tmp_path: Path, lines: List[str]) -> None:
+    """
+    Test our handling of a file with no header.
+
+    1. The helper `Metric._read_header` returns None
+    2. `Metric.read` raises `ValueError`
+    """
+
+    metrics_path = tmp_path / "bad_metrics"
+
+    with metrics_path.open("w") as metrics_file:
+        metrics_file.writelines(lines)
+
+    with metrics_path.open("r") as metrics_file:
+        assert Metric._read_header(metrics_file) is None
+
+    with pytest.raises(ValueError, match="No header found"):
+        [m for m in DummyMetric.read(metrics_path)]

@@ -120,6 +120,8 @@ from fgpyo.util import inspect
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
+DEFAULT_HEADER_COMMENT_CHAR = "#"
+
 
 @attr.s
 class Metric(ABC, Generic[MetricType]):
@@ -153,6 +155,7 @@ class Metric(ABC, Generic[MetricType]):
         cls,
         path: Path,
         ignore_extra_fields: bool = True,
+        header_comment_char: str = DEFAULT_HEADER_COMMENT_CHAR,
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -164,10 +167,12 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
+            header_comment_char: Any lines beginning with this character will be ignored before
+                parsing the header.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            header: List[str] = Metric.read_header(reader)
+            header: List[str] = Metric.read_header(reader, comment_char=header_comment_char)
 
             # check the header
             class_fields = set(cls.header())
@@ -329,8 +334,27 @@ class Metric(ABC, Generic[MetricType]):
             )
 
     @staticmethod
-    def read_header(reader: io.Reader) -> List[str]:
+    def read_header(
+        reader: io.Reader,
+        comment_char: str = DEFAULT_HEADER_COMMENT_CHAR,
+    ) -> List[str]:
         """
         Read the header from an open file.
+
+        Comment and empty lines will be ignored.
+
+        Args:
+            reader: An open, readable file
+            comment_char: The character which indicates the start of a comment line.
+
+        Returns:
+            A list of field names found in the header line.
         """
-        return reader.readline().rstrip("\r\n").split("\t")
+
+        for line in reader:
+            if not line.startswith(comment_char) and not line.strip() == "":
+                break
+        else:
+            raise ValueError("No header found")
+
+        return line.rstrip("\r\n").split("\t")

@@ -96,7 +96,7 @@ class SegmentType(enum.Enum):
         return self.value
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
+@attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class SubReadWithoutQuals:
     """Contains the bases that correspond to the given read segment."""
 
@@ -112,7 +112,7 @@ class SubReadWithoutQuals:
         return self.segment.kind
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
+@attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class SubReadWithQuals:
     """Contains the bases and qualities that correspond to the given read segment"""
 
@@ -131,7 +131,7 @@ class SubReadWithQuals:
         return self.segment.kind
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
+@attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class ReadSegment:
     """Encapsulates all the information about a segment within a read structure. A segment can
     either have a definite length, in which case length must be Some(Int), or an indefinite length
@@ -203,7 +203,7 @@ class ReadSegment:
             return f"{ANY_LENGTH_CHAR}{self.kind.value}"
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
+@attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class ReadStructure(Iterable[ReadSegment]):
     """Describes the structure of a give read.  A read contains one or more read segments. A read
     segment describes a contiguous stretch of bases of the same type (ex. template bases) of some

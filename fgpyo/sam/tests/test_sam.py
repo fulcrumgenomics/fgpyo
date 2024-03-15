@@ -195,6 +195,12 @@ def test_cigar_element_length_on(
     assert element.length_on_target == length_on_target
 
 
+@pytest.mark.parametrize("character", ["M", "I", "D", "S"])
+def test_invalid_cigar_element(character: str) -> None:
+    with pytest.raises(ValueError):
+        CigarElement(-1, operator=CigarOp.from_character(character))
+
+
 @pytest.mark.parametrize(
     "cigartuples,cigarstring",
     [

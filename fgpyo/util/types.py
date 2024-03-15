@@ -94,6 +94,7 @@ def _make_union_parser_worker(
             return None
         except (ValueError, InspectException):
             pass
+
     for p in parsers:
         try:
             return p(value)

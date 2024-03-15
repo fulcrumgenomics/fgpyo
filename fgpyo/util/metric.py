@@ -149,7 +149,11 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(
+        cls,
+        path: Path,
+        ignore_extra_fields: bool = True,
+    ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
@@ -163,7 +167,8 @@ class Metric(ABC, Generic[MetricType]):
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            header: List[str] = reader.readline().rstrip("\r\n").split("\t")
+            header: List[str] = Metric.read_header(reader)
+
             # check the header
             class_fields = set(cls.header())
             file_fields = set(header)
@@ -322,3 +327,10 @@ class Metric(ABC, Generic[MetricType]):
             io.write_lines(
                 path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
             )
+
+    @staticmethod
+    def read_header(reader: io.Reader) -> List[str]:
+        """
+        Read the header from an open file.
+        """
+        return reader.readline().rstrip("\r\n").split("\t")

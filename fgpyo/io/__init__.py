@@ -59,7 +59,17 @@ from typing import TextIO
 from typing import Union
 from typing import cast
 
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
+
+
 COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
+
+
+Reader: TypeAlias = Union[io.TextIOWrapper, TextIO, IO[Any]]
+Writer: TypeAlias = Union[IO[Any], io.TextIOWrapper]
 
 
 def assert_path_is_readable(path: Path) -> None:
@@ -129,7 +139,7 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None
         raise AssertionError(f"No parent directories exist for: {path}")
 
 
-def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
+def to_reader(path: Path) -> Reader:
     """Opens a Path for reading and based on extension uses open() or gzip.open()
 
     Args:
@@ -147,7 +157,7 @@ def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
         return path.open(mode="r")
 
 
-def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapper]:
+def to_writer(path: Path, append: bool = False) -> Writer:
     """Opens a Path for writing (or appending) and based on extension uses open() or gzip.open()
 
     Args:

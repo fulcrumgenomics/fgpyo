@@ -111,6 +111,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import TypeVar
 
 import attr
@@ -119,6 +120,8 @@ from fgpyo import io
 from fgpyo.util import inspect
 
 MetricType = TypeVar("MetricType", bound="Metric")
+
+DEFAULT_HEADER_COMMENT_CHAR = "#"
 
 
 @attr.s
@@ -149,7 +152,12 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(
+        cls,
+        path: Path,
+        ignore_extra_fields: bool = True,
+        header_comment_char: str = DEFAULT_HEADER_COMMENT_CHAR,
+    ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
@@ -160,10 +168,18 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
+            header_comment_char: Any lines beginning with this character will be ignored before
+                parsing the header.
+
+        Raises:
+            ValueError: if the file does not contain a header.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            header: List[str] = reader.readline().rstrip("\r\n").split("\t")
+            header = Metric._read_header(reader, comment_char=header_comment_char)
+            if header is None:
+                raise ValueError(f"No header found in file: {path}")
+
             # check the header
             class_fields = set(cls.header())
             file_fields = set(header)
@@ -322,3 +338,34 @@ class Metric(ABC, Generic[MetricType]):
             io.write_lines(
                 path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
             )
+
+    @staticmethod
+    def _read_header(
+        reader: io.Reader,
+        comment_char: str = DEFAULT_HEADER_COMMENT_CHAR,
+    ) -> Optional[List[str]]:
+        """
+        Read the header from an open file.
+
+        Comment and empty lines will be ignored.
+
+        NB: This function returns `Optional` instead of raising an error because the name of the
+        source file is not in scope, making it difficult to provide a helpful error message. It is
+        the responsibility of the caller to raise an error if the file is empty.
+
+        Args:
+            reader: An open, readable file
+            comment_char: The character which indicates the start of a comment line.
+
+        Returns:
+            A list of field names found in the header line.
+            None if the file was empty or contained only comments or empty lines.
+        """
+
+        for line in reader:
+            if not line.startswith(comment_char) and not line.strip() == "":
+                break
+        else:
+            return None
+
+        return line.rstrip("\r\n").split("\t")

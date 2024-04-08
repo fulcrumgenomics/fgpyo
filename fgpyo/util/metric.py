@@ -10,13 +10,27 @@ columns for age, gender, and address.
 
 The :class:`~fgpyo.util.metric.Metric` class makes it easy to read, write, and store one or metrics
 of the same type, all the while preserving types for each value in a metric.  It is an abstract
-base class decorated by `attr <https://www.attrs.org/en/stable/examples.html>`_, with attributes
-storing one or more typed values.
+base class decorated by `@dataclass <https://docs.python.org/3/library/dataclasses.html>`_, or
+`@attr.s <https://www.attrs.org/en/stable/examples.html>`_, with attributes storing one or more
+typed values. If using multiple layers of inheritance, keep in mind that it's not possible to mix
+these dataclass utils, e.g. a dataclasses class derived from an attr class will not appropriately
+initialize the values of the attr superclass.
 
 Examples
 ~~~~~~~~
 
 Defining a new metric class:
+
+.. code-block:: python
+
+   >>> from fgpyo.util.metric import Metric
+   >>> import dataclasses
+   >>> @dataclasses.dataclass(frozen=True)
+   ... class Person(Metric["Person"]):
+   ...     name: str
+   ...     age: int
+
+or using attr:
 
 .. code-block:: python
 
@@ -75,7 +89,7 @@ Formatting and parsing the values for custom types is supported by overriding th
 
 .. code-block:: python
 
-   >>> @attr.s(auto_attribs=True, frozen=True)
+   >>> @dataclasses.dataclass(frozen=True)
    ... class Name:
    ...     first: str
    ...     last: str
@@ -83,7 +97,7 @@ Formatting and parsing the values for custom types is supported by overriding th
    ...     def parse(cls, value: str) -> "Name":
    ...          fields = value.split(" ")
    ...          return Name(first=fields[0], last=fields[1])
-   >>> @attr.s(auto_attribs=True, frozen=True)
+   >>> @dataclasses.dataclass(frozen=True)
    ... class Person(Metric["Person"]):
    ...     name: Name
    ...     age: int
@@ -113,15 +127,12 @@ from typing import Iterator
 from typing import List
 from typing import TypeVar
 
-import attr
-
 from fgpyo import io
 from fgpyo.util import inspect
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
 
-@attr.s
 class Metric(ABC, Generic[MetricType]):
     """Abstract base class for all metric-like tab-delimited files
 
@@ -135,7 +146,8 @@ class Metric(ABC, Generic[MetricType]):
 
     def values(self) -> Iterator[Any]:
         """An iterator over attribute values in the same order as the header."""
-        return iter(attr.astuple(self, recurse=False))
+        for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
+            yield getattr(self, field.name)
 
     def formatted_values(self) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
@@ -170,7 +182,7 @@ class Metric(ABC, Generic[MetricType]):
             missing_from_class = file_fields.difference(class_fields)
             missing_from_file = class_fields.difference(file_fields)
 
-            field_name_to_attribute = attr.fields_dict(cls)
+            field_name_to_attribute = inspect.get_fields_dict(cls)  # type: ignore[arg-type]
 
             # ignore class fields that are missing from the file (via header) if they're optional
             # or have a default
@@ -178,7 +190,7 @@ class Metric(ABC, Generic[MetricType]):
                 fields_with_defaults = [
                     field
                     for field in missing_from_file
-                    if inspect.attribute_has_default(field_name_to_attribute[field])
+                    if inspect._attribute_has_default(field_name_to_attribute[field])
                 ]
                 # remove optional class fields from the fields
                 missing_from_file = missing_from_file.difference(fields_with_defaults)
@@ -250,7 +262,7 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     def header(cls) -> List[str]:
         """The list of header values for the metric."""
-        return [a.name for a in attr.fields(cls)]
+        return [a.name for a in inspect.get_fields(cls)]  # type: ignore[arg-type]
 
     @classmethod
     def format_value(cls, value: Any) -> str:

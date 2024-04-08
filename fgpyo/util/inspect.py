@@ -1,28 +1,112 @@
-import functools
 import sys
+import types as python_types
 import typing
-from enum import Enum
-from functools import partial
-from pathlib import PurePath
 from typing import Any
-from typing import Callable
 from typing import Dict
+from typing import FrozenSet
 from typing import Iterable
 from typing import List
 from typing import Literal
-from typing import Optional
+from typing import Mapping
+from typing import Protocol
 from typing import Tuple
 from typing import Type
 from typing import Union
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
 
-import attr
+import dataclasses
+import functools
+from dataclasses import MISSING as DATACLASSES_MISSING
+from dataclasses import fields as get_dataclasses_fields
+from dataclasses import is_dataclass as is_dataclasses_class
+from enum import Enum
+from functools import partial
+from pathlib import PurePath
+from typing import TYPE_CHECKING
+from typing import Callable
+from typing import Optional
+from typing import TypeVar
 
 import fgpyo.util.types as types
+
+attr: Optional[python_types.ModuleType]
+MISSING: FrozenSet[Any]
+
+try:
+    import attr
+
+    _use_attr = True
+    from attr import fields as get_attr_fields
+    from attr import fields_dict as get_attr_fields_dict
+
+    Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined, no-redef]
+    # dataclasses and attr have internal tokens for missing values, join into a set so that we can
+    # check if a value is missing without knowing the type of backing class
+    MISSING = frozenset({DATACLASSES_MISSING, attr.NOTHING})
+except ImportError:  # pragma: no cover
+    _use_attr = False
+    attr = None
+    Attribute: TypeAlias = TypeVar("Attribute", bound=object)  # type: ignore[misc, assignment, no-redef]  # noqa: E501
+
+    # define empty placeholders for getting attr fields as a tuple or dict. They will never be
+    # called because the import failed; but they're here to ensure that the function is defined in
+    # sections of code that don't know if the import was successful or not.
+
+    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:  # type: ignore[misc]
+        """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
+        return ()
+
+    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:  # type: ignore[misc]
+        """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
+        return {}
+
+    # for consistency with successful import of attr, create a set for missing values
+    MISSING = frozenset({DATACLASSES_MISSING})
+
+if TYPE_CHECKING:  # pragma: no cover
+    from _typeshed import DataclassInstance as DataclassesProtocol
+else:
+
+    class DataclassesProtocol(Protocol):
+        __dataclasses_fields__: Dict[str, dataclasses.Field]
+
+
+if TYPE_CHECKING and _use_attr:  # pragma: no cover
+    from attr import AttrsInstance
+else:
+
+    class AttrsInstance(Protocol):  # type: ignore[no-redef]
+        __attrs_attrs__: Dict[str, Any]
+
+
+def is_attr_class(cls: type) -> bool:  # type: ignore[arg-type]
+    """Return True if the class is an attr class, and False otherwise"""
+    return hasattr(cls, "__attrs_attrs__")
+
+
+_MISSING_OR_NONE: FrozenSet[Any] = frozenset({*MISSING, None})
+"""Set of values that are considered missing or None for dataclasses or attr classes"""
+_DataclassesOrAttrClass: TypeAlias = Union[DataclassesProtocol, AttrsInstance]
+"""
+TypeAlias for dataclasses or attr classes. Mostly nonsense because they are not true types, they
+are traits, but there is no python trait-tester.
+"""
+FieldType: TypeAlias = Union[dataclasses.Field, Attribute]
+"""
+TypeAlias for dataclass Fields or attrs Attributes. It will correspond to the correct type for the
+corresponding _DataclassesOrAttrClass
+"""
+
+
+def _get_dataclasses_fields_dict(
+    class_or_instance: Union[DataclassesProtocol, Type[DataclassesProtocol]],
+) -> Dict[str, dataclasses.Field]:
+    """Get a dict from field name to Field for a dataclass class or instance."""
+    return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
 
 
 class ParserNotFoundException(Exception):
@@ -67,7 +151,7 @@ def split_at_given_level(
     return out_vals
 
 
-NoneType = type(None)
+NoneType: TypeAlias = type(None)  # type: ignore[no-redef]
 
 
 def list_parser(
@@ -305,27 +389,58 @@ def _get_parser(
     return parser
 
 
+def get_fields_dict(
+    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]]
+) -> Mapping[str, FieldType]:
+    """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
+    if is_dataclasses_class(cls):
+        return _get_dataclasses_fields_dict(cls)  # type: ignore[arg-type]
+    elif is_attr_class(cls):  # type: ignore[arg-type]
+        return get_attr_fields_dict(cls)  # type: ignore[arg-type]
+    else:
+        raise TypeError("cls must a dataclasses or attr class")
+
+
+def get_fields(
+    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]]
+) -> Tuple[FieldType, ...]:
+    """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
+    if is_dataclasses_class(cls):
+        return get_dataclasses_fields(cls)  # type: ignore[arg-type]
+    elif is_attr_class(cls):  # type: ignore[arg-type]
+        return get_attr_fields(cls)  # type: ignore[arg-type]
+    else:
+        raise TypeError("cls must a dataclasses or attr class")
+
+
+_AttrFromType = TypeVar("_AttrFromType")
+"""TypeVar to allow attr_from to be used with either an attr class or a dataclasses class"""
+
+
 def attr_from(
-    cls: Type, kwargs: Dict[str, str], parsers: Optional[Dict[type, Callable[[str], Any]]] = None
-) -> Any:
-    """Builds an attr class from key-word arguments
+    cls: Type[_AttrFromType],
+    kwargs: Dict[str, str],
+    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+) -> _AttrFromType:
+    """Builds an attr or dataclasses class from key-word arguments
 
     Args:
-        cls: the attr class to be built
+        cls: the attr or dataclasses class to be built
         kwargs: a dictionary of keyword arguments
         parsers: a dictionary of parser functions to apply to specific types
 
     """
     return_values: Dict[str, Any] = {}
-    for attribute in attr.fields(cls):
+    for attribute in get_fields(cls):  # type: ignore[arg-type]
         return_value: Any
         if attribute.name in kwargs:
             str_value: str = kwargs[attribute.name]
             set_value: bool = False
 
             # Use the converter if provided
-            if attribute.converter is not None:
-                return_value = attribute.converter(str_value)
+            converter = getattr(attribute, "converter", None)
+            if converter is not None:
+                return_value = converter(str_value)
                 set_value = True
 
             # try getting a known parser
@@ -352,12 +467,12 @@ def attr_from(
                 set_value
             ), f"Do not know how to convert string to {attribute.type} for value: {str_value}"
         else:  # no value, check for a default
-            assert attribute.default is not None or attribute_is_optional(
+            assert attribute.default is not None or _attribute_is_optional(
                 attribute
             ), f"No value given and no default for attribute `{attribute.name}`"
             return_value = attribute.default
             # when the default is attr.NOTHING, just use None
-            if return_value is attr.NOTHING:
+            if return_value in MISSING:
                 return_value = None
 
         return_values[attribute.name] = return_value
@@ -365,13 +480,13 @@ def attr_from(
     return cls(**return_values)
 
 
-def attribute_is_optional(attribute: attr.Attribute) -> bool:
+def _attribute_is_optional(attribute: FieldType) -> bool:
     """Returns True if the attribute is optional, False otherwise"""
     return typing.get_origin(attribute.type) is Union and isinstance(
         None, typing.get_args(attribute.type)
     )
 
 
-def attribute_has_default(attribute: attr.Attribute) -> bool:
+def _attribute_has_default(attribute: FieldType) -> bool:
     """Returns True if the attribute has a default value, False otherwise"""
-    return attribute.default != attr.NOTHING or attribute_is_optional(attribute)
+    return attribute.default not in _MISSING_OR_NONE or _attribute_is_optional(attribute)

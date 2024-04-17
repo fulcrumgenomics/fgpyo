@@ -69,3 +69,12 @@ def test_from_read() -> None:
 
     read = builder.add_single(attrs={"SA": f"{s1};{s2};"})
     assert SupplementaryAlignment.from_read(read) == [sa1, sa2]
+
+
+def test_end() -> None:
+    """Test that we can get the end of a SupplementaryAlignment."""
+
+    s1 = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
+
+    # NB: the SA tag is one-based, but SupplementaryAlignment is zero-based
+    assert s1.end == 222

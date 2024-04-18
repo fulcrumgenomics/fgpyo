@@ -551,6 +551,11 @@ class SupplementaryAlignment:
             )
         )
 
+    @property
+    def end(self) -> int:
+        """The 0-based exclusive end position of the alignment."""
+        return self.start + self.cigar.length_on_target()
+
     @staticmethod
     def parse(string: str) -> "SupplementaryAlignment":
         """Returns a supplementary alignment parsed from the given string.  The various fields

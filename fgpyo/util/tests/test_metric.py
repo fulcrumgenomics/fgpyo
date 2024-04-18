@@ -69,6 +69,7 @@ class DataBuilder:
         DummyMetric: Metric with many different field types
         Person: Metric with optional name and age string fields
         Name: Metric with first and last name string fields and a parse method
+        NameMetric: Metric to test specifying columns out of order
         NamedPerson: Metric with name (Name Metric) field and age (int) fields, and parsers.
         PersonMaybeAge = Person with required name string field and optional age int field
         PersonDefault = Person with required name string field and age int field with default value
@@ -116,6 +117,11 @@ class DataBuilder:
                 return Name(first=fields[0], last=fields[1])
 
         @make_dataclass(use_attr=use_attr)
+        class NameMetric(Metric["NameMetric"]):
+            first: str
+            last: str
+
+        @make_dataclass(use_attr=use_attr)
         class NamedPerson(Metric["NamedPerson"]):
             name: Name
             age: int
@@ -149,6 +155,7 @@ class DataBuilder:
         self.DummyMetric = DummyMetric
         self.Person = Person
         self.Name = Name
+        self.NameMetric = NameMetric
         self.NamedPerson = NamedPerson
         self.PersonMaybeAge = PersonMaybeAge
         self.PersonDefault = PersonDefault
@@ -225,6 +232,8 @@ def test_is_correct_dataclass_type(use_attr: bool) -> None:
     assert is_dataclasses_class(data_and_classes.Person) is not use_attr
     assert is_attr_class(data_and_classes.Name) is use_attr
     assert is_dataclasses_class(data_and_classes.Name) is not use_attr
+    assert is_attr_class(data_and_classes.NameMetric) is use_attr
+    assert is_dataclasses_class(data_and_classes.NameMetric) is not use_attr
     assert is_attr_class(data_and_classes.NamedPerson) is use_attr
     assert is_dataclasses_class(data_and_classes.NamedPerson) is not use_attr
     assert is_attr_class(data_and_classes.PersonMaybeAge) is use_attr
@@ -493,3 +502,20 @@ def test_metrics_fast_concat(tmp_path: Path, data_and_classes: DataBuilder) -> N
     assert metrics[0] == DUMMY_METRICS[0]
     assert metrics[1] == DUMMY_METRICS[1]
     assert metrics[2] == DUMMY_METRICS[2]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    path = tmp_path / "metrics.txt"
+    NameMetric: TypeAlias = data_and_classes.NameMetric
+
+    name = NameMetric(first="jon", last="Doe")
+
+    # Write the columns out of order (last then first)
+    with path.open("w") as writer:
+        writer.write("last\tfirst\n")
+        writer.write(f"{name.last}\t{name.first}\n")
+
+    names = list(NameMetric.read(path=path))
+    assert len(names) == 1
+    assert names[0] == name

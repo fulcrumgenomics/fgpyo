@@ -2,6 +2,7 @@ import sys
 import types as python_types
 import typing
 from typing import Any
+from typing import ClassVar
 from typing import Dict
 from typing import FrozenSet
 from typing import Iterable
@@ -71,16 +72,18 @@ if TYPE_CHECKING:  # pragma: no cover
     from _typeshed import DataclassInstance
 else:
 
+    # https://github.com/python/typeshed/blob/727f3c4320d2af3af2f16695e24dd78e79b7c070/stdlib/_typeshed/__init__.pyi#L348
     class DataclassInstance(Protocol):
-        __dataclasses_fields__: Dict[str, dataclasses.Field]
+        __dataclasses_fields__: ClassVar[Dict[str, dataclasses.Field[Any]]]
 
 
 if TYPE_CHECKING and _use_attr:  # pragma: no cover
     from attr import AttrsInstance
 else:
 
+    # https://github.com/python-attrs/attrs/blob/f7f317ae4c3790f23ae027db626593d50e8a4e88/src/attr/_typing_compat.pyi#L9
     class AttrsInstance(Protocol):  # type: ignore[no-redef]
-        __attrs_attrs__: Dict[str, Any]
+        __attrs_attrs__: ClassVar[Any]
 
 
 def is_attr_class(cls: type) -> bool:  # type: ignore[arg-type]

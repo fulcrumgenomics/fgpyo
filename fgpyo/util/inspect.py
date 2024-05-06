@@ -68,10 +68,10 @@ except ImportError:  # pragma: no cover
     MISSING = frozenset({DATACLASSES_MISSING})
 
 if TYPE_CHECKING:  # pragma: no cover
-    from _typeshed import DataclassInstance as DataclassesProtocol
+    from _typeshed import DataclassInstance
 else:
 
-    class DataclassesProtocol(Protocol):
+    class DataclassInstance(Protocol):
         __dataclasses_fields__: Dict[str, dataclasses.Field]
 
 
@@ -90,7 +90,7 @@ def is_attr_class(cls: type) -> bool:  # type: ignore[arg-type]
 
 _MISSING_OR_NONE: FrozenSet[Any] = frozenset({*MISSING, None})
 """Set of values that are considered missing or None for dataclasses or attr classes"""
-_DataclassesOrAttrClass: TypeAlias = Union[DataclassesProtocol, AttrsInstance]
+_DataclassesOrAttrClass: TypeAlias = Union[DataclassInstance, AttrsInstance]
 """
 TypeAlias for dataclasses or attr classes. Mostly nonsense because they are not true types, they
 are traits, but there is no python trait-tester.
@@ -103,7 +103,7 @@ corresponding _DataclassesOrAttrClass
 
 
 def _get_dataclasses_fields_dict(
-    class_or_instance: Union[DataclassesProtocol, Type[DataclassesProtocol]],
+    class_or_instance: Union[DataclassInstance, Type[DataclassInstance]],
 ) -> Dict[str, dataclasses.Field]:
     """Get a dict from field name to Field for a dataclass class or instance."""
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}

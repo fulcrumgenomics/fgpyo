@@ -116,6 +116,7 @@ Formatting and parsing the values for custom types is supported by overriding th
 
 """
 
+import dataclasses
 from abc import ABC
 from enum import Enum
 from pathlib import Path
@@ -126,6 +127,8 @@ from typing import Generic
 from typing import Iterator
 from typing import List
 from typing import TypeVar
+
+import attr
 
 from fgpyo import io
 from fgpyo.util import inspect
@@ -334,3 +337,14 @@ class Metric(ABC, Generic[MetricType]):
             io.write_lines(
                 path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
             )
+
+
+def asdict(metric: Metric) -> dict[str, Any]:
+    """Convert a Metric instance to a dictionary."""
+
+    if dataclasses.is_dataclass(metric):
+        return dataclasses.asdict(metric)
+    elif attr.has(metric):
+        return attr.asdict(metric)
+    else:
+        assert False, "Unreachable"

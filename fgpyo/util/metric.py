@@ -149,6 +149,15 @@ class Metric(ABC, Generic[MetricType]):
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield getattr(self, field.name)
 
+    def asdict(self) -> Dict[str, Any]:
+        """
+        A dictionary mapping attribute names to values, inserted in the same order as the header.
+        """
+        return {
+            field.name: getattr(self, field.name)
+            for field in inspect.get_fields(self.__class__)  # type: ignore[arg-type]
+        }
+
     def formatted_values(self) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [self.format_value(value) for value in self.values()]

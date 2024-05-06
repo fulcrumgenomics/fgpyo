@@ -392,6 +392,11 @@ def test_metric_values(data_and_classes: DataBuilder) -> None:
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_asdict(data_and_classes: DataBuilder) -> None:
+    assert data_and_classes.Person(name="name", age=42).asdict() == {"name": "name", "age": 42}
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_parse(data_and_classes: DataBuilder) -> None:
     Person: TypeAlias = data_and_classes.Person
     assert Person.parse(fields=["name", "42"]) == Person(name="name", age=42)

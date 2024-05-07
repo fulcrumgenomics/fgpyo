@@ -117,8 +117,10 @@ Formatting and parsing the values for custom types is supported by overriding th
 """
 
 import dataclasses
+import sys
 from abc import ABC
 from enum import Enum
+from inspect import isclass
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -128,10 +130,17 @@ from typing import Iterator
 from typing import List
 from typing import TypeVar
 
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
+
 import attr
 
 from fgpyo import io
 from fgpyo.util import inspect
+from fgpyo.util.inspect import AttrsInstance
+from fgpyo.util.inspect import DataclassInstance
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
@@ -339,12 +348,53 @@ class Metric(ABC, Generic[MetricType]):
             )
 
 
-def asdict(metric: Metric) -> dict[str, Any]:
-    """Convert a Metric instance to a dictionary."""
+def is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
+    """
+    Test if the given metric is a dataclass instance.
 
-    if dataclasses.is_dataclass(metric):
+    NB: `dataclasses.is_dataclass` returns True for both dataclass instances and class objects, and
+    we need to override the built-in function's `TypeGuard`.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        True if the given metric is an instance of a dataclass-decorated Metric.
+        False otherwise.
+    """
+    return not isclass(metric) and dataclasses.is_dataclass(metric)
+
+
+def is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
+    """
+    Test if the given metric is an attr.s instance.
+
+    NB: `attr.has` provides a type guard, but only on the class object - we want to narrow the type
+    of the metric instance, so we implement a guard here.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        True if the given metric is an instance of an attr.s-decorated Metric.
+        False otherwise.
+    """
+    return not isclass(metric) and attr.has(metric.__class__)
+
+
+def asdict(metric: Metric) -> dict[str, Any]:
+    """
+    Convert a Metric instance to a dictionary.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        A dictionary representation of the given metric.
+    """
+    if is_dataclass_instance(metric):
         return dataclasses.asdict(metric)
-    elif attr.has(metric):
+    elif is_attrs_instance(metric):
         return attr.asdict(metric)
     else:
         assert False, "Unreachable"

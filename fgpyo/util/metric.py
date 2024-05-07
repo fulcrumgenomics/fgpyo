@@ -382,7 +382,7 @@ def is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
     return not isclass(metric) and attr.has(metric.__class__)
 
 
-def asdict(metric: Metric) -> dict[str, Any]:
+def asdict(metric: Metric) -> Dict[str, Any]:
     """
     Convert a Metric instance to a dictionary.
 

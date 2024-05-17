@@ -60,6 +60,11 @@ jobs:
       run: |
         poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
 
+    - name: Run isort
+      shell: bash
+      run: |
+        poetry run isort --force-single-line-imports --profile black fgpyo
+
     - name: Style checking
       shell: bash
       run: |

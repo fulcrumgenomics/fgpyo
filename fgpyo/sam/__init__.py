@@ -161,8 +161,8 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
-from typing import set
 from typing import Union
 from typing import cast
 
@@ -193,7 +193,7 @@ _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 SAM_UMI_DELIMITER: str = "-"
 """Multiple UMI delimiter, which SAM specification recommends should be a hyphen"""
 
-VALID_UMI_CHARACTERS: set[str] = set("ACGTN")
+VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
 """Illumina's restricted UMI characters."""
 
 ILLUMINA_UMI_DELIMITER: str = "+"

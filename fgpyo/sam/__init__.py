@@ -189,6 +189,17 @@ NO_REF_POS: int = -1
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
+SAM_UMI_DELIMITER: str = "-"
+"""Multiple UMI delimiter, which SAM specification recommends should be a hyphen"""
+
+VALID_UMI_CHARACTERS: set[str] = set("ACGTN")
+"""Illumina's restricted UMI characters."""
+
+ILLUMINA_UMI_DELIMITER: str = "+"
+"""Multiple UMIs are delimited with a plus-sign in Illumina FASTQs."""
+
+ILLUMINA_READ_NAME_DELIMITER: str = ":"
+"""Illumina read names are delimited with a colon."""
 
 @enum.unique
 class SamFileType(enum.Enum):
@@ -934,3 +945,88 @@ class SamOrder(enum.Enum):
     Coordinate = "coordinate"  #: coordinate sorted
     QueryName = "queryname"  #: queryname sorted
     Unknown = "unknown"  # Unknown SAM / BAM / CRAM sort order
+
+def extract_umis_from_read_name(
+    read_name: str,
+    read_name_delimiter: str = ILLUMINA_READ_NAME_DELIMITER,
+    umi_delimiter: str = ILLUMINA_UMI_DELIMITER,
+    strict: bool = False
+) -> Optional[str]:
+    """Extract UMI(s) from a read name.
+    The UMI is expected to be the final component of the read name, delimited by the
+    `read_name_delimiter`. Multiple UMIs may be present, delimited by the `umi_delimiter`. This
+    delimiter will be replaced by the SAM-standard `-`.
+    Args:
+        read_name: The read name to extract the UMI from.
+        read_name_delimiter: The delimiter separating the components of the read name.
+        umi_delimiter: The delimiter separating multiple UMIs.
+        strict: If `strict` is true, the read name must contain either 7 or 8 colon-separated
+        segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
+        in the case of 7 segments. If `strict` is false, the last segment is returned so long
+        as it appears to be a valid UMI.
+    Returns:
+        The UMI extracted from the read name, or None if no UMI was found. Multiple UMIs are
+        returned in a single string, separated by a hyphen (`-`).
+    Raises:
+        ValueError: If the read name does not end with a valid UMI.
+    """
+    if strict:
+        colons = read_name.count(":")
+        if colons == 6: #number of fields is 7
+            return None
+        elif colons != 7:
+            raise ValueError(f"Trying to extract UMIs from read with {colons + 1} parts "
+                             f"(7 or 8 expected): {read_name}")
+    raw_umi = read_name.split(read_name_delimiter)[-1]
+    # Check each UMI individually
+    umis = raw_umi.split(umi_delimiter)
+    # Strip the "r" from rev-comped UMIs
+    # (NB: for consistency with UMI_tools, the UMI is not revcomped)
+    umis = [umi.lstrip("r") for umi in umis]
+
+    invalid_umis = [umi for umi in umis if not _is_valid_umi(umi)]
+    if len(invalid_umis) > 0:
+        raise ValueError(
+            f"Invalid UMIs found in read name: {read_name}",
+            f"  (Invalid UMIs: {', '.join(invalid_umis)})",
+        )
+    return SAM_UMI_DELIMITER.join(umis)
+
+def copy_umi_from_read_name(rec: AlignedSegment, remove_umi: bool = False) -> None:
+    """
+    Copy a UMI from an alignment's read name to its `RX` SAM tag.
+
+    Args:
+        rec: The alignment record to update.
+        remove_umi: If True, the UMI will be removed from the read name after copying.
+
+    Returns:
+        This function does not return a value but updates the record in place.
+
+    Raises:
+        ValueError: If the read name does not end with a valid UMI.
+        ValueError: If the record already has a populated `RX` SAM tag.
+    """
+
+    umi = extract_umis_from_read_name(read_name=rec.qname,umi_delimiter=ILLUMINA_READ_NAME_DELIMITER)
+    if not _is_valid_umi(umi):
+            raise ValueError(
+                f"Invalid UMI(s) found in read name: {read_name}",
+            )
+    else:
+        rec.set_tag(tag="RX", value=umi, value_type="Z")
+        if remove_umi:
+            last_index = rec.qname.rfind(ILLUMINA_READ_NAME_DELIMITER)
+            rec.qname = rec.qname[:last_index] if last_index != -1 else rec.qname
+
+def _is_valid_umi(umi: str) -> bool:
+    """Check whether a UMI is valid.
+    Illumina UMIs may only contain A/C/G/T/N.
+    https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
+    Args:
+        umi: The UMI to check.
+    Returns:
+        True if the UMI is valid, False otherwise.
+    """
+
+    return len(umi) > 0 and set(umi).issubset(VALID_UMI_CHARACTERS)

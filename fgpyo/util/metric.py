@@ -161,7 +161,7 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator["Metric[MetricType]"]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.

@@ -72,8 +72,12 @@ def assert_path_is_readable(path: Path) -> None:
     Example:
         assert_file_exists(path = Path("some_file.csv"))
     """
+    # stdin is readable
+    if path == Path("/dev/stdin"):
+        return
+
     assert path.exists(), f"Cannot read non-existent path: {path}"
-    assert not path.is_dir(), f"Cannot read path becasue it is a directory: {path}"
+    assert path.is_file(), f"Cannot read path becasue it is not a file: {path}"
     assert os.access(path, os.R_OK), f"Path exists but is not readable: {path}"
 
 
@@ -124,30 +128,32 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
     Example:
         assert_path_is_writable(path = Path("example.txt"))
     """
-    # If file exists, it must be writable
+    # stdout is writable
+    if path == Path("/dev/stdout"):
+        return
+
+    # If path exists, it must be a writable file
     if path.exists():
-        assert path.is_file() and os.access(
-            path, os.W_OK
-        ), f"File exists but is not writable: {path}"
+        assert path.is_file(), f"Cannot read path becasue it is not a file: {path}"
+        assert os.access(path, os.W_OK), f"File exists but is not writable: {path}"
 
     # Else if file doesnt exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writable
     elif parent_must_exist:
         parent = path.absolute().parent
-        assert (
-            parent.exists() & parent.is_dir() & os.access(parent, os.W_OK)
-        ), f"Path does not exist and parent isn't extant/writable: {path}"
+        assert parent.exists(), f"Parent directory does not exist: {parent}"
+        assert parent.is_dir(), f"Parent directory exists but is not a directory: {parent}"
+        assert os.access(parent, os.W_OK), f"Parent directory exists but is not writable: {parent}"
 
     # Else if file doesn't exist and parent_must_exist is False, test parent until
     # you find the first extant path, and check that it is a directory and is writable.
     else:
         for parent in path.parents:
             if parent.exists():
-                assert os.access(
-                    parent, os.W_OK
-                ), f"File does not have a writable parent directory: {path}"
-                return
-        raise AssertionError(f"No parent directories exist for: {path}")
+                assert os.access(parent, os.W_OK), f"Parent directory is not writable: {parent}"
+                break
+        else:
+            raise AssertionError(f"No parent directories exist for: {path}")
 
 
 def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:

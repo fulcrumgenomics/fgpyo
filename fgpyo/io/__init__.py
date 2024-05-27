@@ -148,7 +148,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
     # Else if file doesn't exist and parent_must_exist is False, test parent until
     # you find the first extant path, and check that it is a directory and is writable.
     else:
-        for parent in path.parents:
+        for parent in path.absolute().parents:
             if parent.exists():
                 assert os.access(parent, os.W_OK), f"Parent directory is not writable: {parent}"
                 break

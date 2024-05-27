@@ -525,17 +525,27 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
 
 
 def test_is_dataclass_instance() -> None:
-    """Test that is_dataclass_instance works as expected."""
+    """Test that _is_dataclass_instance works as expected."""
 
+    # True for `dataclass`-decorated instances but not `attr.s`-decorated instances
     assert _is_dataclass_instance(dataclasses_data_and_classes.Person(name="name", age=42))
     assert not _is_dataclass_instance(attr_data_and_classes.Person(name="name", age=42))
 
+    # And False for both classes
+    assert not _is_dataclass_instance(dataclasses_data_and_classes.Person)
+    assert not _is_dataclass_instance(attr_data_and_classes.Person)
+
 
 def test_is_attrs_instance() -> None:
-    """Test that is_attrs_instance works as expected."""
+    """Test that _is_attrs_instance works as expected."""
 
+    # True for `attr.s`-decorated instances but not `dataclass`-decorated instances
     assert not _is_attrs_instance(dataclasses_data_and_classes.Person(name="name", age=42))
     assert _is_attrs_instance(attr_data_and_classes.Person(name="name", age=42))
+
+    # And False for both classes
+    assert not _is_attrs_instance(dataclasses_data_and_classes.Person)
+    assert not _is_attrs_instance(attr_data_and_classes.Person)
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

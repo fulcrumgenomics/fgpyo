@@ -348,7 +348,7 @@ class Metric(ABC, Generic[MetricType]):
             )
 
 
-def is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
+def _is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
     """
     Test if the given metric is a dataclass instance.
 
@@ -365,7 +365,7 @@ def is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
     return not isclass(metric) and dataclasses.is_dataclass(metric)
 
 
-def is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
+def _is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
     """
     Test if the given metric is an attr.s instance.
 
@@ -392,9 +392,9 @@ def asdict(metric: Metric) -> Dict[str, Any]:
     Returns:
         A dictionary representation of the given metric.
     """
-    if is_dataclass_instance(metric):
+    if _is_dataclass_instance(metric):
         return dataclasses.asdict(metric)
-    elif is_attrs_instance(metric):
+    elif _is_attrs_instance(metric):
         return attr.asdict(metric)
     else:
         assert False, "Unreachable"

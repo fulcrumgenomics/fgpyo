@@ -391,10 +391,17 @@ def asdict(metric: Metric) -> Dict[str, Any]:
 
     Returns:
         A dictionary representation of the given metric.
+
+    Raises:
+        TypeError: If the given metric is not an instance of a `dataclass` or `attr.s`-decorated
+        Metric.
     """
     if _is_dataclass_instance(metric):
         return dataclasses.asdict(metric)
     elif _is_attrs_instance(metric):
         return attr.asdict(metric)
     else:
-        assert False, "Unreachable"
+        raise TypeError(
+            "The provided metric is not an instance of a `dataclass` or `attr.s`-decorated Metric "
+            f"class: {metric.__class__}"
+        )

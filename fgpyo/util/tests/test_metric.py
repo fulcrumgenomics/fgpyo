@@ -553,3 +553,18 @@ def test_asdict(data_and_classes: DataBuilder) -> None:
     """Test that asdict works as expected on both dataclass and attr.s decoreated metrics."""
 
     assert asdict(data_and_classes.Person(name="name", age=42)) == {"name": "name", "age": 42}
+
+
+def test_asdict_raises() -> None:
+    """Test that we raise a TypeError when asdict is called on a non-metric class."""
+
+    class UndecoratedMetric(Metric["UndecoratedMetric"]):
+        foo: int
+        bar: str
+
+        def __init__(self, foo: int, bar: str):
+            self.foo = foo
+            self.bar = bar
+
+    with pytest.raises(TypeError, match="The provided metric is not an instance"):
+        asdict(UndecoratedMetric(foo=1, bar="a"))

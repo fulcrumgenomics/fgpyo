@@ -196,7 +196,7 @@ see specification here: https://samtools.github.io/hts-specs/SAMtags.pdf"""
 
 VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
 """Illumina's restricted UMI characters;
-https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm."""
+https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm."""  # noqa
 
 ILLUMINA_UMI_DELIMITER: str = "+"
 """Multiple UMIs are delimited with a plus-sign in Illumina FASTQs; see docs above."""

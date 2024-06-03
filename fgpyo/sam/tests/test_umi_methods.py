@@ -50,9 +50,21 @@ def test_extract_umi_from_read_name(read_name: str, umi: str) -> None:
     ],
 )
 def test_extract_umi_from_read_name_raises(read_name: str) -> None:
-    """Test that we raise an error when the read name includes an invalid UMI."""
+    """Test that we raise an error when the read name includes an invalid UMI
+    and strict=True."""
     with pytest.raises(ValueError):
-        extract_umis_from_read_name(read_name)
+        extract_umis_from_read_name(read_name=read_name, strict=True)
+
+
+def test_extract_umi_from_read_name_strict_False() -> None:
+    """Test that we return None when an invalid UMI is encountered
+    and strict=False (but still return a valid UMI)."""
+    assert extract_umis_from_read_name(read_name="abc:def:ghi:ArCGT", strict=False) is None
+    assert extract_umis_from_read_name(read_name="abc:def:ghi:ACGTr", strict=False) is None
+    assert (
+        extract_umis_from_read_name(read_name="abc:def:ghi:rACGT+CAGA", strict=False)
+        == "ACGT-CAGA"
+    )
 
 
 @pytest.mark.parametrize(
@@ -81,17 +93,25 @@ def test_strict_extract_umi_from_read_name_raises(read_name: str) -> None:
         extract_umis_from_read_name(read_name, strict=True)
 
 
-def test_copy_umi_from_read_name() -> None:
+@pytest.mark.parametrize("remove_umi, strict", [[True, False], [True, False]])
+def test_copy_valid_umi_from_read_name(remove_umi: bool, strict: bool) -> None:
+    """Test that we populate the RX field with a valid UMI if remove_umi and strict
+    are both True; otherwise do not remove UMI from read.query_name"""
     builder = SamBuilder()
-    read = builder.add_single(name="read_name:GATTACA")
-    copy_umi_from_read_name(read, remove_umi=False)
-    assert read.query_name == "read_name:GATTACA"
+    read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:GATTACA")
+    copy_umi_from_read_name(read, strict=strict, remove_umi=remove_umi)
     assert read.get_tag("RX") == "GATTACA"
+    if remove_umi:
+        assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst"
+    else:
+        assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst:GATTACA"
 
 
-def test_copy_remove_umi_from_read_name() -> None:
+def test_copy_invalid_umi_from_read_name() -> None:
+    """Test that we do not set the RX tag if we encounter an invalid UMI"""
     builder = SamBuilder()
-    read = builder.add_single(name="read_name:GATTACA")
-    copy_umi_from_read_name(read, remove_umi=True)
-    assert read.query_name == "read_name"
-    assert read.get_tag("RX") == "GATTACA"
+    read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:uvw+xyz")
+    assert _is_valid_umi(read.query_name) is False
+    with pytest.raises(ValueError):
+        copy_umi_from_read_name(read, strict=True, remove_umi=True)
+    assert read.has_tag("RX") is False

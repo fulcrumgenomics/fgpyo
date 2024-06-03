@@ -191,13 +191,15 @@ _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
 SAM_UMI_DELIMITER: str = "-"
-"""Multiple UMI delimiter, which SAM specification recommends should be a hyphen"""
+"""Multiple UMI delimiter, which SAM specification recommends should be a hyphen;
+see specification here: https://samtools.github.io/hts-specs/SAMtags.pdf"""
 
 VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
-"""Illumina's restricted UMI characters."""
+"""Illumina's restricted UMI characters;
+https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm."""
 
 ILLUMINA_UMI_DELIMITER: str = "+"
-"""Multiple UMIs are delimited with a plus-sign in Illumina FASTQs."""
+"""Multiple UMIs are delimited with a plus-sign in Illumina FASTQs; see docs above."""
 
 ILLUMINA_READ_NAME_DELIMITER: str = ":"
 """Illumina read names are delimited with a colon."""
@@ -956,20 +958,25 @@ def extract_umis_from_read_name(
     strict: bool = False,
 ) -> Optional[str]:
     """Extract UMI(s) from a read name.
+
     The UMI is expected to be the final component of the read name, delimited by the
     `read_name_delimiter`. Multiple UMIs may be present, delimited by the `umi_delimiter`. This
     delimiter will be replaced by the SAM-standard `-`.
+
     Args:
         read_name: The read name to extract the UMI from.
         read_name_delimiter: The delimiter separating the components of the read name.
         umi_delimiter: The delimiter separating multiple UMIs.
         strict: If `strict` is true, the read name must contain either 7 or 8 colon-separated
-        segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
-        in the case of 7 segments. If `strict` is false, the last segment is returned so long
-        as it appears to be a valid UMI.
+          segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
+          in the case of 7 segments. `strict` requires the UMI to be valid and consistent with
+          Illumina's allowed UMI characters. If `strict` is false, the last segment is returned
+          so long as it appears to be a valid UMI.
+
     Returns:
         The UMI extracted from the read name, or None if no UMI was found. Multiple UMIs are
         returned in a single string, separated by a hyphen (`-`).
+
     Raises:
         ValueError: If the read name does not end with a valid UMI.
     """
@@ -991,19 +998,28 @@ def extract_umis_from_read_name(
 
     invalid_umis = [umi for umi in umis if not _is_valid_umi(umi)]
     if len(invalid_umis) > 0:
-        raise ValueError(
-            f"Invalid UMIs found in read name: {read_name}",
-            f"  (Invalid UMIs: {', '.join(invalid_umis)})",
-        )
-    return SAM_UMI_DELIMITER.join(umis)
+        if strict:
+            raise ValueError(
+                f"Invalid UMIs found in read name: {read_name}",
+                f"  (Invalid UMIs: {', '.join(invalid_umis)})",
+            )
+        else:
+            return None
+
+    else:
+        return SAM_UMI_DELIMITER.join(umis)
 
 
-def copy_umi_from_read_name(rec: AlignedSegment, remove_umi: bool = False) -> None:
+def copy_umi_from_read_name(
+    rec: AlignedSegment, strict: bool = False, remove_umi: bool = False
+) -> None:
     """
-    Copy a UMI from an alignment's read name to its `RX` SAM tag.
+    Copy a UMI from an alignment's read name to its `RX` SAM tag. UMI will not be copied to RX
+     tag if invalid.
 
     Args:
         rec: The alignment record to update.
+        strict: If True and UMI invalid, will throw an exception
         remove_umi: If True, the UMI will be removed from the read name after copying.
 
     Returns:
@@ -1015,17 +1031,19 @@ def copy_umi_from_read_name(rec: AlignedSegment, remove_umi: bool = False) -> No
     """
 
     umi = extract_umis_from_read_name(
-        read_name=rec.query_name, umi_delimiter=ILLUMINA_READ_NAME_DELIMITER
+        read_name=rec.query_name, strict=strict, umi_delimiter=ILLUMINA_READ_NAME_DELIMITER
     )
-    if not _is_valid_umi(umi):
-        raise ValueError(
-            f"Invalid UMI(s) found in read name: {rec.query_name}",
-        )
-    else:
-        rec.set_tag(tag="RX", value=umi, value_type="Z")
-        if remove_umi:
-            last_index = rec.query_name.rfind(ILLUMINA_READ_NAME_DELIMITER)
-            rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
+    if umi is None:
+        if strict:
+            raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")
+        else:
+            return
+
+    rec.set_tag(tag="RX", value=umi)
+
+    if remove_umi:
+        last_index = rec.query_name.rfind(ILLUMINA_READ_NAME_DELIMITER)
+        rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
 
 
 def _is_valid_umi(umi: str) -> bool:

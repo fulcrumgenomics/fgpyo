@@ -11,6 +11,8 @@ import pytest
 from pytest import raises
 
 import fgpyo.io as fio
+from fgpyo.io import assert_path_is_writable
+from fgpyo.io import assert_path_is_writeable
 
 
 def test_assert_path_is_readable_missing_file_error() -> None:
@@ -50,37 +52,46 @@ def test_assert_directory_exists_pass() -> None:
         fio.assert_directory_exists(path=path.parent.absolute())
 
 
-def test_assert_path_is_writeable_mode_error() -> None:
+def test_assert_path_is_writable_mode_error() -> None:
     """Error when permissions are read only by owner"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
         os.chmod(path, 0o00400)  # Read only permissions
-        with raises(AssertionError, match=f"File exists but is not writeable: {path}"):
-            fio.assert_path_is_writeable(path=path)
+        with raises(AssertionError, match=f"File exists but is not writable: {path}"):
+            assert_path_is_writable(path=path)
 
 
-def test_assert_path_is_writeable_parent_not_writeable() -> None:
-    """Error when parent_must_exist is false and no writeable parent directory exists"""
+def test_assert_path_is_writable_parent_not_writable() -> None:
+    """Error when parent_must_exist is false and no writable parent directory exists"""
     path = Path("/no/parent/exists/")
-    with raises(AssertionError, match=f"File does not have a writeable parent directory: {path}"):
-        fio.assert_path_is_writeable(path=path, parent_must_exist=False)
+    with raises(AssertionError, match=f"File does not have a writable parent directory: {path}"):
+        assert_path_is_writable(path=path, parent_must_exist=False)
 
 
-def test_assert_path_is_writeable_file_does_not_exist() -> None:
+def test_assert_path_is_writable_file_does_not_exist() -> None:
     """Error when file does not exist"""
-    path = Path("example/non_existant_file.txt")
+    path = Path("example/non_existent_file.txt")
     with raises(
         AssertionError,
-        match="Path does not exist and parent isn't extent/writable: example/non_existant_file.txt",
+        match="Path does not exist and parent isn't extant/writable: example/non_existent_file.txt",
     ):
-        fio.assert_path_is_writeable(path=path)
+        assert_path_is_writable(path=path)
 
 
-def test_assert_path_is_writeable_pass() -> None:
-    """Should return the correct writeable path"""
+def test_assert_path_is_writable_pass() -> None:
+    """Should return the correct writable path"""
     with NamedTemp(suffix=".txt", mode="w", delete=True) as read_file:
         path = Path(read_file.name)
-        fio.assert_path_is_writeable(path=path)
+        assert_path_is_writable(path=path)
+
+
+def test_assert_path_is_writeable_raises_deprecation_warning(tmp_path: Path) -> None:
+    """
+    Test that we get a DeprecationWarning when the `assert_path_is_writeable` alias is called,
+    but otherwise works as expected.
+    """
+    with pytest.warns(DeprecationWarning):
+        assert_path_is_writeable(path=tmp_path / "test.txt")
 
 
 @pytest.mark.parametrize(

@@ -4,8 +4,8 @@ Module for reading and writing files
 
 The functions in this module make it easy to:
 
-* check if a file exists and is writeable
-* check if a file and its parent directories exist and are writeable
+* check if a file exists and is writable
+* check if a file and its parent directories exist and are writable
 * check if a file exists and is readable
 * check if a path exists and is a directory
 * open an appropriate reader or writer based on the file extension
@@ -47,6 +47,7 @@ import gzip
 import io
 import os
 import sys
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
@@ -90,41 +91,61 @@ def assert_directory_exists(path: Path) -> None:
 
 
 def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None:
-    """Asserts the following:
-    If the file exists then it must also be writeable. Else if the path is not a file and
-    parent_must_exist is true then assert that the parent directory exists and is writeable.
-    Else if the path is not a directory and parent_must_exist is false then look at each parent
-    directory until one is found that exists and is writeable.
+    """
+    A deprecated alias for `assert_path_is_writable()`.
+    """
+    warnings.warn(
+        "assert_path_is_writeable is deprecated, use assert_path_is_writable instead",
+        DeprecationWarning,
+    )
+
+    assert_path_is_writable(path=path, parent_must_exist=parent_must_exist)
+
+
+def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
+    """
+    Assert that a filepath is writable.
+
+    Specifically:
+    - If the file exists then it must also be writable.
+    - Else if the path is not a file and `parent_must_exist` is true, then assert that the parent
+      directory exists and is writable.
+    - Else if the path is not a directory and `parent_must_exist` is false, then look at each parent
+      directory until one is found that exists and is writable.
 
     Args:
-         path: Path to check
-         parent_must_exist: True/False the parent directory must exist, the default is True
+        path: Path to check
+        parent_must_exist: If True, the file's parent directory must exist. Otherwise, at least one
+            directory in the path's components must exist.
+
+    Raises:
+        AssertionError: If any of the above conditions are not met.
 
     Example:
-        assert_path_is_writeable(path = Path("example.txt"))
+        assert_path_is_writable(path = Path("example.txt"))
     """
-    # If file exists, it must be writeable
+    # If file exists, it must be writable
     if path.exists():
         assert path.is_file() and os.access(
             path, os.W_OK
-        ), f"File exists but is not writeable: {path}"
+        ), f"File exists but is not writable: {path}"
 
     # Else if file doesnt exist and parent_must_exist is True then check
-    # that path.absolute().parent exists, is a directory and is writeable
+    # that path.absolute().parent exists, is a directory and is writable
     elif parent_must_exist:
         parent = path.absolute().parent
         assert (
             parent.exists() & parent.is_dir() & os.access(parent, os.W_OK)
-        ), f"Path does not exist and parent isn't extent/writable: {path}"
+        ), f"Path does not exist and parent isn't extant/writable: {path}"
 
     # Else if file doesn't exist and parent_must_exist is False, test parent until
-    # you find the first extent path, and check that it is a directory and is writeable.
+    # you find the first extant path, and check that it is a directory and is writable.
     else:
         for parent in path.parents:
             if parent.exists():
                 assert os.access(
                     parent, os.W_OK
-                ), f"File does not have a writeable parent directory: {path}"
+                ), f"File does not have a writable parent directory: {path}"
                 return
         raise AssertionError(f"No parent directories exist for: {path}")
 

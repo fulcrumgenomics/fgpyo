@@ -386,6 +386,9 @@ def asdict(metric: Metric) -> Dict[str, Any]:
     """
     Convert a Metric instance to a dictionary.
 
+    No formatting is performed on the values, and they are returned as contained (and typed) in the
+    underlying dataclass. Use `Metric.format_value` to format the values to string.
+
     Args:
         metric: An instance of a Metric.
 

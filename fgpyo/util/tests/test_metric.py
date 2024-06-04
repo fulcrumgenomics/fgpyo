@@ -568,3 +568,25 @@ def test_asdict_raises() -> None:
 
     with pytest.raises(TypeError, match="The provided metric is not an instance"):
         asdict(UndecoratedMetric(foo=1, bar="a"))
+
+
+def test_read_header_can_read_picard(tmp_path: Path) -> None:
+    """
+    Test that we can read the header of a picard-formatted file.
+    """
+
+    metrics_path = tmp_path / "fake_picard_metrics"
+
+    with metrics_path.open("w") as metrics_file:
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# hts.fake_tool.FakeTool INPUT=input OUTPUT=fake_picard_metrics\n")
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# Started on: Mon Jul 03 18:06:02 UTC 2017\n")
+        metrics_file.write("\n")
+        metrics_file.write("## METRICS CLASS\tpicard.analysis.FakeMetrics\n")
+        metrics_file.write("SAMPLE\tFOO\tBAR\n")
+
+    with metrics_path.open("r") as metrics_file:
+        header = Metric.read_header(metrics_file, comment_prefix="#")
+
+    assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]

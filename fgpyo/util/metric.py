@@ -160,8 +160,8 @@ class MetricFileHeader:
         fieldnames: The field names specified in the final line of the header.
     """
 
-    preface: list[str]
-    fieldnames: list[str]
+    preface: List[str]
+    fieldnames: List[str]
 
 
 class Metric(ABC, Generic[MetricType]):
@@ -391,7 +391,7 @@ class Metric(ABC, Generic[MetricType]):
             ValueError: If the file was empty or contained only comments or empty lines.
         """
 
-        preface: list[str] = []
+        preface: List[str] = []
 
         for line in reader:
             if line.startswith(comment_prefix) or line.strip() == "":

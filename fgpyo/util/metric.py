@@ -147,7 +147,7 @@ from fgpyo.util.inspect import DataclassInstance
 MetricType = TypeVar("MetricType", bound="Metric")
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True)
 class MetricFileHeader:
     """
     Header of a file.

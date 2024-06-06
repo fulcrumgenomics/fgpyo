@@ -130,6 +130,7 @@ from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
+from typing import Type
 from typing import TypeVar
 
 if sys.version_info >= (3, 10):
@@ -406,6 +407,16 @@ class Metric(ABC, Generic[MetricType]):
         return MetricFileHeader(preamble=preamble, fieldnames=fieldnames)
 
 
+def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
+    """True if the given class is a Metric."""
+
+    return (
+        isclass(cls)
+        and issubclass(cls, Metric)
+        and (dataclasses.is_dataclass(cls) or attr.has(cls))
+    )
+
+
 def _is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
     """
     Test if the given metric is a dataclass instance.
@@ -466,3 +477,98 @@ def asdict(metric: Metric) -> Dict[str, Any]:
             "The provided metric is not an instance of a `dataclass` or `attr.s`-decorated Metric "
             f"class: {metric.__class__}"
         )
+
+
+def _get_fieldnames(metric_class: Type[Metric]) -> List[str]:
+    """
+    Get the fieldnames of the specified metric class.
+
+    Args:
+        metric_class: A Metric class.
+
+    Returns:
+        A list of fieldnames.
+    """
+    _assert_is_metric_class(metric_class)
+
+    if dataclasses.is_dataclass(metric_class):
+        return [f.name for f in dataclasses.fields(metric_class)]
+    elif attr.has(metric_class):
+        return [f.name for f in attr.fields(metric_class)]
+    else:
+        assert False, "Unreachable"
+
+
+def _assert_file_header_matches_metric(
+    path: Path,
+    metric_class: Type[MetricType],
+    delimiter: str,
+) -> None:
+    """
+    Check that the specified file has a header and its fields match those of the provided Metric.
+
+    Args:
+        path: A path to a `Metric` file.
+        metric_class: The `Metric` class to validate against.
+        delimiter: The delimiter to use when reading the header.
+
+    Raises:
+        ValueError: If the provided file does not include a header.
+        ValueError: If the header of the provided file does not match the provided Metric.
+    """
+    # NB: _get_fieldnames() will validate that `metric_class` is a valid Metric class.
+    fieldnames: List[str] = _get_fieldnames(metric_class)
+
+    header: MetricFileHeader
+    with path.open("r") as fin:
+        try:
+            header = metric_class._read_header(fin, delimiter=delimiter)
+        except ValueError:
+            raise ValueError(f"Could not find a header in the provided file: {path}")
+
+    if header.fieldnames != fieldnames:
+        raise ValueError(
+            "The provided file does not have the same field names as the provided Metric:\n"
+            f"\tMetric: {metric_class.__name__}\n"
+            f"\tFile: {path}\n"
+            f"\tExpected fields: {', '.join(fieldnames)}\n"
+            f"\tActual fields: {', '.join(header.fieldnames)}\n"
+        )
+
+
+def _assert_fieldnames_are_metric_attributes(
+    specified_fieldnames: List[str],
+    metric_class: Type[MetricType],
+) -> None:
+    """
+    Check that all of the specified fields are attributes on the given Metric.
+
+    Raises:
+        ValueError: if any of the specified fieldnames are not an attribute on the given Metric.
+    """
+    _assert_is_metric_class(metric_class)
+
+    invalid_fieldnames = {
+        f for f in specified_fieldnames if f not in _get_fieldnames(metric_class)
+    }
+
+    if len(invalid_fieldnames) > 0:
+        raise ValueError(
+            "One or more of the specified fields are not attributes on the Metric "
+            + f"{metric_class.__name__}: "
+            + ", ".join(invalid_fieldnames)
+        )
+
+
+def _assert_is_metric_class(cls: Type[Metric]) -> None:
+    """
+    Assert that the given class is a Metric.
+
+    Args:
+        cls: A class object.
+
+    Raises:
+        TypeError: If the given class is not a Metric.
+    """
+    if not _is_metric_class(cls):
+        raise TypeError(f"Not a dataclass or attr decorated Metric: {cls}")

@@ -343,6 +343,8 @@ class SamBuilder:
 
     def rg_id(self) -> str:
         """Returns the ID of the single read group that is defined in the header."""
+        # The read group mapping has mixed types of values (e.g. "PI" is numeric), but the "ID"
+        # field is always a string.
         return cast(str, self.rg()["ID"])
 
     def add_pair(

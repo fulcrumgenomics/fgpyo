@@ -587,6 +587,6 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
         metrics_file.write("SAMPLE\tFOO\tBAR\n")
 
     with metrics_path.open("r") as metrics_file:
-        header = Metric.read_header(metrics_file, comment_prefix="#")
+        header = Metric._read_header(metrics_file, comment_prefix="#")
 
     assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]

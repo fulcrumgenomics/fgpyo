@@ -152,15 +152,15 @@ class MetricFileHeader:
     """
     Header of a file.
 
-    A file's header contains an optional preface, consisting of lines prefixed by a comment
+    A file's header contains an optional preamble, consisting of lines prefixed by a comment
     character and/or empty lines, and a required row of fieldnames before the data rows begin.
 
     Attributes:
-        preface: A list of any lines preceding the fieldnames.
+        preamble: A list of any lines preceding the fieldnames.
         fieldnames: The field names specified in the final line of the header.
     """
 
-    preface: List[str]
+    preamble: List[str]
     fieldnames: List[str]
 
 
@@ -367,7 +367,7 @@ class Metric(ABC, Generic[MetricType]):
             )
 
     @staticmethod
-    def read_header(
+    def _read_header(
         reader: TextIOWrapper,
         delimiter: str = "\t",
         comment_prefix: str = "#",
@@ -377,7 +377,7 @@ class Metric(ABC, Generic[MetricType]):
 
         The first row after any commented or empty lines will be used as the fieldnames.
 
-        Lines preceding the fieldnames will be returned in the `preface`.
+        Lines preceding the fieldnames will be returned in the `preamble`.
 
         Args:
             reader: An open, readable file handle.
@@ -385,17 +385,17 @@ class Metric(ABC, Generic[MetricType]):
                 prefixing any comment lines.
 
         Returns:
-            A `FileHeader` containing the field names and any preceding lines.
+            A `MetricFileHeader` containing the field names and any preceding lines.
 
         Raises:
             ValueError: If the file was empty or contained only comments or empty lines.
         """
 
-        preface: List[str] = []
+        preamble: List[str] = []
 
         for line in reader:
             if line.startswith(comment_prefix) or line.strip() == "":
-                preface.append(line.strip())
+                preamble.append(line.strip())
             else:
                 break
         else:
@@ -403,7 +403,7 @@ class Metric(ABC, Generic[MetricType]):
 
         fieldnames = line.strip().split(delimiter)
 
-        return MetricFileHeader(preface=preface, fieldnames=fieldnames)
+        return MetricFileHeader(preamble=preamble, fieldnames=fieldnames)
 
 
 def _is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:

@@ -30,6 +30,8 @@ import pytest
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
+from fgpyo.util.metric import _assert_fieldnames_are_metric_attributes
+from fgpyo.util.metric import _assert_file_header_matches_metric
 from fgpyo.util.metric import _assert_is_metric_class
 from fgpyo.util.metric import _get_fieldnames
 from fgpyo.util.metric import _is_attrs_instance
@@ -660,3 +662,87 @@ def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
 
     with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
         _assert_is_metric_class(BadMetric)
+
+
+# fmt: off
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "fieldnames",
+    [
+        ["name", "age"],  # The fieldnames are all the attributes of the provided metric
+        ["age", "name"],  # The fieldnames are out of order
+        ["name"],         # The fieldnames are a subset of the attributes of the provided metric
+    ],
+)
+# fmt: on
+def test_assert_fieldnames_are_metric_attributes(
+    data_and_classes: DataBuilder,
+    fieldnames: List[str],
+) -> None:
+    """
+    Should not raise an error if the provided fieldnames are all attributes of the provided metric.
+    """
+    try:
+        _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
+    except Exception:
+        raise AssertionError("Fieldnames should be valid") from None
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "fieldnames",
+    [
+        ["name", "age", "foo"],
+        ["name", "foo"],
+        ["foo", "name", "age"],
+        ["foo"],
+    ],
+)
+def test_assert_fieldnames_are_metric_attributes_raises(
+    data_and_classes: DataBuilder,
+    fieldnames: List[str],
+) -> None:
+    """
+    Should raise an error if any of the provided fieldnames are not an attribute on the metric.
+    """
+    with pytest.raises(ValueError, match="One or more of the specified fields are not "):
+        _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """
+    Should not raise an error if the provided file header matches the provided metric.
+    """
+    metric_path = tmp_path / "metrics.tsv"
+    with metric_path.open("w") as metrics_file:
+        metrics_file.write("name\tage\n")
+
+    try:
+        _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
+    except Exception:
+        raise AssertionError("File header should be valid") from None
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "header",
+    [
+        ["name"],
+        ["age"],
+        ["name", "age", "foo"],
+        ["foo", "name", "age"],
+    ],
+)
+def test_assert_file_header_matches_metric_raises(
+    tmp_path: Path, data_and_classes: DataBuilder, header: List[str]
+) -> None:
+    """
+    Should raise an error if the provided file header does not match the provided metric.
+    """
+    metric_path = tmp_path / "metrics.tsv"
+    with metric_path.open("w") as metrics_file:
+        metrics_file.write("\t".join(header) + "\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")

@@ -22,6 +22,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import cast
 
 import pysam
 from pysam import AlignedSegment
@@ -334,13 +335,15 @@ class SamBuilder:
 
     def rg(self) -> Dict[str, Any]:
         """Returns the single read group that is defined in the header."""
-        rgs = self._header["RG"]
+        # The `RG` field contains a list of read group mappings
+        # e.g. `[{"ID": "rg1", "PL": "ILLUMINA"}]`
+        rgs = cast(List[Dict[str, Any]], self._header["RG"])
         assert len(rgs) == 1, "Header did not contain exactly one read group!"
         return rgs[0]
 
     def rg_id(self) -> str:
         """Returns the ID of the single read group that is defined in the header."""
-        return self.rg()["ID"]
+        return cast(str, self.rg()["ID"])
 
     def add_pair(
         self,

@@ -43,11 +43,11 @@ The functions in this module make it easy to:
 """
 
 import gzip
-import io
 import os
 import sys
 import warnings
 from contextlib import contextmanager
+from io import TextIOWrapper
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -55,8 +55,6 @@ from typing import Generator
 from typing import Iterable
 from typing import Iterator
 from typing import Set
-from typing import TextIO
-from typing import Union
 from typing import cast
 
 COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
@@ -156,7 +154,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
             raise AssertionError(f"No parent directories exist for: {path}")
 
 
-def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
+def to_reader(path: Path) -> TextIOWrapper:
     """Opens a Path for reading and based on extension uses open() or gzip.open()
 
     Args:
@@ -169,12 +167,12 @@ def to_reader(path: Path) -> Union[io.TextIOWrapper, TextIO, IO[Any]]:
 
     """
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
-        return io.TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="rb")), encoding="utf-8")
+        return TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="rb")), encoding="utf-8")
     else:
         return path.open(mode="r")
 
 
-def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapper]:
+def to_writer(path: Path, append: bool = False) -> TextIOWrapper:
     """Opens a Path for writing (or appending) and based on extension uses open() or gzip.open()
 
     Args:
@@ -191,11 +189,11 @@ def to_writer(path: Path, append: bool = False) -> Union[IO[Any], io.TextIOWrapp
         mode_prefix = "a"
 
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
-        return io.TextIOWrapper(
+        return TextIOWrapper(
             cast(IO[bytes], gzip.open(path, mode=mode_prefix + "b")), encoding="utf-8"
         )
     else:
-        return path.open(mode=mode_prefix)
+        return cast(TextIOWrapper, path.open(mode=mode_prefix))
 
 
 def read_lines(path: Path, strip: bool = False) -> Iterator[str]:

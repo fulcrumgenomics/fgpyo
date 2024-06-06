@@ -191,10 +191,10 @@ _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
 _STDIN_PATHS: List[str] = ["-", "stdin", "/dev/stdin"]
-"""Paths that should be opened as stdin."""
+"""Paths that should be opened as standard input."""
 
 _STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
-"""Paths that should be opened as stdout."""
+"""Paths that should be opened as standard output."""
 
 
 @enum.unique

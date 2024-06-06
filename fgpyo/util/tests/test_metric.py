@@ -4,6 +4,7 @@
 import enum
 import gzip
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -29,6 +30,8 @@ import pytest
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
+from fgpyo.util.metric import _assert_is_metric_class
+from fgpyo.util.metric import _get_fieldnames
 from fgpyo.util.metric import _is_attrs_instance
 from fgpyo.util.metric import _is_dataclass_instance
 from fgpyo.util.metric import asdict
@@ -590,3 +593,70 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
         header = Metric._read_header(metrics_file, comment_prefix="#")
 
     assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_get_fieldnames(data_and_classes: DataBuilder) -> None:
+    """Test we can get the fieldnames of a metric."""
+
+    assert _get_fieldnames(data_and_classes.Person) == ["name", "age"]
+
+
+def test_fieldnames_raises_if_not_a_metric() -> None:
+    """Test we raise if we get a non-metric."""
+
+    @dataclass
+    class BadMetric:
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _get_fieldnames(BadMetric)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
+    """
+    Test that we can validate if a class is a Metric.
+    """
+    try:
+        _assert_is_metric_class(data_and_classes.DummyMetric)
+    except TypeError:
+        raise AssertionError("Failed to validate a valid Metric") from None
+
+
+def test_assert_is_metric_class_raises_if_not_decorated() -> None:
+    """
+    Test that we raise an error if the provided type is a Metric subclass but not decorated as a
+    dataclass or attr.
+    """
+
+    class BadMetric(Metric["BadMetric"]):
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)
+
+
+def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
+    """
+    Test that we raise an error if the provided type is decorated as a
+    dataclass or attr but does not subclass Metric.
+    """
+
+    @dataclass
+    class BadMetric:
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)
+
+    @attr.s
+    class BadMetric:
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)

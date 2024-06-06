@@ -154,7 +154,7 @@ class SamBuilder:
 
     def _bases(self, length: int) -> str:
         """Returns a random string of bases of the length requested."""
-        return "".join(self._random.choices("ACGT", k=length))  # type: ignore
+        return "".join(self._random.choices("ACGT", k=length))
 
     def _new_rec(
         self,
@@ -585,7 +585,7 @@ class SamBuilder:
                 file_handle = fp.file
 
             with sam.writer(
-                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM  # type: ignore
+                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM
             ) as writer:
                 for rec in self._records:
                     if pred(rec):

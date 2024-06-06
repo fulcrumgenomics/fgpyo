@@ -253,7 +253,7 @@ def _pysam_open(
         :class:`~pysam.AlignmentFile`; may not include "mode".
     """
 
-    if isinstance(path, (str, Path)):  # type: ignore
+    if isinstance(path, (str, Path)):
         if str(path) in _STDIN_PATHS and open_for_reading:
             path = sys.stdin
         elif str(path) in _STDOUT_PATHS and not open_for_reading:
@@ -505,23 +505,23 @@ class Cigar:
         i = 0
         while i < cigarstring_length:
             if not cigarstring[i].isdigit():
-                raise cls._pretty_cigarstring_exception(cigarstring, i)  # type: ignore
+                raise cls._pretty_cigarstring_exception(cigarstring, i)
             length = int(cigarstring[i])
             i += 1
             while i < cigarstring_length and cigarstring[i].isdigit():
                 length = (length * 10) + int(cigarstring[i])
                 i += 1
             if i == cigarstring_length:
-                raise cls._pretty_cigarstring_exception(cigarstring, i)  # type: ignore
+                raise cls._pretty_cigarstring_exception(cigarstring, i)
             try:
                 operator = CigarOp.from_character(cigarstring[i])
                 elements.append(CigarElement(length, operator))
             except KeyError as ex:
                 # cigar operator was not valid
-                raise cls._pretty_cigarstring_exception(cigarstring, i) from ex  # type: ignore
+                raise cls._pretty_cigarstring_exception(cigarstring, i) from ex
             except IndexError as ex:
                 # missing cigar operator (i == len(cigarstring))
-                raise cls._pretty_cigarstring_exception(cigarstring, i) from ex  # type: ignore
+                raise cls._pretty_cigarstring_exception(cigarstring, i) from ex
             i += 1
         return Cigar(tuple(elements))
 

@@ -44,14 +44,14 @@ try:
     from attr import fields as get_attr_fields
     from attr import fields_dict as get_attr_fields_dict
 
-    Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined, no-redef]
+    Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined]
     # dataclasses and attr have internal tokens for missing values, join into a set so that we can
     # check if a value is missing without knowing the type of backing class
     MISSING = frozenset({DATACLASSES_MISSING, attr.NOTHING})
 except ImportError:  # pragma: no cover
     _use_attr = False
     attr = None
-    Attribute: TypeAlias = TypeVar("Attribute", bound=object)  # type: ignore[misc, assignment, no-redef]  # noqa: E501
+    Attribute: TypeAlias = TypeVar("Attribute", bound=object)  # type: ignore[misc, no-redef]  # noqa: E501
 
     # define empty placeholders for getting attr fields as a tuple or dict. They will never be
     # called because the import failed; but they're here to ensure that the function is defined in
@@ -85,7 +85,7 @@ else:
         __attrs_attrs__: ClassVar[Any]
 
 
-def is_attr_class(cls: type) -> bool:  # type: ignore[arg-type]
+def is_attr_class(cls: type) -> bool:
     """Return True if the class is an attr class, and False otherwise"""
     return hasattr(cls, "__attrs_attrs__")
 
@@ -396,7 +396,7 @@ def get_fields_dict(
 ) -> Mapping[str, FieldType]:
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
-        return _get_dataclasses_fields_dict(cls)  # type: ignore[arg-type]
+        return _get_dataclasses_fields_dict(cls)
     elif is_attr_class(cls):  # type: ignore[arg-type]
         return get_attr_fields_dict(cls)  # type: ignore[arg-type]
     else:
@@ -408,9 +408,9 @@ def get_fields(
 ) -> Tuple[FieldType, ...]:
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
-        return get_dataclasses_fields(cls)  # type: ignore[arg-type]
+        return get_dataclasses_fields(cls)
     elif is_attr_class(cls):  # type: ignore[arg-type]
-        return get_attr_fields(cls)  # type: ignore[arg-type]
+        return get_attr_fields(cls)  # type: ignore[arg-type, no-any-return]
     else:
         raise TypeError("cls must a dataclasses or attr class")
 

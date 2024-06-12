@@ -165,7 +165,7 @@ def test_read_structure_extract() -> None:
     assert all(r.bases == "TT" for r in extracted if r.kind == SegmentType.Skip)
 
     # too short
-    with pytest.raises(Exception):
+    with pytest.raises(AssertionError, match="Read ends before end of segment"):
         rs.extract("AAAAAAA")
 
     # last segment is truncated
@@ -196,7 +196,7 @@ def test_read_structure_extract_with_quals() -> None:
     assert all(r.quals == "44" for r in extracted if r.kind == SegmentType.Skip)
 
     # too short
-    with pytest.raises(Exception):
+    with pytest.raises(AssertionError, match="Read ends before end of segment"):
         rs.extract_with_quals("AAAAAAA", "1122334")
 
     # last segment is truncated

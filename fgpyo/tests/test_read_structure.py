@@ -97,12 +97,18 @@ def test_read_structure_variable_once_and_only_once_last_segment_ok(
     assert ReadStructure.from_string(segments=string).segments == segments
 
 
-@pytest.mark.parametrize(
-    "string",
-    ["++M", "5M++T", "5M70+T", "+M+T", "+M70T"],
-)
-def test_read_structure_variable_once_and_only_once_last_segment_exception(string: str) -> None:
-    with pytest.raises(Exception):
+@pytest.mark.parametrize("string", ["+M+T", "+M70T"])
+def test_read_structure_rejects_variable_length(string: str) -> None:
+    """Variable length should only be permitted in the last segment of the read structure."""
+    expected_msg = r"Variable length \(\+\) can only be used in the last segment"
+    with pytest.raises(AssertionError, match=expected_msg):
+        ReadStructure.from_string(segments=string)
+
+
+@pytest.mark.parametrize("string", ["++M", "5M70+T", "5M++T"])
+def test_read_structure_rejects_unknown_type(string: str) -> None:
+    """Segments with unknown type should be rejected."""
+    with pytest.raises(ValueError, match="Read structure segment had unknown type"):
         ReadStructure.from_string(segments=string)
 
 

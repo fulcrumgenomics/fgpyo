@@ -105,6 +105,8 @@ def test_copy_valid_umi_from_read_name(remove_umi: bool, strict: bool) -> None:
         assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst"
     else:
         assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst:GATTACA"
+
+
 def test_populated_rx_tag() -> None:
     """Test that we raise a ValueError when a record already has a populated RX tag"""
     builder = SamBuilder()
@@ -113,6 +115,7 @@ def test_populated_rx_tag() -> None:
     assert copy_umi_from_read_name(read, strict=False, remove_umi=True) is False
     assert read.get_tag("RX") == "NNNNACGT"
     assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst:GATTACA"
+
 
 def test_copy_invalid_umi_from_read_name() -> None:
     """Test that we do not set the RX tag if we encounter an invalid UMI"""

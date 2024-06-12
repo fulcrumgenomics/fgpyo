@@ -1000,10 +1000,10 @@ def extract_umis_from_read_name(
     if len(invalid_umis) == 0:
         return SAM_UMI_DELIMITER.join(umis)
     elif strict:
-            raise ValueError(
-                f"Invalid UMIs found in read name: {read_name}",
-                f"  (Invalid UMIs: {', '.join(invalid_umis)})",
-            )
+        raise ValueError(
+            f"Invalid UMIs found in read name: {read_name}",
+            f"  (Invalid UMIs: {', '.join(invalid_umis)})",
+        )
     else:
         return None
 

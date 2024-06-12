@@ -44,10 +44,9 @@ if [[ "$1" == "--check" ]]; then
 fi
 
 banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory ${root}"
+run "Style Checking" "ruff format fgpyo"
+run "Linting"        "ruff check --fix fgpyo"
 run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
-run "Import Sorting" "isort --force-single-line-imports --profile black fgpyo"
-run "Style Checking" "black --line-length 99 $black_extra_args fgpyo"
-run "Linting"        "flake8 --config=$parent/flake8.cfg fgpyo"
 run "Type Checking"  "mypy -p fgpyo --config $parent/mypy.ini"
 
 if [ -z "$failures" ]; then

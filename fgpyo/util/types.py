@@ -9,6 +9,7 @@ from typing import Literal
 from typing import Type
 from typing import TypeVar
 from typing import Union
+from typing import cast
 
 UnionType = TypeVar("UnionType", bound="Union")
 EnumType = TypeVar("EnumType", bound="Enum")
@@ -119,7 +120,9 @@ def _make_literal_parser_worker(
     for arg, p in zip(typing.get_args(literal), parsers):
         try:
             if p(value) == arg:
-                return arg
+                # typing.get_args returns `Any` because there's no guarantee on the input type, but
+                # if we're passing it a literal then the returned args will always be `LiteralType`
+                return cast(LiteralType, arg)
         except ValueError:
             pass
     raise InspectException(

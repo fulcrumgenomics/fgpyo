@@ -34,7 +34,6 @@ from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import cast
 
 from pysam import FastxFile
 from pysam import FastxRecord
@@ -77,7 +76,6 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
                 )
             )
         else:
-            records = cast(Tuple[FastxRecord, ...], records)
             record_names: Set[str] = {self._name_minus_ordinal(record.name) for record in records}
             if len(record_names) != 1:
                 raise ValueError(f"FASTX record names do not all match: {record_names}")

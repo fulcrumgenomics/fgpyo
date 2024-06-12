@@ -22,6 +22,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import cast
 
 import pysam
 from pysam import AlignedSegment
@@ -154,7 +155,7 @@ class SamBuilder:
 
     def _bases(self, length: int) -> str:
         """Returns a random string of bases of the length requested."""
-        return "".join(self._random.choices("ACGT", k=length))  # type: ignore
+        return "".join(self._random.choices("ACGT", k=length))
 
     def _new_rec(
         self,
@@ -334,13 +335,17 @@ class SamBuilder:
 
     def rg(self) -> Dict[str, Any]:
         """Returns the single read group that is defined in the header."""
-        rgs = self._header["RG"]
+        # The `RG` field contains a list of read group mappings
+        # e.g. `[{"ID": "rg1", "PL": "ILLUMINA"}]`
+        rgs = cast(List[Dict[str, Any]], self._header["RG"])
         assert len(rgs) == 1, "Header did not contain exactly one read group!"
         return rgs[0]
 
     def rg_id(self) -> str:
         """Returns the ID of the single read group that is defined in the header."""
-        return self.rg()["ID"]
+        # The read group mapping has mixed types of values (e.g. "PI" is numeric), but the "ID"
+        # field is always a string.
+        return cast(str, self.rg()["ID"])
 
     def add_pair(
         self,
@@ -585,7 +590,7 @@ class SamBuilder:
                 file_handle = fp.file
 
             with sam.writer(
-                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM  # type: ignore
+                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM
             ) as writer:
                 for rec in self._records:
                     if pred(rec):

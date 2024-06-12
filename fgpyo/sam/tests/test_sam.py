@@ -227,7 +227,11 @@ def test_pretty_cigarstring_exception() -> None:
     expected = "10M5[U]4M"
     with pytest.raises(CigarParsingException, match=r".*Malformed cigar") as ex:
         raise Cigar._pretty_cigarstring_exception(cigar, index)
-    assert expected in str(ex)
+
+    # Known issue, `mypy` thinks the `raise` above makes the following unreachable
+    # https://github.com/python/mypy/issues/8985
+    # https://github.com/python/mypy/issues/8766
+    assert expected in str(ex)  # type: ignore[unreachable]
 
     expected = cigar + "[]"
     with pytest.raises(CigarParsingException, match=r".*Malformed cigar") as ex:

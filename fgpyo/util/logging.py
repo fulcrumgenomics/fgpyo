@@ -105,6 +105,7 @@ class ProgressLogger(AbstractContextManager):
         verb: str = "Read",
         unit: int = 100000,
     ) -> None:
+        self.printer: Callable[[str], Any]
         if isinstance(printer, Logger):
             self.printer = lambda s: printer.info(s)
         else:
@@ -186,6 +187,8 @@ class ProgressLogger(AbstractContextManager):
             coordinate = f"{refname}:{position:,d}"
 
         self.printer(f"{self.verb} {self.count:,d} {self.noun}: {coordinate}")
+
+        return None
 
     def log_last(
         self,

@@ -116,8 +116,13 @@ Formatting and parsing the values for custom types is supported by overriding th
 
 """
 
+import dataclasses
+import sys
 from abc import ABC
+from dataclasses import dataclass
 from enum import Enum
+from inspect import isclass
+from io import TextIOWrapper
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -127,10 +132,36 @@ from typing import Iterator
 from typing import List
 from typing import TypeVar
 
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
+
+import attr
+
 from fgpyo import io
 from fgpyo.util import inspect
+from fgpyo.util.inspect import AttrsInstance
+from fgpyo.util.inspect import DataclassInstance
 
 MetricType = TypeVar("MetricType", bound="Metric")
+
+
+@dataclass(frozen=True)
+class MetricFileHeader:
+    """
+    Header of a file.
+
+    A file's header contains an optional preamble, consisting of lines prefixed by a comment
+    character and/or empty lines, and a required row of fieldnames before the data rows begin.
+
+    Attributes:
+        preamble: A list of any lines preceding the fieldnames.
+        fieldnames: The field names specified in the final line of the header.
+    """
+
+    preamble: List[str]
+    fieldnames: List[str]
 
 
 class Metric(ABC, Generic[MetricType]):
@@ -334,3 +365,104 @@ class Metric(ABC, Generic[MetricType]):
             io.write_lines(
                 path=output, lines_to_write=list(io.read_lines(input_path))[1:], append=True
             )
+
+    @staticmethod
+    def _read_header(
+        reader: TextIOWrapper,
+        delimiter: str = "\t",
+        comment_prefix: str = "#",
+    ) -> MetricFileHeader:
+        """
+        Read the header from an open file.
+
+        The first row after any commented or empty lines will be used as the fieldnames.
+
+        Lines preceding the fieldnames will be returned in the `preamble`.
+
+        Args:
+            reader: An open, readable file handle.
+            file_format: A dataclass containing (at minimum) the file's delimiter and the string
+                prefixing any comment lines.
+
+        Returns:
+            A `MetricFileHeader` containing the field names and any preceding lines.
+
+        Raises:
+            ValueError: If the file was empty or contained only comments or empty lines.
+        """
+
+        preamble: List[str] = []
+
+        for line in reader:
+            if line.startswith(comment_prefix) or line.strip() == "":
+                preamble.append(line.strip())
+            else:
+                break
+        else:
+            raise ValueError(f"File {reader.name} did not contain a header line.")
+
+        fieldnames = line.strip().split(delimiter)
+
+        return MetricFileHeader(preamble=preamble, fieldnames=fieldnames)
+
+
+def _is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
+    """
+    Test if the given metric is a dataclass instance.
+
+    NB: `dataclasses.is_dataclass` returns True for both dataclass instances and class objects, and
+    we need to override the built-in function's `TypeGuard`.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        True if the given metric is an instance of a dataclass-decorated Metric.
+        False otherwise.
+    """
+    return not isclass(metric) and dataclasses.is_dataclass(metric)
+
+
+def _is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
+    """
+    Test if the given metric is an attr.s instance.
+
+    NB: `attr.has` provides a type guard, but only on the class object - we want to narrow the type
+    of the metric instance, so we implement a guard here.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        True if the given metric is an instance of an attr.s-decorated Metric.
+        False otherwise.
+    """
+    return not isclass(metric) and attr.has(metric.__class__)
+
+
+def asdict(metric: Metric) -> Dict[str, Any]:
+    """
+    Convert a Metric instance to a dictionary.
+
+    No formatting is performed on the values, and they are returned as contained (and typed) in the
+    underlying dataclass. Use `Metric.format_value` to format the values to string.
+
+    Args:
+        metric: An instance of a Metric.
+
+    Returns:
+        A dictionary representation of the given metric.
+
+    Raises:
+        TypeError: If the given metric is not an instance of a `dataclass` or `attr.s`-decorated
+        Metric.
+    """
+    if _is_dataclass_instance(metric):
+        return dataclasses.asdict(metric)
+    elif _is_attrs_instance(metric):
+        return attr.asdict(metric)
+    else:
+        raise TypeError(
+            "The provided metric is not an instance of a `dataclass` or `attr.s`-decorated Metric "
+            f"class: {metric.__class__}"
+        )

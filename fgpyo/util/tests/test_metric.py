@@ -29,6 +29,9 @@ import pytest
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
+from fgpyo.util.metric import _is_attrs_instance
+from fgpyo.util.metric import _is_dataclass_instance
+from fgpyo.util.metric import asdict
 
 
 class EnumTest(enum.Enum):
@@ -519,3 +522,71 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
     names = list(NameMetric.read(path=path))
     assert len(names) == 1
     assert names[0] == name
+
+
+def test_is_dataclass_instance() -> None:
+    """Test that _is_dataclass_instance works as expected."""
+
+    # True for `dataclass`-decorated instances but not `attr.s`-decorated instances
+    assert _is_dataclass_instance(dataclasses_data_and_classes.Person(name="name", age=42))
+    assert not _is_dataclass_instance(attr_data_and_classes.Person(name="name", age=42))
+
+    # And False for both classes
+    assert not _is_dataclass_instance(dataclasses_data_and_classes.Person)
+    assert not _is_dataclass_instance(attr_data_and_classes.Person)
+
+
+def test_is_attrs_instance() -> None:
+    """Test that _is_attrs_instance works as expected."""
+
+    # True for `attr.s`-decorated instances but not `dataclass`-decorated instances
+    assert not _is_attrs_instance(dataclasses_data_and_classes.Person(name="name", age=42))
+    assert _is_attrs_instance(attr_data_and_classes.Person(name="name", age=42))
+
+    # And False for both classes
+    assert not _is_attrs_instance(dataclasses_data_and_classes.Person)
+    assert not _is_attrs_instance(attr_data_and_classes.Person)
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_asdict(data_and_classes: DataBuilder) -> None:
+    """Test that asdict works as expected on both dataclass and attr.s decoreated metrics."""
+
+    assert asdict(data_and_classes.Person(name="name", age=42)) == {"name": "name", "age": 42}
+
+
+def test_asdict_raises() -> None:
+    """Test that we raise a TypeError when asdict is called on a non-metric class."""
+
+    class UndecoratedMetric(Metric["UndecoratedMetric"]):
+        foo: int
+        bar: str
+
+        def __init__(self, foo: int, bar: str):
+            self.foo = foo
+            self.bar = bar
+
+    with pytest.raises(TypeError, match="The provided metric is not an instance"):
+        asdict(UndecoratedMetric(foo=1, bar="a"))
+
+
+def test_read_header_can_read_picard(tmp_path: Path) -> None:
+    """
+    Test that we can read the header of a picard-formatted file.
+    """
+
+    metrics_path = tmp_path / "fake_picard_metrics"
+
+    with metrics_path.open("w") as metrics_file:
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# hts.fake_tool.FakeTool INPUT=input OUTPUT=fake_picard_metrics\n")
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# Started on: Mon Jul 03 18:06:02 UTC 2017\n")
+        metrics_file.write("\n")
+        metrics_file.write("## METRICS CLASS\tpicard.analysis.FakeMetrics\n")
+        metrics_file.write("SAMPLE\tFOO\tBAR\n")
+
+    with metrics_path.open("r") as metrics_file:
+        header = Metric._read_header(metrics_file, comment_prefix="#")
+
+    assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]

@@ -194,14 +194,14 @@ SAM_UMI_DELIMITER: str = "-"
 """Multiple UMI delimiter, which SAM specification recommends should be a hyphen;
 see specification here: https://samtools.github.io/hts-specs/SAMtags.pdf"""
 
-VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
+_VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
 """Illumina's restricted UMI characters;
 https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm."""  # noqa
 
-ILLUMINA_UMI_DELIMITER: str = "+"
+_ILLUMINA_UMI_DELIMITER: str = "+"
 """Multiple UMIs are delimited with a plus-sign in Illumina FASTQs; see docs above."""
 
-ILLUMINA_READ_NAME_DELIMITER: str = ":"
+_ILLUMINA_READ_NAME_DELIMITER: str = ":"
 """Illumina read names are delimited with a colon."""
 
 
@@ -953,11 +953,11 @@ class SamOrder(enum.Enum):
 
 def extract_umis_from_read_name(
     read_name: str,
-    read_name_delimiter: str = ILLUMINA_READ_NAME_DELIMITER,
-    umi_delimiter: str = ILLUMINA_UMI_DELIMITER,
+    read_name_delimiter: str = _ILLUMINA_READ_NAME_DELIMITER,
+    umi_delimiter: str = _ILLUMINA_UMI_DELIMITER,
     strict: bool = False,
 ) -> Optional[str]:
-    """Extract UMI(s) from a read name.
+    """Extract UMI(s) from an Illumina-style read name.
 
     The UMI is expected to be the final component of the read name, delimited by the
     `read_name_delimiter`. Multiple UMIs may be present, delimited by the `umi_delimiter`. This
@@ -997,25 +997,23 @@ def extract_umis_from_read_name(
     umis = [umi.lstrip("r") for umi in umis]
 
     invalid_umis = [umi for umi in umis if not _is_valid_umi(umi)]
-    if len(invalid_umis) > 0:
-        if strict:
+    if len(invalid_umis) == 0:
+        return SAM_UMI_DELIMITER.join(umis)
+    elif strict:
             raise ValueError(
                 f"Invalid UMIs found in read name: {read_name}",
                 f"  (Invalid UMIs: {', '.join(invalid_umis)})",
             )
-        else:
-            return None
-
     else:
-        return SAM_UMI_DELIMITER.join(umis)
+        return None
 
 
 def copy_umi_from_read_name(
     rec: AlignedSegment, strict: bool = False, remove_umi: bool = False
-) -> None:
+) -> bool:
     """
     Copy a UMI from an alignment's read name to its `RX` SAM tag. UMI will not be copied to RX
-     tag if invalid.
+    tag if invalid.
 
     Args:
         rec: The alignment record to update.
@@ -1023,7 +1021,7 @@ def copy_umi_from_read_name(
         remove_umi: If True, the UMI will be removed from the read name after copying.
 
     Returns:
-        This function does not return a value but updates the record in place.
+        True if the UMI was successfully extracted, False if otherwise.
 
     Raises:
         ValueError: If the read name does not end with a valid UMI.
@@ -1031,19 +1029,22 @@ def copy_umi_from_read_name(
     """
 
     umi = extract_umis_from_read_name(
-        read_name=rec.query_name, strict=strict, umi_delimiter=ILLUMINA_READ_NAME_DELIMITER
+        read_name=rec.query_name, strict=strict, umi_delimiter=_ILLUMINA_READ_NAME_DELIMITER
     )
-    if umi is None:
-        if strict:
-            raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")
-        else:
-            return
-
-    rec.set_tag(tag="RX", value=umi)
-
-    if remove_umi:
-        last_index = rec.query_name.rfind(ILLUMINA_READ_NAME_DELIMITER)
-        rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
+    if umi is not None:
+        if rec.has_tag("RX"):
+            return False
+            raise ValueError(f"Record {rec.query_name} already has a populated RX tag")
+        rec.set_tag(tag="RX", value=umi)
+        if remove_umi:
+            last_index = rec.query_name.rfind(_ILLUMINA_READ_NAME_DELIMITER)
+            rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
+        return True
+    elif strict:
+        return False
+        raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")
+    else:
+        return False
 
 
 def _is_valid_umi(umi: str) -> bool:
@@ -1056,4 +1057,4 @@ def _is_valid_umi(umi: str) -> bool:
         True if the UMI is valid, False otherwise.
     """
 
-    return len(umi) > 0 and set(umi).issubset(VALID_UMI_CHARACTERS)
+    return len(umi) > 0 and set(umi).issubset(_VALID_UMI_CHARACTERS)

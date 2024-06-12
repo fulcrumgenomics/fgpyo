@@ -146,7 +146,10 @@ def test_sam_file_open_writing(
     with NamedTemp(suffix=file_type.extension, dir=tmp_path, mode="w", delete=False) as fp:
         kwargs = {"header": header_dict}
         with sam._pysam_open(
-            path=fp.file, open_for_reading=False, file_type=file_type, **kwargs  # type: ignore
+            path=fp.file,
+            open_for_reading=False,
+            file_type=file_type,
+            **kwargs,  # type: ignore
         ) as sam_writer:
             for r in expected_records:
                 sam_writer.write(r)

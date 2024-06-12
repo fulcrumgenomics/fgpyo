@@ -210,8 +210,7 @@ def set_parser(
             set({})
             if s == "{}"
             else [
-                subtype_parser(item)
-                for item in set(split_at_given_level(s[1:-1], split_delim=","))
+                subtype_parser(item) for item in set(split_at_given_level(s[1:-1], split_delim=","))
             ]
         )
     )
@@ -392,7 +391,7 @@ def _get_parser(
 
 
 def get_fields_dict(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]]
+    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
 ) -> Mapping[str, FieldType]:
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
@@ -404,7 +403,7 @@ def get_fields_dict(
 
 
 def get_fields(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]]
+    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
 ) -> Tuple[FieldType, ...]:
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):

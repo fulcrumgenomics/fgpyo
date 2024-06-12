@@ -231,9 +231,7 @@ class ReadStructure(Iterable[ReadSegment]):
         """The fixed length if there is one. Throws an exception on segments without fixed
         lengths!"""
         if not self.has_fixed_length:
-            raise AttributeError(
-                f"fixed_length called on a variable length read structure: {self}"
-            )
+            raise AttributeError(f"fixed_length called on a variable length read structure: {self}")
         return self._min_length
 
     @property
@@ -307,9 +305,9 @@ class ReadStructure(Iterable[ReadSegment]):
                 segs.append(seg)
             segments = tuple(segs)
 
-        assert all(
-            s.length is None or s.length > 0 for s in segments
-        ), "Read structure contained zero length segments" + "".join(str(s) for s in segments)
+        assert all(s.length is None or s.length > 0 for s in segments), (
+            "Read structure contained zero length segments" + "".join(str(s) for s in segments)
+        )
 
         return ReadStructure(segments=segments)
 

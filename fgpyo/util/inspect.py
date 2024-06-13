@@ -386,7 +386,7 @@ def _get_parser(
     # Set the name that the user expects to see in error messages (we always
     # return a temporary partial object so it's safe to set its __name__).
     # Unions and Literals don't have a __name__, but their str is fine.
-    setattr(parser, "__name__", getattr(type_, "__name__", str(type_)))
+    setattr(parser, "__name__", getattr(type_, "__name__", str(type_)))  # noqa: B010
     return parser
 
 

@@ -333,7 +333,7 @@ def _get_parser(
         nonlocal parsers
         try:
             return functools.partial(parsers[type_])
-        except KeyError:
+        except KeyError as ex:
             if (
                 type_ in [str, int, float]
                 or isinstance(type_, type)
@@ -343,13 +343,13 @@ def _get_parser(
             elif type_ == bool:
                 return functools.partial(types.parse_bool)
             elif type_ == list:
-                raise ValueError("Unable to parse list (try typing.List[type])")
+                raise ValueError("Unable to parse list (try typing.List[type])") from ex
             elif type_ == tuple:
-                raise ValueError("Unable to parse tuple (try typing.Tuple[type])")
+                raise ValueError("Unable to parse tuple (try typing.Tuple[type])") from ex
             elif type_ == set:
-                raise ValueError("Unable to parse set (try typing.Set[type])")
+                raise ValueError("Unable to parse set (try typing.Set[type])") from ex
             elif type_ == dict:
-                raise ValueError("Unable to parse dict (try typing.Mapping[type])")
+                raise ValueError("Unable to parse dict (try typing.Mapping[type])") from ex
             elif typing.get_origin(type_) == list:
                 return list_parser(cls, type_, parsers)
             elif typing.get_origin(type_) == set:
@@ -380,7 +380,7 @@ def _get_parser(
                         # typing types have no __name__.
                         getattr(type_, "__name__", repr(type_))
                     )
-                )
+                ) from ex
 
     parser = get_parser()
     # Set the name that the user expects to see in error messages (we always

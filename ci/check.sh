@@ -37,13 +37,7 @@ function run() {
 
 parent=$(cd $(dirname $0) && pwd -P)
 
-# If the script is invoked with --check only have black check, otherwise have it fix!
-black_extra_args=""
-if [[ "$1" == "--check" ]]; then
-    black_extra_args="--check"
-fi
-
-banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory ${root}"
+banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory fgpyo"
 run "Style Checking" "ruff format fgpyo"
 run "Linting"        "ruff check --fix fgpyo"
 run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"

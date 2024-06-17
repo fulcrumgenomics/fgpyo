@@ -22,7 +22,7 @@ def test_progress_logger() -> None:
 def test_progress_logger_with_custom_printer() -> None:
     ss = []
     progress = ProgressLogger(printer=lambda s: ss.append(s), noun="things", verb="saw", unit=2)
-    for i in range(0, 4):
+    for _ in range(0, 4):
         progress.record()
 
     assert ss == ["saw 2 things: NA", "saw 4 things: NA"]
@@ -31,7 +31,7 @@ def test_progress_logger_with_custom_printer() -> None:
 def test_progress_logger_as_context_manager() -> None:
     ss = []
     with ProgressLogger(printer=lambda s: ss.append(s), noun="xs", verb="saw", unit=9) as progress:
-        for i in range(0, 7):
+        for _ in range(0, 7):
             progress.record()
 
     assert ss == ["saw 7 xs: NA"]

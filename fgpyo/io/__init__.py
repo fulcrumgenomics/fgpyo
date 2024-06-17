@@ -101,6 +101,7 @@ def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None
     warnings.warn(
         "assert_path_is_writeable is deprecated, use assert_path_is_writable instead",
         DeprecationWarning,
+        stacklevel=2,
     )
 
     assert_path_is_writable(path=path, parent_must_exist=parent_must_exist)

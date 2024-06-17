@@ -45,7 +45,7 @@ def test_bases_length_from_ContigBuilder_add(
 
 def test_override_existing_contig() -> None:
     """Asserts than an exception is raised when an override is attempted"""
-    with raises(Exception):
+    with raises(AssertionError, match="The contig contig_name already exists,"):
         builder = FastaBuilder()
         builder.add("contig_name")
         builder.add("contig_name")

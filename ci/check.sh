@@ -40,8 +40,8 @@ parent=$(cd $(dirname $0) && pwd -P)
 banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory fgpyo"
 run "Style Checking" "ruff format fgpyo"
 run "Linting"        "ruff check --fix fgpyo"
-run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
 run "Type Checking"  "mypy -p fgpyo --config $parent/mypy.ini"
+run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
 
 if [ -z "$failures" ]; then
     banner "Checks Passed"

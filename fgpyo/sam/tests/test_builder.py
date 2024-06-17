@@ -254,9 +254,7 @@ def test_sorting() -> None:
 
 def make_sort_order_builder(tmp_path: Path, sort_order: SamOrder) -> Path:
     builder = SamBuilder(sort_order=sort_order)
-    builder.add_pair(
-        name="test3", chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+"
-    )
+    builder.add_pair(name="test3", chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+")
     builder.add_pair(name="test2", chrom="chr1", start1=4000, start2=4300)
     builder.add_pair(name="test1", chrom="chr5", start1=4000, start2=4300)
     builder.add_pair(name="test4", chrom="chr2", start1=4000, start2=4300)

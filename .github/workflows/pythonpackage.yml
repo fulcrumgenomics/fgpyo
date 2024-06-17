@@ -55,30 +55,25 @@ jobs:
       run: |
         poetry install --extras docs 
 
-    - name: Run pytest
-      shell: bash
-      run: |
-        poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
-
-    - name: Run isort
-      shell: bash
-      run: |
-        poetry run isort --force-single-line-imports --profile black fgpyo
-
     - name: Style checking
       shell: bash
       run: |
-        poetry run black --line-length 99 --check fgpyo
+        poetry run ruff format --check fgpyo
 
     - name: Run lint
       shell: bash
       run: |
-        poetry run flake8 --config=ci/flake8.cfg fgpyo
+        poetry run ruff check fgpyo
 
     - name: Run mypy
       shell: bash
       run: |
         poetry run mypy -p fgpyo --config=ci/mypy.ini
+
+    - name: Run pytest
+      shell: bash
+      run: |
+        poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
 
     - name: Run docs
       shell: bash

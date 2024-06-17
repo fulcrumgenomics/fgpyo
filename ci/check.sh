@@ -37,18 +37,11 @@ function run() {
 
 parent=$(cd $(dirname $0) && pwd -P)
 
-# If the script is invoked with --check only have black check, otherwise have it fix!
-black_extra_args=""
-if [[ "$1" == "--check" ]]; then
-    black_extra_args="--check"
-fi
-
-banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory ${root}"
-run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
-run "Import Sorting" "isort --force-single-line-imports --profile black fgpyo"
-run "Style Checking" "black --line-length 99 $black_extra_args fgpyo"
-run "Linting"        "flake8 --config=$parent/flake8.cfg fgpyo"
+banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory fgpyo"
+run "Style Checking" "ruff format fgpyo"
+run "Linting"        "ruff check --fix fgpyo"
 run "Type Checking"  "mypy -p fgpyo --config $parent/mypy.ini"
+run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
 
 if [ -z "$failures" ]; then
     banner "Checks Passed"

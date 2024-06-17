@@ -200,7 +200,7 @@ def test_sort_order(random_generator: random.Random) -> None:
 
 
 def test_zero_sample_records_match_inputs(
-    zero_sample_record_inputs: Tuple[Mapping[str, Any]]
+    zero_sample_record_inputs: Tuple[Mapping[str, Any]],
 ) -> None:
     """Test if zero-sample VCF (no genotypes) records produced match the requested inputs."""
     variant_builder = VariantBuilder()

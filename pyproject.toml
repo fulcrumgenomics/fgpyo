@@ -35,12 +35,7 @@ typing_extensions = { version = ">=3.7.4", python = "<3.12" }
 docs = ["sphinx", "sphinx_rtd_theme"]
 
 [tool.poetry.dev-dependencies]
-black = ">=24.2.0"
-flake8 = [
-	{ version = ">=5.0.0", python = "<3.12.0" },
-	{ version = ">=6.1.0", python = ">=3.12.0" },
-]
-isort = ">=5.10.1"
+ruff = "0.4.8"
 mypy = ">=1.7.0"
 pytest = ">=5.4.2"
 pytest-cov = ">=2.8.1"
@@ -49,3 +44,15 @@ setuptools = ">=68.0.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length    = 100
+target-version = "py38"
+output-format  = "full"
+
+[tool.ruff.lint]
+select    = ["E", "F", "I", "W"]
+ignore    = ["E203", "E701"]
+
+[tool.ruff.lint.isort]
+force-single-line = true

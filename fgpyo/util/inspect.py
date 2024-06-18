@@ -311,7 +311,7 @@ def dict_parser(
     return functools.partial(dict_parse)
 
 
-def _get_parser(
+def _get_parser(  # noqa: C901
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
     """Attempts to find a parser for a provided type.
@@ -328,7 +328,7 @@ def _get_parser(
         parsers = cls._parsers()
 
     # TODO - handle optional types
-    def get_parser() -> partial:
+    def get_parser() -> partial:  # noqa: C901
         nonlocal type_
         nonlocal parsers
         try:

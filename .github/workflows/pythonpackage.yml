@@ -7,6 +7,7 @@ env:
 jobs:
   testing:
     runs-on: ubuntu-latest
+    environment: github-actions-ci
     strategy:
       matrix:
         PYTHON_VERSION: ["3.8", "3.9", "3.10", "3.11", "3.12"]
@@ -84,4 +85,4 @@ jobs:
         popd
 
     - name: Upload code coverage
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v4.5.0

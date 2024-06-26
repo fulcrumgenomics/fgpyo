@@ -933,9 +933,9 @@ files = [
 
 [package.dependencies]
 numpy = [
+    {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
     {version = ">=1.20.3", markers = "python_version < \"3.10\""},
     {version = ">=1.21.0", markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
-    {version = ">=1.23.2", markers = "python_version >= \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -1520,4 +1520,4 @@ docs = ["black", "mkdocs", "mkdocs-autorefs", "mkdocs-gen-files", "mkdocs-includ
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<4.0"
-content-hash = "7257c6e20970d92a7464735c3718bafa6a7e6425f47f8de594fbae5fac0a39e3"
+content-hash = "48785f981b5d9283294d5f9ce637dc6edb84e410b85647b470594af3920c86f8"

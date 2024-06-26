@@ -111,6 +111,23 @@ the query):
     >>> [e.operator.is_indel for e in cigar.elements]
     [False, True, False, True, False]
 
+Any particular tuple can be accessed directly with its index (and works also with negative indexes):
+
+    >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
+    >>> cigar[0].length
+    50
+    >>> cigar[1].operator
+    <CigarOp.D: (2, 'D', False, True)>
+    >>> cigar[-1].operator
+    <CigarOp.S: (4, 'S', True, False)>
+    >>> tuple(x.operator.character for x in cigar[1:3])
+    ('D','M')
+
+
+The Cigar has __len__ defined to be the length of the elements:
+    >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
+    >>> len(cigar) == len(cigar.elements)
+    True
 
 Examples of parsing the SA tag and individual supplementary alignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -543,6 +560,24 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
+    def __getitem__(self, index:int|slice) -> CigarElement|Tuple[CigarElement]:
+        """Returns the cigar element indexed by index
+
+        Arguments:
+            index: int The index of the requested cigar-element
+
+        Returns: the CigarElement or tuple of elements indexed by index
+
+        Throws:
+            TypeError if index isn't an integer or a slice
+            IndexError: if there's no such element
+
+        """
+        return self.elements[index]
+
+    def __len__(self) -> int:
+        """Returns the number of elements in the cigar"""
+        return len(self.elements)
 
 @attr.s(frozen=True, auto_attribs=True)
 class SupplementaryAlignment:

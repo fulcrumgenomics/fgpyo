@@ -7,6 +7,6 @@ build:
     post_install:
       - pip install poetry==1.8.3
       - poetry config virtualenvs.create false
-      - poetry install --extras doc
+      - poetry install --extras docs
 mkdocs:
   configuration: mkdocs.yml

@@ -111,7 +111,7 @@ the query):
     >>> [e.operator.is_indel for e in cigar.elements]
     [False, True, False, True, False]
 
-Any particular tuple can be accessed directly with its index (and works also with negative indexes):
+Any particular tuple can be accessed directly with its index (and works with negative indexes and slices):
 
     >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
     >>> cigar[0].length
@@ -122,6 +122,8 @@ Any particular tuple can be accessed directly with its index (and works also wit
     <CigarOp.S: (4, 'S', True, False)>
     >>> tuple(x.operator.character for x in cigar[1:3])
     ('D','M')
+    >>> tuple(x.operator.character for x in cigar[-2:])
+    ('I', 'S')
 
 
 The Cigar has __len__ defined to be the length of the elements:

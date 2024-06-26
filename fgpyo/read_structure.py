@@ -1,6 +1,5 @@
 """
-Classes for representing Read Structures
-----------------------------------------
+## Classes for representing Read Structures
 
 A Read Structure refers to a String that describes how the bases in a sequencing run should be
 allocated into logical reads.  It serves a similar purpose to the --use-bases-mask in Illumina's
@@ -13,9 +12,9 @@ to whatever bases are left after the other segments are processed and can be tho
 
 See more at: https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures
 
-Examples
-~~~~~~~~
+## Examples
 
+```python
    >>> from fgpyo.read_structure import ReadStructure
    >>> rs = ReadStructure.from_string("75T8B75T")
    >>> [str(segment) for segment in rs]
@@ -46,20 +45,7 @@ Examples
    ...   print(str(ex))
    ...
    Read structure missing length information: 23T2T[T]23T
-
-Module Contents
-~~~~~~~~~~~~~~~
-The module contains the following public classes:
-    - :class:`~fgpyo.read_structure.ReadStructure` -- Describes the structure of a give read
-    - :class:`~fgpyo.read_structure.ReadSegment` -- Describes all the information about a segment
-      within a read structure
-    - :class:`~fgpyo.read_structure.SegmentType` -- The type of segments that can show up in a read
-      structure
-    - :class:`~fgpyo.read_structure.SubReadWithoutQuals` -- Contains the bases that correspond to
-      the given read segment
-    - :class:`~fgpyo.read_structure.SubReadWithQuals` -- Contains the bases and qualities that
-      correspond to the given read segment
-
+```
 """
 
 import enum

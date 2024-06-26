@@ -41,7 +41,8 @@ banner "Executing in conda environment ${CONDA_DEFAULT_ENV} in directory fgpyo"
 run "Style Checking" "ruff format fgpyo"
 run "Linting"        "ruff check --fix fgpyo"
 run "Type Checking"  "mypy -p fgpyo --config $parent/mypy.ini"
-run "Unit Tests"     "python -m pytest -vv -r sx fgpyo"
+run "Unit Tests"     "python -m pytest -vv -r sx tests"
+run "Make docs"      "poetry run mkdocs build --strict"
 
 if [ -z "$failures" ]; then
     banner "Checks Passed"

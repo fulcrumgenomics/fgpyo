@@ -1,9 +1,7 @@
 """
-Utility Functions for Manipulating DNA and RNA sequences.
----------------------------------------------------------
+# Utility Functions for Manipulating DNA and RNA sequences.
 
 This module contains utility functions for manipulating DNA and RNA sequences.
-
 """
 
 from typing import Dict

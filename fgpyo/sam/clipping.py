@@ -1,19 +1,18 @@
 """
-Utility Functions for Soft-Clipping records in SAM/BAM Files
-------------------------------------------------------------
+# Utility Functions for Soft-Clipping records in SAM/BAM Files
 
 This module contains utility functions for soft-clipping reads.  There are four variants
 that support clipping the beginnings and ends of reads, and specifying the amount to be
 clipped in terms of query bases or reference bases:
 
-    - :func:`~fgpyo.clipping.softclip_start_of_alignment_by_query` clips the start
-      of the alignment in terms of query bases
-    - :func:`~fgpyo.clipping.softclip_end_of_alignment_by_query` clips the end
-      of the alignment in terms of query bases
-    - :func:`~fgpyo.clipping.softclip_start_of_alignment_by_ref` clips the start
-      of the alignment in terms of reference bases
-    - :func:`~fgpyo.clipping.softclip_end_of_alignment_by_ref` clips the end
-      of the alignment in terms of reference bases
+- [`softclip_start_of_alignment_by_query()`][fgpyo.sam.clipping.softclip_start_of_alignment_by_query]
+  clips the start of the alignment in terms of query bases
+- [`softclip_end_of_alignment_by_query()`][fgpyo.sam.clipping.softclip_end_of_alignment_by_query]
+  clips the end of the alignment in terms of query bases
+- [`softclip_start_of_alignment_by_ref()`][fgpyo.sam.clipping.softclip_start_of_alignment_by_ref]
+  clips the start of the alignment in terms of reference bases
+- [`softclip_end_of_alignment_by_ref()`][fgpyo.sam.clipping.softclip_end_of_alignment_by_ref]
+  clips the end of the alignment in terms of reference bases
 
 The difference between query and reference based versions is apparent only when there are
 insertions or deletions in the read as indels have lengths on either the query (insertions) or
@@ -23,14 +22,13 @@ Upon clipping a set of additional SAM tags are removed from reads as they are li
 
 For example, to clip the last 10 query bases of all records and reduce the qualities to Q2:
 
-.. code-block:: python
-
-
+```python
     >>> from fgpyo.sam import reader, clipping
     >>> with reader("/path/to/sample.sam") as fh:
     ...     for rec in fh:
     ...         clipping.softclip_end_of_alignment_by_query(rec, 10, 2)
     ...         print(rec.cigarstring)
+```
 
 It should be noted that any clipping potentially makes the common SAM tags NM, MD and UQ
 invalid, as well as potentially other alignment based SAM tags.  Any clipping added to the start
@@ -43,10 +41,10 @@ it should be noted that:
 
 To rectify these problems it is necessary to do the equivalent of:
 
-.. code-block:: bash
-
+```console
     cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools calmd
-"""
+```
+"""  # noqa: E501
 
 from array import array
 from typing import Iterable

@@ -1,4 +1,4 @@
-"""Tests for :py:mod:`~fgpyo.sequence`"""
+"""Tests for `~fgpyo.sequence`"""
 
 import pytest
 

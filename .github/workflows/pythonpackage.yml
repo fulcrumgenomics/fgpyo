@@ -2,7 +2,7 @@ name: Python package
 
 on: [push]
 env:
-  POETRY_VERSION: 1.5
+  POETRY_VERSION: 1.8
 
 jobs:
   testing:
@@ -80,9 +80,12 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        pushd docs
-        poetry run make html
-        popd
+        poetry run mkdocs build --strict
+
+    - name: Create RTD preview
+      uses: readthedocs/actions/preview@v1
+      with:
+          project-slug: "fgpyo"
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v4.5.0

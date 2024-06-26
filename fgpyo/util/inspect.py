@@ -164,10 +164,10 @@ def list_parser(
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
-        parsers)
+            parsers)
         type_: the type of the attribute to be parsed
         parsers: an optional mapping from type to the function to use for parsing that type (allows
-        for parsing of more complex types)
+            for parsing of more complex types)
     """
     subtypes = typing.get_args(type_)
     assert len(subtypes) == 1, "Lists are allowed only one subtype per PEP specification!"
@@ -193,10 +193,10 @@ def set_parser(
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
-        parsers)
+            parsers)
         type_: the type of the attribute to be parsed
         parsers: an optional mapping from type to the function to use for parsing that type (allows
-        for parsing of more complex types)
+            for parsing of more complex types)
     """
     subtypes = typing.get_args(type_)
     assert len(subtypes) == 1, "Sets are allowed only one subtype per PEP specification!"
@@ -224,10 +224,10 @@ def tuple_parser(
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
-        parsers)
+            parsers)
         type_: the type of the attribute to be parsed
         parsers: an optional mapping from type to the function to use for parsing that type (allows
-        for parsing of more complex types)
+            for parsing of more complex types)
     """
     subtype_parsers = [
         _get_parser(
@@ -264,10 +264,10 @@ def dict_parser(
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
-        parsers)
+            parsers)
         type_: the type of the attribute to be parsed
-        parsers: an optional mapping from type to the function to use for parsing that type (allows
-        for parsing of more complex types)
+            parsers: an optional mapping from type to the function to use for parsing that type
+            (allows for parsing of more complex types)
     """
     subtypes = typing.get_args(type_)
     assert len(subtypes) == 2, "Dict object must have exactly 2 subtypes per PEP specification!"

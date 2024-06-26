@@ -1,35 +1,40 @@
 """
-Classes for generating fasta files and records for testing
-----------------------------------------------------------
+# Classes for generating fasta files and records for testing
+
 This module contains utility classes for creating fasta files, indexed fasta files (.fai), and
 sequence dictionaries (.dict).
 
-Examples of creating sets of contigs for writing to fasta
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Examples of creating sets of contigs for writing to fasta
 
 Writing a FASTA with two contigs each with 100 bases:
 
+```python
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10)
     >>> builder.add("chr11").add("GGGGGGGGGG", 10)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
+```
 
 Writing a FASTA with one contig with 100 A's and 50 T's:
 
+```python
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
     >>> builder.to_file(path = pathlib.Path("test.fasta"))
+```
 
 Add bases to existing contig:
 
+```python
     >>> from fgpyo.fasta.builder import FastaBuilder
     >>> builder = FastaBuilder()
     >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
     >>> contig_one.add("NNN", 1)
     >>> contig_one.bases
     'AAAAAAAAAANNN'
+```
 
 """
 
@@ -128,13 +133,13 @@ class FastaBuilder:
     defaults, however these can be overwritten.
 
     Contigs are added to FastaBuilder using:
-    :func:`~fgpyo.fasta.builder.FastaBuilder.add`
+    [`add()`][fgpyo.fasta.builder.FastaBuilder.add]
 
     Bases are added to existing contigs using:
-    :func:`~fgpyo.fasta.builder.FastaBuilder.add.add`
+    [`add()`][fgpyo.fasta.builder.ContigBuilder.add]
 
     Once accumulated the contigs can be written to a file using:
-    :func:`~fgpyo.fasta.builder.FastaBuilder.to_file`
+    [`to_file()`][fgpyo.fasta.builder.FastaBuilder.to_file]
 
     Calling to_file() will also generate the fasta index (.fai) and sequence dictionary (.dict).
 

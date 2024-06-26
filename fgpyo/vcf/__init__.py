@@ -1,24 +1,24 @@
 """
-Classes for generating VCF and records for testing
---------------------------------------------------
+# Classes for generating VCF and records for testing
 
 This module contains utility classes for the generation of VCF files and variant records, for use
 in testing.
 
 The module contains the following public classes:
 
-    - :class:`~fgpyo.vcf.builder.VariantBuilder` -- A builder class that allows the
-        accumulation of variant records and access as a list and writing to file.
+- [`VariantBuilder()`][fgpyo.vcf.builder.VariantBuilder] -- A builder class that allows the
+    accumulation of variant records and access as a list and writing to file.
 
-Examples
-~~~~~~~~
+## Examples
 
-Typically, we have :class:`~pysam.VariantRecord` records obtained from reading from a VCF file.
-The :class:`~fgpyo.vcf.builder.VariantBuilder` class builds such records.
+Typically, we have `pysam.VariantRecord` records obtained from reading
+from a VCF file.  The [`VariantBuilder()`][fgpyo.vcf.builder.VariantBuilder] class builds
+such records.
 
-Variants are added with the :func:`~fgpyo.vcf.builder.VariantBuilder.add()` method, which
-returns a :class:`pysam.VariantRecord`.
+Variants are added with the [`add()`][fgpyo.vcf.builder.VariantBuilder.add] method,
+which returns a `pysam.VariantRecord`.
 
+```python
     >>> import pysam
     >>> from fgpyo.vcf.builder import VariantBuilder
     >>> builder: VariantBuilder = VariantBuilder()
@@ -27,25 +27,31 @@ returns a :class:`pysam.VariantRecord`.
     >>>     contig="chr2", pos=1001, id="rs1234", ref="C", alts=["T"],
     >>>     qual=40, filter=["PASS"]
     >>> )
+```
 
 VariantBuilder can create sites-only, single-sample, or multi-sample VCF files. If not producing a
 sites-only VCF file, VariantBuilder must be created by passing a list of sample IDs
 
+```python
     >>> builder: VariantBuilder = VariantBuilder(sample_ids=["sample1", "sample2"])
     >>> new_record_1: pysam.VariantRecord = builder.add()  # uses the defaults
     >>> new_record_2: pysam.VariantRecord = builder.add(
     >>>     samples={"sample1": {"GT": "0|1"}, "sample2": {"GT": "0|0"}}
     >>> )
+```
 
 The variants stored in the builder can be retrieved as a coordinate sorted VCF file via the
-:func:`~VariantBuilder.to_path()` method:
+[`to_path()`][fgpyo.vcf.builder.VariantBuilder.to_path] method:
 
+```python
     >>>     from pathlib import Path
     >>>     path_to_vcf: Path = builder.to_path()
+```
 
 The variants may also be retrieved in the order they were added via the
-:func:`~fgpyo.vcf.builder.VariantBuilder.to_unsorted_list()` method and in coordinate sorted
-order via the :func:`~fgpyo.vcf.builder.VariantBuilder.to_sorted_list()` method.
+[`to_unsorted_list()`][fgpyo.vcf.builder.VariantBuilder.to_unsorted_list] method and
+in coordinate sorted order via the
+[`to_sorted_list()`][fgpyo.vcf.builder.VariantBuilder.to_sorted_list] method.
 
 """
 

@@ -1,31 +1,30 @@
 """
-Functions for Working with Collections
---------------------------------------
+# Functions for Working with Collections
 
 This module contains classes and functions for working with collections and iterators.
 
-Examples of a "Peekable" Iterator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Examples of a "Peekable" Iterator
 
 "Peekable" iterators are useful to "peek" at the next item in an iterator without consuming it.
 For example, this is useful when consuming items in iterator while a predicate is true, and not
 consuming the first element where the element is not true.  See the
-:func:`~fgpyo.collections.PeekableIterator.takewhile` and
-:func:`~fgpyo.collections.PeekableIterator.dropwhile` methods.
+[`takewhile()`][fgpyo.collections.PeekableIterator.takewhile] and
+[`dropwhile()`][fgpyo.collections.PeekableIterator.dropwhile] methods.
 
 An empty peekable iterator throws StopIteration:
 
-.. code-block:: python
+```python
 
     >>> from fgpyo.collections import PeekableIterator
     >>> piter = PeekableIterator(iter([]))
     >>> piter.peek()
     StopIteration
 
+```
+
 A peekable iterator will return the next item before consuming it.
 
-.. code-block:: python
-
+```python
     >>> piter = PeekableIterator([1, 2, 3])
     >>> piter.peek()
     1
@@ -33,6 +32,7 @@ A peekable iterator will return the next item before consuming it.
     1
     >>> [j for j in piter]
     [2, 3]
+```
 
 The `can_peek()` function can be used to determine if the iterator can be peeked without
 StopIteration being thrown:
@@ -48,15 +48,6 @@ StopIteration being thrown:
     StopIteration
 
 `PeekableIterator`'s constructor supports creation from iterable objects as well as iterators.
-
-Module Contents
-~~~~~~~~~~~~~~~
-
-The module contains the following public classes:
-
-    - :class:`~fgpyo.collections.PeekableIterator` -- Iterator that allows you to peek at the
-        next value before calling next
-
 """
 
 from typing import Any
@@ -134,7 +125,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
 
         Args:
             pred (Callable[[V], bool]): a function that takes a value from the iterator
-            and returns true or false.
+                and returns true or false.
 
         Returns:
             PeekableIterator[V]: a reference to this iterator, so calls can be chained

@@ -1,17 +1,15 @@
 """
-Methods for setting up logging for tools.
------------------------------------------
+# Methods for setting up logging for tools.
 
-Progress Logging Examples
-~~~~~~~~~~~~~~~~~~~~~~~~~
+## Progress Logging Examples
 
 Frequently input data (SAM/BAM/CRAM/VCF) are iterated in genomic coordinate order.  Logging
 progress is useful to not only log how many inputs have been consumed, but also their genomic
-coordinate.  :class:`~fgpyo.util.logging.ProgressLogger` can log progress every fixed number of
-records.  Logging can be written to :class:`logging.Logger` as well as custom print method.
+coordinate.  [`ProgressLogger()`][fgpyo.util.logging.ProgressLogger] can log progress every
+fixed number of records.  Logging can be written to `logging.Logger` as well as custom print
+method.
 
-.. code-block:: python
-
+```python
    >>> from fgpyo.util.logging import ProgressLogger
    >>> logged_lines = []
    >>> progress = ProgressLogger(
@@ -30,7 +28,7 @@ records.  Logging can be written to :class:`logging.Logger` as well as custom pr
    True
    >>> logged_lines  # show the lines logged
    ['recorded 2 items: chr1:2', 'recorded 3 items: chr1:3']
-
+```
 """
 
 import logging

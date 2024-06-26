@@ -1,0 +1,45 @@
+site_name: fgpyo
+site_url: https://fgpyo.readthedocs.io/en/latest/
+use_directory_urls: false
+theme:
+  name: material
+  highlightjs: true
+  hljs_languages:
+    - python
+  palette:
+    primary: teal
+  navstyle: dark
+  include_sidebar: true
+  collapse_navigation: false
+repo_url: https://github.com/fulcrumgenomics/fgpyo
+plugins:
+  - autorefs
+  - include-markdown
+  - search
+  - gen-files:
+      scripts:
+        - docs/scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_section_style: table
+            docstring_style: google
+            group_by_category: true
+            separate_signature: true
+            show_category_heading: true
+            show_if_no_docstring: false
+            show_root_toc_entry: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            show_submodules: true
+  - table-reader
+markdown_extensions:
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+exclude_docs: |
+  test_*.py

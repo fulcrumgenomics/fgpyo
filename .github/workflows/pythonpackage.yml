@@ -4,6 +4,9 @@ on: [push]
 env:
   POETRY_VERSION: 1.8
 
+permissions:
+  pull-requests: write
+
 jobs:
   testing:
     runs-on: ubuntu-latest
@@ -81,11 +84,6 @@ jobs:
       run: |
         set -euo pipefail
         poetry run mkdocs build --strict
-
-    - name: Create RTD preview
-      uses: readthedocs/actions/preview@v1
-      with:
-          project-slug: "fgpyo"
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v4.5.0

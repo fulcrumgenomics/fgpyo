@@ -560,7 +560,9 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
-    def __getitem__(self, index: int | slice) -> CigarElement | Tuple[CigarElement]:
+    def __getitem__(
+        self, index: Union[int, slice]
+    ) -> Union[CigarElement, Tuple[CigarElement, ...]]:
         """Returns the cigar element indexed by index
 
         Arguments:

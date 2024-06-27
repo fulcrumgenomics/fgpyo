@@ -111,7 +111,8 @@ the query):
     >>> [e.operator.is_indel for e in cigar.elements]
     [False, True, False, True, False]
 
-Any particular tuple can be accessed directly with its index (and works with negative indexes and slices):
+Any particular tuple can be accessed directly with its index (and works with negative indexes
+and slices):
 
     >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
     >>> cigar[0].length
@@ -124,12 +125,6 @@ Any particular tuple can be accessed directly with its index (and works with neg
     ('D','M')
     >>> tuple(x.operator.character for x in cigar[-2:])
     ('I', 'S')
-
-
-The Cigar has __len__ defined to be the length of the elements:
-    >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
-    >>> len(cigar) == len(cigar.elements)
-    True
 
 Examples of parsing the SA tag and individual supplementary alignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -568,9 +563,10 @@ class Cigar:
         """Returns the cigar element indexed by index
 
         Arguments:
-            index: int The index of the requested cigar-element
+            index: int The index of the requested cigar element(s)
 
-        Returns: the CigarElement or tuple of elements indexed by index
+        Returns: CigarElement or Tuple[CigarElement,...]
+            The element(s) selected by index
 
         Throws:
             TypeError if index isn't an integer or a slice
@@ -578,10 +574,6 @@ class Cigar:
 
         """
         return self.elements[index]
-
-    def __len__(self) -> int:
-        """Returns the number of elements in the cigar"""
-        return len(self.elements)
 
 
 @attr.s(frozen=True, auto_attribs=True)

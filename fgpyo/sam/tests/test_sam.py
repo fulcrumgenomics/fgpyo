@@ -372,3 +372,25 @@ def test_calc_edit_info_with_aligned_Ns() -> None:
     assert info.deletions == 0
     assert info.deleted_bases == 0
     assert info.nm == 5
+
+
+@pytest.mark.parametrize("cigarstring", ["10M5I4M", "10M5D4M", "10M40S", "*"])
+def test_cigar_length(cigarstring: str) -> None:
+    """CIGAR length should be the number of elements."""
+    cigar = Cigar.from_cigarstring(cigarstring)
+    assert len(cigar) == len(cigar.elements)
+
+
+@pytest.mark.parametrize("cigarstring", ["10M5I4M", "10M5D4M", "10M40S", "*"])
+def test_cigar_get_item(cigarstring: str) -> None:
+    """CIGAR elements should be accessible by index."""
+    cigar = Cigar.from_cigarstring(cigarstring)
+    for i in range(len(cigar)):
+        assert cigar[i] == cigar.elements[i]
+
+
+@pytest.mark.parametrize("cigarstring", ["10M5I4M", "10M5D4M", "10M40S", "*"])
+def test_cigar_iterable(cigarstring: str) -> None:
+    """Iterating over a CIGAR should yield its elements."""
+    cigar = Cigar.from_cigarstring(cigarstring)
+    assert [e for e in cigar] == list(cigar.elements)

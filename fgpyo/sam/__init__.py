@@ -531,6 +531,15 @@ class Cigar:
         else:
             return "*"
 
+    def __len__(self) -> int:
+        return len(self.elements)
+
+    def __iter__(self) -> Iterator[CigarElement]:
+        return iter(self.elements)
+
+    def __getitem__(self, index: int) -> CigarElement:
+        return self.elements[index]
+
     def reversed(self) -> "Cigar":
         """Returns a copy of the Cigar with the elements in reverse order."""
         return Cigar(tuple(reversed(self.elements)))

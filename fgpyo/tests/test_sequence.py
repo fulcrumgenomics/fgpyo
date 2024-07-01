@@ -2,6 +2,7 @@
 
 import pytest
 
+from fgpyo.sequence import gc_content
 from fgpyo.sequence import longest_hp_length
 from fgpyo.sequence import reverse_complement
 

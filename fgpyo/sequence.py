@@ -88,3 +88,11 @@ def longest_hp_length(bases: str) -> int:
         max_hp = max(max_hp, hp)
 
     return max_hp
+
+def gc_content(bases: str) -> float:
+    """Calculates the fraction of G and C bases in a sequence."""
+    if bases:
+        gc_count = sum(1 if (ch == "C" or ch == "G") else 0 for ch in bases)
+        return gc_count / len(bases)
+    else:
+        return 0

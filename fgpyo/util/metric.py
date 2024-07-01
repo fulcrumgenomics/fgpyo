@@ -265,7 +265,7 @@ class Metric(ABC, Generic[MetricType]):
         return [a.name for a in inspect.get_fields(cls)]  # type: ignore[arg-type]
 
     @classmethod
-    def format_value(cls, value: Any) -> str:
+    def format_value(cls, value: Any) -> str:  # noqa: C901
         """The default method to format values of a given type.
 
         By default, this method will comma-delimit `list`, `tuple`, and `set` types, and apply

@@ -238,8 +238,8 @@ class SamFileType(enum.Enum):
         ext = Path(path).suffix
         try:
             return next(iter([tpe for tpe in SamFileType if tpe.extension == ext]))
-        except StopIteration:
-            raise ValueError(f"Could not infer file type from {path}")
+        except StopIteration as ex:
+            raise ValueError(f"Could not infer file type from {path}") from ex
 
 
 def _pysam_open(

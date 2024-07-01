@@ -39,12 +39,12 @@ def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
     from a string if possible"""
     try:
         return enum(value)
-    except KeyError:
+    except KeyError as ex:
         raise InspectException(
             "invalid choice: {!r} (choose from {})".format(
                 value, ", ".join(map(repr, enum.__members__))
             )
-        )
+        ) from ex
 
 
 def make_enum_parser(enum: Type[EnumType]) -> partial:

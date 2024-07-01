@@ -51,8 +51,9 @@ target-version = "py38"
 output-format  = "full"
 
 [tool.ruff.lint]
-select    = ["E", "F", "I", "W"]
+select    = ["C901", "B", "E", "F", "I", "W", "Q"]
 ignore    = ["E203", "E701"]
+unfixable = ["B"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

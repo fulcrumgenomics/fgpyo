@@ -27,7 +27,7 @@ def test_supplementary_alignment() -> None:
     )
 
     # not enough fields
-    with pytest.raises(Exception):
+    with pytest.raises(IndexError):
         SupplementaryAlignment.parse("chr1,123,+,50S100M,60")
 
 

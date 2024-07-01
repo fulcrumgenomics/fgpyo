@@ -311,7 +311,7 @@ def dict_parser(
     return functools.partial(dict_parse)
 
 
-def _get_parser(
+def _get_parser(  # noqa: C901
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
     """Attempts to find a parser for a provided type.
@@ -328,12 +328,12 @@ def _get_parser(
         parsers = cls._parsers()
 
     # TODO - handle optional types
-    def get_parser() -> partial:
+    def get_parser() -> partial:  # noqa: C901
         nonlocal type_
         nonlocal parsers
         try:
             return functools.partial(parsers[type_])
-        except KeyError:
+        except KeyError as ex:
             if (
                 type_ in [str, int, float]
                 or isinstance(type_, type)
@@ -343,13 +343,13 @@ def _get_parser(
             elif type_ == bool:
                 return functools.partial(types.parse_bool)
             elif type_ == list:
-                raise ValueError("Unable to parse list (try typing.List[type])")
+                raise ValueError("Unable to parse list (try typing.List[type])") from ex
             elif type_ == tuple:
-                raise ValueError("Unable to parse tuple (try typing.Tuple[type])")
+                raise ValueError("Unable to parse tuple (try typing.Tuple[type])") from ex
             elif type_ == set:
-                raise ValueError("Unable to parse set (try typing.Set[type])")
+                raise ValueError("Unable to parse set (try typing.Set[type])") from ex
             elif type_ == dict:
-                raise ValueError("Unable to parse dict (try typing.Mapping[type])")
+                raise ValueError("Unable to parse dict (try typing.Mapping[type])") from ex
             elif typing.get_origin(type_) == list:
                 return list_parser(cls, type_, parsers)
             elif typing.get_origin(type_) == set:
@@ -380,13 +380,13 @@ def _get_parser(
                         # typing types have no __name__.
                         getattr(type_, "__name__", repr(type_))
                     )
-                )
+                ) from ex
 
     parser = get_parser()
     # Set the name that the user expects to see in error messages (we always
     # return a temporary partial object so it's safe to set its __name__).
     # Unions and Literals don't have a __name__, but their str is fine.
-    setattr(parser, "__name__", getattr(type_, "__name__", str(type_)))
+    setattr(parser, "__name__", getattr(type_, "__name__", str(type_)))  # noqa: B010
     return parser
 
 

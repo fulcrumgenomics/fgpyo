@@ -967,10 +967,10 @@ def extract_umis_from_read_name(
         read_name: The read name to extract the UMI from.
         read_name_delimiter: The delimiter separating the components of the read name.
         umi_delimiter: The delimiter separating multiple UMIs.
-        strict: If `strict` is true, the read name must contain either 7 or 8 colon-separated
+        strict: If `strict` is `True`, the read name must contain either 7 or 8 colon-separated
           segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
           in the case of 7 segments. `strict` requires the UMI to be valid and consistent with
-          Illumina's allowed UMI characters. If `strict` is false, the last segment is returned
+          Illumina's allowed UMI characters. If `strict` is `False`, the last segment is returned
           so long as it appears to be a valid UMI.
 
     Returns:
@@ -1017,11 +1017,11 @@ def copy_umi_from_read_name(
 
     Args:
         rec: The alignment record to update.
-        strict: If True and UMI invalid, will throw an exception
-        remove_umi: If True, the UMI will be removed from the read name after copying.
+        strict: If `True` and UMI invalid, will throw an exception
+        remove_umi: If `True`, the UMI will be removed from the read name after copying.
 
     Returns:
-        True if the UMI was successfully extracted, False if otherwise.
+        `True` if the UMI was successfully extracted, False if otherwise.
 
     Raises:
         ValueError: If the read name does not end with a valid UMI.
@@ -1033,7 +1033,6 @@ def copy_umi_from_read_name(
     )
     if umi is not None:
         if rec.has_tag("RX"):
-            return False
             raise ValueError(f"Record {rec.query_name} already has a populated RX tag")
         rec.set_tag(tag="RX", value=umi)
         if remove_umi:
@@ -1041,7 +1040,6 @@ def copy_umi_from_read_name(
             rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
         return True
     elif strict:
-        return False
         raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")
     else:
         return False
@@ -1054,7 +1052,7 @@ def _is_valid_umi(umi: str) -> bool:
     Args:
         umi: The UMI to check.
     Returns:
-        True if the UMI is valid, False otherwise.
+        `True` if the UMI is valid, `False` otherwise.
     """
 
     return len(umi) > 0 and set(umi).issubset(_VALID_UMI_CHARACTERS)

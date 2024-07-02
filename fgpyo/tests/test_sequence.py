@@ -18,10 +18,16 @@ def test_reverse_complement() -> None:
         reverse_complement("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
-def test_homopolymer() -> None:
-    assert longest_hp_length("") == 0
-    assert longest_hp_length("A") == 1
-    assert longest_hp_length("AAAA") == 4
-    assert longest_hp_length("ACTACGATTTTTACGAT") == 5
-    assert longest_hp_length("ACTACGATTTTTACGAT") == 5
-    assert longest_hp_length("TTTTACTACGAACGAGTTTTT") == 5
+@pytest.mark.parametrize(
+    "bases, expected_hp_len",
+    [
+        ("", 0),
+        ("A", 1),
+        ("AAAA", 4),
+        ("ACTACGATTTTTACGAT", 5),
+        ("ACTACGATTTTTACGAT", 5),
+        ("TTTTACTACGAACGAGTTTTT", 5),
+    ],
+)
+def test_homopolymer(bases: str, expected_hp_len: int) -> None:
+    assert longest_hp_length(bases) == expected_hp_len

@@ -23,6 +23,7 @@ def test_reverse_complement(bases: str, expected_rev_comp: str) -> None:
     with pytest.raises(KeyError):
         reverse_complement("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
+
 @pytest.mark.parametrize(
     "bases, expected_gc_content",
     [
@@ -31,8 +32,8 @@ def test_reverse_complement(bases: str, expected_rev_comp: str) -> None:
         ("ACGT", 0.5),
         ("", 0.0),
         ("ACGTN", 0.4),
-        ("acGTN", 0.4), # mixed case
-        ("ggcc", 1.0)
+        ("acGTN", 0.4),  # mixed case
+        ("ggcc", 1.0),
     ],
 )
 def test_gc_content(bases: str, expected_gc_content: float) -> None:

@@ -70,3 +70,12 @@ def reverse_complement(bases: str) -> str:
         the reverse complement of the provided base string
     """
     return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
+
+
+def gc_content(bases: str) -> float:
+    """Calculates the fraction of G and C bases in a sequence."""
+    if len(bases) == 0:
+        return 0
+    else:
+        gc_count = sum(base == "C" or base == "G" for base in bases.upper())
+        return gc_count / len(bases)

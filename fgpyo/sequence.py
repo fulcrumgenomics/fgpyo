@@ -93,6 +93,5 @@ def gc_content(bases: str) -> float:
     """Calculates the fraction of G and C bases in a sequence."""
     if len(bases) == 0:
         return 0
-    else:
-        gc_count = sum(base == "C" or base == "G" for base in bases.upper())
-        return gc_count / len(bases)
+    gc_count = sum(1 for base in bases if base == "C" or base == "G" or base == "c" or base == "g")
+    return gc_count / len(bases)

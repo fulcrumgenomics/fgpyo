@@ -1,8 +1,25 @@
 """
-Functions for Working with Collections
---------------------------------------
+Custom Collections and Collection Functions
+-------------------------------------------
 
 This module contains classes and functions for working with collections and iterators.
+
+Helpful Functions for Working with Collections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To test if an iterable is sorted or not:
+
+.. code-block:: python
+
+    >>> from fgpyo.collections import is_sorted
+    >>> is_sorted([])
+    True
+    >>> is_sorted([1])
+    True
+    >>> is_sorted([1, 2, 2, 3])
+    True
+    >>> is_sorted([1, 2, 4, 3])
+    False
 
 Examples of a "Peekable" Iterator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,7 +30,7 @@ consuming the first element where the element is not true.  See the
 :func:`~fgpyo.collections.PeekableIterator.takewhile` and
 :func:`~fgpyo.collections.PeekableIterator.dropwhile` methods.
 
-An empty peekable iterator throws StopIteration:
+An empty peekable iterator throws a :py:class:`StopIteration`:
 
 .. code-block:: python
 
@@ -34,8 +51,8 @@ A peekable iterator will return the next item before consuming it.
     >>> [j for j in piter]
     [2, 3]
 
-The `can_peek()` function can be used to determine if the iterator can be peeked without
-StopIteration being thrown:
+The :func:`~fgpyo.collections.PeekableIterator.can_peek()` function can be used to determine if the
+iterator can be peeked without a :py:class:`StopIteration` from being thrown:
 
     >>> piter = PeekableIterator([1])
     >>> piter.peek() if piter.can_peek() else -1
@@ -47,7 +64,8 @@ StopIteration being thrown:
     >>> next(piter)
     StopIteration
 
-`PeekableIterator`'s constructor supports creation from iterable objects as well as iterators.
+:class:`~fgpyo.collections.PeekableIterator`'s constructor supports creation from iterable objects
+as well as iterators.
 
 Module Contents
 ~~~~~~~~~~~~~~~
@@ -55,20 +73,50 @@ Module Contents
 The module contains the following public classes:
 
     - :class:`~fgpyo.collections.PeekableIterator` -- Iterator that allows you to peek at the
-        next value before calling next
+      next value without advancing the iterator.
+
+The module contains the following public functions:
+
+    - :func:`~fgpyo.collections.is_sorted` -- for lazily checking if an iterable is sorted.
 
 """
 
+import sys
+from operator import le
 from typing import Any
 from typing import Callable
 from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Protocol
+from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
+if sys.version_info[:2] >= (3, 10):
+    from itertools import pairwise
+else:
+    # TODO: remove this branch when Python <3.10 support is dropped
+    def pairwise(iterable: Iterable[Any]) -> Iterator[Tuple[Any, Any]]:
+        """Return successive overlapping pairs taken from the input iterable."""
+        iterator = iter(iterable)
+        head = next(iterator, None)
+        for other in iterator:
+            yield head, other
+            head = other
+
+
+class _SupportsLessThanOrEqual(Protocol):
+    """A structural type for objects that support less-than-or-equal comparison."""
+
+    def __le__(self, other: Any) -> bool: ...
+
+
 IterType = TypeVar("IterType")
+
+_LessThanOrEqualType = TypeVar("_LessThanOrEqualType", bound=_SupportsLessThanOrEqual)
+"""A type variable for an object that supports less-than-or-equal comparisons."""
 
 
 class PeekableIterator(Generic[IterType], Iterator[IterType]):
@@ -142,3 +190,16 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         while self.can_peek() and pred(self._peek):
             self.__update_peek()
         return self
+
+
+def is_sorted(iterable: Iterable[_LessThanOrEqualType]) -> bool:
+    """Tests lazily if an iterable of comparable objects is sorted or not.
+
+    Args:
+        iterable: An iterable of comparable objects.
+
+    Raises:
+        TypeError: If there is more than 1 element in ``iterable`` and any of the elements are not
+            comparable.
+    """
+    return all(map(lambda pair: le(*pair), pairwise(iterable)))

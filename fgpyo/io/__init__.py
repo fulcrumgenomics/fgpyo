@@ -112,11 +112,11 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
     Assert that a filepath is writable.
 
     Specifically:
-    - If the file exists then it must also be writable.
-    - Else if the path is not a file and `parent_must_exist` is true, then assert that the parent
-      directory exists and is writable.
-    - Else if the path is not a directory and `parent_must_exist` is false, then look at each parent
-      directory until one is found that exists and is writable.
+        - If the file exists then it must also be writable.
+        - Else if the path is not a file and `parent_must_exist` is true, then assert that the
+          parent directory exists and is writable.
+        - Else if the path is not a directory and `parent_must_exist` is false, then look at each
+          parent directory until one is found that exists and is writable.
 
     Args:
         path: Path to check

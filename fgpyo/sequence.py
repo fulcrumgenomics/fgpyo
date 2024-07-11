@@ -75,18 +75,18 @@ def reverse_complement(bases: str) -> str:
 def longest_hp_length(bases: str) -> int:
     """Calculates the length of the longest homopolymer in the input sequence."""
     max_hp = 0
-    for i in range(0, len(bases)):
+    i = 0
+    # NB: if we have found a homopolymer of length `max_hp`, then we do not need
+    # to examine the last `max_hp` bases since we'll never find a longer one.
+    bases_len = len(bases)
+    while i < bases_len - max_hp:
         base = bases[i]
-        hp = 0
-
-        for j in range(i, len(bases)):
-            if bases[j] == base:
-                hp += 1
-            else:
-                break
-
-        max_hp = max(max_hp, hp)
-
+        j = i + 1
+        while j < bases_len and bases[j] == base:
+            j += 1
+        max_hp = max(max_hp, j - i)
+        # skip over all the bases in the current homopolymer
+        i = j
     return max_hp
 
 

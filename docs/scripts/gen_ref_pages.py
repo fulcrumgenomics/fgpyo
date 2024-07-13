@@ -36,7 +36,6 @@ for path in sorted(module_root.rglob("*.py")):
         ident = ".".join(parts)
         fd.write(f"::: {ident}")
 
-    #mkdocs_gen_files.set_edit_path(full_doc_path, Path("../") / path.relative_to(root))
     mkdocs_gen_files.set_edit_path(full_doc_path, path.relative_to(root))
 
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:

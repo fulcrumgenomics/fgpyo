@@ -1,6 +1,5 @@
 """
-Metrics
--------
+# Metrics
 
 Module for storing, reading, and writing metric-like tab-delimited information.
 
@@ -8,87 +7,85 @@ Metric files are tab-delimited, contain a header, and zero or more rows for metr
 makes it easy for them to be read in languages like `R`.  For example, a row per person, with
 columns for age, gender, and address.
 
-The :class:`~fgpyo.util.metric.Metric` class makes it easy to read, write, and store one or metrics
-of the same type, all the while preserving types for each value in a metric.  It is an abstract
-base class decorated by `@dataclass <https://docs.python.org/3/library/dataclasses.html>`_, or
-`@attr.s <https://www.attrs.org/en/stable/examples.html>`_, with attributes storing one or more
+The [`Metric()`][fgpyo.util.metric.Metric] class makes it easy to read, write, and store
+one or metrics of the same type, all the while preserving types for each value in a metric.  It is
+an abstract base class decorated by
+[`@dataclass`](https://docs.python.org/3/library/dataclasses.html), or
+[`@attr.s`](https://www.attrs.org/en/stable/examples.html), with attributes storing one or more
 typed values. If using multiple layers of inheritance, keep in mind that it's not possible to mix
 these dataclass utils, e.g. a dataclasses class derived from an attr class will not appropriately
 initialize the values of the attr superclass.
 
-Examples
-~~~~~~~~
+## Examples
 
 Defining a new metric class:
 
-.. code-block:: python
-
+```python
    >>> from fgpyo.util.metric import Metric
    >>> import dataclasses
    >>> @dataclasses.dataclass(frozen=True)
    ... class Person(Metric["Person"]):
    ...     name: str
    ...     age: int
+```
 
 or using attr:
 
-.. code-block:: python
-
+```python
    >>> from fgpyo.util.metric import Metric
    >>> import attr
    >>> @attr.s(auto_attribs=True, frozen=True)
    ... class Person(Metric["Person"]):
    ...     name: str
    ...     age: int
+```
 
 Getting the attributes for a metric class.  These will be used for the header when reading and
 writing metric files.
 
-.. code-block:: python
-
+```python
    >>> Person.header()
    ['name', 'age']
+```
 
 Getting the values from a metric class instance.  The values are in the same order as the header.
 
-.. code-block:: python
-
+```python
    >>> list(Person(name="Alice", age=47).values())
    ["Alice", 47]
+```
 
 Writing a list of metrics to a file:
 
-.. code-block:: python
-
+```python
    >>> metrics = [
    ...     Person(name="Alice", age=47),
    ...     Person(name="Bob", age=24)
    ... ]
    >>> from pathlib import Path
    >>> Person.write(Path("/path/to/metrics.txt"), *metrics)
+```
 
 Then the contents of the written metrics file:
 
-.. code-block:: console
-
+```python
    $ column -t /path/to/metrics.txt
    name   age
    Alice  47
    Bob    24
+```
 
 Reading the metrics file back in:
 
-.. code-block:: python
-
+```python
    >>> list(Person.read(Path("/path/to/metrics.txt")))
    [Person(name='Alice', age=47, address=None), Person(name='Bob', age=24, address='North Pole')]
+```
 
-Formatting and parsing the values for custom types is supported by overriding the
-:func:`~fgpyo.util.metric.Metric._parsers` and
-:func:`~fgpyo.util.metric.Metric.format_value` methods.
+Formatting and parsing the values for custom types is supported by overriding the `_parsers()` and
+[`format_value()`][fgpyo.util.metric.Metric.format_value] methods.
 
-.. code-block:: python
-
+```python
    >>> @dataclasses.dataclass(frozen=True)
    ... class Name:
    ...     first: str
@@ -113,7 +110,7 @@ Formatting and parsing the values for custom types is supported by overriding th
    Person(name=Name(first='john', last='doe'), age=42)
    >>> Person(name=Name(first='john', last='doe'), age=42, address=None).formatted_values()
    ["first last", "42"]
-
+```
 """
 
 from abc import ABC
@@ -139,9 +136,9 @@ class Metric(ABC, Generic[MetricType]):
     Metric files are tab-delimited, contain a header, and zero or more rows for metric values.  This
     makes it easy for them to be read in languages like `R`.
 
-    Sub-classes of :class:`~fgpyo.util.metric.Metric` can support parsing and formatting custom
-    types with :func:`~fgpyo.util.metric.Metric._parsers` and
-    :func:`~fgpyo.util.metric.Metric.format_value`.
+    Subclasses of [`Metric()`][fgpyo.util.metric.Metric] can support parsing and
+    formatting custom types with `_parsers()` and
+    [`format_value()`][fgpyo.util.metric.Metric.format_value].
     """
 
     def values(self) -> Iterator[Any]:

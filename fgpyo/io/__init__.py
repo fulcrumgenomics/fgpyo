@@ -1,6 +1,5 @@
 """
-Module for reading and writing files
-------------------------------------
+# Module for reading and writing files
 
 The functions in this module make it easy to:
 
@@ -12,10 +11,9 @@ The functions in this module make it easy to:
 * write items to a file, one per line
 * read lines from a file
 
-fgpyo.io Examples:
-~~~~~~~~~~~~~~~~~~
+## fgpyo.io Examples:
 
-.. code-block:: python
+```python
 
     >>> import fgpyo.io as fio
     >>> from pathlib import Path
@@ -40,6 +38,7 @@ fgpyo.io Examples:
     "gzip file"
     >>> next(lines)
     "10"
+```
 
 """
 
@@ -207,7 +206,7 @@ def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
     Args:
         path: Path to read from
         strip: True to strip lines of all leading and trailing whitespace,
-        False to only remove trailing CR/LF characters.
+            False to only remove trailing CR/LF characters.
 
     Example:
         read_back = fio.read_lines(path)

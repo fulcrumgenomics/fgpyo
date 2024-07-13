@@ -2,7 +2,10 @@ name: Python package
 
 on: [push]
 env:
-  POETRY_VERSION: 1.5
+  POETRY_VERSION: 1.8
+
+permissions:
+  pull-requests: write
 
 jobs:
   testing:
@@ -80,9 +83,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        pushd docs
-        poetry run make html
-        popd
+        poetry run mkdocs build --strict
 
     - name: Upload code coverage
       uses: codecov/codecov-action@v4.5.0

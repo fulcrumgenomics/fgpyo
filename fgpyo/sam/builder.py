@@ -1,14 +1,8 @@
 """
-Classes for generating SAM and BAM files and records for testing
-----------------------------------------------------------------
+# Classes for generating SAM and BAM files and records for testing
 
 This module contains utility classes for the generation of SAM and BAM files and
 alignment records, for use in testing.
-
-The module contains the following public classes:
-
-    - :class:`~fgpyo.sam.builder.SamBuilder` -- A builder class that allows the accumulation
-        of alignment records and access as a list and writing to file.
 """
 
 from array import array
@@ -41,13 +35,14 @@ class SamBuilder:
     A builder is constructed with a handful of defaults including lengths for generated R1s
     and R2s, the default base quality score to use, a sequence dictionary and a single read group.
 
-    Records are then added using the :func:`~fgpyo.builder.SamBuilder.add_pair` method.
-    Once accumulated the records can be accessed in the order in which they were created through
-    the :func:`~fgpyo.builder.SamBuilder.to_unsorted_list` function, or in a list sorted
-    by coordinate order via :func:`~fgpyo.builder.SamBuilder.to_sorted_list`.  The latter
-    creates a temporary file to do the sorting and is somewhat slower as a result.  Lastly, the
-    records can be written to a temporary file using
-    :func:`~fgpyo.builder.SamBuilder.to_path`.
+    Records are then added using the [`add_pair()`][fgpyo.sam.builder.SamBuilder.add_pair]
+    method.  Once accumulated the records can be accessed in the order in which they were created
+    through the [`to_unsorted_list()`][fgpyo.sam.builder.SamBuilder.to_unsorted_list]
+    function, or in a list sorted by coordinate order via
+    [`to_sorted_list()`][fgpyo.sam.builder.SamBuilder.to_sorted_list].  The latter creates
+    a temporary file to do the sorting and is somewhat slower as a result.  Lastly, the records can
+    be written to a temporary file using
+    [`to_path()`][fgpyo.sam.builder.SamBuilder.to_path].
     """
 
     # The default read one length
@@ -119,7 +114,7 @@ class SamBuilder:
             sd: a sequence dictionary as a list of dicts; defaults to calling default_sd() if None
             rg: a single read group as a dict; defaults to calling default_sd() if None
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
-                          `::class::~pysam.AlignmentHeader` for more details.
+                          `pysam.AlignmentHeader` for more details.
             seed: a seed value for random number/string generation
             sort_order: Order to sort records when writing to file, or output of to_sorted_list()
         """

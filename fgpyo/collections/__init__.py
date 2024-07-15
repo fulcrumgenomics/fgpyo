@@ -50,7 +50,9 @@ A peekable iterator will return the next item before consuming it.
 ```
 
 The [`can_peek()`][fgpyo.collections.PeekableIterator.can_peek] function can be used to determine if
-the iterator can be peeked without a :py:class:`StopIteration` from being thrown:
+the iterator can be peeked without a
+[`StopIteration`](https://docs.python.org/3/library/exceptions.html#StopIteration) from being
+thrown:
 
 ```python
 >>> piter = PeekableIterator([1])

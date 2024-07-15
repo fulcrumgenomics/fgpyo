@@ -1,27 +1,27 @@
 """
-Zipping FASTX Files
-~~~~~~~~~~~~~~~~~~~
+# Zipping FASTX Files
 
 Zipping a set of FASTA/FASTQ files into a single stream of data is a common task in bioinformatics
-and can be achieved with the :class:`~fgpyo.fastx.FastxZipped` context manager. The context manager
-facilitates opening of all input FASTA/FASTQ files and closing them after iteration is complete.
-For every iteration of :class:`~fgpyo.fastx.FastxZipped`, a tuple of the next FASTX records are
-returned (of type :class:`~pysam.FastxRecord`). An exception will be raised if any of the input
+and can be achieved with the [`FastxZipped()`][fgpyo.fastx.FastxZipped] context manager.
+The context manager facilitates opening of all input FASTA/FASTQ files and closing them after
+iteration is complete.  For every iteration of [`FastxZipped()`][fgpyo.fastx.FastxZipped],
+a tuple of the next FASTX records are returned (of type
+`pysam.FastxRecord()`). An exception will be raised if any of the input
 files are malformed or truncated and if record names are not equivalent and in sync.
 
 Importantly, this context manager is optimized for fast streaming read-only usage and, by default,
 any previous records saved while advancing the iterator will not be correct as the underlying
 pointer in memory will refer to the most recent record only, and not any past records. To preserve
-the state of all previously iterated records, set the parameter ``persist`` to :py:obj:`True`.
+the state of all previously iterated records, set the parameter ``persist`` to `True`.
 
-.. code-block:: python
-
+```python
    >>> from fgpyo.fastx import FastxZipped
    >>> with FastxZipped("r1.fq", "r2.fq", persist=False) as zipped:
    ...    for (r1, r2) in zipped:
    ...         print(f"{r1.name}: {r1.sequence}, {r2.name}: {r2.sequence}")
    seq1: AAAA, seq1: CCCC
    seq2: GGGG, seq2: TTTT
+```
 
 """
 
@@ -44,12 +44,12 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     Args:
         paths: Paths to the FASTX files to zip over.
-        persist: Whether to persit the state of previous records during iteration.
+        persist: Whether to persist the state of previous records during iteration.
 
     """
 
     def __init__(self, *paths: Union[Path, str], persist: bool = False) -> None:
-        """Insantiate a :class:`FastxZipped` context manager and iterator."""
+        """Instantiate a `FastxZipped` context manager and iterator."""
         if len(paths) <= 0:
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
@@ -87,13 +87,13 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> Optional[bool]:
-        """Exit the :class:`FastxZipped` context manager by closing all FASTX files."""
+        """Exit the `FastxZipped` context manager by closing all FASTX files."""
         self.close()
         if exc_type is not None:
             raise exc_type(exc_val).with_traceback(exc_tb)
         return None
 
     def close(self) -> None:
-        """Close the :class:`FastxZipped` context manager by closing all FASTX files."""
+        """Close the `FastxZipped` context manager by closing all FASTX files."""
         for fastx in self._fastx:
             fastx.close()

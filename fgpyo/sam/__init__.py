@@ -1,37 +1,33 @@
 """
-Utility Classes and Methods for SAM/BAM
----------------------------------------
+# Utility Classes and Methods for SAM/BAM
 
 This module contains utility classes for working with SAM/BAM files and the data contained
 within them.  This includes i) utilities for opening SAM/BAM files for reading and writing,
 ii) functions for manipulating supplementary alignments, iii) classes and functions for
 maniuplating CIGAR strings, and iv) a class for building sam records and files for testing.
 
-Motivation for Reader and Writer methods
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Motivation for Reader and Writer methods
 
 The following are the reasons for choosing to implement methods to open a SAM/BAM file for
-reading and writing, rather than relying on :class:`pysam.AlignmentFile` directly:
+reading and writing, rather than relying on `pysam.AlignmentFile` directly:
 
 1. Provides a centralized place for the implementation of opening a SAM/BAM for reading and
    writing.  This is useful if any additional parameters are added, or changes to standards or
    defaults are made.
 2. Makes the requirement to provide a header when opening a file for writing more explicit.
-3. Adds support for :class:`~pathlib.Path`.
+3. Adds support for `pathlib.Path`.
 4. Remove the reliance on specifying the mode correctly, including specifying the file type (i.e.
    SAM, BAM, or CRAM), as well as additional options (ex. compression level).  This makes the
    code more explicit and easier to read.
 5. An explicit check is performed to ensure the file type is specified when writing using a
    file-like object rather than a path to a file.
 
-Examples of Opening a SAM/BAM for Reading or Writing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Examples of Opening a SAM/BAM for Reading or Writing
 
 Opening a SAM/BAM file for reading, auto-recognizing the file-type by the file extension.  See
-:class:`~fgpyo.sam.SamFileType` for the supported file types.
+[`SamFileType()`][fgpyo.sam.SamFileType] for the supported file types.
 
-.. code-block:: python
-
+```python
     >>> from fgpyo.sam import reader
     >>> with reader("/path/to/sample.sam") as fh:
     ...     for record in fh:
@@ -39,9 +35,11 @@ Opening a SAM/BAM file for reading, auto-recognizing the file-type by the file e
     >>> with reader("/path/to/sample.bam") as fh:
     ...     for record in fh:
     ...         print(record.name)  # do something
+```
 
 Opening a SAM/BAM file for reading, explicitly passing the file type.
 
+```python
     >>> from fgpyo.sam import SamFileType
     >>> with reader(path="/path/to/sample.ext1", file_type=SamFileType.SAM) as fh:
     ...     for record in fh:
@@ -49,17 +47,21 @@ Opening a SAM/BAM file for reading, explicitly passing the file type.
     >>> with reader(path="/path/to/sample.ext2", file_type=SamFileType.BAM) as fh:
     ...     for record in fh:
     ...         print(record.name)  # do something
+```
 
 Opening a SAM/BAM file for reading, using an existing file-like object
 
+```python
     >>> with open("/path/to/sample.sam", "rb") as file_object:
     ...     with reader(path=file_object, file_type=SamFileType.BAM) as fh:
     ...         for record in fh:
     ...             print(record.name)  # do something
+```
 
-Opening a SAM/BAM file for writing follows similar to the :func:`~fgpyo.sam.reader` method,
-but the SAM file header object is required.
+Opening a SAM/BAM file for writing follows similar to the [`reader()`][fgpyo.sam.reader]
+method, but the SAM file header object is required.
 
+```python
     >>> from fgpyo.sam import writer
     >>> header: Dict[str, Any] = {
     ...     "HD": {"VN": "1.5", "SO": "coordinate"},
@@ -71,38 +73,45 @@ but the SAM file header object is required.
     ... }
     >>> with writer(path="/path/to/sample.bam", header=header) as fh:
     ...     pass  # do something
+```
 
-Examples of Manipulating Cigars
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Examples of Manipulating Cigars
 
-Creating a :class:`~fgpyo.sam.Cigar` from a :class:`pysam.AlignedSegment`.
+Creating a [`Cigar` from a `pysam.AlignedSegment`][fgpyo.sam.Cigar].
 
+```python
     >>> from fgpyo.sam import Cigar
     >>> with reader("/path/to/sample.sam") as fh:
     ...     record = next(fh)
     ...     cigar = Cigar.from_cigartuples(record.cigartuples)
     ...     print(str(cigar))
     50M2D5M10S
+```
 
-Creating a :class:`~fgpyo.sam.Cigar` from a :class:`str`.
+Creating a [`Cigar` from a `str()`][fgpyo.sam.Cigar].
 
+```python
     >>> cigar = Cigar.from_cigarstring("50M2D5M10S")
     >>> print(str(cigar))
     50M2D5M10S
+```
 
 If the cigar string is invalid, the exception message will show you the problem character(s) in
 square brackets.
 
+```python
     >>> cigar = Cigar.from_cigarstring("10M5U")
     ... CigarException("Malformed cigar: 10M5[U]")
+```
 
-The cigar contains a tuple of :class:`~fgpyo.sam.CigarElement`s.  Each element contains the
-cigar operator (:class:`~fgpyo.sam.CigarOp`) and associated operator length.  A number of
-useful methods are part of both classes.
+The cigar contains a tuple of [`CigarElement()`][fgpyo.sam.CigarElement]s.  Each element
+contains the cigar operator ([`CigarOp()`][fgpyo.sam.CigarOp]) and associated operator
+length.  A number of useful methods are part of both classes.
 
 The number of bases aligned on the query (i.e. the number of bases consumed by the cigar from
 the query):
 
+```python
     >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
     >>> [e.length_on_query for e in cigar.elements]
     [50, 0, 5, 2, 10]
@@ -110,6 +119,7 @@ the query):
     [50, 2, 5, 0, 0]
     >>> [e.operator.is_indel for e in cigar.elements]
     [False, True, False, True, False]
+```
 
 Any particular tuple can be accessed directly with its index (and works with negative indexes
 and slices):
@@ -126,10 +136,9 @@ and slices):
     >>> tuple(x.operator.character for x in cigar[-2:])
     ('I', 'S')
 
-Examples of parsing the SA tag and individual supplementary alignments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. code-block:: python
+## Examples of parsing the SA tag and individual supplementary alignments
 
+```python
    >>> from fgpyo.sam import SupplementaryAlignment
    >>> sup = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
    >>> sup.reference_name
@@ -143,26 +152,7 @@ Examples of parsing the SA tag and individual supplementary alignments
    2
    >>> [str(sup.cigar) for sup in sups]
    ['50S100M', '75S75M']
-
-Module Contents
-~~~~~~~~~~~~~~~
-The module contains the following public classes:
-    - :class:`~fgpyo.sam.SupplementaryAlignment` -- Stores a supplementary alignment record
-        produced by BWA and stored in the SA SAM tag.
-    - :class:`~fgpyo.sam.SamFileType` -- Enumeration of valid SAM/BAM/CRAM file types.
-    - :class:`~fgpyo.sam.SamOrder` -- Enumeration of possible SAM/BAM/CRAM sort orders.
-    - :class:`~fgpyo.sam.CigarOp` -- Enumeration of operators that can appear in a Cigar string.
-    - :class:`~fgpyo.sam.CigarElement` -- Class representing an element in a Cigar string.
-    - :class:`~fgpyo.sam.CigarParsingException` -- The exception raised specific to parsing a
-        cigar
-    - :class:`~fgpyo.sam.Cigar` -- Class representing a cigar string.
-    - :class:`~fgpyo.sam.ReadEditInfo` -- Class describing how a read differs from the reference
-
-The module contains the following methods:
-
-    - :func:`~fgpyo.sam.reader` -- opens a SAM/BAM/CRAM file for reading.
-    - :func:`~fgpyo.sam.writer` -- opens a SAM/BAM/CRAM file for writing
-    - :func:`~fgpyo.sam.calc_edit_info` -- calculates how a read differs from the reference
+```
 """
 
 import enum
@@ -264,7 +254,7 @@ def _pysam_open(
             will be auto-detected for reading and must be a path-like object for writing.
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
         kwargs: any keyword arguments to be passed to
-        :class:`~pysam.AlignmentFile`; may not include "mode".
+        `pysam.AlignmentFile`; may not include "mode".
     """
 
     if isinstance(path, (str, Path)):
@@ -375,7 +365,7 @@ class CigarOp(enum.Enum):
     """Enumeration of operators that can appear in a Cigar string.
 
     Attributes:
-        code (int): The :py:mod:`~pysam` cigar operator code.
+        code (int): The `~pysam` cigar operator code.
         character (int): The single character cigar operator.
         consumes_query (bool): True if this operator consumes query bases, False otherwise.
         consumes_target (bool): True if this operator consumes target bases, False otherwise.
@@ -478,7 +468,7 @@ class Cigar:
         """Returns a Cigar from a list of tuples returned by pysam.
 
         Each tuple denotes the operation and length.  See
-        :class:`~fgpyo.sam.CigarOp` for more information on the
+        [`CigarOp()`][fgpyo.sam.CigarOp] for more information on the
         various operators.  If None is given, returns an empty Cigar.
         """
         if cigartuples is None or cigartuples == []:
@@ -709,17 +699,17 @@ class ReadEditInfo:
     Attributes:
         matches: the number of bases in the read that match the reference
         mismatches: the number of mismatches between the read sequence and the reference sequence
-          as dictated by the alignment.  Like as defined for the SAM NM tag computation, any base
-          except A/C/G/T in the read is considered a mismatch.
+            as dictated by the alignment.  Like as defined for the SAM NM tag computation, any base
+            except A/C/G/T in the read is considered a mismatch.
         insertions: the number of insertions in the read vs. the reference.  I.e. the number of I
-          operators in the CIGAR string.
+            operators in the CIGAR string.
         inserted_bases: the total number of bases contained within insertions in the read
         deletions: the number of deletions in the read vs. the reference.  I.e. the number of D
-          operators in the CIGAT string.
+            operators in the CIGAT string.
         deleted_bases: the total number of that are deleted within the alignment (i.e. bases in
-          the reference but not in the read).
+            the reference but not in the read).
         nm: the computed value of the SAM NM tag, calculated as mismatches + inserted_bases +
-          deleted_bases
+            deleted_bases
     """
 
     matches: int
@@ -742,9 +732,9 @@ def calculate_edit_info(
     Args:
         rec: the read/record for which to calculate values
         reference_sequence: the reference sequence (or fragment thereof) that the read is
-          aligned to
+            aligned to
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
-          first base aligned to in reference_sequence, otherwise use r.reference_start
+            first base aligned to in reference_sequence, otherwise use r.reference_start
 
     Returns:
         a ReadEditInfo with information about how the read differs from the reference

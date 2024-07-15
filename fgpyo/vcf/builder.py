@@ -1,6 +1,5 @@
 """
-Classes for generating VCF and records for testing
---------------------------------------------------
+# Classes for generating VCF and records for testing
 """
 
 from enum import Enum
@@ -56,12 +55,14 @@ class VariantBuilder:
     dictionary. If the VCF will not be sites-only, the list of sample IDS ("sample_ids") must be
     provided to the VariantBuilder constructor.
 
-    Variants are then added using the :func:`~fgpyo.vcf.VariantBuilder.add` method.
+    Variants are then added using the [`add()`][fgpyo.vcf.builder.VariantBuilder.add]
+    method.
     Once accumulated the variants can be accessed in the order in which they were created through
-    the :func:`~fgpyo.vcf.VariantBuilder.to_unsorted_list` function, or in a
-    list sorted by coordinate order via
-    :func:`~fgpyo.vcf.VariantBuilder.to_sorted_list`. Lastly, the records can
-    be written to a temporary file using :func:`~fgpyo.vcf.VariantBuilder.to_path`.
+    the [`to_unsorted_list()`][fgpyo.vcf.builder.VariantBuilder.to_unsorted_list]
+    function, or in a list sorted by coordinate order via
+    [`to_sorted_list()`][fgpyo.vcf.builder.VariantBuilder.to_sorted_list]. Lastly, the
+    records can be written to a temporary file using
+    [`to_path()`][fgpyo.vcf.builder.VariantBuilder.to_path].
 
     Attributes:
         sample_ids: the sample name(s)

@@ -1,84 +1,71 @@
 """
-Custom Collections and Collection Functions
--------------------------------------------
+# Custom Collections and Collection Functions
 
 This module contains classes and functions for working with collections and iterators.
 
-Helpful Functions for Working with Collections
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Helpful Functions for Working with Collections
 
 To test if an iterable is sorted or not:
 
-.. code-block:: python
+```python
+>>> from fgpyo.collections import is_sorted
+>>> is_sorted([])
+True
+>>> is_sorted([1])
+True
+>>> is_sorted([1, 2, 2, 3])
+True
+>>> is_sorted([1, 2, 4, 3])
+False
+```
 
-    >>> from fgpyo.collections import is_sorted
-    >>> is_sorted([])
-    True
-    >>> is_sorted([1])
-    True
-    >>> is_sorted([1, 2, 2, 3])
-    True
-    >>> is_sorted([1, 2, 4, 3])
-    False
-
-Examples of a "Peekable" Iterator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Examples of a "Peekable" Iterator
 
 "Peekable" iterators are useful to "peek" at the next item in an iterator without consuming it.
 For example, this is useful when consuming items in iterator while a predicate is true, and not
 consuming the first element where the element is not true.  See the
-:func:`~fgpyo.collections.PeekableIterator.takewhile` and
-:func:`~fgpyo.collections.PeekableIterator.dropwhile` methods.
+[`takewhile()`][fgpyo.collections.PeekableIterator.takewhile] and
+[`dropwhile()`][fgpyo.collections.PeekableIterator.dropwhile] methods.
 
-An empty peekable iterator throws a :py:class:`StopIteration`:
+An empty peekable iterator throws a
+[`StopIteration`](https://docs.python.org/3/library/exceptions.html#StopIteration):
 
-.. code-block:: python
-
-    >>> from fgpyo.collections import PeekableIterator
-    >>> piter = PeekableIterator(iter([]))
-    >>> piter.peek()
-    StopIteration
+```python
+>>> from fgpyo.collections import PeekableIterator
+>>> piter = PeekableIterator(iter([]))
+>>> piter.peek()
+StopIteration
+```
 
 A peekable iterator will return the next item before consuming it.
 
-.. code-block:: python
+```python
+>>> piter = PeekableIterator([1, 2, 3])
+>>> piter.peek()
+1
+>>> next(piter)
+1
+>>> [j for j in piter]
+[2, 3]
+```
 
-    >>> piter = PeekableIterator([1, 2, 3])
-    >>> piter.peek()
-    1
-    >>> next(piter)
-    1
-    >>> [j for j in piter]
-    [2, 3]
+The [`can_peek()`][fgpyo.collections.PeekableIterator.can_peek] function can be used to determine if
+the iterator can be peeked without a :py:class:`StopIteration` from being thrown:
 
-The :func:`~fgpyo.collections.PeekableIterator.can_peek()` function can be used to determine if the
-iterator can be peeked without a :py:class:`StopIteration` from being thrown:
+```python
+>>> piter = PeekableIterator([1])
+>>> piter.peek() if piter.can_peek() else -1
+1
+>>> next(piter)
+1
+>>> piter.peek() if piter.can_peek() else -1
+-1
+>>> next(piter)
+StopIteration
+```
 
-    >>> piter = PeekableIterator([1])
-    >>> piter.peek() if piter.can_peek() else -1
-    1
-    >>> next(piter)
-    1
-    >>> piter.peek() if piter.can_peek() else -1
-    -1
-    >>> next(piter)
-    StopIteration
-
-:class:`~fgpyo.collections.PeekableIterator`'s constructor supports creation from iterable objects
-as well as iterators.
-
-Module Contents
-~~~~~~~~~~~~~~~
-
-The module contains the following public classes:
-
-    - :class:`~fgpyo.collections.PeekableIterator` -- Iterator that allows you to peek at the
-      next value without advancing the iterator.
-
-The module contains the following public functions:
-
-    - :func:`~fgpyo.collections.is_sorted` -- for lazily checking if an iterable is sorted.
-
+[`PeekableIterator`][fgpyo.collections.PeekableIterator]'s constructor supports creation from
+iterable objects as well as iterators.
 """
 
 import sys
@@ -95,10 +82,10 @@ from typing import TypeVar
 from typing import Union
 
 if sys.version_info[:2] >= (3, 10):
-    from itertools import pairwise
+    from itertools import pairwise as _pairwise
 else:
     # TODO: remove this branch when Python <3.10 support is dropped
-    def pairwise(iterable: Iterable[Any]) -> Iterator[Tuple[Any, Any]]:
+    def _pairwise(iterable: Iterable[Any]) -> Iterator[Tuple[Any, Any]]:
         """Return successive overlapping pairs taken from the input iterable."""
         iterator = iter(iterable)
         head = next(iterator, None)
@@ -107,7 +94,7 @@ else:
             head = other
 
 
-class _SupportsLessThanOrEqual(Protocol):
+class SupportsLessThanOrEqual(Protocol):
     """A structural type for objects that support less-than-or-equal comparison."""
 
     def __le__(self, other: Any) -> bool: ...
@@ -115,7 +102,7 @@ class _SupportsLessThanOrEqual(Protocol):
 
 IterType = TypeVar("IterType")
 
-LessThanOrEqualType = TypeVar("LessThanOrEqualType", bound=_SupportsLessThanOrEqual)
+LessThanOrEqualType = TypeVar("LessThanOrEqualType", bound=SupportsLessThanOrEqual)
 """A type variable for an object that supports less-than-or-equal comparisons."""
 
 
@@ -182,7 +169,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
 
         Args:
             pred (Callable[[V], bool]): a function that takes a value from the iterator
-            and returns true or false.
+                and returns true or false.
 
         Returns:
             PeekableIterator[V]: a reference to this iterator, so calls can be chained
@@ -202,4 +189,4 @@ def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
         TypeError: If there is more than 1 element in ``iterable`` and any of the elements are not
             comparable.
     """
-    return all(map(lambda pair: le(*pair), pairwise(iterable)))
+    return all(map(lambda pair: le(*pair), _pairwise(iterable)))

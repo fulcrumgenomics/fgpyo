@@ -71,9 +71,9 @@ class DataBuilder:
         Name: Metric with first and last name string fields and a parse method
         NameMetric: Metric to test specifying columns out of order
         NamedPerson: Metric with name (Name Metric) field and age (int) fields, and parsers.
-        PersonMaybeAge = Person with required name string field and optional age int field
-        PersonDefault = Person with required name string field and age int field with default value
-        ListPerson = Person with list[str] name and list[int] age fields
+        PersonMaybeAge: Person with required name string field and optional age int field
+        PersonDefault: Person with required name string field and age int field with default value
+        ListPerson: Person with list[str] name and list[int] age fields
         DUMMY_METRICS: a list of 3 different DummyMetrics
     """
 

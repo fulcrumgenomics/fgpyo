@@ -115,7 +115,7 @@ class _SupportsLessThanOrEqual(Protocol):
 
 IterType = TypeVar("IterType")
 
-_LessThanOrEqualType = TypeVar("_LessThanOrEqualType", bound=_SupportsLessThanOrEqual)
+LessThanOrEqualType = TypeVar("LessThanOrEqualType", bound=_SupportsLessThanOrEqual)
 """A type variable for an object that supports less-than-or-equal comparisons."""
 
 
@@ -192,7 +192,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         return self
 
 
-def is_sorted(iterable: Iterable[_LessThanOrEqualType]) -> bool:
+def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
     """Tests lazily if an iterable of comparable objects is sorted or not.
 
     Args:

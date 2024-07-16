@@ -4,7 +4,8 @@ from fgpyo.util.distance import hamming
 
 
 @pytest.mark.parametrize(
-    "string1, string2, hamming_distance", [
+    "string1, string2, hamming_distance",
+    [
         ("", "", 0),
         ("AAA", "AAA", 0),
         ("ABC", "ABC", 0),
@@ -19,8 +20,10 @@ from fgpyo.util.distance import hamming
 def test_hamming(string1: str, string2: str, hamming_distance: int):
     assert hamming(string1, string2) == hamming_distance
 
+
 @pytest.mark.parametrize(
-    "string1, string2", [
+    "string1, string2",
+    [
         ("", "A"),
         ("AB", "ABC"),
         ("A", ""),

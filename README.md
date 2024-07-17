@@ -50,7 +50,10 @@ A simple way to create an environment with the desired version of python and poe
 ```bash
 conda create -n fgpyo -c conda-forge "python>=3.8" poetry
 conda activate fgpyo
-poetry install
+
+# --all-extras is required to install `mkdocs` and associated dependencies,
+# which are required for development 
+poetry install --all-extras
 ```
 
 [rtd-link]:    http://fgpyo.readthedocs.org/en/stable

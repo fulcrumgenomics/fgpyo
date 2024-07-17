@@ -28,17 +28,17 @@ attrs = ">=19.3.0"
 pysam = ">=0.22.1"
 pytest = ">=7.4.0"
 typing_extensions = { version = ">=3.7.4", python = "<3.12" }
-mkdocs-autorefs = { version = ">=0.5.0", optional = true }
-mkdocs-include-markdown-plugin = { version = ">=6.0.1", optional = true }
-mkdocs-material = { version = ">=9.2.8", optional = true }
-mkdocs-table-reader-plugin = { version = ">=2.0.1", optional = true }
-mkdocs = { version = ">=1.5.2", optional = true }
-mkdocs-gen-files = { version = ">=0.5.0", optional = true }
-mkdocs-literate-nav = { version = ">=0.6.1", optional = true }
-mkdocs-section-index = { version = ">=0.3.9", optional = true }
-mkdocstrings-python = { version = ">=1.6.2", optional = true }
-mkdocstrings = { version = ">=0.23.0", optional = true }
-black = {version = ">=24.4.2", optional = true}
+mkdocs-autorefs = { version = ">=0.5.0" }
+mkdocs-include-markdown-plugin = { version = ">=6.0.1" }
+mkdocs-material = { version = ">=9.2.8" }
+mkdocs-table-reader-plugin = { version = ">=2.0.1" }
+mkdocs = { version = ">=1.5.2" }
+mkdocs-gen-files = { version = ">=0.5.0" }
+mkdocs-literate-nav = { version = ">=0.6.1" }
+mkdocs-section-index = { version = ">=0.3.9" }
+mkdocstrings-python = { version = ">=1.6.2" }
+mkdocstrings = { version = ">=0.23.0" }
+black = {version = ">=24.4.2"}
 numpy = [
   {version = "^1.26.4", python = ">=3.12"},
   {version = "^1.25.2", python = ">=3.9,<3.12"},
@@ -46,20 +46,21 @@ numpy = [
 ]
 strenum = "^0.4.15"
 
-[tool.poetry.extras]
-docs = [
-  "black",
-  "mkdocs-autorefs",
-  "mkdocs-include-markdown-plugin",
-  "mkdocs-material",
-  "mkdocs-table-reader-plugin",
-  "mkdocs",
-  "mkdocs-gen-files",
-  "mkdocs-literate-nav",
-  "mkdocs-section-index",
-  "mkdocstrings-python",
-  "mkdocstrings"
-]
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-autorefs = { version = ">=0.5.0" }
+mkdocs-include-markdown-plugin = { version = ">=6.0.1" }
+mkdocs-material = { version = ">=9.2.8" }
+mkdocs-table-reader-plugin = { version = ">=2.0.1" }
+mkdocs = { version = ">=1.5.2" }
+mkdocs-gen-files = { version = ">=0.5.0" }
+mkdocs-literate-nav = { version = ">=0.6.1" }
+mkdocs-section-index = { version = ">=0.3.9" }
+mkdocstrings-python = { version = ">=1.6.2" }
+mkdocstrings = { version = ">=0.23.0" }
+black = {version = ">=24.4.2"}
 
 [tool.poetry.dev-dependencies]
 ruff = "0.4.8"

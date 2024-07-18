@@ -3,6 +3,7 @@ These functions are included for convenience.
 If you are performing many distance calculations, using a C based method is preferable.
 ex. https://pypi.org/project/Distance/
 """
+
 from typing import List
 
 
@@ -56,7 +57,7 @@ def levenshtein(string1: str, string2: str) -> int:
     for i in range(N - 1, -1, -1):
         for j in range(M - 1, -1, -1):
             if string1[i] == string2[j]:
-                matrix[i][j] = matrix[i + 1][j + 1] # No Operation
+                matrix[i][j] = matrix[i + 1][j + 1]  # No Operation
             else:
                 matrix[i][j] = 1 + min(
                     matrix[i + 1][j],  # Deletion

@@ -62,17 +62,17 @@ jobs:
     - name: Style checking
       shell: bash
       run: |
-        poetry run ruff format --check fgpyo
+        poetry run ruff format --check fgpyo tests
 
     - name: Run lint
       shell: bash
       run: |
-        poetry run ruff check fgpyo
+        poetry run ruff check fgpyo tests
 
     - name: Run mypy
       shell: bash
       run: |
-        poetry run mypy -p fgpyo --config=ci/mypy.ini
+        poetry run mypy fgpyo tests --config=ci/mypy.ini
 
     - name: Run pytest
       shell: bash

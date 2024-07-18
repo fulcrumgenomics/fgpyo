@@ -15,7 +15,8 @@ def hamming(string1: str, string2: str) -> int:
         string1: first string for comparison
         string2: second string for comparison
 
-    Raises ValueError if strings are of different lengths
+    Raises:
+        ValueError: If strings are of different lengths.
     """
     if len(string1) != len(string2):
         raise ValueError(

@@ -37,6 +37,8 @@ def levenshtein(string1: str, string2: str) -> int:
     """
     N: int = len(string1)
     M: int = len(string2)
+    if N == 0 or M == 0:
+        return max(N, M)
     # Initialize N + 1 x M + 1 matrix with final row/column representing the empty string.
     # Fill in initial values for empty string sub-problem comparisons.
     #   A D C "

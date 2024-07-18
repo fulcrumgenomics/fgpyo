@@ -35,11 +35,24 @@ def levenshtein(string1: str, string2: str) -> int:
     """
     N: int = len(string1)
     M: int = len(string2)
+    # Initialize N + 1 x M + 1 matrix with final row/column representing empty string
+    # Fill in initial values for empty string sub-problem comparisons
+    #   A D C "
+    # A - - - 3
+    # B - - - 2
+    # C - - - 1
+    # " 3 2 1 0
     matrix: List[List[int]] = [[int()] * (M + 1) for _ in range(N + 1)]
     for j in range(M + 1):
         matrix[N][j] = M - j
     for i in range(N + 1):
         matrix[i][M] = N - i
+    # Fill in matrix from bottom up using previous solutions
+    #   A D C "      A D C "      A D C "      A D C "      A D C "
+    # A - - - 3    A - - - 3    A - - 2 3    A - 2 2 3    A 1 2 2 3
+    # B - - - 2 -> B - - 1 2 -> B - 1 1 2 -> B 2 1 1 2 -> B 2 1 1 2
+    # C - - 0 1    C - 1 0 1    C 2 1 0 1    C 2 1 0 1    C 2 1 0 1
+    # " 3 2 1 0    " 3 2 1 0    " 3 2 1 0    " 3 2 1 0    " 3 2 1 0
     for i in range(N - 1, -1, -1):
         for j in range(M - 1, -1, -1):
             if string1[i] == string2[j]:

@@ -1,3 +1,11 @@
+"""
+These functions are included for convenience.
+If you are performing many distance calculations, using a C based method is preferable.
+ex. https://pypi.org/project/Distance/
+"""
+from typing import List
+
+
 def hamming(string1: str, string2: str) -> int:
     """
     Calculates hamming distance between two strings. Strings must be of equal lengths.
@@ -6,7 +14,7 @@ def hamming(string1: str, string2: str) -> int:
         string1: first string for comparison
         string2: second string for comparison
 
-
+    Raises ValueError if strings are of different lengths
     """
     if len(string1) != len(string2):
         raise ValueError(
@@ -16,6 +24,30 @@ def hamming(string1: str, string2: str) -> int:
     return sum([string1[i] != string2[i] for i in range(len(string1))])
 
 
-def levenshtein(str1: str, str2: str):
-    """"""
-    0
+def levenshtein(string1: str, string2: str) -> int:
+    """
+    Calculates levenshtein distance between two strings.
+
+    Args:
+        string1: first string for comparison
+        string2: second string for comparison
+
+    """
+    N: int = len(string1)
+    M: int = len(string2)
+    matrix: List[List[int]] = [[int()] * (M + 1) for _ in range(N + 1)]
+    for j in range(M + 1):
+        matrix[N][j] = M - j
+    for i in range(N + 1):
+        matrix[i][M] = N - i
+    for i in range(N - 1, -1, -1):
+        for j in range(M - 1, -1, -1):
+            if string1[i] == string2[j]:
+                matrix[i][j] = matrix[i + 1][j + 1]
+            else:
+                matrix[i][j] = 1 + min(
+                    matrix[i + 1][j],  # Deletion
+                    matrix[i][j + 1],  # Insertion
+                    matrix[i + 1][j + 1],  # Substitution
+                )
+    return matrix[0][0]

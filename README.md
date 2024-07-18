@@ -53,8 +53,6 @@ conda activate fgpyo
 poetry install
 ```
 
-To enable support building the docs, run `poetry install --with docs`.
-
 [rtd-link]:    http://fgpyo.readthedocs.org/en/stable
 [poetry-link]: https://github.com/python-poetry/poetry
 [conda-link]:  https://docs.conda.io/en/latest/miniconda.html

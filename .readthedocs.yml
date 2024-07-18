@@ -7,6 +7,6 @@ build:
     post_install:
       - pip install poetry==1.8.3
       - poetry config virtualenvs.create false
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install
 mkdocs:
   configuration: mkdocs.yml

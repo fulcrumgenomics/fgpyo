@@ -1,5 +1,6 @@
 import collections
 import inspect
+import sys
 import typing
 from enum import Enum
 from functools import partial
@@ -11,7 +12,18 @@ from typing import TypeVar
 from typing import Union
 from typing import cast
 
-UnionType = TypeVar("UnionType", bound="Union")
+from typing_extensions import TypeAlias
+
+if sys.version_info >= (3, 10):
+    from types import UnionType
+else:
+    # NB: `types.UnionType`, available since Python 3.10, is **not** a `type`, but is a class.
+    # We declare an empty class here to use in the instance checks below.
+    class UnionType:
+        pass
+
+
+# UnionType = TypeVar("UnionType", bound="Union")
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
 # see: https://peps.python.org/pep-0586/#illegal-parameters-for-literal-at-type-check-time
@@ -73,9 +85,52 @@ def is_constructible_from_str(type_: type) -> bool:
     return False
 
 
-def _is_optional(type_: type) -> bool:
-    """Returns true if type_ is optional"""
-    return typing.get_origin(type_) is Union and type(None) in typing.get_args(type_)
+# NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
+TypeAnnotation: TypeAlias = Union[type, typing._GenericAlias, UnionType]  # type: ignore[name-defined]
+"""
+A function parameter's type annotation may be any of the following:
+    1) `type`, when declaring any of the built-in Python types
+    2) `typing._GenericAlias`, when declaring generic collection types or union types using pre-PEP
+        585 and pre-PEP 604 syntax (e.g. `List[int]`, `Optional[int]`, or `Union[int, None]`)
+    3) `types.UnionType`, when declaring union types using PEP604 syntax (e.g. `int | None`)
+    4) `types.GenericAlias`, when declaring generic collection types using PEP 585 syntax (e.g.
+       `list[int]`)
+`types.GenericAlias` is a subclass of `type`, but `typing._GenericAlias` and `types.UnionType` are
+not and must be considered explicitly.
+"""
+
+# TODO When dropping support for Python 3.9, deprecate this in favor of performing instance checks
+# directly on the `TypeAnnotation` union type.
+# NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
+TYPE_ANNOTATION_TYPES = (type, typing._GenericAlias, UnionType)  # type: ignore[attr-defined]
+
+
+def _is_optional(dtype: TypeAnnotation) -> bool:
+    """Check if a type is `Optional`.
+    An optional type may be declared using three syntaxes: `Optional[T]`, `Union[T, None]`, or `T |
+    None`. All of these syntaxes is supported by this function.
+    Args:
+        dtype: A type.
+    Returns:
+        True if the type is a union type with exactly two elements, one of which is `None`.
+        False otherwise.
+    Raises:
+        TypeError: If the input is not a valid `TypeAnnotation` type (see above).
+    """
+    if not isinstance(dtype, TYPE_ANNOTATION_TYPES):
+        raise TypeError(f"Expected type annotation, got {type(dtype)}: {dtype}")
+
+    origin = typing.get_origin(dtype)
+    args = typing.get_args(dtype)
+
+    # Optional[T] has `typing.Union` as its origin, but PEP604 syntax (e.g. `int | None`) has
+    # `types.UnionType` as its origin.
+    return (
+        origin is not None
+        and (origin is Union or origin is UnionType)
+        and len(args) == 2
+        and type(None) in args
+    )
 
 
 def _make_union_parser_worker(
@@ -84,7 +139,7 @@ def _make_union_parser_worker(
     value: str,
 ) -> UnionType:
     """Worker function behind union parsing. Iterates through possible parsers for the union and
-    returns the value produced by the first parser that works. Otherwise raises an error if none
+    returns the value produced by the first parser that works. Otherwise, raises an error if none
     work"""
     # Need to do this in the case of type Optional[str], because otherwise it'll return the string
     # 'None' instead of the object None

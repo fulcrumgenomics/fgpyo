@@ -23,7 +23,6 @@ else:
         pass
 
 
-# UnionType = TypeVar("UnionType", bound="Union")
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
 # see: https://peps.python.org/pep-0586/#illegal-parameters-for-literal-at-type-check-time

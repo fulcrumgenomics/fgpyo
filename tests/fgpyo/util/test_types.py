@@ -17,7 +17,6 @@ def test_is_listlike() -> None:
 
 
 def test_is_optional() -> None:
-    print(type((Union[str, NoneType])))
     assert types._is_optional(Union[str, NoneType])
     assert types._is_optional(Optional[str])
     assert not types._is_optional(str)

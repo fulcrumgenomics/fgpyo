@@ -23,11 +23,22 @@ Upon clipping a set of additional SAM tags are removed from reads as they are li
 For example, to clip the last 10 query bases of all records and reduce the qualities to Q2:
 
 ```python
-    >>> from fgpyo.sam import reader, clipping
-    >>> with reader("/path/to/sample.sam") as fh:
-    ...     for rec in fh:
-    ...         clipping.softclip_end_of_alignment_by_query(rec, 10, 2)
-    ...         print(rec.cigarstring)
+>>> from fgpyo.sam import reader, clipping
+>>> with reader("./tests/fgpyo/sam/data/valid.sam") as fh:
+...     for rec in fh:
+...         before = rec.cigarstring
+...         info = clipping.softclip_end_of_alignment_by_query(rec, 10, 2)
+...         after = rec.cigarstring
+...         print(f"before: {before} after: {after} info: {info}")
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 101M after: 91M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: 10M1D10M5I76M after: 10M1D10M5I66M10S info: ClippingInfo(query_bases_clipped=10, ref_bases_clipped=10)
+before: None after: None info: ClippingInfo(query_bases_clipped=0, ref_bases_clipped=0)
+
 ```
 
 It should be noted that any clipping potentially makes the common SAM tags NM, MD and UQ
@@ -42,7 +53,7 @@ it should be noted that:
 To rectify these problems it is necessary to do the equivalent of:
 
 ```console
-    cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools calmd
+cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools calmd
 ```
 """  # noqa: E501
 

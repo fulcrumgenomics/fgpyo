@@ -9,10 +9,10 @@ Building a sequence dictionary from a `pysam.AlignmentHeader`:
 >>> import pysam
 >>> from fgpyo.fasta.sequence_dictionary import SequenceDictionary
 >>> sd: SequenceDictionary
->>> with pysam.AlignmentFile("./fgpyo/sam/tests/data/valid.sam") as fh:
-    ...    sd = SequenceDictionary.from_sam(header=fh.header)
+>>> with pysam.AlignmentFile("./tests/fgpyo/sam/data/valid.sam") as fh:
+...    sd = SequenceDictionary.from_sam(header=fh.header)
 ...
->>> print(sd)
+>>> print(sd)  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101
 @SQ	SN:chr2	LN:101
 @SQ	SN:chr3	LN:101
@@ -21,40 +21,44 @@ Building a sequence dictionary from a `pysam.AlignmentHeader`:
 @SQ	SN:chr6	LN:101
 @SQ	SN:chr7	LN:404
 @SQ	SN:chr8	LN:202
+
 ```
 
 Query based on index:
 
 ```python
->>> print(sd[3])
+>>> print(sd[3])  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr4	LN:101
+
 ```
 
 Query based on name:
 
 ```python
->>> print(sd["chr6"])
+>>> print(sd["chr6"])  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr6	LN:101
+
 ```
 
 Add, get, and delete attributes:
 
 ```python
 >>> meta = sd[0]
->>> print(meta)
+>>> print(meta)  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101
 >>> meta[Keys.ASSEMBLY] = "hg38"
->>> print(meta))
+>>> print(meta)  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101	AS:hg38
 >>> meta.get(Keys.ASSEMBLY)
-"hg38"
+'hg38'
 >>> meta.get(Keys.SPECIES) is None
 True
 >>> Keys.MD5 in meta
 False
 >>> del meta[Keys.ASSEMBLY]
->>> print(meta)
+>>> print(meta)  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101
+
 ```
 
 Get a sequence based on one of its aliases
@@ -62,7 +66,7 @@ Get a sequence based on one of its aliases
 ```python
 >>> meta[Keys.ALIASES] = "foo,bar,car"
 >>> sd = SequenceDictionary(infos=[meta] + sd.infos[1:])
->>> print(sd)
+>>> print(sd)  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101	AN:foo,bar,car
 @SQ	SN:chr2	LN:101
 @SQ	SN:chr3	LN:101
@@ -71,18 +75,19 @@ Get a sequence based on one of its aliases
 @SQ	SN:chr6	LN:101
 @SQ	SN:chr7	LN:404
 @SQ	SN:chr8	LN:202
->>> print(sd["chr1"])
+>>> print(sd["chr1"])  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101	AN:foo,bar,car
->>> print(sd["bar"])
+>>> print(sd["bar"])  # doctest: +NORMALIZE_WHITESPACE
 @SQ	SN:chr1	LN:101	AN:foo,bar,car
+
 ```
 
 Create a `pysam.AlignmentHeader` from a sequence dictionary:
 
 ```python
->>> sd.to_sam_header()
-<pysam.libcalignmentfile.AlignmentHeader object at 0x10e93f5f0>
->>> print(sd.to_sam_header())
+>>> sd.to_sam_header()  # doctest: +ELLIPSIS
+<pysam.libcalignmentfile.AlignmentHeader object at ...>
+>>> print(sd.to_sam_header())  # doctest: +NORMALIZE_WHITESPACE
 @HD	VN:1.5
 @SQ	SN:chr1	LN:101	AN:foo,bar,car
 @SQ	SN:chr2	LN:101
@@ -92,6 +97,7 @@ Create a `pysam.AlignmentHeader` from a sequence dictionary:
 @SQ	SN:chr6	LN:101
 @SQ	SN:chr7	LN:404
 @SQ	SN:chr8	LN:202
+
 ```
 
 Create a `pysam.AlignmentHeader` from a sequence dictionary with extra header items:
@@ -100,10 +106,12 @@ Create a `pysam.AlignmentHeader` from a sequence dictionary with extra header it
 >>> sd.to_sam_header(
 ...     extra_header={"RG": [{"ID": "A", "LB": "a-library"}, {"ID": "B", "LB": "b-library"}]}
 ... )
-<pysam.libcalignmentfile.AlignmentHeader object at 0x10e93fe30>
+... # doctest: +ELLIPSIS
+<pysam.libcalignmentfile.AlignmentHeader object at ...>
 >>> print(sd.to_sam_header(
 ...     extra_header={"RG": [{"ID": "A", "LB": "a-library"}, {"ID": "B", "LB": "b-library"}]}
 ... ))
+... # doctest: +NORMALIZE_WHITESPACE
 @HD	VN:1.5
 @SQ	SN:chr1	LN:101	AN:foo,bar,car
 @SQ	SN:chr2	LN:101
@@ -115,6 +123,7 @@ Create a `pysam.AlignmentHeader` from a sequence dictionary with extra header it
 @SQ	SN:chr8	LN:202
 @RG	ID:A	LB:a-library
 @RG	ID:B	LB:b-library
+
 ```
 """
 

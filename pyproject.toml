@@ -33,6 +33,7 @@ numpy = [
   {version = "^1.24.4", python = "<3.9"}
 ]
 strenum = "^0.4.15"
+mktestdocs = "^0.2.2"
 
 [tool.poetry.group.dev.dependencies]
 # dependencies for linting, style checking, and unit testing
@@ -70,3 +71,7 @@ unfixable = ["B"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+doctest_optionflags = "NORMALIZE_WHITESPACE"

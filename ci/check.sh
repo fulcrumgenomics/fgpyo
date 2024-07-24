@@ -41,6 +41,7 @@ run "Style Checking" "ruff format fgpyo tests"
 run "Linting"        "ruff check --fix fgpyo tests"
 run "Type Checking"  "mypy fgpyo tests --config $parent/mypy.ini"
 run "Unit Tests"     "python -m pytest -vv -r sx tests"
+run "Doc Tests"      "python -m pytest -vv -r sx fgpyo"
 run "Make docs"      "mkdocs build --strict"
 
 if [ -z "$failures" ]; then

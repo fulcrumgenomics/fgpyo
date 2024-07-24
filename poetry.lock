@@ -737,19 +737,6 @@ griffe = ">=0.47"
 mkdocstrings = ">=0.25"
 
 [[package]]
-name = "mktestdocs"
-version = "0.2.2"
-description = ""
-optional = false
-python-versions = "*"
-files = [
-    {file = "mktestdocs-0.2.2-py2.py3-none-any.whl", hash = "sha256:b0eea09c14cb9df7bf112f848c3d5069713519eddb3b0b2223211699246c3f1d"},
-]
-
-[package.extras]
-test = ["pytest (>=4.0.2)"]
-
-[[package]]
 name = "mypy"
 version = "1.11.0"
 description = "Optional static typing for Python"
@@ -1126,6 +1113,25 @@ pytest = ">=4.6"
 
 [package.extras]
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
+
+[[package]]
+name = "pytest-doctestplus"
+version = "1.2.1"
+description = "Pytest plugin with advanced doctest features."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-doctestplus-1.2.1.tar.gz", hash = "sha256:2472a8a2c8cea34d2f65f6499543faeb748eecb59c597852fd98839b47307679"},
+    {file = "pytest_doctestplus-1.2.1-py3-none-any.whl", hash = "sha256:103705daee8d4468eb59d444c29b0d71eb85b8f6d582295c8bc3d68ee1d88911"},
+]
+
+[package.dependencies]
+packaging = ">=17.0"
+pytest = ">=4.6"
+setuptools = ">=30.3.0"
+
+[package.extras]
+test = ["numpy", "pytest-remotedata (>=0.3.2)", "sphinx"]
 
 [[package]]
 name = "python-dateutil"
@@ -1547,4 +1553,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.0,<4.0"
-content-hash = "b6a6f6a1f32b7bac112113183c421f9ed6cdaeade4a64711f74ecdcda9b8668a"
+content-hash = "fd55a2a245617d88598c2fb30877f608c647ceaa681b12ecff497640798c32a3"

@@ -33,7 +33,7 @@ def find_illumina_fastq(
     Args:
         fastq_dir: The directory to search.
         sample_id: The sample ID. The function will search for a FASTQ prefixed with this string.
-        number: The read number.
+        read_number: The read number.
         recursive: If True, search subdirectories.
 
     Returns:

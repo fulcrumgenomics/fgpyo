@@ -516,6 +516,6 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
         writer.write("last\tfirst\n")
         writer.write(f"{name.last}\t{name.first}\n")
 
-    names = list(NameMetric.read(path=path))
+    names: list[NameMetric] = list(NameMetric.read(path=path))
     assert len(names) == 1
     assert names[0] == name

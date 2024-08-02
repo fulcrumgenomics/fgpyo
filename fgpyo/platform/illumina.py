@@ -1,3 +1,15 @@
+"""
+Methods for working with Illumina-specific UMIs in SAM files
+------------------------------------
+
+The functions in this module make it easy to:
+
+* check whether a UMI is valid
+* extract UMI(s) from an Illumina-style read name
+* copy a UMI from an alignment's read name to its `RX` SAM tag
+
+"""
+
 from typing import Optional
 from typing import Set
 
@@ -35,10 +47,10 @@ def extract_umis_from_read_name(
         read_name_delimiter: The delimiter separating the components of the read name.
         umi_delimiter: The delimiter separating multiple UMIs.
         strict: If `strict` is `True`, the read name must contain either 7 or 8 colon-separated
-          segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
-          in the case of 7 segments. `strict` requires the UMI to be valid and consistent with
-          Illumina's allowed UMI characters. If `strict` is `False`, the last segment is returned
-          so long as it appears to be a valid UMI.
+            segments. The UMI is assumed to be the last one in the case of 8 segments and `None`
+            in the case of 7 segments. `strict` requires the UMI to be valid and consistent with
+            Illumina's allowed UMI characters. If `strict` is `False`, the last segment is returned
+            so long as it appears to be a valid UMI.
 
     Returns:
         The UMI extracted from the read name, or None if no UMI was found. Multiple UMIs are

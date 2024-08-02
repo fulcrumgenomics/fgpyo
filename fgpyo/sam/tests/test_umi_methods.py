@@ -92,9 +92,7 @@ def test_extract_umi_from_read_name_strict_false(
 ) -> None:
     """Test that we return None when an invalid UMI is encountered
     and strict is False. Otherwise, return a valid UMI."""
-    assert (
-        extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi
-    )
+    assert extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi
 
 
 @pytest.mark.parametrize(

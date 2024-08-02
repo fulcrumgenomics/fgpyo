@@ -1,4 +1,5 @@
-from typing import Optional, Set
+from typing import Optional
+from typing import Set
 
 from pysam import AlignedSegment
 
@@ -105,9 +106,7 @@ def copy_umi_from_read_name(
         rec.set_tag(tag="RX", value=umi)
         if remove_umi:
             last_index = rec.query_name.rfind(_ILLUMINA_READ_NAME_DELIMITER)
-            rec.query_name = (
-                rec.query_name[:last_index] if last_index != -1 else rec.query_name
-            )
+            rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
         return True
     elif strict:
         raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")

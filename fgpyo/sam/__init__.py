@@ -257,9 +257,7 @@ def _pysam_open(
     if file_type is not None:
         kwargs["mode"] = "r" if open_for_reading else "w" + file_type.mode
     else:
-        assert (
-            open_for_reading
-        ), "Bug: file_type was None but open_for_reading was False"
+        assert open_for_reading, "Bug: file_type was None but open_for_reading was False"
 
     if unmapped and open_for_reading:
         kwargs["check_sq"] = False
@@ -282,9 +280,7 @@ def reader(
             type will be auto-detected.
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
     """
-    return _pysam_open(
-        path=path, open_for_reading=True, file_type=file_type, unmapped=unmapped
-    )
+    return _pysam_open(path=path, open_for_reading=True, file_type=file_type, unmapped=unmapped)
 
 
 def writer(
@@ -405,9 +401,7 @@ class CigarElement:
     def __attrs_post_init__(self) -> None:
         """Validates the length attribute is greater than zero."""
         if self.length <= 0:
-            raise ValueError(
-                f"Cigar element must have a length > 0, found {self.length}"
-            )
+            raise ValueError(f"Cigar element must have a length > 0, found {self.length}")
 
     @property
     def length_on_query(self) -> int:
@@ -456,14 +450,10 @@ class Cigar:
                 elements.append(CigarElement(length, operator))
             return Cigar(tuple(elements))
         except Exception as ex:
-            raise CigarParsingException(
-                f"Malformed cigar tuples: {cigartuples}"
-            ) from ex
+            raise CigarParsingException(f"Malformed cigar tuples: {cigartuples}") from ex
 
     @classmethod
-    def _pretty_cigarstring_exception(
-        cls, cigarstring: str, index: int
-    ) -> CigarParsingException:
+    def _pretty_cigarstring_exception(cls, cigarstring: str, index: int) -> CigarParsingException:
         """Raises an exception highlighting the malformed character"""
         prefix = cigarstring[:index]
         character = cigarstring[index] if index < len(cigarstring) else ""
@@ -619,9 +609,7 @@ def isize(r1: AlignedSegment, r2: AlignedSegment) -> int:
         return r2_pos - r1_pos
 
 
-def set_pair_info(
-    r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True
-) -> None:
+def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
     """Resets mate pair information between reads in a pair. Requires that both r1
     and r2 are mapped.  Can be handed reads that already have pairing flags setup or
     independent R1 and R2 records that are currently flagged as SE reads.
@@ -632,9 +620,7 @@ def set_pair_info(
     """
     assert not r1.is_unmapped, f"Cannot process unmapped mate {r1.query_name}/1"
     assert not r2.is_unmapped, f"Cannot process unmapped mate {r2.query_name}/2"
-    assert (
-        r1.query_name == r2.query_name
-    ), "Attempting to pair reads with different qnames."
+    assert r1.query_name == r2.query_name, "Attempting to pair reads with different qnames."
 
     for r in [r1, r2]:
         r.is_paired = True
@@ -708,9 +694,7 @@ def calculate_edit_info(
     assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
 
     query_offset = 0
-    target_offset = (
-        reference_offset if reference_offset is not None else rec.reference_start
-    )
+    target_offset = reference_offset if reference_offset is not None else rec.reference_start
     cigar = Cigar.from_cigartuples(rec.cigartuples)
 
     matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
@@ -837,14 +821,10 @@ class Template:
     def validate(self) -> None:
         """Performs sanity checks that all the records in the Template are as expected."""
         for rec in self.all_recs():
-            assert (
-                rec.query_name == self.name
-            ), f"Name error {self.name} vs. {rec.query_name}"
+            assert rec.query_name == self.name, f"Name error {self.name} vs. {rec.query_name}"
 
         if self.r1 is not None:
-            assert (
-                self.r1.is_read1 or not self.r1.is_paired
-            ), "R1 not flagged as R1 or unpaired"
+            assert self.r1.is_read1 or not self.r1.is_paired, "R1 not flagged as R1 or unpaired"
             assert not self.r1.is_supplementary, "R1 primary flagged as supplementary"
             assert not self.r1.is_secondary, "R1 primary flagged as secondary"
 
@@ -854,15 +834,11 @@ class Template:
             assert not self.r2.is_secondary, "R2 primary flagged as secondary"
 
         for rec in self.r1_secondaries:
-            assert (
-                rec.is_read1 or not rec.is_paired
-            ), "R1 secondary not flagged as R1 or unpaired"
+            assert rec.is_read1 or not rec.is_paired, "R1 secondary not flagged as R1 or unpaired"
             assert rec.is_secondary, "R1 secondary not flagged as secondary"
 
         for rec in self.r1_supplementals:
-            assert (
-                rec.is_read1 or not rec.is_paired
-            ), "R1 supp. not flagged as R1 or unpaired"
+            assert rec.is_read1 or not rec.is_paired, "R1 supp. not flagged as R1 or unpaired"
             assert rec.is_supplementary, "R1 supp. not flagged as supplementary"
 
         for rec in self.r2_secondaries:

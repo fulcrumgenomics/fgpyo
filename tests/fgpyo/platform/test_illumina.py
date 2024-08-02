@@ -1,3 +1,5 @@
+"""Basic tests for Illumina-specific UMI Methods"""
+
 from typing import Optional
 
 import pytest

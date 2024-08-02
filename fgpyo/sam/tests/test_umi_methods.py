@@ -2,9 +2,9 @@ from typing import Optional
 
 import pytest
 
-from fgpyo.sam import _is_valid_umi
-from fgpyo.sam import copy_umi_from_read_name
-from fgpyo.sam import extract_umis_from_read_name
+from fgpyo.platform.illumina import _is_valid_umi
+from fgpyo.platform.illumina import copy_umi_from_read_name
+from fgpyo.platform.illumina import extract_umis_from_read_name
 from fgpyo.sam.builder import SamBuilder
 
 

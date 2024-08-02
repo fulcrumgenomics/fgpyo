@@ -92,7 +92,9 @@ def test_extract_umi_from_read_name_strict_false(
 ) -> None:
     """Test that we return None when an invalid UMI is encountered
     and strict is False. Otherwise, return a valid UMI."""
-    assert extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi
+    assert (
+        extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi
+    )
 
 
 @pytest.mark.parametrize(
@@ -100,8 +102,14 @@ def test_extract_umi_from_read_name_strict_false(
     [
         ("abc:def:ghi:jfk:lmn:opq:ACGT", None),  # colons == 6
         ("abc:def:ghi:jfk:lmn:opq:rst:ACGT", "ACGT"),  # colons == 7
-        ("abc:def:ghi:jfk:lmn:opq:rst+uvw:ACGT", "ACGT"),  # colons == 7, penultimate multi-UMI
-        ("abc:def:ghi:jfk:lmn:opq:rst:AGT+CAT", "AGT-CAT"),  # last field (multi-UMI) is returned
+        (
+            "abc:def:ghi:jfk:lmn:opq:rst+uvw:ACGT",
+            "ACGT",
+        ),  # colons == 7, penultimate multi-UMI
+        (
+            "abc:def:ghi:jfk:lmn:opq:rst:AGT+CAT",
+            "AGT-CAT",
+        ),  # last field (multi-UMI) is returned
     ],
 )
 def test_strict_extract_umi_from_read_name(read_name: str, extraction: str) -> None:

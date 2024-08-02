@@ -16,6 +16,7 @@ _ILLUMINA_UMI_DELIMITER: str = "+"
 _ILLUMINA_READ_NAME_DELIMITER: str = ":"
 """Illumina read names are delimited with a colon."""
 
+
 def extract_umis_from_read_name(
     read_name: str,
     read_name_delimiter: str = _ILLUMINA_READ_NAME_DELIMITER,
@@ -94,7 +95,9 @@ def copy_umi_from_read_name(
     """
 
     umi = extract_umis_from_read_name(
-        read_name=rec.query_name, strict=strict, umi_delimiter=_ILLUMINA_READ_NAME_DELIMITER
+        read_name=rec.query_name,
+        strict=strict,
+        umi_delimiter=_ILLUMINA_READ_NAME_DELIMITER,
     )
     if umi is not None:
         if rec.has_tag("RX"):
@@ -102,7 +105,9 @@ def copy_umi_from_read_name(
         rec.set_tag(tag="RX", value=umi)
         if remove_umi:
             last_index = rec.query_name.rfind(_ILLUMINA_READ_NAME_DELIMITER)
-            rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
+            rec.query_name = (
+                rec.query_name[:last_index] if last_index != -1 else rec.query_name
+            )
         return True
     elif strict:
         raise ValueError(f"Invalid UMI {umi} extracted from {rec.query_name}")

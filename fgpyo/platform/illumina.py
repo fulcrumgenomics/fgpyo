@@ -1,3 +1,15 @@
+"""
+Methods for working with Illumina-specific UMIs in SAM files
+------------------------------------
+
+The functions in this module make it easy to:
+
+* check whether a UMI is valid
+* extract UMI(s) from an Illumina-style read name
+* copy a UMI from an alignment's read name to its `RX` SAM tag
+
+"""
+
 from typing import Optional
 from typing import Set
 

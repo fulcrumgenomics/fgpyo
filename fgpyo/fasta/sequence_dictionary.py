@@ -137,7 +137,7 @@ from typing import Pattern
 from typing import Union
 from typing import overload
 
-if sys.version_info[0] == 3 and sys.version_info[0] < 11:
+if sys.version_info[0] == 3 and sys.version_info[1] < 11:
     from strenum import StrEnum
 else:
     from enum import StrEnum

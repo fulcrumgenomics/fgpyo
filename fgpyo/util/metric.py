@@ -292,11 +292,7 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     @final
     def header(cls) -> List[str]:
-        """The list of header values for the metric.
-
-        This method may be overridden to re-order or subset the columns written to file with
-        `write()` or returned by `values()`.
-        """
+        """The list of header values for the metric."""
         field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
         field_names = {field.name for field in field_types}
         header = cls._header(field_types=field_types)
@@ -307,10 +303,10 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
-        """Returns a mapping of a field to the index it should be returned in `values()`
-        based on the field names returned by `header()`.
+        """Returns a list of field names for the header and values.
 
-        This is useful for re-ordering or sub-setting the output columns in `write()`.
+        This method may be overridden to re-order or subset the columns written to file with
+        `write()` or returned by `values()`.
         """
         if field_types is None:
             field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]

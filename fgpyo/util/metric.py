@@ -111,6 +111,32 @@ Formatting and parsing the values for custom types is supported by overriding th
    >>> Person(name=Name(first='john', last='doe'), age=42, address=None).formatted_values()
    ["first last", "42"]
 ```
+
+Re-ordering and sub-setting the columns when writing is supported by overriding the `_header()`
+method.  In the example below, the `weight` field is not written, but is optional to support reading
+the metric back in.  Also, the `name` and `age` columns are written in reverse order.
+
+```python
+   >>> from fgpyo.util.metric import Metric
+   >>> import attr
+   >>> @attr.s(auto_attribs=True, frozen=True)
+   ... class Person(Metric["Person"]):
+   ...     name: str
+   ...     age: int
+   ...     weight: Optional[int]
+   ...     @classmethod
+   ...     def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+   ...         return ["age", "name"]
+   >>> person = Person(name="john", age=42, weight=180)
+   >>> person.header()
+   ["age", "name"]
+   >>> list(person.values())
+   [42, "john"]
+   >>> Person.write(Path("/path/to/metrics.txt"), person)
+   >>> list(Person.read(Path("/path/to/metrics.txt")))
+   [Person(name="john", age=42, weight=None)]
+```
+
 """
 
 from abc import ABC
@@ -122,10 +148,13 @@ from typing import Dict
 from typing import Generic
 from typing import Iterator
 from typing import List
+from typing import Optional
 from typing import TypeVar
+from typing import final
 
 from fgpyo import io
 from fgpyo.util import inspect
+from fgpyo.util.inspect import FieldType
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
@@ -141,19 +170,21 @@ class Metric(ABC, Generic[MetricType]):
     [`format_value()`][fgpyo.util.metric.Metric.format_value].
     """
 
-    def values(self) -> Iterator[Any]:
+    def values(self, _header: Optional[List[str]] = None) -> Iterator[Any]:
         """An iterator over attribute values in the same order as the header."""
-        for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
-            yield getattr(self, field.name)
+        if _header is None:
+            _header = self.header()
+        for name in _header:
+            yield getattr(self, name)
 
-    def formatted_values(self) -> List[str]:
+    def formatted_values(self, _header: Optional[List[str]] = None) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
-        return [self.format_value(value) for value in self.values()]
+        return [self.format_value(value) for value in self.values(_header=_header)]
 
     @classmethod
     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
         """Mapping of type to a specific parser for that type.  The parser must accept a string
-        as a single parameter and return a single value of the given type.  Sub-classes may
+        as a single parameter and return a single value of the given type.  Subclasses may
         override this method to support custom types."""
         return {}
 
@@ -245,21 +276,45 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: Path to the output file.
             values: Zero or more metrics.
-
         """
+        header = cls.header()
         with io.to_writer(path) as writer:
             writer.write("\t".join(cls.header()))
             writer.write("\n")
             for value in values:
                 # Important, don't recurse on nested attr classes, instead let implementing class
                 # implement format_value.
-                writer.write("\t".join(cls.format_value(item) for item in value.values()))
+                writer.write(
+                    "\t".join(cls.format_value(item) for item in value.values(_header=header))
+                )
                 writer.write("\n")
 
     @classmethod
+    @final
     def header(cls) -> List[str]:
-        """The list of header values for the metric."""
-        return [a.name for a in inspect.get_fields(cls)]  # type: ignore[arg-type]
+        """The list of header values for the metric.
+
+        This method may be overridden to re-order or subset the columns written to file with
+        `write()` or returned by `values()`.
+        """
+        field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
+        field_names = {field.name for field in field_types}
+        header = cls._header(field_types=field_types)
+        extra_fields = [h for h in header if h not in field_names]
+        if len(extra_fields) > 0:
+            raise ValueError("header() returned extra fields: " + ", ".join(extra_fields))
+        return header
+
+    @classmethod
+    def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+        """Returns a mapping of a field to the index it should be returned in `values()`
+        based on the field names returned by `header()`.
+
+        This is useful for re-ordering or sub-setting the output columns in `write()`.
+        """
+        if field_types is None:
+            field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
+        return [a.name for a in field_types]
 
     @classmethod
     def format_value(cls, value: Any) -> str:  # noqa: C901
@@ -315,7 +370,7 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def to_list(cls, value: str) -> List[Any]:
-        """Returns a list value split on comma delimeter."""
+        """Returns a list value split on comma delimiter."""
         return [] if value == "" else value.split(",")
 
     @staticmethod

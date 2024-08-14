@@ -26,6 +26,7 @@ import dataclasses
 import attr
 import pytest
 
+from fgpyo.util.inspect import FieldType
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
@@ -122,6 +123,24 @@ class DataBuilder:
             last: str
 
         @make_dataclass(use_attr=use_attr)
+        class LastFirstMetric(Metric["LastFirstMetric"]):
+            first: str
+            last: str
+
+            @classmethod
+            def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+                return ["last", "first"]
+
+        @make_dataclass(use_attr=use_attr)
+        class SubsetMetric(Metric["SubsetMetric"]):
+            written: str
+            hidden: Optional[str]
+
+            @classmethod
+            def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+                return ["written"]
+
+        @make_dataclass(use_attr=use_attr)
         class NamedPerson(Metric["NamedPerson"]):
             name: Name
             age: int
@@ -156,6 +175,8 @@ class DataBuilder:
         self.Person = Person
         self.Name = Name
         self.NameMetric = NameMetric
+        self.LastFirstMetric = LastFirstMetric
+        self.SubsetMetric = SubsetMetric
         self.NamedPerson = NamedPerson
         self.PersonMaybeAge = PersonMaybeAge
         self.PersonDefault = PersonDefault
@@ -234,6 +255,10 @@ def test_is_correct_dataclass_type(use_attr: bool) -> None:
     assert is_dataclasses_class(data_and_classes.Name) is not use_attr
     assert is_attr_class(data_and_classes.NameMetric) is use_attr
     assert is_dataclasses_class(data_and_classes.NameMetric) is not use_attr
+    assert is_attr_class(data_and_classes.LastFirstMetric) is use_attr
+    assert is_dataclasses_class(data_and_classes.LastFirstMetric) is not use_attr
+    assert is_attr_class(data_and_classes.SubsetMetric) is use_attr
+    assert is_dataclasses_class(data_and_classes.SubsetMetric) is not use_attr
     assert is_attr_class(data_and_classes.NamedPerson) is use_attr
     assert is_dataclasses_class(data_and_classes.NamedPerson) is not use_attr
     assert is_attr_class(data_and_classes.PersonMaybeAge) is use_attr
@@ -366,6 +391,54 @@ def test_metric_read_missing_column_with_default(
         writer.write("age\n42\n")
     with pytest.raises(ValueError):
         list(PersonDefault.read(path=path))
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_read_different_column_order(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    NameMetric: TypeAlias = data_and_classes.NameMetric
+    name = NameMetric(first="Jane", last="Doe")
+    path = tmp_path / "metrics.txt"
+
+    with path.open("w") as writer:
+        writer.write("last\tfirst\n")
+        writer.write("Doe\tJane\n")
+    assert list(NameMetric.read(path=path)) == [name]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_write_different_column_order(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    LastFirstMetric: TypeAlias = data_and_classes.LastFirstMetric
+    name = LastFirstMetric(first="Jane", last="Doe")
+
+    assert LastFirstMetric.header() == ["last", "first"]
+    assert list(name.values()) == ["Doe", "Jane"]
+
+    path = tmp_path / "metrics.txt"
+    LastFirstMetric.write(path, name)
+    with path.open("r") as read:
+        header = read.readline().strip().split("\t")
+        fields = read.readline().strip().split("\t")
+
+    assert header == ["last", "first"]
+    assert fields == [name.last, name.first]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_write_subset(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    SubsetMetric: TypeAlias = data_and_classes.SubsetMetric
+    metric = SubsetMetric(written="present", hidden="absent")
+
+    assert SubsetMetric.header() == ["written"]
+    assert list(metric.values()) == ["present"]
+
+    path = tmp_path / "metrics.txt"
+    SubsetMetric.write(path, metric)
+    with path.open("r") as read:
+        header = read.readline().strip().split("\t")
+        fields = read.readline().strip().split("\t")
+
+    assert header == ["written"]
+    assert fields == [metric.written]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

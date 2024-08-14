@@ -332,7 +332,7 @@ def _get_parser(  # noqa: C901
         nonlocal type_
         nonlocal parsers
         try:
-            return functools.partial(parsers[type_])  # type: ignore[misc]
+            return functools.partial(parsers[type_])
         except KeyError as ex:
             if (
                 type_ in [str, int, float]

@@ -10,6 +10,7 @@ from fgpyo.sequence import hamming
 from fgpyo.sequence import levenshtein
 from fgpyo.sequence import longest_dinucleotide_run_length
 from fgpyo.sequence import longest_homopolymer_length
+from fgpyo.sequence import longest_hp_length
 from fgpyo.sequence import longest_multinucleotide_run_length
 from fgpyo.sequence import reverse_complement
 
@@ -44,6 +45,7 @@ def test_reverse_complement(bases: str, expected_rev_comp: str) -> None:
     ],
 )
 def test_homopolymer(bases: str, expected_hp_len: int) -> None:
+    assert longest_hp_length(bases) == expected_hp_len
     assert longest_homopolymer_length(bases) == expected_hp_len
 
 

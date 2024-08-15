@@ -160,29 +160,29 @@ def longest_hp_length(bases: str) -> int:
     return longest_homopolymer_length(bases=bases)
 
 
-def longest_homopolymer_length(bases: str, min_length: int = 0) -> int:
+def longest_homopolymer_length(bases: str) -> int:
     """Calculates the length of the longest homopolymer in the input sequence.
 
     Args:
         bases: the bases over which to compute
-        min_length: do not search for homopolymers of this length or shorter
 
     Return:
-        the length of the longest homopolymer, or zero if not at least the minimum length
+        the length of the longest homopolymer
     """
+    cur_length: int = 0
     i = 0
     # NB: if we have found a homopolymer of length `min_hp`, then we do not need
     # to examine the last `min_hp` bases since we'll never find a longer one.
     bases_len = len(bases)
-    while i < bases_len - min_length:
+    while i < bases_len - cur_length:
         base = bases[i].upper()
         j = i + 1
         while j < bases_len and bases[j] == base:
             j += 1
-        min_length = max(min_length, j - i)
+        cur_length = max(cur_length, j - i)
         # skip over all the bases in the current homopolymer
         i = j
-    return min_length
+    return cur_length
 
 
 def longest_dinucleotide_run_length(bases: str) -> int:

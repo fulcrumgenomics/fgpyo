@@ -76,29 +76,11 @@ def reverse_complement(bases: str) -> str:
     return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
 
 
-def longest_hp_length(bases: str) -> int:
-    """Calculates the length of the longest homopolymer in the input sequence."""
-    max_hp = 0
-    i = 0
-    # NB: if we have found a homopolymer of length `max_hp`, then we do not need
-    # to examine the last `max_hp` bases since we'll never find a longer one.
-    bases_len = len(bases)
-    while i < bases_len - max_hp:
-        base = bases[i]
-        j = i + 1
-        while j < bases_len and bases[j] == base:
-            j += 1
-        max_hp = max(max_hp, j - i)
-        # skip over all the bases in the current homopolymer
-        i = j
-    return max_hp
-
-
 def gc_content(bases: str) -> float:
     """Calculates the fraction of G and C bases in a sequence."""
     if len(bases) == 0:
         return 0
-    gc_count = sum(1 for base in bases if base == "C" or base == "G" or base == "c" or base == "g")
+    gc_count = sum(1 for base in bases if base in "CGcg")
     return gc_count / len(bases)
 
 
@@ -164,3 +146,99 @@ def levenshtein(string1: str, string2: str) -> int:
                     matrix[i + 1][j + 1],  # Substitution
                 )
     return matrix[0][0]
+
+
+def longest_hp_length(bases: str) -> int:
+    """Calculates the length of the longest homopolymer in the input sequence.
+
+    Args:
+        bases: the bases over which to compute
+
+    Return:
+        the length of the longest homopolymer
+    """
+    return longest_homopolymer_length(bases=bases)
+
+
+def longest_homopolymer_length(bases: str) -> int:
+    """Calculates the length of the longest homopolymer in the input sequence.
+
+    Args:
+        bases: the bases over which to compute
+
+    Return:
+        the length of the longest homopolymer
+    """
+    cur_length: int = 0
+    i = 0
+    # NB: if we have found a homopolymer of length `min_hp`, then we do not need
+    # to examine the last `min_hp` bases since we'll never find a longer one.
+    bases_len = len(bases)
+    while i < bases_len - cur_length:
+        base = bases[i].upper()
+        j = i + 1
+        while j < bases_len and bases[j] == base:
+            j += 1
+        cur_length = max(cur_length, j - i)
+        # skip over all the bases in the current homopolymer
+        i = j
+    return cur_length
+
+
+def longest_dinucleotide_run_length(bases: str) -> int:
+    """Number of bases in the longest dinucleotide run in a primer.
+
+    A dinucleotide run is when two nucleotides are repeated in tandem. For example,
+    TTGG (length = 4) or AACCAACCAA (length = 10). If there are no such runs, returns 0.
+
+    Args:
+        bases: the bases over which to compute
+
+    Return:
+        the number of bases in the longest dinuc repeat (NOT the number of repeat units)
+    """
+    return longest_multinucleotide_run_length(bases=bases, repeat_unit_length=2)
+
+
+def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> int:
+    """Number of bases in the longest multi-nucleotide run.
+
+    A multi-nucleotide run is when N nucleotides are repeated in tandem. For example,
+    TTGG (length = 4, N=2) or TAGTAGTAG (length = 9, N = 3). If there are no such runs,
+    returns 0.
+
+    Args:
+        bases: the bases over which to compute
+        repeat_unit_length: the length of the multi-nucleotide repetitive unit (must be > 0)
+
+    Returns:
+        the number of bases in the longest multinucleotide repeat (NOT the number of repeat units)
+    """
+    if repeat_unit_length <= 0:
+        raise ValueError(f"repeat_unit_length must be >= 0, found: {repeat_unit_length}")
+    elif len(bases) < repeat_unit_length:
+        return 0
+    elif len(bases) == repeat_unit_length:
+        return repeat_unit_length
+    elif repeat_unit_length == 1:
+        return longest_homopolymer_length(bases=bases)
+
+    best_length: int = 0
+    start = 0  # the start index of the current multi-nucleotide run
+    while start < len(bases) - 1:
+        # get the dinuc bases
+        dinuc = bases[start : start + repeat_unit_length].upper()
+        # keep going while there are more di-nucs
+        end = start + repeat_unit_length
+        while end < len(bases) - 1 and dinuc == bases[end : end + repeat_unit_length].upper():
+            end += repeat_unit_length
+        cur_length = end - start
+        # update the longest total run length
+        best_length = max(best_length, cur_length)
+        # move to the next start
+        if cur_length <= repeat_unit_length:  # only one repeat unit found, move the start by 1bp
+            start += 1
+        else:  # multiple repeats found, skip to the last base of the current run
+            start += cur_length - 1
+
+    return best_length

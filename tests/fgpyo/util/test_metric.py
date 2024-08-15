@@ -128,7 +128,7 @@ class DataBuilder:
             last: str
 
             @classmethod
-            def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+            def _fields_to_write(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
                 return ["last", "first"]
 
         @make_dataclass(use_attr=use_attr)
@@ -137,7 +137,7 @@ class DataBuilder:
             hidden: Optional[str]
 
             @classmethod
-            def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+            def _fields_to_write(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
                 return ["written"]
 
         @make_dataclass(use_attr=use_attr)

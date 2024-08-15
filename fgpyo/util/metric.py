@@ -112,9 +112,10 @@ Formatting and parsing the values for custom types is supported by overriding th
    ["first last", "42"]
 ```
 
-Re-ordering and sub-setting the columns when writing is supported by overriding the `_header()`
-method.  In the example below, the `weight` field is not written, but is optional to support reading
-the metric back in.  Also, the `name` and `age` columns are written in reverse order.
+Re-ordering and sub-setting the columns when writing is supported by overriding the
+`_fields_to_write()` method.  In the example below, the `weight` field is not written, but is
+optional to support reading the metric back in.  Also, the `name` and `age` columns are written in
+reverse order.
 
 ```python
    >>> from fgpyo.util.metric import Metric
@@ -125,7 +126,7 @@ the metric back in.  Also, the `name` and `age` columns are written in reverse o
    ...     age: int
    ...     weight: Optional[int]
    ...     @classmethod
-   ...     def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+   ...     def _fields_to_write(cls, field_types: List[FieldType] = None) -> List[str]:
    ...         return ["age", "name"]
    >>> person = Person(name="john", age=42, weight=180)
    >>> person.header()
@@ -295,21 +296,19 @@ class Metric(ABC, Generic[MetricType]):
         """The list of header values for the metric."""
         field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
         field_names = {field.name for field in field_types}
-        header = cls._header(field_types=field_types)
+        header = cls._fields_to_write(field_types=field_types)
         extra_fields = [h for h in header if h not in field_names]
         if len(extra_fields) > 0:
             raise ValueError("header() returned extra fields: " + ", ".join(extra_fields))
         return header
 
     @classmethod
-    def _header(cls, field_types: Optional[List[FieldType]] = None) -> List[str]:
+    def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
         """Returns a list of field names for the header and values.
 
         This method may be overridden to re-order or subset the columns written to file with
         `write()` or returned by `values()`.
         """
-        if field_types is None:
-            field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
         return [a.name for a in field_types]
 
     @classmethod

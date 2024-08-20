@@ -177,7 +177,7 @@ def longest_homopolymer_length(bases: str) -> int:
     while i < bases_len - cur_length:
         base = bases[i].upper()
         j = i + 1
-        while j < bases_len and bases[j] == base:
+        while j < bases_len and bases[j].upper() == base:
             j += 1
         cur_length = max(cur_length, j - i)
         # skip over all the bases in the current homopolymer

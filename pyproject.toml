@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fgpyo"
-version = "0.7.1-dev"
+version = "0.7.1"
 description = "Python bioinformatics and genomics library"
 authors = ["Nils Homer", "Tim Fennell", "Nathan Roach"]
 license = "MIT"

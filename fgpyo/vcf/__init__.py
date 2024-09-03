@@ -19,33 +19,36 @@ Variants are added with the [`add()`][fgpyo.vcf.builder.VariantBuilder.add] meth
 which returns a `pysam.VariantRecord`.
 
 ```python
-    >>> import pysam
-    >>> from fgpyo.vcf.builder import VariantBuilder
-    >>> builder: VariantBuilder = VariantBuilder()
-    >>> new_record_1: pysam.VariantRecord = builder.add()  # uses the defaults
-    >>> new_record_2: pysam.VariantRecord = builder.add(
-    >>>     contig="chr2", pos=1001, id="rs1234", ref="C", alts=["T"],
-    >>>     qual=40, filter=["PASS"]
-    >>> )
+>>> import pysam
+>>> from fgpyo.vcf.builder import VariantBuilder
+>>> builder: VariantBuilder = VariantBuilder()
+>>> new_record_1: pysam.VariantRecord = builder.add()  # uses the defaults
+>>> new_record_2: pysam.VariantRecord = builder.add(
+...     contig="chr2", pos=1001, id="rs1234", ref="C", alts=["T"],
+...     qual=40, filter=["PASS"]
+... )
+
 ```
 
 VariantBuilder can create sites-only, single-sample, or multi-sample VCF files. If not producing a
 sites-only VCF file, VariantBuilder must be created by passing a list of sample IDs
 
 ```python
-    >>> builder: VariantBuilder = VariantBuilder(sample_ids=["sample1", "sample2"])
-    >>> new_record_1: pysam.VariantRecord = builder.add()  # uses the defaults
-    >>> new_record_2: pysam.VariantRecord = builder.add(
-    >>>     samples={"sample1": {"GT": "0|1"}, "sample2": {"GT": "0|0"}}
-    >>> )
+>>> builder: VariantBuilder = VariantBuilder(sample_ids=["sample1", "sample2"])
+>>> new_record_1: pysam.VariantRecord = builder.add()  # uses the defaults
+>>> new_record_2: pysam.VariantRecord = builder.add(
+...     samples={"sample1": {"GT": "0|1"}, "sample2": {"GT": "0|0"}}
+... )
+
 ```
 
 The variants stored in the builder can be retrieved as a coordinate sorted VCF file via the
 [`to_path()`][fgpyo.vcf.builder.VariantBuilder.to_path] method:
 
 ```python
-    >>>     from pathlib import Path
-    >>>     path_to_vcf: Path = builder.to_path()
+>>> from pathlib import Path
+>>> path_to_vcf: Path = builder.to_path()
+
 ```
 
 The variants may also be retrieved in the order they were added via the

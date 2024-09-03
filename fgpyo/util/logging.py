@@ -10,24 +10,25 @@ fixed number of records.  Logging can be written to `logging.Logger` as well as 
 method.
 
 ```python
-   >>> from fgpyo.util.logging import ProgressLogger
-   >>> logged_lines = []
-   >>> progress = ProgressLogger(
-   ...     printer=lambda s: logged_lines.append(s),
-   ...     verb="recorded",
-   ...     noun="items",
-   ...     unit=2
-   ... )
-   >>> progress.record(reference_name="chr1", position=1)  # does not log
-   False
-   >>> progress.record(reference_name="chr1", position=2)  # logs
-   True
-   >>> progress.record(reference_name="chr1", position=3)  # does not log
-   False
-   >>> progress.log_last()  # will log the last recorded item, if not previously logged
-   True
-   >>> logged_lines  # show the lines logged
-   ['recorded 2 items: chr1:2', 'recorded 3 items: chr1:3']
+>>> from fgpyo.util.logging import ProgressLogger
+>>> logged_lines = []
+>>> progress = ProgressLogger(
+...     printer=lambda s: logged_lines.append(s),
+...     verb="recorded",
+...     noun="items",
+...     unit=2
+... )
+>>> progress.record(reference_name="chr1", position=1)  # does not log
+False
+>>> progress.record(reference_name="chr1", position=2)  # logs
+True
+>>> progress.record(reference_name="chr1", position=3)  # does not log
+False
+>>> progress.log_last()  # will log the last recorded item, if not previously logged
+True
+>>> logged_lines  # show the lines logged
+['recorded 2 items: chr1:2', 'recorded 3 items: chr1:3']
+
 ```
 """
 

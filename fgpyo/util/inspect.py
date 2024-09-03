@@ -332,7 +332,8 @@ def _get_parser(  # noqa: C901
         nonlocal type_
         nonlocal parsers
         try:
-            return functools.partial(parsers[type_])
+            parser: Callable[[str], Any] = parsers[type_]
+            return functools.partial(parser)
         except KeyError as ex:
             if (
                 type_ in [str, int, float]

@@ -126,6 +126,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import replace
 from enum import unique
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -136,6 +137,8 @@ from typing import Optional
 from typing import Pattern
 from typing import Union
 from typing import overload
+
+from fgpyo import sam
 
 if sys.version_info[0] == 3 and sys.version_info[1] < 11:
     from strenum import StrEnum
@@ -214,7 +217,7 @@ SEQUENCE_NAME_PATTERN: Pattern = re.compile(
 class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
     """Stores information about a single Sequence (ex. chromosome, contig).
 
-    Implements the mutable mapping interface, which provide access to the attributes of this
+    Implements the mutable mapping interface, which provides access to the attributes of this
     sequence, including name, length, but not index.  When using the mapping interface, for example
     getting, setting, deleting, as well as iterating over keys, values, and items, the _values_ will
     always be strings (`str` type).  For example, the length will be an `str` when accessing via
@@ -446,28 +449,41 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
     @staticmethod
     @overload
-    def from_sam(header: pysam.AlignmentHeader) -> "SequenceDictionary": ...
+    def from_sam(data: Path) -> "SequenceDictionary": ...
 
     @staticmethod
     @overload
-    def from_sam(header: List[Dict[str, Any]]) -> "SequenceDictionary": ...
+    def from_sam(data: pysam.AlignmentFile) -> "SequenceDictionary": ...
+
+    @staticmethod
+    @overload
+    def from_sam(data: pysam.AlignmentHeader) -> "SequenceDictionary": ...
+
+    @staticmethod
+    @overload
+    def from_sam(data: List[Dict[str, Any]]) -> "SequenceDictionary": ...
 
     @staticmethod
     def from_sam(
-        header: Union[pysam.AlignmentHeader, List[Dict[str, Any]]],
+        data: Union[Path, pysam.AlignmentFile, pysam.AlignmentHeader, List[Dict[str, Any]]],
     ) -> "SequenceDictionary":
         """Creates a `SequenceDictionary` from either a `pysam.AlignmentHeader` or from
-        the list of sequences returned by `pysam.AlignmentHeader#to_dict()["SQ"]`."""
-        if isinstance(header, pysam.AlignmentHeader):
-            return SequenceDictionary.from_sam(header=header.to_dict()["SQ"])
+        the list of sequences returned by `pysam.AlignmentHeader.to_dict()["SQ"]`."""
+        if isinstance(data, pysam.AlignmentHeader):
+            return SequenceDictionary.from_sam(data.to_dict()["SQ"])
+        if isinstance(data, pysam.AlignmentFile):
+            return SequenceDictionary.from_sam(data.header.to_dict()["SQ"])
+        if isinstance(data, Path):
+            with sam.reader(data, file_type=sam.SamFileType.SAM) as fh:
+                return SequenceDictionary.from_sam(fh.header)
 
         infos: List[SequenceMetadata] = [
-            SequenceMetadata.from_sam(meta=meta, index=index) for index, meta in enumerate(header)
+            SequenceMetadata.from_sam(meta=meta, index=index) for index, meta in enumerate(data)
         ]
 
         return SequenceDictionary(infos=infos)
 
-    # TODO: mypyp doesn't like these
+    # TODO: mypy doesn't like these
     # @overload
     # def __getitem__(self, key: str) -> SequenceMetadata: ...
     #

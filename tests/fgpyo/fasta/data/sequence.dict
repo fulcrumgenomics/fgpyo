@@ -1,0 +1,4 @@
+@HD	VN:1.5
+@SQ	SN:chr1	LN:10
+@SQ	SN:chr2	LN:20	AN:chr3
+@RG	ID:foo

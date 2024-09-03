@@ -4,7 +4,7 @@
 This module contains utility classes for working with SAM/BAM files and the data contained
 within them.  This includes i) utilities for opening SAM/BAM files for reading and writing,
 ii) functions for manipulating supplementary alignments, iii) classes and functions for
-maniuplating CIGAR strings, and iv) a class for building sam records and files for testing.
+manipulating CIGAR strings, and iv) a class for building sam records and files for testing.
 
 ## Motivation for Reader and Writer methods
 
@@ -691,6 +691,100 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     r2.template_length = -insert_size
 
 
+def set_mate_info(r1: pysam.AlignedSegment, r2: pysam.AlignedSegment) -> None:
+    """Sets the mate information on a pair of sam records.
+
+    Handles cases where both reads are mapped, one of the two reads is unmapped or both reads
+    are unmapped.
+
+    Args:
+        r1: the first read in the pair
+        r2: the second read in the pair
+    """
+    assert (
+        r1.query_name == r2.query_name
+    ), "Attempting to set mate info on reads with different qnames."
+
+    for rec in r1, r2:
+        rec.template_length = 0
+        rec.is_proper_pair = False
+
+    if r1.is_unmapped and r2.is_unmapped:
+        # If they're both unmapped just clean the records up
+        for rec, other in [(r1, r2), (r2, r1)]:
+            rec.reference_id = NO_REF_INDEX
+            rec.next_reference_id = NO_REF_INDEX
+            rec.reference_start = NO_REF_POS
+            rec.next_reference_start = NO_REF_POS
+            rec.is_unmapped = True
+            rec.is_proper_pair = False
+            rec.mate_is_reverse = other.is_reverse
+            rec.mate_is_unmapped = True
+            rec.set_tag("MC", None)
+
+    elif r1.is_unmapped or r2.is_unmapped:
+        # If only one is mapped/unmapped copy over the relevant stuff
+        (m, u) = (r1, r2) if r2.is_unmapped else (r2, r1)
+        u.reference_id = m.reference_id
+        u.reference_start = m.reference_start
+        u.next_reference_id = m.reference_id
+        u.next_reference_start = m.reference_start
+        u.mate_is_reverse = m.is_reverse
+        u.mate_is_unmapped = False
+        u.set_tag("MC", m.cigarstring)
+
+        m.next_reference_id = u.reference_id
+        m.next_reference_start = u.reference_start
+        m.mate_is_reverse = u.is_reverse
+        m.mate_is_unmapped = True
+        m.set_tag("MC", None)
+
+    else:
+        # Else they are both mapped
+        for rec, other in [(r1, r2), (r2, r1)]:
+            rec.next_reference_id = other.reference_id
+            rec.next_reference_start = other.reference_start
+            rec.mate_is_reverse = other.is_reverse
+            rec.mate_is_unmapped = False
+            rec.set_tag("MC", other.cigarstring)
+
+        if r1.reference_id == r2.reference_id:
+            r1p = r1.reference_end if r1.is_reverse else r1.reference_start
+            r2p = r2.reference_end if r2.is_reverse else r2.reference_start
+            r1.template_length = r2p - r1p
+            r2.template_length = r1p - r2p
+
+            # Arbitrarily set proper pair if the we have an FR pair with isize <= 1000
+            if r1.is_reverse != r2.is_reverse and abs(r1.template_length) <= 1000:
+                fpos, rpos = (r2p, r1p) if r1.is_reverse else (r1p, r2p)
+                if fpos < rpos:
+                    r1.is_proper_pair = True
+                    r2.is_proper_pair = True
+
+
+def set_mate_info_on_supplementary(
+    primary: AlignedSegment, supp: AlignedSegment, set_cigar: bool = False
+) -> None:
+    """Sets mate pair information on a supplemental record (e.g. from a split alignment), using
+    the primary alignment of the read's mate.
+
+    Args:
+        primary: the primary alignment of the mate pair of the supplemental
+        supp: a supplemental alignment for the mate pair of the primary supplied
+        set_cigar: true if we should update/create the mate CIGAR (MC) optional tag,
+                   false if we should remove any mate CIGAR tag that is present
+    """
+    supp.next_reference_id = primary.reference_id
+    supp.next_reference_start = primary.reference_start
+    supp.mate_is_reverse = primary.is_reverse
+    supp.mate_is_unmapped = primary.is_unmapped
+    supp.template_length = -primary.template_length
+    if set_cigar and not primary.is_unmapped:
+        supp.set_tag("MC", primary.cigarstring)
+    else:
+        supp.set_tag("MC", None)
+
+
 @attr.s(frozen=True, auto_attribs=True)
 class ReadEditInfo:
     """
@@ -953,6 +1047,16 @@ class Template:
 
         for rec in self.all_recs():
             rec.set_tag(tag, value)
+
+    def fixmate(self) -> None:
+        """Fixes mate information and sets mate CIGAR on all primary and supplementary
+        (but not secondary) records.
+        """
+        for r2_supplemental in self.r2_supplementals:
+            set_mate_info_on_supplementary(self.r1, r2_supplemental, True)
+        for r1_supplemental in self.r1_supplementals:
+            set_mate_info_on_supplementary(self.r2, r1_supplemental, True)
+        set_mate_info(self.r1, self.r2)
 
 
 class TemplateIterator(Iterator[Template]):

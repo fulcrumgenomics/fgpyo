@@ -449,19 +449,19 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
     @staticmethod
     @overload
-    def from_sam(data: Path) -> "SequenceDictionary": ...
+    def from_sam(data: Path) -> "SequenceDictionary": ...  # pragma: no cover
 
     @staticmethod
     @overload
-    def from_sam(data: pysam.AlignmentFile) -> "SequenceDictionary": ...
+    def from_sam(data: pysam.AlignmentFile) -> "SequenceDictionary": ...  # pragma: no cover
 
     @staticmethod
     @overload
-    def from_sam(data: pysam.AlignmentHeader) -> "SequenceDictionary": ...
+    def from_sam(data: pysam.AlignmentHeader) -> "SequenceDictionary": ...  # pragma: no cover
 
     @staticmethod
     @overload
-    def from_sam(data: List[Dict[str, Any]]) -> "SequenceDictionary": ...
+    def from_sam(data: List[Dict[str, Any]]) -> "SequenceDictionary": ...  # pragma: no cover
 
     @staticmethod
     def from_sam(

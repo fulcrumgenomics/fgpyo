@@ -36,7 +36,6 @@ strenum = "^0.4.15"
 
 [tool.poetry.group.dev.dependencies]
 # dependencies for linting, style checking, and unit testing
-black = {version = ">=24.4.2"}
 mypy = ">=1.7.0"
 pytest = ">=7.4.0"
 pytest-cov = ">=2.8.1"

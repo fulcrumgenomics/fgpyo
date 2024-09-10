@@ -68,6 +68,23 @@ StopIteration
 
 [`PeekableIterator`][fgpyo.collections.PeekableIterator]'s constructor supports creation from
 iterable objects as well as iterators.
+
+## Mixins to support sub-classed dataclasses
+
+It is commonly useful to construct a subclassed dataclass from an instance of its parent.
+
+```python
+>>> @dataclass
+... class MyData:
+...     foo: str
+...     bar: int
+...
+>>> @dataclass
+... class MySubData(MyData, DataSubclassMixin):
+...     baz: float
+...
+>>> data = MyData(foo="hello", bar=42)
+>>> subdata = MySubData.from_parent(data, baz=0.0)
 """
 
 import sys

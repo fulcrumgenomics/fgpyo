@@ -203,7 +203,7 @@ class DataSubclassMixin:
     """
 
     @classmethod
-    def from_parent(cls, parent: DataclassInstance, **kwargs: Any) -> DataclassInstance:
+    def from_parent(cls, parent: DataclassInstance, /, **kwargs: Any) -> DataclassInstance:
         """
         Construct a subclass instance from an instance of its parent.
 

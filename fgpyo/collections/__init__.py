@@ -71,6 +71,7 @@ iterable objects as well as iterators.
 """
 
 import sys
+from dataclasses import fields
 from operator import le
 from typing import Any
 from typing import Callable
@@ -82,6 +83,8 @@ from typing import Protocol
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
+
+from fgpyo.util.inspect import DataclassInstance
 
 if sys.version_info[:2] >= (3, 10):
     from itertools import pairwise as _pairwise
@@ -192,3 +195,27 @@ def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
             comparable.
     """
     return all(map(lambda pair: le(*pair), _pairwise(iterable)))
+
+
+class DataSubclassMixin:
+    """
+    Support construction from an instance of a sub-classed dataclass's parent.
+    """
+
+    @classmethod
+    def from_parent(cls, parent: DataclassInstance, **kwargs: Any) -> DataclassInstance:
+        """
+        Construct a subclass instance from an instance of its parent.
+
+        Args:
+            parent: An instance of the parent dataclass.
+
+        Returns:
+            An instance of the subclass, with the same fields as the parent.
+        """
+        if not issubclass(cls, type(parent)):
+            raise TypeError(f"{cls.__name__} must be a subclass of {type(parent).__name__}")
+
+        parent_fields = {field.name: getattr(parent, field.name) for field in fields(parent)}
+
+        return cls(**parent_fields, **kwargs)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from fgpyo.util.dataclasses import DataSubclassMixin
+from fgpyo.collections import DataSubclassMixin
 
 
 @dataclass

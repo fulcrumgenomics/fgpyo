@@ -547,7 +547,7 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
-    def get_query_alignment_offsets(self, reverse: bool = False) -> Optional[range]:
+    def query_alignment_offsets(self, reverse: bool = False) -> Optional[range]:
         """Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
         The resulting range will contain the range of positions in the SEQ string for the bases
         that are aligned. If no bases are aligned, the return value will be None.

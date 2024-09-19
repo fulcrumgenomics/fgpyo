@@ -549,15 +549,16 @@ class Cigar:
 
     def get_alignment_offsets(self, reverse: bool = False) -> Tuple[int, int]:
         """
-                Get the starting and ending offset for the alignment based on the CIGAR string.
+        Get the starting and ending offsets for the alignment based on the CIGAR string.
 
-                Args:
-                    reverse: Whether to count from the end of the read sequence.
-                        Default is False, which counts from the beginning of the read sequence.
+        Args:
+            reverse: If True, count from the end of the read sequence.
+                Otherwise (default behavior), count from the beginning of the read sequence.
 
-                Returns: Tuple[int, int] The start and end of the _aligned part_ of the read.
-                    0-based, open-ended offsets (to the read sequence.)
-                    If 'reverse' is True, the offsets count from the end of the read sequence.
+        Returns: 
+            A tuple (start, end), defining the start and end offsets of the _aligned part_ of the read.
+            These offsets are 0-based and open-ended, with respect to the beginning of the read sequence.
+            (If 'reverse' is True, the offsets are with respect to the end of the read sequence.)
 
         # TODO: FIGURE OUT WHY the following three lines causes mkdocs to fail
         # If the Cigar contains no alignment operators that consume sequence bases, or
@@ -571,11 +572,14 @@ class Cigar:
         elements = self.elements if not reverse else reversed(self.elements)
         for cig_el in elements:
             if cig_el.operator.is_clipping and not alignment_began:
+                # We are in the clipping operators preceding the alignment
                 start_offset += cig_el.length_on_query
                 end_offset += cig_el.length_on_query
             elif cig_el.operator.is_clipping:
+                # We have exited the alignment and are in the clipping operators after the alignment
                 break
             else:
+                # We are within the alignment
                 alignment_began = True
                 end_offset += cig_el.length_on_query
 

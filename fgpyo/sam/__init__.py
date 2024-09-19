@@ -368,7 +368,7 @@ class CigarOp(enum.Enum):
         code (int): The `~pysam` cigar operator code.
         character (int): The single character cigar operator.
         consumes_query (bool): True if this operator consumes query bases, False otherwise.
-        consumes_target (bool): True if this operator consumes target bases, False otherwise.
+        consumes_reference (bool): True if this operator consumes reference bases, False otherwise.
     """
 
     M = (0, "M", True, True)  #: Match or Mismatch the reference
@@ -546,6 +546,40 @@ class Cigar:
     def length_on_target(self) -> int:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
+
+    def get_alignment_offsets(self, reverse: bool = False) -> Tuple[int, int]:
+        """
+                Get the starting and ending offset for the alignment based on the CIGAR string.
+
+                Args:
+                    reverse: Whether to count from the end of the read sequence.
+                        Default is False, which counts from the beginning of the read sequence.
+
+                Returns: Tuple[int, int] The start and end of the _aligned part_ of the read.
+                    0-based, open-ended offsets (to the read sequence.)
+                    If 'reverse' is True, the offsets count from the end of the read sequence.
+
+        # TODO: FIGURE OUT WHY the following three lines causes mkdocs to fail
+        # If the Cigar contains no alignment operators that consume sequence bases, or
+        # only clipping operators, the start and end offsets will be the same value (indicating
+        # an empty region).
+        """
+        start_offset: int = 0
+        end_offset: int = 0
+        cig_el: CigarElement
+        alignment_began = False
+        elements = self.elements if not reverse else reversed(self.elements)
+        for cig_el in elements:
+            if cig_el.operator.is_clipping and not alignment_began:
+                start_offset += cig_el.length_on_query
+                end_offset += cig_el.length_on_query
+            elif cig_el.operator.is_clipping:
+                break
+            else:
+                alignment_began = True
+                end_offset += cig_el.length_on_query
+
+        return start_offset, end_offset
 
     def __getitem__(
         self, index: Union[int, slice]

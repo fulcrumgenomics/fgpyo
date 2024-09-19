@@ -548,10 +548,9 @@ class Cigar:
         return sum([elem.length_on_target for elem in self.elements])
 
     def get_query_alignment_offsets(self, reverse: bool = False) -> Optional[range]:
-        """
-        Get the 0-based, end-exclusive positions of the first and last aligned base in the query.
-        The resulting range will contain the range of positions in the SEQ string for the bases t
-        hat are aligned. If no bases are aligned, the return value will be None.
+        """Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
+        The resulting range will contain the range of positions in the SEQ string for the bases
+        that are aligned. If no bases are aligned, the return value will be None.
 
         Args:
             reverse: If True, count from the end of the query. i.e. find the offsets
@@ -560,12 +559,11 @@ class Cigar:
 
         Returns:
             A range, defining the start and stop offsets of the aligned part
-            of the query. These offsets are 0-based and open-ended, with respect to the
-            beginning of the query. (If 'reverse' is True, the offsets are with
-            respect to the reversed query.)
-            If no bases are aligned, the return value will be None.
+                of the query. These offsets are 0-based and open-ended, with respect to the
+                beginning of the query. (If 'reverse' is True, the offsets are with
+                respect to the reversed query.)
+                If no bases are aligned, the return value will be None.
         """
-        # breaking the build
         start_offset: int = 0
         end_offset: int = 0
         element: CigarElement

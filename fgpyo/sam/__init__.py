@@ -368,7 +368,7 @@ class CigarOp(enum.Enum):
         code (int): The `~pysam` cigar operator code.
         character (int): The single character cigar operator.
         consumes_query (bool): True if this operator consumes query bases, False otherwise.
-        consumes_reference (bool): True if this operator consumes reference bases, False otherwise.
+        consumes_target (bool): True if this operator consumes target bases, False otherwise.
     """
 
     M = (0, "M", True, True)  #: Match or Mismatch the reference
@@ -547,27 +547,24 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
-    def get_alignment_offsets(self, reverse: bool = False) -> Tuple[int, int]:
+    def get_query_alignment_offsets(self, reverse: bool = False) -> Optional[range]:
         """
-            Get the starting and ending offsets for the alignment based on the CIGAR string.
+        Get the 0-based, end-exclusive positions of the first and last aligned base in the query.
+        The resulting range will contain the range of positions in the SEQ string for the bases t
+        hat are aligned. If no bases are aligned, the return value will be None.
 
-            Args:
-                reverse: If True, count from the end of the read sequence.
-                    Otherwise (default behavior), count from the beginning of the read sequence.
+        Args:
+            reverse: If True, count from the end of the query. i.e. find the offsets
+                using the reversed elements of the cigar.
 
-            Returns:
-                A tuple (start, end), defining the start and end offsets of the aligned part
-                of the read. These offsets are 0-based and open-ended, with respect to the
-                beginning of the read sequence. (If 'reverse' is True, the offsets are with
-                respect to the end of the read sequence.)
-                If the Cigar contains no alignment operators that consume sequence bases, or
-                only clipping operators, the start and end offsets will be the same value
-                (indicating an empty region). This shared value will be the offset to the first
-                base consumed by a non-clipping operator or the length of the read sequence if
-                there is no such base.
 
-        #
-        """  # TODO: figure out how to remove the '#' from the documentation above without
+        Returns:
+            A range, defining the start and stop offsets of the aligned part
+            of the query. These offsets are 0-based and open-ended, with respect to the
+            beginning of the query. (If 'reverse' is True, the offsets are with
+            respect to the reversed query.)
+            If no bases are aligned, the return value will be None.
+        """
         # breaking the build
         start_offset: int = 0
         end_offset: int = 0
@@ -577,6 +574,7 @@ class Cigar:
         for element in elements:
             if element.operator.is_clipping and not alignment_began:
                 # We are in the clipping operators preceding the alignment
+                # Note: hardclips have length-on-query=0
                 start_offset += element.length_on_query
                 end_offset += element.length_on_query
             elif not element.operator.is_clipping:
@@ -587,7 +585,10 @@ class Cigar:
                 # We have exited the alignment and are in the clipping operators after the alignment
                 break
 
-        return start_offset, end_offset
+        ret = range(start_offset, end_offset)
+        if not alignment_began or len(ret) == 0:
+            return None
+        return ret
 
     def __getitem__(
         self, index: Union[int, slice]

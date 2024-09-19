@@ -549,39 +549,43 @@ class Cigar:
 
     def get_alignment_offsets(self, reverse: bool = False) -> Tuple[int, int]:
         """
-        Get the starting and ending offsets for the alignment based on the CIGAR string.
+            Get the starting and ending offsets for the alignment based on the CIGAR string.
 
-        Args:
-            reverse: If True, count from the end of the read sequence.
-                Otherwise (default behavior), count from the beginning of the read sequence.
+            Args:
+                reverse: If True, count from the end of the read sequence.
+                    Otherwise (default behavior), count from the beginning of the read sequence.
 
-        Returns: 
-            A tuple (start, end), defining the start and end offsets of the _aligned part_ of the read.
-            These offsets are 0-based and open-ended, with respect to the beginning of the read sequence.
-            (If 'reverse' is True, the offsets are with respect to the end of the read sequence.)
+            Returns:
+                A tuple (start, end), defining the start and end offsets of the aligned part
+                of the read. These offsets are 0-based and open-ended, with respect to the
+                beginning of the read sequence. (If 'reverse' is True, the offsets are with
+                respect to the end of the read sequence.)
+                If the Cigar contains no alignment operators that consume sequence bases, or
+                only clipping operators, the start and end offsets will be the same value
+                (indicating an empty region). This shared value will be the offset to the first
+                base consumed by a non-clipping operator or the length of the read sequence if
+                there is no such base.
 
-        # TODO: FIGURE OUT WHY the following three lines causes mkdocs to fail
-        # If the Cigar contains no alignment operators that consume sequence bases, or
-        # only clipping operators, the start and end offsets will be the same value (indicating
-        # an empty region).
-        """
+        #
+        """  # TODO: figure out how to remove the '#' from the documentation above without
+        # breaking the build
         start_offset: int = 0
         end_offset: int = 0
-        cig_el: CigarElement
+        element: CigarElement
         alignment_began = False
         elements = self.elements if not reverse else reversed(self.elements)
-        for cig_el in elements:
-            if cig_el.operator.is_clipping and not alignment_began:
+        for element in elements:
+            if element.operator.is_clipping and not alignment_began:
                 # We are in the clipping operators preceding the alignment
-                start_offset += cig_el.length_on_query
-                end_offset += cig_el.length_on_query
-            elif cig_el.operator.is_clipping:
-                # We have exited the alignment and are in the clipping operators after the alignment
-                break
-            else:
+                start_offset += element.length_on_query
+                end_offset += element.length_on_query
+            elif not element.operator.is_clipping:
                 # We are within the alignment
                 alignment_began = True
-                end_offset += cig_el.length_on_query
+                end_offset += element.length_on_query
+            else:
+                # We have exited the alignment and are in the clipping operators after the alignment
+                break
 
         return start_offset, end_offset
 

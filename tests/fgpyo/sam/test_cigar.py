@@ -54,7 +54,7 @@ def test_bad_index_raises_type_error(index: int) -> None:
 )
 def test_get_alignments(cigar_string: str, start: int, end: int) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
-    assert Cigar.get_alignment_offsets(cig, False) == (start, end)
+    assert Cigar.get_alignment_offsets(cig, reverse=False) == (start, end)
 
 
 @pytest.mark.parametrize(

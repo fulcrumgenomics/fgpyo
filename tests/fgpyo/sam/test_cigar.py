@@ -78,4 +78,4 @@ def test_get_alignments(cigar_string: str, start: int, end: int) -> None:
 )
 def test_get_alignments_reversed(cigar_string: str, start: int, end: int) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
-    assert Cigar.get_alignment_offsets(cig, True) == (start, end)
+    assert Cigar.get_alignment_offsets(cig, reverse=True) == (start, end)

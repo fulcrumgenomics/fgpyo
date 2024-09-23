@@ -396,7 +396,7 @@ class RangeOfBases:
         """The length of the range"""
         return self.stop - self.start
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[int]:
         """enables unpacking of start and stop into a tuple"""
         return (self.start, self.stop).__iter__()
 

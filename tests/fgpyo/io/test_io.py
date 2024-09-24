@@ -11,6 +11,7 @@ from typing import List
 import pytest
 
 import fgpyo.io as fio
+from fgpyo.io import assert_fasta_indexed
 from fgpyo.io import assert_path_is_writable
 from fgpyo.io import assert_path_is_writeable
 
@@ -141,3 +142,24 @@ def test_read_and_write_lines(
         read_back = fio.read_lines(path=Path(read_file.name))
         assert next(read_back) == list_to_write[0]
         assert int(next(read_back)) == list_to_write[1]
+
+
+@pytest.mark.parametrize("dictionary", [True, False])
+@pytest.mark.parametrize("bwa", [True, False])
+def test_assert_fasta_indexed(tmp_path: Path, dictionary: bool, bwa: bool) -> None:
+    """assert_fasta_indexed should verify the presence of the expected index files."""
+    fasta = tmp_path / "test.fa"
+    fasta.touch()
+
+    (tmp_path / "test.fa.fai").touch()
+
+    if dictionary:
+        (tmp_path / "test.fa.dict").touch()
+    if bwa:
+        (tmp_path / "test.fa.amb").touch()
+        (tmp_path / "test.fa.ann").touch()
+        (tmp_path / "test.fa.bwt").touch()
+        (tmp_path / "test.fa.pac").touch()
+        (tmp_path / "test.fa.sa").touch()
+
+    assert_fasta_indexed(fasta, dictionary=dictionary, bwa=bwa)

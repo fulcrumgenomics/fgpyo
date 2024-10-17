@@ -299,6 +299,7 @@ class Metric(ABC, Generic[MetricType]):
             values: Zero or more metrics.
 
         """
+        # TODO: open a MetricWriter here instead
         with io.to_writer(path) as writer:
             writer.write("\t".join(cls.header()))
             writer.write("\n")
@@ -434,6 +435,7 @@ def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
 
     try:
         import attr
+
         is_metric_cls = is_metric_cls and (dataclasses.is_dataclass(cls) or attr.has(cls))
     except ImportError:
         is_metric_cls = is_metric_cls and dataclasses.is_dataclass(cls)
@@ -529,7 +531,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         """Close the underlying file handle."""
         self._fout.close()
 
-    def write(self, metric: Metric) -> None:
+    def write(self, metric: MetricType) -> None:
         """
         Write a single Metric instance to file.
 
@@ -545,8 +547,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             TypeError: If the provided `metric` is not an instance of the Metric class used to
                 parametrize the writer.
         """
-        if not isinstance(metric, self._metric_class):
-            raise TypeError(f"Must provide instances of {self._metric_class.__name__}")
 
         # Serialize the Metric to a dict for writing by the underlying `DictWriter`
         row = {fieldname: val for fieldname, val in metric.formatted_items()}
@@ -556,7 +556,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
         self._writer.writerow(row)
 
-    def writeall(self, metrics: Iterable[Metric]) -> None:
+    def writeall(self, metrics: Iterable[MetricType]) -> None:
         """
         Write multiple Metric instances to file.
 

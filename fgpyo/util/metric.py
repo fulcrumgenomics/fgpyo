@@ -456,7 +456,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
     ) -> None:
         """
         Args:
-            path: Path to the file to write.
+            filename: Path to the file to write.
             metric_class: Metric class.
             append: If `True`, the file will be appended to. Otherwise, the specified file will be
                 overwritten.
@@ -541,7 +541,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
         Raises:
             TypeError: If the provided `metric` is not an instance of the Metric class used to
-            parametrize the writer.
+                parametrize the writer.
         """
         if not isinstance(metric, self._metric_class):
             raise TypeError(f"Must provide instances of {self._metric_class.__name__}")

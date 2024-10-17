@@ -132,6 +132,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -183,6 +184,10 @@ class Metric(ABC, Generic[MetricType]):
         """An iterator over attribute values in the same order as the header."""
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield getattr(self, field.name)
+
+    def items(self) -> Iterator[Tuple[str, Any]]:
+        for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
+            yield (field.name, getattr(self, field.name))
 
     def formatted_values(self) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
@@ -726,9 +731,7 @@ def _assert_fieldnames_are_metric_attributes(
     """
     _assert_is_metric_class(metric_class)
 
-    invalid_fieldnames = {
-        f for f in specified_fieldnames if f not in _get_fieldnames(metric_class)
-    }
+    invalid_fieldnames = {f for f in specified_fieldnames if f not in _get_fieldnames(metric_class)}
 
     if len(invalid_fieldnames) > 0:
         raise ValueError(

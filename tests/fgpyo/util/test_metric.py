@@ -30,9 +30,9 @@ import pytest
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
+from fgpyo.util.metric import MetricWriter
 from fgpyo.util.metric import _assert_fieldnames_are_metric_attributes
 from fgpyo.util.metric import _assert_file_header_matches_metric
-from fgpyo.util.metric import MetricWriter
 from fgpyo.util.metric import _assert_is_metric_class
 from fgpyo.util.metric import _get_fieldnames
 from fgpyo.util.metric import _is_attrs_instance
@@ -398,6 +398,13 @@ def test_metric_header(data_and_classes: DataBuilder) -> None:
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_values(data_and_classes: DataBuilder) -> None:
     assert list(data_and_classes.Person(name="name", age=42).values()) == ["name", 42]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_items(data_and_classes: DataBuilder) -> None:
+    """`metric.items()` should return a list of (key, value) tuples."""
+    items = list(data_and_classes.Person(name="Fulcrum", age=9).items())
+    assert items == [("name", "Fulcrum"), ("age", 9)]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

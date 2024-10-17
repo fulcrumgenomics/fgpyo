@@ -126,10 +126,10 @@ def test_non_data_class_fails() -> None:
         x: int
 
     with pytest.raises(TypeError):
-        get_fields_dict(NonDataClass)  # type: ignore
+        get_fields_dict(NonDataClass)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError):
-        get_fields(NonDataClass)  # type: ignore
+        get_fields(NonDataClass)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError):
         attr_from(cls=NonDataClass, kwargs={"x": "1"}, parsers={int: int})

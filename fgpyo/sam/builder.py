@@ -596,12 +596,12 @@ class SamBuilder:
             file_handle.close()
             if self._sort_order == SamOrder.QueryName:
                 # Ignore type hints for now until we have wrappers to use here.
-                pysam.sort("-n", *samtools_sort_args)  # type: ignore
+                pysam.sort("-n", *samtools_sort_args)  # type: ignore[attr-defined]
             elif self._sort_order == SamOrder.Coordinate:
                 # Ignore type hints for now until we have wrappers to use here.
                 if index:
                     samtools_sort_args.insert(0, "--write-index")
-                pysam.sort(*samtools_sort_args)  # type: ignore
+                pysam.sort(*samtools_sort_args)  # type: ignore[attr-defined]
 
         return path
 

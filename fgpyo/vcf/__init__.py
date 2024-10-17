@@ -83,7 +83,7 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
         with fgpyo.io.suppress_stderr():
             # to avoid spamming log about index older than vcf, redirect stderr to /dev/null: only
             # when first opening the file
-            _reader = VariantFile(path, mode="r")  # type: ignore
+            _reader = VariantFile(path, mode="r")  # type: ignore[arg-type]
         # now stderr is back, so any later stderr messages will go through
         yield _reader
         _reader.close()

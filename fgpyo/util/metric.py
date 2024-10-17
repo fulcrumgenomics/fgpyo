@@ -142,8 +142,6 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
-import attr
-
 from fgpyo import io
 from fgpyo.util import inspect
 
@@ -432,11 +430,15 @@ class Metric(ABC, Generic[MetricType]):
 def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
     """True if the given class is a Metric."""
 
-    return (
-        isclass(cls)
-        and issubclass(cls, Metric)
-        and (dataclasses.is_dataclass(cls) or attr.has(cls))
-    )
+    is_metric_cls: bool = isclass(cls) and issubclass(cls, Metric)
+
+    try:
+        import attr
+        is_metric_cls = is_metric_cls and (dataclasses.is_dataclass(cls) or attr.has(cls))
+    except ImportError:
+        is_metric_cls = is_metric_cls and dataclasses.is_dataclass(cls)
+
+    return is_metric_cls
 
 
 class MetricWriter(Generic[MetricType], AbstractContextManager):

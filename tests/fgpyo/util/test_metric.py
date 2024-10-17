@@ -769,6 +769,7 @@ def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
     """
     _assert_is_metric_class(data_and_classes.DummyMetric)
 
+
 def test_assert_is_metric_class_raises_if_not_decorated() -> None:
     """
     Test that we raise an error if the provided type is a Metric subclass but not decorated as a
@@ -821,7 +822,10 @@ def test_assert_fieldnames_are_metric_attributes(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """Should not raise an error if the provided fieldnames are all attributes of the provided metric."""
+    """
+    Should not raise an error if the provided fieldnames are all attributes of
+    the provided metric.
+    """
     _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

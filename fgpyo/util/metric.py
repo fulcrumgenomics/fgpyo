@@ -397,7 +397,8 @@ class Metric(ABC, Generic[MetricType]):
 
         The first row after any commented or empty lines will be used as the fieldnames.
 
-        Lines preceding the fieldnames will be returned in the `preamble`.
+        Lines preceding the fieldnames will be returned in the `preamble`. Leading and trailing
+        whitespace are removed and ignored.
 
         Args:
             reader: An open, readable file handle.

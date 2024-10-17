@@ -178,9 +178,10 @@ class Metric(ABC, Generic[MetricType]):
     [`format_value()`][fgpyo.util.metric.Metric.format_value].
     """
 
-    def keys(self) -> Iterator[str]:
+    @classmethod
+    def keys(cls) -> Iterator[str]:
         """An iterator over field names in the same order as the header."""
-        for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
+        for field in inspect.get_fields(cls):  # type: ignore[arg-type]
             yield field.name
 
     def values(self) -> Iterator[Any]:
@@ -566,26 +567,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             self.write(metric)
 
 
-def _get_fieldnames(metric_class: Type[Metric]) -> List[str]:
-    """
-    Get the fieldnames of the specified metric class.
-
-    Args:
-        metric_class: A Metric class.
-
-    Returns:
-        A list of fieldnames.
-    """
-    _assert_is_metric_class(metric_class)
-
-    if dataclasses.is_dataclass(metric_class):
-        return [f.name for f in dataclasses.fields(metric_class)]
-    elif attr.has(metric_class):
-        return [f.name for f in attr.fields(metric_class)]
-    else:
-        assert False, "Unreachable"
-
-
 def _validate_output_fieldnames(
     metric_class: Type[MetricType],
     include_fields: Optional[List[str]] = None,
@@ -612,12 +593,12 @@ def _validate_output_fieldnames(
         )
     elif exclude_fields is not None:
         _assert_fieldnames_are_metric_attributes(exclude_fields, metric_class)
-        output_fieldnames = [f for f in _get_fieldnames(metric_class) if f not in exclude_fields]
+        output_fieldnames = [f for f in metric_class.keys() if f not in exclude_fields]
     elif include_fields is not None:
         _assert_fieldnames_are_metric_attributes(include_fields, metric_class)
         output_fieldnames = include_fields
     else:
-        output_fieldnames = _get_fieldnames(metric_class)
+        output_fieldnames = list(metric_class.keys())
 
     return output_fieldnames
 
@@ -651,7 +632,7 @@ def _assert_file_header_matches_metric(
         raise ValueError(f"Could not find a header in the provided file: {path}")
 
     fieldnames: List[str] = (
-        ordered_fieldnames if ordered_fieldnames is not None else _get_fieldnames(metric_class)
+        ordered_fieldnames if ordered_fieldnames is not None else list(metric_class.keys())
     )
 
     if header.fieldnames != fieldnames:
@@ -676,7 +657,7 @@ def _assert_fieldnames_are_metric_attributes(
     """
     _assert_is_metric_class(metric_class)
 
-    invalid_fieldnames = {f for f in specified_fieldnames if f not in _get_fieldnames(metric_class)}
+    invalid_fieldnames = {f for f in specified_fieldnames if f not in list(metric_class.keys())}
 
     if len(invalid_fieldnames) > 0:
         raise ValueError(

@@ -34,7 +34,6 @@ from fgpyo.util.metric import MetricWriter
 from fgpyo.util.metric import _assert_fieldnames_are_metric_attributes
 from fgpyo.util.metric import _assert_file_header_matches_metric
 from fgpyo.util.metric import _assert_is_metric_class
-from fgpyo.util.metric import _get_fieldnames
 
 
 class EnumTest(enum.Enum):
@@ -746,25 +745,6 @@ def test_writer_exclude_fields(tmp_path: Path) -> None:
         assert next(f) == "def\n"
         with pytest.raises(StopIteration):
             next(f)
-
-
-@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
-def test_get_fieldnames(data_and_classes: DataBuilder) -> None:
-    """Test we can get the fieldnames of a metric."""
-
-    assert _get_fieldnames(data_and_classes.Person) == ["name", "age"]
-
-
-def test_fieldnames_raises_if_not_a_metric() -> None:
-    """Test we raise if we get a non-metric."""
-
-    @dataclass
-    class BadMetric:
-        foo: str
-        bar: int
-
-    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
-        _get_fieldnames(BadMetric)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

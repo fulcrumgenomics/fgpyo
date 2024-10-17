@@ -300,14 +300,8 @@ class Metric(ABC, Generic[MetricType]):
 
         """
         # TODO: open a MetricWriter here instead
-        with io.to_writer(path) as writer:
-            writer.write("\t".join(cls.header()))
-            writer.write("\n")
-            for value in values:
-                # Important, don't recurse on nested attr classes, instead let implementing class
-                # implement format_value.
-                writer.write("\t".join(cls.format_value(item) for item in value.values()))
-                writer.write("\n")
+        with MetricWriter[MetricType](path, metric_class=values[0].__class__) as writer:
+            writer.writeall(values)
 
     @classmethod
     def header(cls) -> List[str]:

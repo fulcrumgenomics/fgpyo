@@ -200,7 +200,7 @@ class Metric(ABC, Generic[MetricType]):
         """An iterator over formatted attribute values in the same order as the header."""
         return [self.format_value(value) for value in self.values()]
 
-    def formatted_items(self) -> List[str]:
+    def formatted_items(self) -> List[Tuple[str, str]]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [(key, self.format_value(value)) for key, value in self.items()]
 

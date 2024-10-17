@@ -414,7 +414,7 @@ class Metric(ABC, Generic[MetricType]):
         preamble: List[str] = []
 
         for line in reader:
-            if line.startswith(comment_prefix) or line.strip() == "":
+            if line.strip().startswith(comment_prefix) or line.strip() == "":
                 preamble.append(line.strip())
             else:
                 break

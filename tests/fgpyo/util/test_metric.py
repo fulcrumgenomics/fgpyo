@@ -26,6 +26,7 @@ import dataclasses
 
 import attr
 import pytest
+from pytest import CaptureFixture
 
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
@@ -760,6 +761,15 @@ def test_writer_exclude_fields(tmp_path: Path) -> None:
         assert next(f) == "def\n"
         with pytest.raises(StopIteration):
             next(f)
+
+
+def test_writer_raises_if_fifo(capsys: CaptureFixture) -> None:
+    """MetricWriter should raise an error if we try to append to a FIFO."""
+    with pytest.raises(
+        ValueError, match="Cannot append to stdout, stderr, or other named pipe or stream"
+    ):
+        with capsys.disabled():
+            MetricWriter(filename="/dev/stdout", metric_class=FakeMetric, append=True)
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

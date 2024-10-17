@@ -473,12 +473,16 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             AssertionError: If `append=True` and the provided file is not readable. (When appending,
                 we check to ensure that the header matches the specified metric class. The file must
                 be readable to get the header.)
+            ValueError: If `append=True` and the provided file is a FIFO (named pipe).
             ValueError: If `append=True` and the provided file does not include a header.
             ValueError: If `append=True` and the header of the provided file does not match the
                 specified metric class and the specified include/exclude fields.
         """
 
         filepath: Path = Path(filename)
+        if (filepath.is_fifo() or filepath.is_char_device()) and append:
+            raise ValueError("Cannot append to stdout, stderr, or other named pipe or stream")
+
         ordered_fieldnames: List[str] = _validate_and_generate_final_output_fieldnames(
             metric_class=metric_class,
             include_fields=include_fields,

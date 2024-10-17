@@ -146,8 +146,6 @@ import attr
 
 from fgpyo import io
 from fgpyo.util import inspect
-from fgpyo.util.inspect import AttrsInstance
-from fgpyo.util.inspect import DataclassInstance
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
@@ -423,68 +421,6 @@ def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
         and issubclass(cls, Metric)
         and (dataclasses.is_dataclass(cls) or attr.has(cls))
     )
-
-
-def _is_dataclass_instance(metric: Metric) -> TypeGuard[DataclassInstance]:
-    """
-    Test if the given metric is a dataclass instance.
-
-    NB: `dataclasses.is_dataclass` returns True for both dataclass instances and class objects, and
-    we need to override the built-in function's `TypeGuard`.
-
-    Args:
-        metric: An instance of a Metric.
-
-    Returns:
-        True if the given metric is an instance of a dataclass-decorated Metric.
-        False otherwise.
-    """
-    return not isclass(metric) and dataclasses.is_dataclass(metric)
-
-
-def _is_attrs_instance(metric: Metric) -> TypeGuard[AttrsInstance]:
-    """
-    Test if the given metric is an attr.s instance.
-
-    NB: `attr.has` provides a type guard, but only on the class object - we want to narrow the type
-    of the metric instance, so we implement a guard here.
-
-    Args:
-        metric: An instance of a Metric.
-
-    Returns:
-        True if the given metric is an instance of an attr.s-decorated Metric.
-        False otherwise.
-    """
-    return not isclass(metric) and attr.has(metric.__class__)
-
-
-def asdict(metric: Metric) -> Dict[str, Any]:
-    """
-    Convert a Metric instance to a dictionary.
-
-    No formatting is performed on the values, and they are returned as contained (and typed) in the
-    underlying dataclass. Use `Metric.format_value` to format the values to string.
-
-    Args:
-        metric: An instance of a Metric.
-
-    Returns:
-        A dictionary representation of the given metric.
-
-    Raises:
-        TypeError: If the given metric is not an instance of a `dataclass` or `attr.s`-decorated
-        Metric.
-    """
-    if _is_dataclass_instance(metric):
-        return dataclasses.asdict(metric)
-    elif _is_attrs_instance(metric):
-        return attr.asdict(metric)
-    else:
-        raise TypeError(
-            "The provided metric is not an instance of a `dataclass` or `attr.s`-decorated Metric "
-            f"class: {metric.__class__}"
-        )
 
 
 class MetricWriter(Generic[MetricType], AbstractContextManager):

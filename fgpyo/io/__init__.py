@@ -184,15 +184,18 @@ def to_writer(path: Path, append: bool = False) -> TextIOWrapper:
         >>> writer.close()
 
     """
-    mode_prefix = "w"
-    if append:
-        mode_prefix = "a"
+    mode_prefix: str = "a" if append else "w"
 
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
         return TextIOWrapper(
             cast(IO[bytes], gzip.open(path, mode=mode_prefix + "b")), encoding="utf-8"
         )
     else:
+        # NB: the `cast` here is necessary because `path.open()` may return
+        # other types, depending on the specified `mode`.
+        # Within the scope of this function, `mode_prefix` is guaranteed to be
+        # either "w" or "a", both of which result in a `TextIOWrapper`, but
+        # mypy can't follow that logic.
         return cast(TextIOWrapper, path.open(mode=mode_prefix))
 
 

@@ -538,7 +538,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             raise TypeError(f"Must provide instances of {self._metric_class.__name__}")
 
         # Serialize the Metric to a dict for writing by the underlying `DictWriter`
-        row = {fieldname: self._metric_class.format_value(val) for fieldname, val in metric.items()}
+        row = {fieldname: val for fieldname, val in metric.formatted_items()}
 
         # Filter and/or re-order output fields if necessary
         row = {fieldname: row[fieldname] for fieldname in self._fieldnames}

@@ -767,11 +767,7 @@ def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
     """
     Test that we can validate if a class is a Metric.
     """
-    try:
-        _assert_is_metric_class(data_and_classes.DummyMetric)
-    except TypeError:
-        raise AssertionError("Failed to validate a valid Metric") from None
-
+    _assert_is_metric_class(data_and_classes.DummyMetric)
 
 def test_assert_is_metric_class_raises_if_not_decorated() -> None:
     """

@@ -479,7 +479,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         """
 
         filepath: Path = Path(filename)
-        ordered_fieldnames: List[str] = _validate_output_fieldnames(
+        ordered_fieldnames: List[str] = _validate_and_generate_final_output_fieldnames(
             metric_class=metric_class,
             include_fields=include_fields,
             exclude_fields=exclude_fields,
@@ -566,7 +566,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             self.write(metric)
 
 
-def _validate_output_fieldnames(
+def _validate_and_generate_final_output_fieldnames(
     metric_class: Type[MetricType],
     include_fields: Optional[List[str]] = None,
     exclude_fields: Optional[List[str]] = None,

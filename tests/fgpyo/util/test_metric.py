@@ -566,6 +566,21 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
     assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]
 
 
+def test_read_header_can_read_empty(tmp_path: Path) -> None:
+    """
+    If the input file is empty, we should get an empty header.
+    """
+
+    metrics_path = tmp_path / "empty"
+    metrics_path.touch()
+
+    with metrics_path.open("r") as metrics_file:
+        header = Metric._read_header(metrics_file, comment_prefix="#")
+
+    assert header.preamble == []
+    assert header.fieldnames == []
+
+
 @dataclass
 class FakeMetric(Metric["FakeMetric"]):
     foo: str
@@ -643,7 +658,7 @@ def test_writer_append_raises_if_empty(tmp_path: Path) -> None:
     fpath = tmp_path / "test.txt"
     fpath.touch()
 
-    with pytest.raises(ValueError, match=f"File {fpath} did not contain a header line"):
+    with pytest.raises(ValueError, match="Could not find a header in the provided file"):
         with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
             writer.write(FakeMetric(foo="abc", bar=1))
 

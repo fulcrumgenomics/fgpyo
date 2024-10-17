@@ -415,13 +415,15 @@ class Metric(ABC, Generic[MetricType]):
 
         for line in reader:
             if line.strip().startswith(comment_prefix) or line.strip() == "":
+                # Skip any commented or empty lines before the header
                 preamble.append(line.strip())
             else:
+                # The first line with any other content is assumed to be the header
+                fieldnames = line.strip().split(delimiter)
                 break
         else:
-            raise ValueError(f"File {reader.name} did not contain a header line.")
-
-        fieldnames = line.strip().split(delimiter)
+            # If the file was empty, kick back an empty header
+            fieldnames = []
 
         return MetricFileHeader(preamble=preamble, fieldnames=fieldnames)
 
@@ -628,7 +630,7 @@ def _assert_file_header_matches_metric(
     with path.open("r") as fin:
         header: MetricFileHeader = metric_class._read_header(fin, delimiter=delimiter)
 
-    if header is None:
+    if header.fieldnames == []:
         raise ValueError(f"Could not find a header in the provided file: {path}")
 
     fieldnames: List[str] = (

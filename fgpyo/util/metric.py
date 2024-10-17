@@ -184,12 +184,19 @@ class Metric(ABC, Generic[MetricType]):
             yield getattr(self, field.name)
 
     def items(self) -> Iterator[Tuple[str, Any]]:
+        """
+        An iterator over field names and their corresponding values in the same order as the header.
+        """
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield (field.name, getattr(self, field.name))
 
     def formatted_values(self) -> List[str]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [self.format_value(value) for value in self.values()]
+
+    def formatted_items(self) -> List[str]:
+        """An iterator over formatted attribute values in the same order as the header."""
+        return [(key, self.format_value(value)) for key, value in self.items()]
 
     @classmethod
     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:

@@ -416,6 +416,12 @@ def test_metric_formatted_values(data_and_classes: DataBuilder) -> None:
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_formatted_items(data_and_classes: DataBuilder) -> None:
+    items = data_and_classes.Person(name="Fulcrum", age=9).formatted_items()
+    assert items == [("name", "Fulcrum"), ("age", "9")]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_custom_parser(data_and_classes: DataBuilder) -> None:
     NamedPerson: TypeAlias = data_and_classes.NamedPerson
     assert NamedPerson.parse(fields=["john doe", "42"]) == (

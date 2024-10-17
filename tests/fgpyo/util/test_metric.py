@@ -32,6 +32,7 @@ from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
 from fgpyo.util.metric import _assert_fieldnames_are_metric_attributes
 from fgpyo.util.metric import _assert_file_header_matches_metric
+from fgpyo.util.metric import MetricWriter
 from fgpyo.util.metric import _assert_is_metric_class
 from fgpyo.util.metric import _get_fieldnames
 from fgpyo.util.metric import _is_attrs_instance
@@ -595,6 +596,187 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
         header = Metric._read_header(metrics_file, comment_prefix="#")
 
     assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]
+
+
+@dataclass
+class FakeMetric(Metric["FakeMetric"]):
+    foo: str
+    bar: int
+
+
+def test_writer(tmp_path: Path) -> None:
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(filename=fpath, append=False, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+        writer.write(FakeMetric(foo="def", bar=2))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_from_str(tmp_path: Path) -> None:
+    """Test that we can create a writer when `filename` is a `str`."""
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(filename=str(fpath), append=False, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_writeall(tmp_path: Path) -> None:
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(filename=fpath, append=False, metric_class=FakeMetric) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_append(tmp_path: Path) -> None:
+    """Test that we can append to a file."""
+    fpath = tmp_path / "test.txt"
+
+    with fpath.open("w") as fout:
+        fout.write("foo\tbar\n")
+
+    with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+        writer.write(FakeMetric(foo="def", bar=2))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_append_raises_if_empty(tmp_path: Path) -> None:
+    """Test that we raise an error if we try to append to an empty file."""
+    fpath = tmp_path / "test.txt"
+    fpath.touch()
+
+    with pytest.raises(ValueError, match=f"File {fpath} did not contain a header line"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_append_raises_if_no_header(tmp_path: Path) -> None:
+    """Test that we raise an error if we try to append to a file with no header."""
+    fpath = tmp_path / "test.txt"
+    with fpath.open("w") as fout:
+        fout.write("abc\t1\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_append_raises_if_header_does_not_match(tmp_path: Path) -> None:
+    """
+    Test that we raise an error if we try to append to a file whose header doesn't match our
+    dataclass.
+    """
+    fpath = tmp_path / "test.txt"
+
+    with fpath.open("w") as fout:
+        fout.write("foo\tbar\tbaz\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_include_fields(tmp_path: Path) -> None:
+    """Test that we can include only a subset of fields."""
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        include_fields=["foo"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\n"
+        assert next(f) == "abc\n"
+        assert next(f) == "def\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_include_fields_reorders(tmp_path: Path) -> None:
+    """Test that we can reorder the output fields."""
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        include_fields=["bar", "foo"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "bar\tfoo\n"
+        assert next(f) == "1\tabc\n"
+        assert next(f) == "2\tdef\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_exclude_fields(tmp_path: Path) -> None:
+    """Test that we can exclude fields from being written."""
+
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        exclude_fields=["bar"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\n"
+        assert next(f) == "abc\n"
+        assert next(f) == "def\n"
+        with pytest.raises(StopIteration):
+            next(f)
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

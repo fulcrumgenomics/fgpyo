@@ -825,14 +825,8 @@ def test_assert_fieldnames_are_metric_attributes(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """
-    Should not raise an error if the provided fieldnames are all attributes of the provided metric.
-    """
-    try:
-        _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
-    except Exception:
-        raise AssertionError("Fieldnames should be valid") from None
-
+    """Should not raise an error if the provided fieldnames are all attributes of the provided metric."""
+    _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 @pytest.mark.parametrize(

@@ -3,7 +3,7 @@
 function banner() {
     echo
     echo "================================================================================"
-    echo $*
+    echo "$*"
     echo "================================================================================"
     echo
 }
@@ -24,9 +24,9 @@ function run() {
     set -e
 
     if [[ $exit_code == 0 ]]; then
-        echo Passed $name: "[$cmd]"
+        echo Passed "$name": "[$cmd]"
     else
-        echo Failed $name: "[$cmd]"
+        echo Failed "$name": "[$cmd]"
         if [ -z "$failures" ]; then
             failures="$failures $name"
         else
@@ -35,11 +35,9 @@ function run() {
     fi
 }
 
-parent=$(cd $(dirname $0) && pwd -P)
-
 run "Style Checking" "ruff format fgpyo tests"
 run "Linting"        "ruff check --fix fgpyo tests"
-run "Type Checking"  "mypy fgpyo tests --config $parent/mypy.ini"
+run "Type Checking"  "mypy fgpyo tests --config pyproject.toml"
 run "Unit Tests"     "python -m pytest -vv -r sx tests"
 run "Make docs"      "mkdocs build --strict"
 

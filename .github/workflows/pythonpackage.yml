@@ -71,7 +71,7 @@ jobs:
     - name: Run mypy
       shell: bash
       run: |
-        poetry run mypy fgpyo tests --config=ci/mypy.ini
+        poetry run mypy fgpyo tests --config=pyproject.toml
 
     - name: Run pytest
       shell: bash

@@ -36,12 +36,13 @@ strenum = "^0.4.15"
 
 [tool.poetry.group.dev.dependencies]
 # dependencies for linting, style checking, and unit testing
-black = {version = ">=24.4.2"}
 mypy = ">=1.7.0"
 pytest = ">=7.4.0"
 pytest-cov = ">=2.8.1"
 ruff = "0.4.8"
 setuptools = ">=68.0.0"
+
+[tool.poetry.group.docs.dependencies]
 # dependencies for building docs 
 mkdocs-autorefs = { version = ">=0.5.0" }
 mkdocs-include-markdown-plugin = { version = ">=6.0.1" }
@@ -70,3 +71,19 @@ unfixable = ["B"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.mypy]
+python_version              = 3.8
+strict_optional             = false
+check_untyped_defs          = true
+disallow_incomplete_defs    = true
+disallow_untyped_calls      = true
+disallow_untyped_decorators = true
+disallow_untyped_defs       = true
+no_implicit_optional        = true
+warn_no_return              = true
+warn_redundant_casts        = true
+warn_return_any             = true
+warn_unreachable            = true
+warn_unused_configs         = true
+warn_unused_ignores         = true

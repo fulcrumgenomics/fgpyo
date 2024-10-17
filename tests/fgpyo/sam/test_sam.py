@@ -149,7 +149,7 @@ def test_sam_file_open_writing(
             path=fp.file,
             open_for_reading=False,
             file_type=file_type,
-            **kwargs,  # type: ignore
+            **kwargs,  # type: ignore[arg-type]
         ) as sam_writer:
             for r in expected_records:
                 sam_writer.write(r)

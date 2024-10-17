@@ -595,13 +595,10 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             raise TypeError(f"Must provide instances of {self._metric_class.__name__}")
 
         # Serialize the Metric to a dict for writing by the underlying `DictWriter`
-        row = asdict(metric)
+        row = {fieldname: self._metric_class.format_value(val) for fieldname, val in metric.items()}
 
         # Filter and/or re-order output fields if necessary
         row = {fieldname: row[fieldname] for fieldname in self._fieldnames}
-
-        # Format values
-        row = {fieldname: self._metric_class.format_value(val) for fieldname, val in row.items()}
 
         self._writer.writerow(row)
 

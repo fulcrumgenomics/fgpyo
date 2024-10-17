@@ -864,11 +864,7 @@ def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: Dat
     with metric_path.open("w") as metrics_file:
         metrics_file.write("name\tage\n")
 
-    try:
-        _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
-    except Exception:
-        raise AssertionError("File header should be valid") from None
-
+    _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 @pytest.mark.parametrize(

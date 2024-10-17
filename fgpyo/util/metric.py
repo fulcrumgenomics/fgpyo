@@ -488,7 +488,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         )
 
         _assert_is_metric_class(metric_class)
-        io.assert_path_is_writeable(filepath)
+        io.assert_path_is_writable(filepath)
         if append:
             io.assert_path_is_readable(filepath)
             _assert_file_header_matches_metric(

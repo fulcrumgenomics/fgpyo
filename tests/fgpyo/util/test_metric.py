@@ -393,6 +393,11 @@ def test_metric_header(data_and_classes: DataBuilder) -> None:
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_keys(data_and_classes: DataBuilder) -> None:
+    assert list(data_and_classes.Person(name="Fulcrum", age=9).keys()) == ["name", "age"]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_values(data_and_classes: DataBuilder) -> None:
     assert list(data_and_classes.Person(name="name", age=42).values()) == ["name", 42]
 

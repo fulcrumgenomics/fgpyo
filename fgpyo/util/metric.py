@@ -178,6 +178,11 @@ class Metric(ABC, Generic[MetricType]):
     [`format_value()`][fgpyo.util.metric.Metric.format_value].
     """
 
+    def keys(self) -> Iterator[str]:
+        """An iterator over field names in the same order as the header."""
+        for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
+            yield field.name
+
     def values(self) -> Iterator[Any]:
         """An iterator over attribute values in the same order as the header."""
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]

@@ -158,7 +158,6 @@ and slices):
 import enum
 import io
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -361,46 +360,6 @@ class _CigarOpUtil:
     }
 
 
-@dataclass(frozen=True)
-class RangeOfBases:
-    """A simple data class for holding offsets into a range of bases in a read.
-
-    Attributes:
-        start (int): The starting offset (0-based) into the range.
-        stop (int): The ending (excluded) offset into the range.
-
-    Properties:
-        slice: A slice of the range. can be used rto extract the aligned bases from a string.
-        range: The range of bases represented by this object. Can be used to obtain the indexes
-            into the aligned bases in the read.
-        __len__: The length of the range.
-        __iter__: Enables unpacking of start and stop into a tuple by return the iterator of
-            (start, stop)
-
-    """
-
-    start: int
-    stop: int
-
-    @property
-    def slice(self) -> slice:
-        """A slice of the range"""
-        return slice(self.start, self.stop)
-
-    @property
-    def range(self) -> range:
-        """The range of bases represented by this object"""
-        return range(self.start, self.stop)
-
-    def __len__(self) -> int:
-        """The length of the range"""
-        return self.stop - self.start
-
-    def __iter__(self) -> Iterable[int]:
-        """enables unpacking of start and stop into a tuple"""
-        return (self.start, self.stop).__iter__()
-
-
 @enum.unique
 class CigarOp(enum.Enum):
     """Enumeration of operators that can appear in a Cigar string.
@@ -588,28 +547,28 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
-    def query_alignment_offsets(self, reverse: bool = False) -> Optional[RangeOfBases]:
+    def query_alignment_offsets(self) -> tuple:
         """Gets the 0-based, end-exclusive positions of the first and last aligned base in the
-        query. The resulting range will contain the range of positions in the SEQ string for
-        the bases that are aligned. If no bases are aligned, the return value will be None.
+        query.
 
-        Args:
-            reverse: If True, count from the end of the query. i.e. find the offsets
-                using the reversed elements of the cigar.
+        The resulting range will contain the range of positions in the SEQ string for
+        the bases that are aligned. If no bases are aligned, the return value will be None.
+        If counting from the end of the query is desired, use
+        `cigar.reversed().query_alignment_offsets()`
 
         Returns:
-            A RangeOfBases object containing the start and stop positions (0-based, end-exclusive)
+            A tuple (start, stop) containing the start and stop positions
                 of the aligned part of the query. These offsets are 0-based and open-ended, with
-                respect to the beginning of the query. (If 'reverse' is True, the offsets are with
-                respect to the reversed query.) If no bases are aligned, the return value will be
-                None.
+                respect to the beginning of the query. If no bases are aligned.
+
+        Throws:
+            An
         """
         start_offset: int = 0
         end_offset: int = 0
         element: CigarElement
         alignment_began = False
-        elements = self.elements if not reverse else reversed(self.elements)
-        for element in elements:
+        for element in self.elements:
             if element.operator.is_clipping and not alignment_began:
                 # We are in the clipping operators preceding the alignment
                 # Note: hardclips have length-on-query=0
@@ -623,9 +582,9 @@ class Cigar:
                 # We have exited the alignment and are in the clipping operators after the alignment
                 break
 
-        ret = RangeOfBases(start_offset, end_offset)
-        if not alignment_began or len(ret) == 0:
-            return None
+        ret = (start_offset, end_offset)
+        if start_offset == end_offset:
+            raise ValueError("Cigar has no aligned bases")
         return ret
 
     def __getitem__(

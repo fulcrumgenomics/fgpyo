@@ -299,8 +299,7 @@ class Metric(ABC, Generic[MetricType]):
             values: Zero or more metrics.
 
         """
-        # TODO: open a MetricWriter here instead
-        with MetricWriter[MetricType](path, metric_class=values[0].__class__) as writer:
+        with MetricWriter[MetricType](path, metric_class=cls) as writer:
             writer.writeall(values)
 
     @classmethod

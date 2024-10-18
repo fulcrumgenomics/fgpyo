@@ -562,7 +562,7 @@ class Cigar:
                 respect to the beginning of the query. If no bases are aligned.
 
         Throws:
-            An
+            A ValueError exception if according to the cigar, there are no aligned query bases.
         """
         start_offset: int = 0
         end_offset: int = 0
@@ -584,7 +584,7 @@ class Cigar:
 
         ret = (start_offset, end_offset)
         if start_offset == end_offset:
-            raise ValueError("Cigar has no aligned bases")
+            raise ValueError(f"Cigar {self.__str__()} has no aligned bases")
         return ret
 
     def __getitem__(

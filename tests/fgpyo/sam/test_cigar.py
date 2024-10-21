@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import pytest
 
 from fgpyo.sam import Cigar
@@ -49,7 +51,7 @@ def test_bad_index_raises_type_error(index: int) -> None:
         ("76I", (0, 76)),
     ],
 )
-def test_query_alignment_offsets(cigar_string: str, expected_range: tuple) -> None:
+def test_query_alignment_offsets(cigar_string: str, expected_range: Tuple[int, int]) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
     ret = cig.query_alignment_offsets()
     assert ret == expected_range
@@ -91,7 +93,7 @@ def test_query_alignment_offsets_failures(cigar_string: str) -> None:
         ("10H10S10M5S10H", (5, 15)),
     ],
 )
-def test_query_alignment_offsets_reversed(cigar_string: str, expected_range: tuple) -> None:
+def test_query_alignment_offsets_reversed(cigar_string: str, expected_range: Tuple[int, int]) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
 
     ret = cig.reversed().query_alignment_offsets()

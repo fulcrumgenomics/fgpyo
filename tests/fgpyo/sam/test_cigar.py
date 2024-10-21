@@ -38,7 +38,7 @@ def test_bad_index_raises_type_error(index: int) -> None:
 
 @pytest.mark.parametrize(
     ("cigar_string", "maybe_range"),
-    {
+    [
         ("10M", (0, 10)),
         ("10M10I", (0, 20)),
         ("10X10I", (0, 20)),
@@ -57,7 +57,7 @@ def test_bad_index_raises_type_error(index: int) -> None:
         ("76I", (0, 76)),
         ("10P76S", None),
         ("50S1000N50S", None),
-    },
+    ],
 )
 def test_get_alignments(cigar_string: str, maybe_range: Optional[tuple]) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
@@ -71,7 +71,7 @@ def test_get_alignments(cigar_string: str, maybe_range: Optional[tuple]) -> None
 
 @pytest.mark.parametrize(
     ("cigar_string", "maybe_range"),
-    {
+    [
         ("10M", (0, 10)),
         ("10M10I", (0, 20)),
         ("10X10I", (0, 20)),
@@ -86,7 +86,7 @@ def test_get_alignments(cigar_string: str, maybe_range: Optional[tuple]) -> None
         ("10S", None),
         ("10S10H", None),
         ("5H10S10H", None),
-    },
+    ],
 )
 def test_get_alignments_reversed(cigar_string: str, maybe_range: Optional[Tuple]) -> None:
     cig = Cigar.from_cigarstring(cigar_string)

@@ -1,6 +1,3 @@
-from typing import Optional
-from typing import Tuple
-
 import pytest
 
 from fgpyo.sam import Cigar
@@ -37,7 +34,7 @@ def test_bad_index_raises_type_error(index: int) -> None:
 
 
 @pytest.mark.parametrize(
-    ("cigar_string", "maybe_range"),
+    ("cigar_string", "expected_range"),
     [
         ("10M", (0, 10)),
         ("10M10I", (0, 20)),
@@ -49,28 +46,38 @@ def test_bad_index_raises_type_error(index: int) -> None:
         ("10H10S10M", (10, 20)),
         ("10H10S10M5S", (10, 20)),
         ("10H10S10M5S10H", (10, 20)),
-        ("10H", None),
-        ("10S", None),
-        ("10S10H", None),
-        ("5H10S10H", None),
-        ("76D", None),
         ("76I", (0, 76)),
-        ("10P76S", None),
-        ("50S1000N50S", None),
     ],
 )
-def test_get_alignments(cigar_string: str, maybe_range: Optional[tuple]) -> None:
+def test_query_alignment_offsets(cigar_string: str, expected_range: tuple) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
-    if not maybe_range:
-        with pytest.raises(ValueError):
-            cig.query_alignment_offsets()
-    else:
-        ret = cig.query_alignment_offsets()
-        assert ret == maybe_range
+    ret = cig.query_alignment_offsets()
+    assert ret == expected_range
 
 
 @pytest.mark.parametrize(
-    ("cigar_string", "maybe_range"),
+    ("cigar_string"),
+    [
+        ("10H"),
+        ("10S"),
+        ("10S10H"),
+        ("5H10S10H"),
+        ("76D"),
+        ("10P76S"),
+        ("50S1000N50S"),
+    ],
+)
+def test_query_alignment_offsets_failures(cigar_string: str) -> None:
+    cig = Cigar.from_cigarstring(cigar_string)
+    with pytest.raises(ValueError):
+        cig.query_alignment_offsets()
+
+    with pytest.raises(ValueError):
+        cig.reversed().query_alignment_offsets()
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "expected_range"),
     [
         ("10M", (0, 10)),
         ("10M10I", (0, 20)),
@@ -82,18 +89,10 @@ def test_get_alignments(cigar_string: str, maybe_range: Optional[tuple]) -> None
         ("10H10S10M", (0, 10)),
         ("10H10S10M5S", (5, 15)),
         ("10H10S10M5S10H", (5, 15)),
-        ("10H", None),
-        ("10S", None),
-        ("10S10H", None),
-        ("5H10S10H", None),
     ],
 )
-def test_get_alignments_reversed(cigar_string: str, maybe_range: Optional[Tuple]) -> None:
+def test_query_alignment_offsets_reversed(cigar_string: str, expected_range: tuple) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
 
-    if not maybe_range:
-        with pytest.raises(ValueError):
-            cig.reversed().query_alignment_offsets()
-    else:
-        ret = cig.reversed().query_alignment_offsets()
-        assert ret == maybe_range
+    ret = cig.reversed().query_alignment_offsets()
+    assert ret == expected_range

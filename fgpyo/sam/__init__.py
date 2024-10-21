@@ -547,22 +547,22 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
-    def query_alignment_offsets(self) -> tuple:
+    def query_alignment_offsets(self) -> Tuple[int, int]:
         """Gets the 0-based, end-exclusive positions of the first and last aligned base in the
         query.
 
         The resulting range will contain the range of positions in the SEQ string for
-        the bases that are aligned. If no bases are aligned, the return value will be None.
+        the bases that are aligned.
         If counting from the end of the query is desired, use
         `cigar.reversed().query_alignment_offsets()`
 
         Returns:
             A tuple (start, stop) containing the start and stop positions
                 of the aligned part of the query. These offsets are 0-based and open-ended, with
-                respect to the beginning of the query. If no bases are aligned.
+                respect to the beginning of the query.
 
-        Throws:
-            A ValueError exception if according to the cigar, there are no aligned query bases.
+        Raises:
+            ValueError: If according to the cigar, there are no aligned query bases.
         """
         start_offset: int = 0
         end_offset: int = 0

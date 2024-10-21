@@ -926,4 +926,4 @@ def test_read_validates_no_header(
         metrics_file.writelines(lines)
 
     with pytest.raises(ValueError, match="No header found"):
-        [m for m in data_and_classes.DummyMetric.read(metrics_path)]
+        [m for m in data_and_classes.DummyMetric.read(metrics_path, comment_prefix="#")]

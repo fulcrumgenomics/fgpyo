@@ -214,7 +214,7 @@ class Metric(ABC, Generic[MetricType]):
         cls,
         path: Path,
         ignore_extra_fields: bool = True,
-        comment_prefix: str = "#",
+        comment_prefix: Optional[str] = None,
     ) -> Iterator["Metric[MetricType]"]:
         """Reads in zero or more metrics from the given path.
 
@@ -397,7 +397,7 @@ class Metric(ABC, Generic[MetricType]):
     def _read_header(
         reader: TextIOWrapper,
         delimiter: str = "\t",
-        comment_prefix: str = "#",
+        comment_prefix: Optional[str] = None,
     ) -> MetricFileHeader:
         """
         Read the header from an open file.
@@ -422,12 +422,17 @@ class Metric(ABC, Generic[MetricType]):
         preamble: List[str] = []
 
         for line in reader:
-            if line.strip().startswith(comment_prefix) or line.strip() == "":
-                # Skip any commented or empty lines before the header
-                preamble.append(line.strip())
+            line = line.strip()
+
+            if line == "":
+                # Skip any empty lines before the header
+                preamble.append(line)
+            elif comment_prefix is not None and line.startswith(comment_prefix):
+                # Skip any commented lines before the header
+                preamble.append(line)
             else:
                 # The first line with any other content is assumed to be the header
-                fieldnames = line.strip().split(delimiter)
+                fieldnames = line.split(delimiter)
                 break
         else:
             # If the file was empty, kick back an empty header

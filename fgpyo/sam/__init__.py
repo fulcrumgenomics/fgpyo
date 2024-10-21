@@ -548,8 +548,8 @@ class Cigar:
         return sum([elem.length_on_target for elem in self.elements])
 
     def query_alignment_offsets(self) -> Tuple[int, int]:
-        """Gets the 0-based, end-exclusive positions of the first and last aligned base in the
-        query.
+        """
+        Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
 
         The resulting range will contain the range of positions in the SEQ string for
         the bases that are aligned.
@@ -583,7 +583,7 @@ class Cigar:
                 break
 
         if start_offset == end_offset:
-            raise ValueError(f"Cigar {self.__str__()} has no aligned bases")
+            raise ValueError(f"Cigar {self} has no aligned bases")
         return start_offset, end_offset
 
     def __getitem__(

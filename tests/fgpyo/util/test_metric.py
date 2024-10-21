@@ -3,6 +3,7 @@
 # mypy: ignore-errors
 import enum
 import gzip
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -765,6 +766,9 @@ def test_writer_exclude_fields(tmp_path: Path) -> None:
 
 def test_writer_raises_if_fifo(capsys: CaptureFixture) -> None:
     """MetricWriter should raise an error if we try to append to a FIFO."""
+    if os.name == "nt":
+        pytest.skip("Test requires Unix-like operating system")
+
     with pytest.raises(
         ValueError, match="Cannot append to stdout, stderr, or other named pipe or stream"
     ):

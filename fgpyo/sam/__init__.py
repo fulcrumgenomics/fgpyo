@@ -582,10 +582,9 @@ class Cigar:
                 # We have exited the alignment and are in the clipping operators after the alignment
                 break
 
-        ret = (start_offset, end_offset)
         if start_offset == end_offset:
             raise ValueError(f"Cigar {self.__str__()} has no aligned bases")
-        return ret
+        return start_offset, end_offset
 
     def __getitem__(
         self, index: Union[int, slice]

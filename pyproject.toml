@@ -65,8 +65,26 @@ target-version = "py38"
 output-format  = "full"
 
 [tool.ruff.lint]
-select    = ["C901", "B", "E", "F", "I", "W", "Q"]
-ignore    = ["E203", "E701"]
+select    = [
+    "C901",
+    "B",
+    "D",     # pydocstyle (docstrings. We have the "google" convention enabled)
+    "D204",  # Blank line between class docstring and first (__init__) method
+    "D213",  # Summary line should be located on the line after opening quotes
+    "D401",  # Summary line should be in imperative tense.
+    "E",
+    "F",
+    "I",
+    "W",
+    "Q"
+]
+ignore    = [
+    "E203",
+    "E701",
+    "D212",  # summary line should be located on the same line as opening quotes
+    "D100",  # missing docstring in public module
+    "D104",  # missing docstring in public package
+]
 unfixable = ["B"]
 
 [tool.ruff.lint.isort]

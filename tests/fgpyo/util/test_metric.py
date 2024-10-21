@@ -3,7 +3,9 @@
 # mypy: ignore-errors
 import enum
 import gzip
+import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -25,10 +27,15 @@ import dataclasses
 
 import attr
 import pytest
+from pytest import CaptureFixture
 
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
+from fgpyo.util.metric import MetricWriter
+from fgpyo.util.metric import _assert_fieldnames_are_metric_attributes
+from fgpyo.util.metric import _assert_file_header_matches_metric
+from fgpyo.util.metric import _assert_is_metric_class
 
 
 class EnumTest(enum.Enum):
@@ -387,8 +394,20 @@ def test_metric_header(data_and_classes: DataBuilder) -> None:
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_keys(data_and_classes: DataBuilder) -> None:
+    assert list(data_and_classes.Person(name="Fulcrum", age=9).keys()) == ["name", "age"]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_values(data_and_classes: DataBuilder) -> None:
     assert list(data_and_classes.Person(name="name", age=42).values()) == ["name", 42]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_items(data_and_classes: DataBuilder) -> None:
+    """`metric.items()` should return a list of (key, value) tuples."""
+    items = list(data_and_classes.Person(name="Fulcrum", age=9).items())
+    assert items == [("name", "Fulcrum"), ("age", 9)]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -400,6 +419,12 @@ def test_metric_parse(data_and_classes: DataBuilder) -> None:
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_formatted_values(data_and_classes: DataBuilder) -> None:
     assert data_and_classes.Person(name="name", age=42).formatted_values() == (["name", "42"])
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_formatted_items(data_and_classes: DataBuilder) -> None:
+    items = data_and_classes.Person(name="Fulcrum", age=9).formatted_items()
+    assert items == [("name", "Fulcrum"), ("age", "9")]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -519,3 +544,355 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
     names = list(NameMetric.read(path=path))
     assert len(names) == 1
     assert names[0] == name
+
+
+def test_read_header_can_read_picard(tmp_path: Path) -> None:
+    """
+    Test that we can read the header of a picard-formatted file.
+    """
+
+    metrics_path = tmp_path / "fake_picard_metrics"
+
+    with metrics_path.open("w") as metrics_file:
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# hts.fake_tool.FakeTool INPUT=input OUTPUT=fake_picard_metrics\n")
+        metrics_file.write("## htsjdk.samtools.metrics.StringHeader\n")
+        metrics_file.write("# Started on: Mon Jul 03 18:06:02 UTC 2017\n")
+        metrics_file.write("\n")
+        metrics_file.write("## METRICS CLASS\tpicard.analysis.FakeMetrics\n")
+        metrics_file.write("SAMPLE\tFOO\tBAR\n")
+
+    with metrics_path.open("r") as metrics_file:
+        header = Metric._read_header(metrics_file, comment_prefix="#")
+
+    assert header.fieldnames == ["SAMPLE", "FOO", "BAR"]
+
+
+def test_read_header_can_read_empty(tmp_path: Path) -> None:
+    """
+    If the input file is empty, we should get an empty header.
+    """
+
+    metrics_path = tmp_path / "empty"
+    metrics_path.touch()
+
+    with metrics_path.open("r") as metrics_file:
+        header = Metric._read_header(metrics_file, comment_prefix="#")
+
+    assert header.preamble == []
+    assert header.fieldnames == []
+
+
+@dataclass
+class FakeMetric(Metric["FakeMetric"]):
+    foo: str
+    bar: int
+
+
+def test_writer(tmp_path: Path) -> None:
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(filename=fpath, append=False, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+        writer.write(FakeMetric(foo="def", bar=2))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_from_str(tmp_path: Path) -> None:
+    """Test that we can create a writer when `filename` is a `str`."""
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(filename=str(fpath), append=False, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_writeall(tmp_path: Path) -> None:
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(filename=fpath, append=False, metric_class=FakeMetric) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_append(tmp_path: Path) -> None:
+    """Test that we can append to a file."""
+    fpath = tmp_path / "test.txt"
+
+    with fpath.open("w") as fout:
+        fout.write("foo\tbar\n")
+
+    with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+        writer.write(FakeMetric(foo="def", bar=2))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_append_raises_if_empty(tmp_path: Path) -> None:
+    """Test that we raise an error if we try to append to an empty file."""
+    fpath = tmp_path / "test.txt"
+    fpath.touch()
+
+    with pytest.raises(ValueError, match="Could not find a header in the provided file"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_append_raises_if_no_header(tmp_path: Path) -> None:
+    """Test that we raise an error if we try to append to a file with no header."""
+    fpath = tmp_path / "test.txt"
+    with fpath.open("w") as fout:
+        fout.write("abc\t1\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_append_raises_if_header_does_not_match(tmp_path: Path) -> None:
+    """
+    Test that we raise an error if we try to append to a file whose header doesn't match our
+    dataclass.
+    """
+    fpath = tmp_path / "test.txt"
+
+    with fpath.open("w") as fout:
+        fout.write("foo\tbar\tbaz\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        with MetricWriter(filename=fpath, append=True, metric_class=FakeMetric) as writer:
+            writer.write(FakeMetric(foo="abc", bar=1))
+
+
+def test_writer_include_fields(tmp_path: Path) -> None:
+    """Test that we can include only a subset of fields."""
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        include_fields=["foo"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\n"
+        assert next(f) == "abc\n"
+        assert next(f) == "def\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_include_fields_reorders(tmp_path: Path) -> None:
+    """Test that we can reorder the output fields."""
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        include_fields=["bar", "foo"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "bar\tfoo\n"
+        assert next(f) == "1\tabc\n"
+        assert next(f) == "2\tdef\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_exclude_fields(tmp_path: Path) -> None:
+    """Test that we can exclude fields from being written."""
+
+    fpath = tmp_path / "test.txt"
+
+    data = [
+        FakeMetric(foo="abc", bar=1),
+        FakeMetric(foo="def", bar=2),
+    ]
+    with MetricWriter(
+        filename=fpath,
+        append=False,
+        metric_class=FakeMetric,
+        exclude_fields=["bar"],
+    ) as writer:
+        writer.writeall(data)
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\n"
+        assert next(f) == "abc\n"
+        assert next(f) == "def\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_raises_if_fifo(capsys: CaptureFixture) -> None:
+    """MetricWriter should raise an error if we try to append to a FIFO."""
+    if os.name == "nt":
+        pytest.skip("Test requires Unix-like operating system")
+
+    with pytest.raises(
+        ValueError, match="Cannot append to stdout, stderr, or other named pipe or stream"
+    ):
+        with capsys.disabled():
+            MetricWriter(filename="/dev/stdout", metric_class=FakeMetric, append=True)
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
+    """
+    Test that we can validate if a class is a Metric.
+    """
+    _assert_is_metric_class(data_and_classes.DummyMetric)
+
+
+def test_assert_is_metric_class_raises_if_not_decorated() -> None:
+    """
+    Test that we raise an error if the provided type is a Metric subclass but not decorated as a
+    dataclass or attr.
+    """
+
+    class BadMetric(Metric["BadMetric"]):
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)
+
+
+def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
+    """
+    Test that we raise an error if the provided type is decorated as a
+    dataclass or attr but does not subclass Metric.
+    """
+
+    @dataclass
+    class BadMetric:
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)
+
+    @attr.s
+    class BadMetric:
+        foo: str
+        bar: int
+
+    with pytest.raises(TypeError, match="Not a dataclass or attr decorated Metric"):
+        _assert_is_metric_class(BadMetric)
+
+
+# fmt: off
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "fieldnames",
+    [
+        ["name", "age"],  # The fieldnames are all the attributes of the provided metric
+        ["age", "name"],  # The fieldnames are out of order
+        ["name"],         # The fieldnames are a subset of the attributes of the provided metric
+    ],
+)
+# fmt: on
+def test_assert_fieldnames_are_metric_attributes(
+    data_and_classes: DataBuilder,
+    fieldnames: List[str],
+) -> None:
+    """
+    Should not raise an error if the provided fieldnames are all attributes of
+    the provided metric.
+    """
+    _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "fieldnames",
+    [
+        ["name", "age", "foo"],
+        ["name", "foo"],
+        ["foo", "name", "age"],
+        ["foo"],
+    ],
+)
+def test_assert_fieldnames_are_metric_attributes_raises(
+    data_and_classes: DataBuilder,
+    fieldnames: List[str],
+) -> None:
+    """
+    Should raise an error if any of the provided fieldnames are not an attribute on the metric.
+    """
+    with pytest.raises(ValueError, match="One or more of the specified fields are not "):
+        _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """
+    Should not raise an error if the provided file header matches the provided metric.
+    """
+    metric_path = tmp_path / "metrics.tsv"
+    with metric_path.open("w") as metrics_file:
+        metrics_file.write("name\tage\n")
+
+    _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+@pytest.mark.parametrize(
+    "header",
+    [
+        ["name"],
+        ["age"],
+        ["name", "age", "foo"],
+        ["foo", "name", "age"],
+    ],
+)
+def test_assert_file_header_matches_metric_raises(
+    tmp_path: Path, data_and_classes: DataBuilder, header: List[str]
+) -> None:
+    """
+    Should raise an error if the provided file header does not match the provided metric.
+    """
+    metric_path = tmp_path / "metrics.tsv"
+    with metric_path.open("w") as metrics_file:
+        metrics_file.write("\t".join(header) + "\n")
+
+    with pytest.raises(ValueError, match="The provided file does not have the same field names"):
+        _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")

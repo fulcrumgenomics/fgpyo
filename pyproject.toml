@@ -90,6 +90,9 @@ unfixable = ["B"]
 [tool.ruff.lint.isort]
 force-single-line = true
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
 [tool.mypy]
 python_version              = 3.8
 strict_optional             = false

@@ -234,11 +234,11 @@ class Metric(ABC, Generic[MetricType]):
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
-            try:
-                header = cls._read_header(reader, comment_prefix=comment_prefix)
-                fieldnames: List[str] = header.fieldnames
-            except ValueError as e:
-                raise ValueError(f"No header found in file: {path}") from e
+            header = cls._read_header(reader, comment_prefix=comment_prefix)
+            fieldnames: List[str] = header.fieldnames
+
+            if not fieldnames:
+                raise ValueError(f"No header found in file: {path}")
 
             # check the header
             class_fields = set(cls.header())

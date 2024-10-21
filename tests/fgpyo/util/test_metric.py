@@ -898,6 +898,7 @@ def test_assert_file_header_matches_metric_raises(
         _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
 
 
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 @pytest.mark.parametrize(
     "lines",
     [
@@ -907,7 +908,11 @@ def test_assert_file_header_matches_metric_raises(
         ["", "# comment"],
     ],
 )
-def test_read_validates_no_header(tmp_path: Path, lines: List[str]) -> None:
+def test_read_validates_no_header(
+    tmp_path: Path,
+    data_and_classes: DataBuilder,
+    lines: List[str],
+) -> None:
     """
     Test our handling of a file with no header.
 
@@ -921,5 +926,4 @@ def test_read_validates_no_header(tmp_path: Path, lines: List[str]) -> None:
         metrics_file.writelines(lines)
 
     with pytest.raises(ValueError, match="No header found"):
-        [m for m in dataclasses_data_and_classes.DummyMetric.read(metrics_path)]
-
+        [m for m in data_and_classes.DummyMetric.read(metrics_path)]

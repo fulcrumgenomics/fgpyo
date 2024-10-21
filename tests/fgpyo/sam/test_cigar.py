@@ -93,7 +93,9 @@ def test_query_alignment_offsets_failures(cigar_string: str) -> None:
         ("10H10S10M5S10H", (5, 15)),
     ],
 )
-def test_query_alignment_offsets_reversed(cigar_string: str, expected_range: Tuple[int, int]) -> None:
+def test_query_alignment_offsets_reversed(
+    cigar_string: str, expected_range: Tuple[int, int]
+) -> None:
     cig = Cigar.from_cigarstring(cigar_string)
 
     ret = cig.reversed().query_alignment_offsets()

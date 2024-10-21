@@ -237,8 +237,8 @@ class Metric(ABC, Generic[MetricType]):
             try:
                 header = cls._read_header(reader, comment_prefix=comment_prefix)
                 fieldnames: List[str] = header.fieldnames
-            except ValueError:
-                raise ValueError(f"No header found in file: {path}")
+            except ValueError as e:
+                raise ValueError(f"No header found in file: {path}") from e
 
             # check the header
             class_fields = set(cls.header())

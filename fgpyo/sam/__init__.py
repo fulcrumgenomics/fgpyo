@@ -547,6 +547,45 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
+    def query_alignment_offsets(self) -> Tuple[int, int]:
+        """
+        Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
+
+        The resulting range will contain the range of positions in the SEQ string for
+        the bases that are aligned.
+        If counting from the end of the query is desired, use
+        `cigar.reversed().query_alignment_offsets()`
+
+        Returns:
+            A tuple (start, stop) containing the start and stop positions
+                of the aligned part of the query. These offsets are 0-based and open-ended, with
+                respect to the beginning of the query.
+
+        Raises:
+            ValueError: If according to the cigar, there are no aligned query bases.
+        """
+        start_offset: int = 0
+        end_offset: int = 0
+        element: CigarElement
+        alignment_began = False
+        for element in self.elements:
+            if element.operator.is_clipping and not alignment_began:
+                # We are in the clipping operators preceding the alignment
+                # Note: hardclips have length-on-query=0
+                start_offset += element.length_on_query
+                end_offset += element.length_on_query
+            elif not element.operator.is_clipping:
+                # We are within the alignment
+                alignment_began = True
+                end_offset += element.length_on_query
+            else:
+                # We have exited the alignment and are in the clipping operators after the alignment
+                break
+
+        if start_offset == end_offset:
+            raise ValueError(f"Cigar {self} has no aligned bases")
+        return start_offset, end_offset
+
     def __getitem__(
         self, index: Union[int, slice]
     ) -> Union[CigarElement, Tuple[CigarElement, ...]]:

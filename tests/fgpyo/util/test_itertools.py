@@ -17,6 +17,8 @@ def test_sorted_product() -> None:
 
     # We should get the same result as using `itertools.product` and then sorting, the
     # implementation is just more efficient (in most cases).
-    expected_product: List[Pairing] = sorted(product(xs, ys), key=lambda tup: tup[0] + tup[1], reverse=True)
+    expected_product: List[Pairing] = sorted(
+        product(xs, ys), key=lambda tup: tup[0] + tup[1], reverse=True
+    )
 
     assert actual_product == expected_product

@@ -15,18 +15,36 @@ T = TypeVar("T")
 
 @dataclass(order=True)
 class Coord:
+    """
+    Index a position in the ProductSumTable, a 2-D grid.
+
+    Attributes:
+        x: The x-coordinate (or index into the array of `xs`).
+        y: The y-coordinate (or index into the array of `ys`).
+    """
     x: int
     y: int
 
     def incr_x(self) -> "Coord":
+        """Return a new Coord with the same y-coordinate and the x-coordinate incremented by 1."""
         return Coord(self.x + 1, self.y)
 
     def incr_y(self) -> "Coord":
+        """Return a new Coord with the same x-coordinate and the y-coordinate incremented by 1."""
         return Coord(self.x, self.y + 1)
 
 
 @dataclass(order=True)
 class HeapElem(Generic[T]):
+    """
+    A heap element that contains a pairing of elements in the Cartesian product.
+
+    Attributes:
+        _priority: The priority of this element, which is the sum of the priorities of the paired
+            elements.
+        val: The paired elements.
+        coord: The position in the ProductSumTable.
+    """
     _priority: float
     val: Tuple[T, T] = field(compare=False)
     coord: Coord  # NB: sorting must also be stable / deterministic on the coordinates
@@ -37,6 +55,14 @@ class HeapElem(Generic[T]):
 
 
 class ProductSumTable(Generic[T]):
+    """
+    A 2-D grid of elements that supports efficient traversal of the sorted Cartesian product.
+
+    Attributes:
+        xs: A sorted list of elements.
+        ys: A sorted list of elements.
+        priority: A function that returns a numeric priority for each element.
+    """
     xs: List[T]
     ys: List[T]
     priority: Callable[[T], float]
@@ -100,7 +126,7 @@ def sorted_product(
         of x and y.
     """
 
-    table: ProductSumTable = ProductSumTable(xs=xs, ys=ys, priority=priority)
+    table: ProductSumTable[T] = ProductSumTable(xs=xs, ys=ys, priority=priority)
     curr: HeapElem[T] = table.get_elem(Coord(x=0, y=0))
 
     # Each heap element corresponds to a single pairing in the product.

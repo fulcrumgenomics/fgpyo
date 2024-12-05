@@ -13,7 +13,8 @@ theme:
   collapse_navigation: false
 repo_url: https://github.com/fulcrumgenomics/fgpyo
 plugins:
-  - autorefs
+  - autorefs:
+      resolve_closest: true
   - include-markdown
   - search
   - gen-files:

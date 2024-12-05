@@ -37,7 +37,7 @@
 
 `pip install fgpyo`
 
-**Requires python 3.8+**
+**Requires python 3.9+**
 
 See documentation on [fgpyo.readthedocs.org][rtd-link].
 
@@ -48,7 +48,7 @@ See documentation on [fgpyo.readthedocs.org][rtd-link].
 A simple way to create an environment with the desired version of python and poetry is to use [conda][conda-link].  E.g.:
 
 ```bash
-conda create -n fgpyo -c conda-forge "python>=3.8" poetry
+conda create -n fgpyo -c conda-forge "python>=3.9" poetry
 conda activate fgpyo
 
 # --all-extras is required to install `mkdocs` and associated dependencies,

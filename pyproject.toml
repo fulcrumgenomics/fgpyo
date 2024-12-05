@@ -73,7 +73,6 @@ unfixable = ["B"]
 force-single-line = true
 
 [tool.mypy]
-python_version              = 3.9
 strict_optional             = false
 check_untyped_defs          = true
 disallow_incomplete_defs    = true

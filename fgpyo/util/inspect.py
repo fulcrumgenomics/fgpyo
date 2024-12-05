@@ -457,7 +457,7 @@ def attr_from(
             # True, because python, so we need to check for that explicitly
             if not set_value and attribute.type is not None and not attribute.type == bool:
                 try:
-                    return_value = attribute.type(str_value)
+                    return_value = attribute.type(str_value)  # type: ignore[operator]
                     set_value = True
                 except (ValueError, TypeError):
                     pass

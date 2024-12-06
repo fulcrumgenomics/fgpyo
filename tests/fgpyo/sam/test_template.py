@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from fgpyo import sam
 from fgpyo.sam import Template
 from fgpyo.sam import TemplateIterator
 from fgpyo.sam import reader
@@ -29,7 +30,7 @@ def test_template_init_function() -> None:
     assert len([t for t in template.r1_secondaries]) == 0
 
 
-def test_to_templates() -> None:
+def test_template_iterator() -> None:
     builder = SamBuilder()
 
     # Series of alignments for one template
@@ -103,7 +104,7 @@ def test_write_template(
         assert len([r for r in template.all_recs()]) == 2
 
 
-def test_set_tag() -> None:
+def test_template_set_tag() -> None:
     builder = SamBuilder()
     template = Template.build(builder.add_pair(chrom="chr1", start1=100, start2=200))
 
@@ -129,3 +130,65 @@ def test_set_tag() -> None:
     for bad_tag in ["", "A", "ABC", "ABCD"]:
         with pytest.raises(AssertionError, match="Tags must be 2 characters"):
             template.set_tag(bad_tag, VALUE)
+
+
+def test_template_fixmate() -> None:
+    builder = SamBuilder(r1_len=100, r2_len=100, base_quality=30)
+
+    # both reads are mapped
+    r1, r2 = builder.add_pair(name="q1", chrom="chr1", start1=100, start2=500)
+    r1.cigarstring = "80M20S"
+    r1.reference_start = 107
+    template = Template.build([r1, r2])
+    template.fixmate()
+    assert r1.get_tag("MC") == "100M"
+    assert r2.get_tag("MC") == "80M20S"
+    assert r2.next_reference_start == 107
+
+    # only read 1 is mapped
+    r1, r2 = builder.add_pair(name="q1", chrom="chr1", start1=100)
+    r1.cigarstring = "80M20S"
+    r1.reference_start = 107
+    template = Template.build([r1, r2])
+    template.fixmate()
+    with pytest.raises(KeyError):
+        r1.get_tag("MC")
+    assert r2.get_tag("MC") == "80M20S"
+    assert r2.next_reference_start == 107
+
+    # neither reads are mapped
+    r1, r2 = builder.add_pair(chrom=sam.NO_REF_NAME)
+    r1.cigarstring = "80M20S"
+    template = Template.build([r1, r2])
+    template.fixmate()
+    with pytest.raises(KeyError):
+        r1.get_tag("MC")
+    with pytest.raises(KeyError):
+        r2.get_tag("MC")
+
+    # all supplementary (and not secondard) records should be updated
+    r1, r2 = builder.add_pair(name="q1", chrom="chr1", start1=100, start2=500)
+    supp1a = builder.add_single(name="q1", read_num=1, chrom="chr1", start=101, supplementary=True)
+    supp1b = builder.add_single(name="q1", read_num=1, chrom="chr1", start=102, supplementary=True)
+    supp2a = builder.add_single(name="q1", read_num=2, chrom="chr1", start=501, supplementary=True)
+    supp2b = builder.add_single(name="q1", read_num=2, chrom="chr1", start=502, supplementary=True)
+    sec1 = builder.add_single(name="q1", read_num=1, chrom="chr1", start=1001, secondary=True)
+    sec2 = builder.add_single(name="q1", read_num=2, chrom="chr1", start=1002, secondary=True)
+    r1.cigarstring = "80M20S"
+    r1.reference_start = 107
+    template = Template.build([r1, r2, supp1a, supp1b, supp2a, supp2b, sec1, sec2])
+    template.fixmate()
+    assert r1.get_tag("MC") == "100M"
+    assert supp1a.get_tag("MC") == "100M"
+    assert supp1b.get_tag("MC") == "100M"
+    with pytest.raises(KeyError):
+        sec1.get_tag("MC")
+    assert r2.get_tag("MC") == "80M20S"
+    assert supp2a.get_tag("MC") == "80M20S"
+    assert supp2b.get_tag("MC") == "80M20S"
+    with pytest.raises(KeyError):
+        sec2.get_tag("MC")
+    assert r2.next_reference_start == 107
+    assert supp2a.next_reference_start == 107
+    assert supp2b.next_reference_start == 107
+    assert sec2.next_reference_start == -1

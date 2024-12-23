@@ -44,6 +44,8 @@ from typing import Union
 
 from pysam import AlignedSegment
 
+from fgpyo.sam import Template
+
 # Global that is set to True once logging initialization is run to prevent running > once.
 __FGPYO_LOGGING_SETUP: bool = False
 
@@ -162,6 +164,23 @@ class ProgressLogger(AbstractContextManager):
             return self.record(None, None)
         else:
             return self.record(rec.reference_name, rec.reference_start + 1)
+
+    def record_template(
+        self,
+        template: Template,
+    ) -> bool:
+        """Correctly record all records in a fgpyo.sam.Template (zero-based coordinates).
+
+        Args:
+            template: fgpyo.sam.Template objects
+
+        Returns:
+            true if a message was logged, false otherwise
+        """
+        logged_message: bool = False
+        for rec in template.all_recs():
+            logged_message = self.record_alignment(rec) or logged_message
+        return logged_message
 
     def _log(
         self,

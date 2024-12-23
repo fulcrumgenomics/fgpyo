@@ -4,6 +4,7 @@ import pysam
 import pytest
 
 from fgpyo import sam
+from fgpyo.sam import Template
 from fgpyo.sam.builder import SamBuilder
 from fgpyo.util.logging import ProgressLogger
 
@@ -59,3 +60,42 @@ def test_record_alignment_mapped_record(record: pysam.AlignedSegment) -> None:
 
     # Assert record is logged
     assert progress.record_alignment(rec=record) is True
+
+
+def test_record_template() -> None:
+    builder: SamBuilder = SamBuilder()
+    (r1, r2) = builder.add_pair(name="x", chrom="chr1", start1=1, start2=2)
+    (r1_secondary, r2_secondary) = builder.add_pair(name="x", chrom="chr1", start1=10, start2=12)
+    r1_secondary.is_secondary = True
+    r2_secondary.is_secondary = True
+    (r1_supplementary, r2_supplementary) = builder.add_pair(
+        name="x", chrom="chr1", start1=4, start2=6
+    )
+    r1_supplementary.is_supplementary = True
+    r2_supplementary.is_supplementary = True
+
+    template = Template.build(builder.to_unsorted_list())
+    expected = Template(
+        name="x",
+        r1=r1,
+        r2=r2,
+        r1_secondaries=[r1_secondary],
+        r2_secondaries=[r2_secondary],
+        r1_supplementals=[r1_supplementary],
+        r2_supplementals=[r2_supplementary],
+    )
+
+    assert template == expected
+
+    # Define instance of ProgressLogger
+    actual: list[str] = []
+
+    progress = ProgressLogger(
+        printer=lambda rec: actual.append(rec), noun="record(s)", verb="recorded", unit=1
+    )
+
+    # Assert record is logged
+    assert progress.record_template(template=expected) is True
+
+    # Assert every record was logged
+    assert len(actual) == 6

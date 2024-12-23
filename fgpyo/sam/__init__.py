@@ -158,6 +158,7 @@ and slices):
 import enum
 import io
 import sys
+from itertools import chain
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -939,6 +940,16 @@ class Template:
     def primary_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the primary records for the template."""
         return (r for r in (self.r1, self.r2) if r is not None)
+
+    def all_r1s(self) -> Iterator[AlignedSegment]:
+        """Yields all R1 alignments of this template including secondary and supplementary."""
+        r1_primary = [] if self.r1 is None else [self.r1]
+        return chain(r1_primary, self.r1_secondaries, self.r1_supplementals)
+
+    def all_r2s(self) -> Iterator[AlignedSegment]:
+        """Yields all R2 alignments of this template including secondary and supplementary."""
+        r2_primary = [] if self.r2 is None else [self.r2]
+        return chain(r2_primary, self.r2_secondaries, self.r2_supplementals)
 
     def all_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the records for the template."""

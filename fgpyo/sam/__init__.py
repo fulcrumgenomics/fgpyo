@@ -631,7 +631,7 @@ class PairOrientation(enum.Enum):
             r2: The second read in the template. If undefined, mate data set upon R1 will be used.
 
         See:
-            - https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102
+            [`htsjdk.samtools.SamPairUtil.getPairOrientation()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102)
         """
 
         if r2 is None:
@@ -691,7 +691,7 @@ def properly_paired(
         orientations: The valid set of orientations to consider a read pair "proper".
 
     See:
-        https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L106-L125
+        [`htsjdk.samtools.SamPairUtil.isProperPair()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L106-L125)
     """
     if r2 is None:
         r2_is_mapped = r1.mate_is_mapped

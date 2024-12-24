@@ -628,7 +628,7 @@ class PairOrientation(enum.Enum):
 
         Args:
             r1: The first read in the template.
-            r2: The second read in the template. If undefined, mate data on R1 will be used.
+            r2: The second read in the template. If undefined, mate data set upon R1 will be used.
 
         See:
             - https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102
@@ -686,7 +686,7 @@ def properly_paired(
 
     Args:
         r1: The first read in the template.
-        r2: The second read in the template. If undefined, mate data on R1 will be used.
+        r2: The second read in the template. If undefined, mate data set upon R1 will be used.
         max_insert_size: The maximum insert size to consider a read pair "proper".
         orientations: The valid set of orientations to consider a read pair "proper".
 

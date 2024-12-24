@@ -29,6 +29,34 @@ def test_template_init_function() -> None:
     assert len([t for t in template.r1_secondaries]) == 0
 
 
+def test_all_r1_and_all_r2() -> None:
+    builder: SamBuilder = SamBuilder()
+    (r1, r2) = builder.add_pair(name="x", chrom="chr1", start1=1, start2=2)
+    (r1_secondary, r2_secondary) = builder.add_pair(name="x", chrom="chr1", start1=10, start2=12)
+    r1_secondary.is_secondary = True
+    r2_secondary.is_secondary = True
+    (r1_supplementary, r2_supplementary) = builder.add_pair(
+        name="x", chrom="chr1", start1=4, start2=6
+    )
+    r1_supplementary.is_supplementary = True
+    r2_supplementary.is_supplementary = True
+
+    template = Template.build(builder.to_unsorted_list())
+    expected = Template(
+        name="x",
+        r1=r1,
+        r2=r2,
+        r1_secondaries=[r1_secondary],
+        r2_secondaries=[r2_secondary],
+        r1_supplementals=[r1_supplementary],
+        r2_supplementals=[r2_supplementary],
+    )
+
+    assert template == expected
+    assert list(template.all_r1s()) == [r1, r1_secondary, r1_supplementary]
+    assert list(template.all_r2s()) == [r2, r2_secondary, r2_supplementary]
+
+
 def test_to_templates() -> None:
     builder = SamBuilder()
 

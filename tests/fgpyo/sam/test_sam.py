@@ -17,7 +17,9 @@ from fgpyo.sam import Cigar
 from fgpyo.sam import CigarElement
 from fgpyo.sam import CigarOp
 from fgpyo.sam import CigarParsingException
+from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
+from fgpyo.sam import properly_paired
 from fgpyo.sam.builder import SamBuilder
 
 
@@ -298,6 +300,200 @@ def test_is_indel() -> None:
 def test_is_clipping() -> None:
     clips = [op for op in CigarOp if op.is_clipping]
     assert clips == [CigarOp.S, CigarOp.H]
+
+
+def test_pair_orientation_build_with_r2() -> None:
+    """Test that we can build all pair orientations with R1 and R2."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    assert PairOrientation.build(r1, r2) is PairOrientation.FR
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1, r2) is PairOrientation.RF
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = True
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1, r2) is PairOrientation.TANDEM
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = False
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1, r2) is PairOrientation.TANDEM
+
+
+def test_pair_orientation_is_fr_if_opposite_directions_and_overlapping() -> None:
+    """Test the pair orientation is always FR if the reads overlap and are oriented opposite."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
+    assert PairOrientation.build(r1, r2) is PairOrientation.FR
+
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
+    r1.is_reverse = True
+    r2.is_reverse = False
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1, r2) is PairOrientation.FR
+
+
+def test_pair_orientation_build_with_either_unmapped() -> None:
+    """Test that we can return None with either R1 and R2 unmapped (or both)."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair()
+    assert r1.is_unmapped
+    assert r2.is_unmapped
+    assert PairOrientation.build(r1, r2) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100)
+    assert r1.is_mapped
+    assert r2.is_unmapped
+    assert PairOrientation.build(r1, r2) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start2=100)
+    assert r1.is_unmapped
+    assert r2.is_mapped
+    assert PairOrientation.build(r1, r2) is None
+
+
+def test_pair_orientation_build_with_no_r2_but_r2_mapped() -> None:
+    """Test that we can build all pair orientations with R1 and no R2, but R2 is mapped."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    assert PairOrientation.build(r1) is PairOrientation.FR
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is PairOrientation.RF
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = True
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is PairOrientation.TANDEM
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = False
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is PairOrientation.TANDEM
+
+
+def test_pair_orientation_build_with_either_unmapped_but_no_r2() -> None:
+    """Test that we can return None with either R1 and R2 unmapped (or both), but no R2."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair()
+    assert r1.is_unmapped
+    assert r2.is_unmapped
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100)
+    assert r1.is_mapped
+    assert r2.is_unmapped
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start2=100)
+    assert r1.is_unmapped
+    assert r2.is_mapped
+    sam.set_pair_info(r1, r2)
+    assert PairOrientation.build(r1) is None
+
+
+def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag() -> None:
+    """Test that an exception is raised if we cannot find the mate cigar tag."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=10, start2=30)
+    sam.set_pair_info(r1, r2)
+    r1.set_tag("MC", None)  # Clear out the MC tag.
+
+    with pytest.raises(ValueError):
+        PairOrientation.build(r1)
+
+
+def test_properly_paired_when_actually_proper() -> None:
+    """Test that properly_paired returns True when reads are properly paired."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    assert properly_paired(r1, r2)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
+    r1.is_reverse = True
+    r2.is_reverse = False
+    sam.set_pair_info(r1, r2)
+    assert properly_paired(r1, r2)
+
+
+def test_properly_paired_when_actually_proper_and_no_r2() -> None:
+    """Test that properly_paired returns True when reads are properly paired, but no R2."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    assert properly_paired(r1)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
+    r1.is_reverse = True
+    r2.is_reverse = False
+    sam.set_pair_info(r1, r2)
+    assert properly_paired(r1)
+
+
+def test_not_properly_paired_if_wrong_orientation() -> None:
+    """Test that reads are not properly paired if they are not in the right orientation."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1, r2)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = True
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1, r2)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = False
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1, r2)
+
+
+def test_not_properly_paired_if_wrong_orientation_and_no_r2() -> None:
+    """Test reads are not properly paired if they are not in the right orientation, but no R2."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = True
+    r2.is_forward = True
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1)
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.is_forward = False
+    r2.is_forward = False
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1)
+
+
+def test_not_properly_paired_if_too_far_apart() -> None:
+    """Test that reads are not properly paired if they are too far apart."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100 + 1000)
+    sam.set_pair_info(r1, r2)
+    assert not properly_paired(r1, r2)
 
 
 def test_isize() -> None:

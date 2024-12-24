@@ -626,7 +626,6 @@ class PairOrientation(enum.Enum):
     ) -> Optional["PairOrientation"]:
         """Returns the pair orientation if both reads are mapped to the same reference sequence.
 
-
         Args:
             r1: The first read in the template.
             r2: The second read in the template. If undefined, mate data on R1 will be used.

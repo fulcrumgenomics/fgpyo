@@ -883,7 +883,7 @@ class Template:
                     r1_supplementals.append(rec)
                 else:
                     r2_supplementals.append(rec)
-            if rec.is_secondary:
+            elif rec.is_secondary:
                 if is_r1:
                     r1_secondaries.append(rec)
                 else:

@@ -131,6 +131,51 @@ def test_write_template(
         assert len([r for r in template.all_recs()]) == 2
 
 
+def test_template_treats_secondary_supplementary_as_supplementary() -> None:
+    """Test that Template treats "secondary supplementaries" as supplementary."""
+    builder = SamBuilder()
+
+    r1, r2 = builder.add_pair(name="x", chrom="chr1", start1=10, start2=30)
+    r1_secondary, r2_secondary = builder.add_pair(name="x", chrom="chr1", start1=2, start2=5)
+    r1_secondary.is_secondary = True
+    r2_secondary.is_secondary = True
+
+    r1_supp, r2_supp = builder.add_pair(name="x", chrom="chr1", start1=2, start2=3)
+    r1_supp.is_supplementary = True
+    r2_supp.is_supplementary = True
+
+    r1_secondary_supp, r2_secondary_supp = builder.add_pair(
+        name="x", chrom="chr1", start1=2, start2=3
+    )
+    r1_secondary_supp.is_secondary = True
+    r2_secondary_supp.is_secondary = True
+    r1_secondary_supp.is_supplementary = True
+    r2_secondary_supp.is_supplementary = True
+
+    actual = Template.build(
+        [
+            r1,
+            r2,
+            r1_secondary,
+            r2_secondary,
+            r1_supp,
+            r2_supp,
+            r1_secondary_supp,
+            r2_secondary_supp,
+        ]
+    )
+    expected = Template(
+        name="x",
+        r1=r1,
+        r2=r2,
+        r1_secondaries=[r1_secondary],
+        r2_secondaries=[r2_secondary],
+        r1_supplementals=[r1_supp, r1_secondary_supp],
+        r2_supplementals=[r2_supp, r2_secondary_supp],
+    )
+    assert actual == expected
+
+
 def test_set_tag() -> None:
     builder = SamBuilder()
     template = Template.build(builder.add_pair(chrom="chr1", start1=100, start2=200))

@@ -683,7 +683,6 @@ def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
     Args:
         rec1: The first record in the pair.
         rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
-
     """
     if rec2 is None:
         rec2_is_unmapped = rec1.mate_is_unmapped

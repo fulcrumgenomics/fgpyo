@@ -899,16 +899,44 @@ def set_mate_info(
     r2.is_proper_pair = proper_pair
 
 
-def set_mate_info_on_secondary(
-    primary: AlignedSegment,
-    secondary: AlignedSegment,
-    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+def _set_non_primary_mate_fields(
+    secondary_or_supp: AlignedSegment, mate_primary: AlignedSegment
 ) -> None:
-    """Set mate info on a secondary alignment to the next read ordinal's primary alignment.
+    """Set mate info on a secondary or supplementary alignment to its mate's primary alignment.
 
     Args:
-        primary: The primary alignment of the secondary's mate.
+        secondary_or_supp: A secondary or supplementary alignment.
+        mate_primary: The primary alignment of the secondary_or_supp mate.
+    """
+    if (
+        mate_primary.is_read1 == secondary_or_supp.is_read1
+        or mate_primary.is_secondary
+        or mate_primary.is_supplementary
+    ):
+        raise ValueError("Mate info must be set from a primary of the next ordinal!")
+    if mate_primary.query_name != secondary_or_supp.query_name:
+        raise ValueError("Cannot set mate info on alignments with different query names!")
+
+    secondary_or_supp.next_reference_id = mate_primary.reference_id
+    secondary_or_supp.next_reference_name = mate_primary.reference_name
+    secondary_or_supp.next_reference_start = mate_primary.reference_start
+    secondary_or_supp.mate_is_forward = mate_primary.is_forward
+    secondary_or_supp.mate_is_mapped = mate_primary.is_mapped
+    secondary_or_supp.set_tag("MC", mate_primary.cigarstring)
+    secondary_or_supp.set_tag("MQ", mate_primary.mapping_quality)
+    secondary_or_supp.set_tag("ms", sum_of_base_qualities(mate_primary))
+
+
+def set_mate_info_on_secondary(
+    secondary: AlignedSegment,
+    mate_primary: AlignedSegment,
+    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+) -> None:
+    """Set mate info on a secondary alignment to its mate's primary alignment.
+
+    Args:
         secondary: The secondary alignment to set mate information upon.
+        mate_primary: The primary alignment of the secondary's mate.
         is_proper_pair: A function that takes the two alignments and determines proper pair status.
 
     Raises:
@@ -916,59 +944,37 @@ def set_mate_info_on_secondary(
         ValueError: If the primary is marked as either secondary or supplementary.
         ValueError: If the secondary is not marked as secondary.
     """
-    if primary.is_read1 == secondary.is_read1 or primary.is_secondary or primary.is_supplementary:
-        raise ValueError("Secondary mate info must be set from a primary of the next ordinal!")
     if not secondary.is_secondary:
         raise ValueError("Cannot set mate info on an alignment not marked as secondary!")
-    if primary.query_name != secondary.query_name:
-        raise ValueError("Cannot set mate info on alignments with different query names!")
 
-    secondary.next_reference_id = primary.reference_id
-    secondary.next_reference_name = primary.reference_name
-    secondary.next_reference_start = primary.reference_start
-    secondary.mate_is_forward = primary.is_forward
-    secondary.mate_is_mapped = primary.is_mapped
-    secondary.set_tag("MC", primary.cigarstring)
-    secondary.set_tag("MQ", primary.mapping_quality)
-    secondary.set_tag("ms", sum_of_base_qualities(primary))
+    _set_non_primary_mate_fields(secondary_or_supp=secondary, mate_primary=mate_primary)
 
     # NB: calculate isize and proper pair as if this secondary alignment was the primary alignment.
-    secondary.is_proper_pair = is_proper_pair(primary, secondary)
-    secondary.template_length = isize(primary, secondary)
+    secondary.is_proper_pair = is_proper_pair(mate_primary, secondary)
+    secondary.template_length = isize(mate_primary, secondary)
 
 
-def set_mate_info_on_supplementary(primary: AlignedSegment, supp: AlignedSegment) -> None:
-    """Set mate info on a supplementary alignment to the next read ordinal's primary alignment.
+def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
+    """Set mate info on a supplementary alignment to its mate's primary alignment.
 
     Args:
-        primary: The primary alignment of the supplementary's mate.
         supp: The supplementary alignment to set mate information upon.
+        mate_primary: The primary alignment of the supplementary's mate.
 
     Raises:
         ValueError: If primary and secondary are of the same read ordinal.
         ValueError: If the primary is marked as either secondary or supplementary.
         ValueError: If the secondary is not marked as secondary.
     """
-    if primary.is_read1 == supp.is_read1 or primary.is_secondary or primary.is_supplementary:
-        raise ValueError("Supplementary mate info must be set from a primary of the next ordinal!")
     if not supp.is_supplementary:
         raise ValueError("Cannot set mate info on an alignment not marked as supplementary!")
-    if primary.query_name != supp.query_name:
-        raise ValueError("Cannot set mate info on alignments with different query names!")
 
-    supp.next_reference_id = primary.reference_id
-    supp.next_reference_name = primary.reference_name
-    supp.next_reference_start = primary.reference_start
-    supp.mate_is_forward = primary.is_forward
-    supp.mate_is_mapped = primary.is_mapped
-    supp.set_tag("MC", primary.cigarstring)
-    supp.set_tag("MQ", primary.mapping_quality)
-    supp.set_tag("ms", sum_of_base_qualities(primary))
+    _set_non_primary_mate_fields(secondary_or_supp=supp, mate_primary=mate_primary)
 
     # NB: for a non-secondary supplemental alignment, set the following to the same as the primary.
     if not supp.is_secondary:
-        supp.is_proper_pair = primary.is_proper_pair
-        supp.template_length = -primary.template_length
+        supp.is_proper_pair = mate_primary.is_proper_pair
+        supp.template_length = -mate_primary.template_length
 
 
 def set_as_pairs(
@@ -1343,14 +1349,14 @@ def set_mate_info_for_template(
         set_mate_info(template.r1, template.r2, is_proper_pair=is_proper_pair)
     if template.r1 is not None:
         for rec in template.r2_secondaries:
-            set_mate_info_on_secondary(template.r1, rec, is_proper_pair=is_proper_pair)
+            set_mate_info_on_secondary(rec, template.r1, is_proper_pair=is_proper_pair)
         for rec in template.r2_supplementals:
-            set_mate_info_on_supplementary(template.r1, rec)
+            set_mate_info_on_supplementary(rec, template.r1)
     if template.r2 is not None:
         for rec in template.r1_secondaries:
-            set_mate_info_on_secondary(template.r2, rec, is_proper_pair=is_proper_pair)
+            set_mate_info_on_secondary(rec, template.r2, is_proper_pair=is_proper_pair)
         for rec in template.r1_supplementals:
-            set_mate_info_on_supplementary(template.r2, rec)
+            set_mate_info_on_supplementary(rec, template.r2)
     return template
 
 

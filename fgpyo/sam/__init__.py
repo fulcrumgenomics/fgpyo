@@ -622,45 +622,45 @@ class PairOrientation(enum.Enum):
 
     @classmethod
     def build(
-        cls, r1: AlignedSegment, r2: Optional[AlignedSegment] = None
+        cls, rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None
     ) -> Optional["PairOrientation"]:
         """Returns the pair orientation if both reads are mapped to the same reference sequence.
 
         Args:
-            r1: The first read in the template.
-            r2: The second read in the template. If undefined, mate data set upon R1 will be used.
+            rec1: The first record in the pair.
+            rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
 
         See:
             [`htsjdk.samtools.SamPairUtil.getPairOrientation()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102)
         """
 
-        if r2 is None:
-            r2_is_unmapped = r1.mate_is_unmapped
-            r2_reference_id = r1.next_reference_id
+        if rec2 is None:
+            rec2_is_unmapped = rec1.mate_is_unmapped
+            rec2_reference_id = rec1.next_reference_id
         else:
-            r2_is_unmapped = r2.is_unmapped
-            r2_reference_id = r2.reference_id
+            rec2_is_unmapped = rec2.is_unmapped
+            rec2_reference_id = rec2.reference_id
 
-        if r1.is_unmapped or r2_is_unmapped or r1.reference_id != r2_reference_id:
+        if rec1.is_unmapped or rec2_is_unmapped or rec1.reference_id != rec2_reference_id:
             return None
 
-        if r2 is None:
-            if not r1.has_tag("MC"):
+        if rec2 is None:
+            if not rec1.has_tag("MC"):
                 raise ValueError('Cannot determine proper pair status without R2\'s cigar ("MC")!')
-            r2_cigar = Cigar.from_cigarstring(str(r1.get_tag("MC")))
-            r2_is_forward = r1.mate_is_forward
-            r2_reference_start = r1.next_reference_start
-            r2_reference_end = r1.next_reference_start + r2_cigar.length_on_target()
+            rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
+            rec2_is_forward = rec1.mate_is_forward
+            rec2_reference_start = rec1.next_reference_start
+            rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
         else:
-            r2_is_forward = r2.is_forward
-            r2_reference_start = r2.reference_start
-            r2_reference_end = r2.reference_end
+            rec2_is_forward = rec2.is_forward
+            rec2_reference_start = rec2.reference_start
+            rec2_reference_end = rec2.reference_end
 
-        if r1.is_forward is r2_is_forward:
+        if rec1.is_forward is rec2_is_forward:
             return PairOrientation.TANDEM
-        elif r1.is_forward and r1.reference_start < r2_reference_end:
+        elif rec1.is_forward and rec1.reference_start < rec2_reference_end:
             return PairOrientation.FR
-        elif r1.is_reverse and r2_reference_start < r1.reference_end:
+        elif rec1.is_reverse and rec2_reference_start < rec1.reference_end:
             return PairOrientation.FR
         else:
             return PairOrientation.RF
@@ -671,43 +671,43 @@ DefaultProperlyPairedOrientations = {PairOrientation.FR}
 
 
 def is_proper_pair(
-    r1: AlignedSegment,
-    r2: Optional[AlignedSegment] = None,
+    rec1: AlignedSegment,
+    rec2: Optional[AlignedSegment] = None,
     max_insert_size: int = 1000,
     orientations: set[PairOrientation] = DefaultProperlyPairedOrientations,
 ) -> bool:
-    """Determines if a read pair is properly paired or not.
+    """Determines if a pair of records are properly paired or not.
 
-    Criteria for reads in a proper pair are:
-        - Both reads are aligned
-        - Both reads are aligned to the same reference sequence
-        - The pair orientation of the reads is a part of the valid pair orientations (default "FR")
+    Criteria for records in a proper pair are:
+        - Both records are aligned
+        - Both records are aligned to the same reference sequence
+        - The pair orientation of the records is one of the valid pair orientations (default "FR")
         - The inferred insert size is not more than a maximum length (default 1000)
 
     Args:
-        r1: The first read in the template.
-        r2: The second read in the template. If undefined, mate data set upon R1 will be used.
-        max_insert_size: The maximum insert size to consider a read pair "proper".
-        orientations: The valid set of orientations to consider a read pair "proper".
+        rec1: The first record in the pair.
+        rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
+        max_insert_size: The maximum insert size to consider a pair "proper".
+        orientations: The valid set of orientations to consider a pair "proper".
 
     See:
         [`htsjdk.samtools.SamPairUtil.isProperPair()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L106-L125)
     """
-    if r2 is None:
-        r2_is_mapped = r1.mate_is_mapped
-        r2_reference_id = r1.next_reference_id
+    if rec2 is None:
+        rec2_is_mapped = rec1.mate_is_mapped
+        rec2_reference_id = rec1.next_reference_id
     else:
-        r2_is_mapped = r2.is_mapped
-        r2_reference_id = r2.reference_id
+        rec2_is_mapped = rec2.is_mapped
+        rec2_reference_id = rec2.reference_id
 
     return (
-        r1.is_mapped
-        and r2_is_mapped
-        and r1.reference_id == r2_reference_id
-        and PairOrientation.build(r1, r2) in orientations
+        rec1.is_mapped
+        and rec2_is_mapped
+        and rec1.reference_id == rec2_reference_id
+        and PairOrientation.build(rec1=rec1, rec2=rec2) in orientations
         # TODO: consider replacing with `abs(isize(r1, r2)) <= max_insert_size`
         #       which can only be done if isize() is modified to allow for an optional R2.
-        and 0 < abs(r1.template_length) <= max_insert_size
+        and 0 < abs(rec1.template_length) <= max_insert_size
     )
 
 

@@ -492,7 +492,16 @@ def test_not_is_proper_pair_if_too_far_apart() -> None:
     assert not is_proper_pair(r1, r2)
 
 
-def test_isize() -> None:
+def test_is_not_proper_pair_with_custom_isize_func() -> None:
+    """Test that reads are not properly paired because of a custom isize function."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100)
+    assert is_proper_pair(r1, r2)
+    assert not is_proper_pair(r1, r2, isize=lambda a, b: False)
+
+
+def test_isize_when_r2_defined() -> None:
+    """Tests that an insert size can be calculated when both input records are defined."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     assert sam.isize(r1, r2) == 190
@@ -500,6 +509,40 @@ def test_isize() -> None:
 
     r2.is_unmapped = True
     assert sam.isize(r1, r2) == 0
+
+
+def test_isize_when_r2_undefined() -> None:
+    """Tests that an insert size can be calculated when R1 is provided only."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    assert sam.isize(r1) == 190
+    assert sam.isize(r2) == -190
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M")
+    assert sam.isize(r1) == 0
+    assert sam.isize(r2) == 0
+
+
+def test_isize_when_r2_undefined_indels_in_r2_cigar() -> None:
+    """Tests that an insert size can be derived without R2 by using R2's cigar."""
+    builder = SamBuilder()
+    r1, _ = builder.add_pair(
+        chrom="chr1",
+        start1=100,
+        cigar1="115M",
+        start2=250,
+        cigar2="10S5M1D1M1D2I2D30M",  # only 40bp reference-consuming operators
+    )
+    assert sam.isize(r1) == 190
+
+
+def test_isize_raises_when_r2_not_provided_and_no_mate_cigar_tag() -> None:
+    """Tests that an insert size can be calculated when both input records are defined."""
+    builder = SamBuilder()
+    r1, _ = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1.set_tag("MC", None)
+    with pytest.raises(ValueError, match="Cannot determine proper pair status without R2's cigar"):
+        sam.isize(r1)
 
 
 def test_sum_of_base_qualities() -> None:

@@ -20,6 +20,7 @@ from fgpyo.sam import CigarParsingException
 from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
 from fgpyo.sam import is_proper_pair
+from fgpyo.sam import set_mate_info
 from fgpyo.sam import sum_of_base_qualities
 from fgpyo.sam.builder import SamBuilder
 
@@ -579,3 +580,126 @@ def test_calc_edit_info_with_aligned_Ns() -> None:
     assert info.deletions == 0
     assert info.deleted_bases == 0
     assert info.nm == 5
+
+
+def test_set_mate_info_raises_mimatched_query_names() -> None:
+    """Test set_mate_info raises an exception for mismatched query names."""
+    builder = SamBuilder()
+    r1 = builder.add_single(read_num=1)
+    r2 = builder.add_single(read_num=2)
+    assert r1.query_name != r2.query_name
+    with pytest.raises(
+        ValueError, match="Cannot set mate info on alignments with different query names!"
+    ):
+        set_mate_info(r1, r2)
+
+
+def test_set_mate_info_both_unmapped() -> None:
+    """Test set_mate_info sets mate info for two unmapped records."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair()
+    assert r1.is_unmapped is True
+    assert r2.is_unmapped is True
+
+    set_mate_info(r1, r2)
+
+    for rec in (r1, r2):
+        assert rec.reference_id == sam.NO_REF_INDEX
+        assert rec.reference_name is None
+        assert rec.reference_start == sam.NO_REF_POS
+        assert rec.next_reference_id == sam.NO_REF_INDEX
+        assert rec.next_reference_name is None
+        assert rec.next_reference_start == sam.NO_REF_POS
+        assert not rec.has_tag("MC")
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 0
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.template_length == 0
+        assert rec.is_proper_pair is False
+
+    # NB: unmapped records are forward until proven otherwise
+    assert r1.is_forward is True
+    assert r2.is_forward is True
+    assert r1.mate_is_forward is True
+    assert r2.mate_is_forward is True
+
+
+def test_set_mate_info_one_unmapped() -> None:
+    """Test set_mate_info sets mate info for one mapped and one unmapped records."""
+    builder = SamBuilder()
+    r1_mapped, r2_unmapped = builder.add_pair(chrom="chr1", start1=200, strand1="-")
+    r1_unmapped, r2_mapped = builder.add_pair(chrom="chr1", start2=200, strand2="-")
+
+    for mapped, unmapped in [(r1_mapped, r2_unmapped), (r2_mapped, r1_unmapped)]:
+        assert mapped.is_mapped is True
+        assert unmapped.is_unmapped is True
+
+        set_mate_info(mapped, unmapped)
+
+        assert mapped.reference_id == mapped.header.get_tid("chr1")
+        assert mapped.reference_name == "chr1"
+        assert mapped.reference_start == 200
+        assert mapped.next_reference_id == sam.NO_REF_INDEX
+        assert mapped.next_reference_name is None
+        assert mapped.next_reference_start == sam.NO_REF_POS
+        assert not mapped.has_tag("MC")
+        assert mapped.has_tag("MQ")
+        assert mapped.get_tag("MQ") == 0
+        assert mapped.has_tag("ms")
+        assert mapped.get_tag("ms") == 3000
+        assert mapped.template_length == 0
+        assert mapped.is_forward is False
+        assert mapped.is_proper_pair is False
+        assert mapped.mate_is_forward is True
+
+        assert unmapped.reference_id == sam.NO_REF_INDEX
+        assert unmapped.reference_name is None
+        assert unmapped.reference_start == sam.NO_REF_POS
+        assert unmapped.next_reference_id == unmapped.header.get_tid("chr1")
+        assert unmapped.next_reference_name == "chr1"
+        assert unmapped.next_reference_start == 200
+        assert unmapped.has_tag("MC")
+        assert unmapped.get_tag("MC") == "100M"
+        assert unmapped.has_tag("MQ")
+        assert unmapped.get_tag("MQ") == 60
+        assert unmapped.has_tag("ms")
+        assert unmapped.get_tag("ms") == 3000
+        assert unmapped.template_length == 0
+        assert unmapped.is_forward is True
+        assert unmapped.is_proper_pair is False
+        assert unmapped.mate_is_forward is False
+
+
+def test_set_mate_info_both_mapped() -> None:
+    """Test set_mate_info sets mate info for two mapped records."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=300)
+    assert r1.is_mapped is True
+    assert r2.is_mapped is True
+
+    set_mate_info(r1, r2)
+
+    for rec in (r1, r2):
+        assert rec.reference_id == builder.header.get_tid("chr1")
+        assert rec.reference_name == "chr1"
+        assert rec.next_reference_id == builder.header.get_tid("chr1")
+        assert rec.next_reference_name == "chr1"
+        assert rec.has_tag("MC")
+        assert rec.get_tag("MC") == "100M"
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 60
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.is_proper_pair is True
+
+    assert r1.reference_start == 200
+    assert r1.next_reference_start == 300
+    assert r2.reference_start == 300
+    assert r2.next_reference_start == 200
+    assert r1.template_length == 200
+    assert r2.template_length == -200
+    assert r1.is_forward is True
+    assert r2.is_reverse is True
+    assert r1.mate_is_reverse is True
+    assert r2.mate_is_forward is True

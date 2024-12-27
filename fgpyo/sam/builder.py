@@ -264,70 +264,6 @@ class SamBuilder:
         if not rec.is_unmapped:
             rec.cigarstring = cigar if cigar else f"{length}M"
 
-    def _set_mate_info(self, r1: pysam.AlignedSegment, r2: pysam.AlignedSegment) -> None:
-        """Sets the mate information on a pair of sam records.
-
-        Handles cases where both reads are mapped, one of the two reads is unmapped or both reads
-        are unmapped.
-
-        Args:
-            r1: the first read in the pair
-            r2: the sceond read in the pair
-        """
-        for rec in r1, r2:
-            rec.template_length = 0
-            rec.is_proper_pair = False
-
-        if r1.is_unmapped and r2.is_unmapped:
-            # If they're both unmapped just clean the records up
-            for rec, other in [(r1, r2), (r2, r1)]:
-                rec.reference_id = sam.NO_REF_INDEX
-                rec.next_reference_id = sam.NO_REF_INDEX
-                rec.reference_start = sam.NO_REF_POS
-                rec.next_reference_start = sam.NO_REF_POS
-                rec.is_unmapped = True
-                rec.mate_is_unmapped = True
-                rec.is_proper_pair = False
-                rec.mate_is_reverse = other.is_reverse
-
-        elif r1.is_unmapped or r2.is_unmapped:
-            # If only one is mapped/unmapped copy over the relevant stuff
-            (m, u) = (r1, r2) if r2.is_unmapped else (r2, r1)
-            u.reference_id = m.reference_id
-            u.reference_start = m.reference_start
-            u.next_reference_id = m.reference_id
-            u.next_reference_start = m.reference_start
-            u.mate_is_reverse = m.is_reverse
-            u.mate_is_unmapped = False
-            u.set_tag("MC", m.cigarstring)
-
-            m.next_reference_id = u.reference_id
-            m.next_reference_start = u.reference_start
-            m.mate_is_reverse = u.is_reverse
-            m.mate_is_unmapped = True
-
-        else:
-            # Else they are both mapped
-            for rec, other in [(r1, r2), (r2, r1)]:
-                rec.next_reference_id = other.reference_id
-                rec.next_reference_start = other.reference_start
-                rec.mate_is_reverse = other.is_reverse
-                rec.mate_is_unmapped = False
-                rec.set_tag("MC", other.cigarstring)
-
-            if r1.reference_id == r2.reference_id:
-                r1p = r1.reference_end if r1.is_reverse else r1.reference_start
-                r2p = r2.reference_end if r2.is_reverse else r2.reference_start
-                r1.template_length = r2p - r1p
-                r2.template_length = r1p - r2p
-
-                # Arbitrarily set proper pair if the we have an FR pair with isize <= 1000
-                if r1.is_reverse != r2.is_reverse and abs(r1.template_length) <= 1000:
-                    fpos, rpos = (r2p, r1p) if r1.is_reverse else (r1p, r2p)
-                    if fpos < rpos:
-                        r1.is_proper_pair = True
-                        r2.is_proper_pair = True
-
     def rg(self) -> Dict[str, Any]:
         """Returns the single read group that is defined in the header."""
         # The `RG` field contains a list of read group mappings
@@ -444,8 +380,16 @@ class SamBuilder:
             raise ValueError("Cannot use chrom in combination with chrom1 or chrom2")
 
         chrom = sam.NO_REF_NAME if chrom is None else chrom
-        chrom1 = next(c for c in (chrom1, chrom) if c is not None)
-        chrom2 = next(c for c in (chrom2, chrom) if c is not None)
+
+        if start1 != sam.NO_REF_POS:
+            chrom1 = next(c for c in (chrom1, chrom) if c is not None)
+        else:
+            chrom1 = sam.NO_REF_NAME
+
+        if start2 != sam.NO_REF_POS:
+            chrom2 = next(c for c in (chrom2, chrom) if c is not None)
+        else:
+            chrom2 = sam.NO_REF_NAME
 
         if chrom1 == sam.NO_REF_NAME and start1 != sam.NO_REF_POS:
             raise ValueError("start1 cannot be used on its own - specify chrom or chrom1")
@@ -468,7 +412,7 @@ class SamBuilder:
         )
 
         # Sync up mate info and we're done!
-        self._set_mate_info(r1, r2)
+        sam.set_mate_info(r1, r2)
         self._records.append(r1)
         self._records.append(r2)
         return r1, r2

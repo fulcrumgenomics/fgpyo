@@ -162,6 +162,7 @@ from itertools import chain
 from pathlib import Path
 from typing import IO
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
@@ -176,6 +177,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from typing_extensions import deprecated
 
 import fgpyo.io
 from fgpyo.collections import PeekableIterator
@@ -802,38 +804,101 @@ def isize(r1: AlignedSegment, r2: AlignedSegment) -> int:
         return r2_pos - r1_pos
 
 
-def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
-    """Resets mate pair information between reads in a pair. Requires that both r1
-    and r2 are mapped.  Can be handed reads that already have pairing flags setup or
-    independent R1 and R2 records that are currently flagged as SE reads.
+def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
+    """Calculate the sum of base qualities score for an alignment record.
+    This function is useful for calculating the "mate score" as implemented in samtools fixmate.
+    Args:
+        rec: The alignment record to calculate the sum of base qualities from.
+        min_quality_score: The minimum base quality score to use for summation.
+    See:
+        [`calc_sum_of_base_qualities()`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L227-L238)
+        [`MD_MIN_QUALITY`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L42)
+    """
+    score: int = sum(qual for qual in rec.query_qualities if qual >= min_quality_score)
+    return score
+
+
+def set_mate_info(
+    r1: AlignedSegment,
+    r2: AlignedSegment,
+    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+) -> None:
+    """Resets mate pair information between reads in a pair.
 
     Args:
-        r1: read 1
-        r2: read 2 with the same queryname as r1
+        r1: Read 1 (first read in the template).
+        r2: Read 2 with the same query name as r1 (second read in the template).
+        is_proper_pair: A function that takes the two alignments and determines proper pair status.
     """
     if r1.query_name != r2.query_name:
-        raise ValueError("Cannot set pair info on reads with different query names!")
+        raise ValueError("Cannot set mate info on alignments with different query names!")
+
+    for src, dest in [(r1, r2), (r2, r1)]:
+        dest.next_reference_id = src.reference_id
+        dest.next_reference_name = src.reference_name
+        dest.next_reference_start = src.reference_start
+        dest.mate_is_forward = src.is_forward
+        dest.mate_is_mapped = src.is_mapped
+        dest.set_tag("MC", src.cigarstring)
+        dest.set_tag("MQ", src.mapping_quality)
+
+    r1.set_tag("ms", sum_of_base_qualities(r2))
+    r2.set_tag("ms", sum_of_base_qualities(r1))
+
+    template_length = isize(r1, r2)
+    r1.template_length = template_length
+    r2.template_length = -template_length
+
+    proper_pair = is_proper_pair(r1, r2)
+    r1.is_proper_pair = proper_pair
+    r2.is_proper_pair = proper_pair
+
+
+def set_as_pairs(
+    r1: AlignedSegment,
+    r2: AlignedSegment,
+    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+) -> None:
+    """Forces the two reads to become pairs as long as they share the same query name.
+
+    This function will take two reads, as long as they have the same query name, and make them
+    pairs. The reads are marked as pairs and then first and second read flags are set. Finally, all
+    mate information is reset upon both reads.
+
+    This function is useful for taking once-single-end reads and making them pairs.
+
+    Args:
+        r1: Read 1 (first read in the template).
+        r2: Read 2 with the same query name as r1 (second read in the template).
+        is_proper_pair: A function that takes the two reads and determines proper pair status.
+    """
+    if r1.query_name != r2.query_name:
+        raise ValueError("Cannot pair reads with different query names!")
 
     for r in [r1, r2]:
         r.is_paired = True
-        r.is_proper_pair = proper_pair
 
     r1.is_read1 = True
     r1.is_read2 = False
     r2.is_read2 = True
     r2.is_read1 = False
 
-    for src, dest in [(r1, r2), (r2, r1)]:
-        dest.next_reference_id = src.reference_id
-        dest.next_reference_start = src.reference_start
-        dest.mate_is_reverse = src.is_reverse
-        dest.mate_is_unmapped = src.mate_is_unmapped
-        dest.set_tag("MC", src.cigarstring)
-        dest.set_tag("MQ", src.mapping_quality)
+    set_mate_info(r1=r1, r2=r2, is_proper_pair=is_proper_pair)
 
-    insert_size = isize(r1, r2)
-    r1.template_length = insert_size
-    r2.template_length = -insert_size
+
+@deprecated("Use `set_mate_info()` instead. Deprecated as of fgpyo 0.8.0.")
+def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
+    """Resets mate pair information between reads in a pair.
+
+    Requires that both r1 and r2 are mapped. Can be handed reads that already have pairing flags
+    setup or independent R1 and R2 records that are currently flagged as SE reads.
+
+    Args:
+        r1: Read 1 (first read in the template).
+        r2: Read 2 with the same query name as r1 (second read in the template).
+        proper_pair: whether the pair is proper or not.
+    """
+    set_as_pairs(r1, r2, lambda r1, r2: proper_pair)
 
 
 @attr.s(frozen=True, auto_attribs=True)

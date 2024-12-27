@@ -114,33 +114,56 @@ def test_unmapped_reads() -> None:
     assert r1.mate_is_unmapped
     assert r2.is_unmapped
     assert not r2.mate_is_unmapped
-    for rec in r1, r2:
-        assert rec.reference_name == "chr1"
-        assert rec.reference_start == 1000
-        assert rec.next_reference_name == "chr1"
-        assert rec.next_reference_start == 1000
+    assert r1.reference_name == "chr1"
+    assert r1.reference_start == 1000
+    assert r1.next_reference_name is None
+    assert r1.next_reference_start == sam.NO_REF_POS
+    assert r2.reference_name is None
+    assert r2.reference_start == sam.NO_REF_POS
+    assert r2.next_reference_name == "chr1"
+    assert r2.next_reference_start == 1000
 
     r1, r2 = builder.add_pair(chrom="chr1", start2=2000)
     assert r1.is_unmapped
     assert not r1.mate_is_unmapped
     assert not r2.is_unmapped
     assert r2.mate_is_unmapped
-    for rec in r1, r2:
-        assert rec.reference_name == "chr1"
-        assert rec.reference_start == 2000
-        assert rec.next_reference_name == "chr1"
-        assert rec.next_reference_start == 2000
+    assert r1.reference_name is None
+    assert r1.reference_start == sam.NO_REF_POS
+    assert r1.next_reference_name == "chr1"
+    assert r1.next_reference_start == 2000
+    assert r2.reference_name == "chr1"
+    assert r2.reference_start == 2000
+    assert r2.next_reference_name is None
+    assert r2.next_reference_start == sam.NO_REF_POS
 
     r1, r2 = builder.add_pair(chrom=sam.NO_REF_NAME)
     assert r1.is_unmapped
     assert r1.mate_is_unmapped
     assert r2.is_unmapped
     assert r2.mate_is_unmapped
-    for rec in r1, r2:
-        assert rec.reference_name is None
-        assert rec.reference_start == sam.NO_REF_POS
-        assert rec.next_reference_name is None
-        assert rec.next_reference_start == sam.NO_REF_POS
+    assert r1.reference_name is None
+    assert r1.reference_start == sam.NO_REF_POS
+    assert r1.next_reference_name is None
+    assert r1.next_reference_start == sam.NO_REF_POS
+    assert r2.reference_name is None
+    assert r2.reference_start == sam.NO_REF_POS
+    assert r2.next_reference_name is None
+    assert r2.next_reference_start == sam.NO_REF_POS
+
+    r1, r2 = builder.add_pair(chrom=None)
+    assert r1.is_unmapped
+    assert r1.mate_is_unmapped
+    assert r2.is_unmapped
+    assert r2.mate_is_unmapped
+    assert r1.reference_name is None
+    assert r1.reference_start == sam.NO_REF_POS
+    assert r1.next_reference_name is None
+    assert r1.next_reference_start == sam.NO_REF_POS
+    assert r2.reference_name is None
+    assert r2.reference_start == sam.NO_REF_POS
+    assert r2.next_reference_name is None
+    assert r2.next_reference_start == sam.NO_REF_POS
 
 
 def test_invalid_strand() -> None:

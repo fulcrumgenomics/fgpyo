@@ -19,7 +19,7 @@ from fgpyo.sam import CigarOp
 from fgpyo.sam import CigarParsingException
 from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
-from fgpyo.sam import properly_paired
+from fgpyo.sam import is_properly_paired
 from fgpyo.sam.builder import SamBuilder
 
 
@@ -418,82 +418,82 @@ def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag() -> None:
         PairOrientation.build(r1)
 
 
-def test_properly_paired_when_actually_proper() -> None:
-    """Test that properly_paired returns True when reads are properly paired."""
+def test_is_properly_paired_when_actually_proper() -> None:
+    """Test that is_properly_paired returns True when reads are properly paired."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
-    assert properly_paired(r1, r2)
+    assert is_properly_paired(r1, r2)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
     r1.is_reverse = True
     r2.is_reverse = False
     sam.set_pair_info(r1, r2)
-    assert properly_paired(r1, r2)
+    assert is_properly_paired(r1, r2)
 
 
-def test_properly_paired_when_actually_proper_and_no_r2() -> None:
-    """Test that properly_paired returns True when reads are properly paired, but no R2."""
+def test_is_properly_paired_when_actually_proper_and_no_r2() -> None:
+    """Test that is_properly_paired returns True when reads are properly paired, but no R2."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
-    assert properly_paired(r1)
+    assert is_properly_paired(r1)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
     r1.is_reverse = True
     r2.is_reverse = False
     sam.set_pair_info(r1, r2)
-    assert properly_paired(r1)
+    assert is_properly_paired(r1)
 
 
-def test_not_properly_paired_if_wrong_orientation() -> None:
+def test_not_is_properly_paired_if_wrong_orientation() -> None:
     """Test that reads are not properly paired if they are not in the right orientation."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1, r2)
+    assert not is_properly_paired(r1, r2)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1, r2)
+    assert not is_properly_paired(r1, r2)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1, r2)
+    assert not is_properly_paired(r1, r2)
 
 
-def test_not_properly_paired_if_wrong_orientation_and_no_r2() -> None:
+def test_not_is_properly_paired_if_wrong_orientation_and_no_r2() -> None:
     """Test reads are not properly paired if they are not in the right orientation, but no R2."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1)
+    assert not is_properly_paired(r1)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1)
+    assert not is_properly_paired(r1)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1)
+    assert not is_properly_paired(r1)
 
 
-def test_not_properly_paired_if_too_far_apart() -> None:
+def test_not_is_properly_paired_if_too_far_apart() -> None:
     """Test that reads are not properly paired if they are too far apart."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100 + 1000)
     sam.set_pair_info(r1, r2)
-    assert not properly_paired(r1, r2)
+    assert not is_properly_paired(r1, r2)
 
 
 def test_isize() -> None:

@@ -265,7 +265,8 @@ def _pysam_open(
             assert file_type is not None, "Must specify file_type when writing to standard output"
             path = sys.stdout
         else:
-            file_type = file_type or SamFileType.from_path(path)
+            if file_type is None:
+                file_type = SamFileType.from_path(path)
             path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
         open_type = "reading" if open_for_reading else "writing"

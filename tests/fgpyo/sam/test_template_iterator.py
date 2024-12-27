@@ -131,6 +131,23 @@ def test_write_template(
         assert len([r for r in template.all_recs()]) == 2
 
 
+def test_template_can_set_r1_and_r2_with_no_secondary_or_supplementals() -> None:
+    """Test that we can build a template with just an R1 and R2 primary alignment."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(name="x", chrom="chr1", start1=10, start2=30)
+    actual = Template.build([r1, r2])
+    expected = Template(
+        name="x",
+        r1=r1,
+        r2=r2,
+        r1_secondaries=[],
+        r2_secondaries=[],
+        r1_supplementals=[],
+        r2_supplementals=[],
+    )
+    assert actual == expected
+
+
 def test_template_treats_secondary_supplementary_as_supplementary() -> None:
     """Test that Template treats "secondary supplementaries" as supplementary."""
     builder = SamBuilder()

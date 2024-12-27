@@ -622,7 +622,7 @@ class PairOrientation(enum.Enum):
     """A pair orientation for tandem (forward-forward or reverse-reverse) reads."""
 
     @classmethod
-    def build(
+    def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
         cls, rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None
     ) -> Optional["PairOrientation"]:
         """Returns the pair orientation if both reads are mapped to the same reference sequence.
@@ -646,22 +646,30 @@ class PairOrientation(enum.Enum):
             return None
 
         if rec2 is None:
-            if not rec1.has_tag("MC"):
-                raise ValueError('Cannot determine proper pair status without R2\'s cigar ("MC")!')
-            rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
             rec2_is_forward = rec1.mate_is_forward
             rec2_reference_start = rec1.next_reference_start
-            rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
         else:
             rec2_is_forward = rec2.is_forward
             rec2_reference_start = rec2.reference_start
-            rec2_reference_end = rec2.reference_end
 
         if rec1.is_forward is rec2_is_forward:
             return PairOrientation.TANDEM
-        elif rec1.is_forward and rec1.reference_start < rec2_reference_end:
+        if rec1.is_forward and rec1.reference_start <= rec2_reference_start:
             return PairOrientation.FR
-        elif rec1.is_reverse and rec2_reference_start < rec1.reference_end:
+        if rec1.is_reverse and rec2_reference_start < rec1.reference_end:
+            return PairOrientation.FR
+        if rec1.is_reverse and rec2_reference_start >= rec1.reference_end:
+            return PairOrientation.RF
+
+        if rec2 is None:
+            if not rec1.has_tag("MC"):
+                raise ValueError('Cannot determine proper pair status without R2\'s cigar ("MC")!')
+            rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
+            rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
+        else:
+            rec2_reference_end = rec2.reference_end
+
+        if rec1.reference_start < rec2_reference_end:
             return PairOrientation.FR
         else:
             return PairOrientation.RF
@@ -705,7 +713,7 @@ def is_proper_pair(
         rec1.is_mapped
         and rec2_is_mapped
         and rec1.reference_id == rec2_reference_id
-        and PairOrientation.build(rec1=rec1, rec2=rec2) in orientations
+        and PairOrientation.from_recs(rec1=rec1, rec2=rec2) in orientations
         # TODO: consider replacing with `abs(isize(r1, r2)) <= max_insert_size`
         #       which can only be done if isize() is modified to allow for an optional R2.
         and 0 < abs(rec1.template_length) <= max_insert_size

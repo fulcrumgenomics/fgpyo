@@ -158,6 +158,7 @@ and slices):
 import enum
 import io
 import sys
+from collections.abc import Collection
 from itertools import chain
 from pathlib import Path
 from typing import IO
@@ -666,7 +667,7 @@ class PairOrientation(enum.Enum):
             return PairOrientation.RF
 
 
-DefaultProperlyPairedOrientations = {PairOrientation.FR}
+DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}
 """The default orientations for properly paired reads."""
 
 
@@ -674,7 +675,7 @@ def is_proper_pair(
     rec1: AlignedSegment,
     rec2: Optional[AlignedSegment] = None,
     max_insert_size: int = 1000,
-    orientations: set[PairOrientation] = DefaultProperlyPairedOrientations,
+    orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
 ) -> bool:
     """Determines if a pair of records are properly paired or not.
 

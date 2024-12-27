@@ -677,33 +677,48 @@ class PairOrientation(enum.Enum):
             return PairOrientation.RF
 
 
-def isize(r1: AlignedSegment, r2: Optional[AlignedSegment] = None) -> int:
-    """Computes the insert size for a pair of records."""
-    if r2 is None:
-        r2_is_unmapped = r1.mate_is_unmapped
-        r2_reference_id = r1.next_reference_id
-    else:
-        r2_is_unmapped = r2.is_unmapped
-        r2_reference_id = r2.reference_id
+def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
+    """Computes the insert size ("template length" or "TLEN") for a pair of records.
 
-    if r1.is_unmapped or r2_is_unmapped or r1.reference_id != r2_reference_id:
+    Args:
+        rec1: The first record in the pair.
+        rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
+
+    """
+    if rec2 is None:
+        rec2_is_unmapped = rec1.mate_is_unmapped
+        rec2_reference_id = rec1.next_reference_id
+    else:
+        rec2_is_unmapped = rec2.is_unmapped
+        rec2_reference_id = rec2.reference_id
+
+    if rec1.is_unmapped or rec2_is_unmapped or rec1.reference_id != rec2_reference_id:
         return 0
 
-    if r2 is None:
-        if not r1.has_tag("MC"):
-            raise ValueError('Cannot determine proper pair status without R2\'s cigar ("MC")!')
-        r2_cigar = Cigar.from_cigarstring(str(r1.get_tag("MC")))
-        r2_is_reverse = r1.mate_is_reverse
-        r2_reference_start = r1.next_reference_start
-        r2_reference_end = r1.next_reference_start + r2_cigar.length_on_target()
+    if rec2 is None:
+        rec2_is_forward = rec1.mate_is_forward
+        rec2_reference_start = rec1.next_reference_start
     else:
-        r2_is_reverse = r2.is_reverse
-        r2_reference_start = r2.reference_start
-        r2_reference_end = r2.reference_end
+        rec2_is_forward = rec2.is_forward
+        rec2_reference_start = rec2.reference_start
 
-    r1_pos = r1.reference_end if r1.is_reverse else r1.reference_start
-    r2_pos = r2_reference_end if r2_is_reverse else r2_reference_start
-    return r2_pos - r1_pos
+    if rec1.is_forward and rec2_is_forward:
+        return rec2_reference_start - rec1.reference_start
+    if rec1.is_reverse and rec2_is_forward:
+        return rec2_reference_start - rec1.reference_end
+
+    if rec2 is None:
+        if not rec1.has_tag("MC"):
+            raise ValueError('Cannot determine proper pair status without a mate cigar ("MC")!')
+        rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
+        rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
+    else:
+        rec2_reference_end = rec2.reference_end
+
+    if rec1.is_forward:
+        return rec2_reference_end - rec1.reference_start
+    else:
+        return rec2_reference_end - rec1.reference_end
 
 
 DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}

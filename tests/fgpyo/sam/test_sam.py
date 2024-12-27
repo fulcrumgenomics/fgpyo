@@ -594,7 +594,9 @@ def test_isize_raises_when_r2_not_provided_and_no_mate_cigar_tag() -> None:
     builder = SamBuilder()
     r1, _ = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.set_tag("MC", None)
-    with pytest.raises(ValueError, match="Cannot determine proper pair status without R2's cigar"):
+    with pytest.raises(
+        ValueError, match="Cannot determine proper pair status without a mate cigar"
+    ):
         sam.isize(r1)
 
 
@@ -769,7 +771,7 @@ def test_set_mate_info_one_unmapped() -> None:
 def test_set_mate_info_both_mapped() -> None:
     """Test set_mate_info sets mate info for two mapped records."""
     builder = SamBuilder()
-    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=300)
+    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=301)
     assert r1.is_mapped is True
     assert r2.is_mapped is True
 
@@ -789,11 +791,11 @@ def test_set_mate_info_both_mapped() -> None:
         assert rec.is_proper_pair is True
 
     assert r1.reference_start == 200
-    assert r1.next_reference_start == 300
-    assert r2.reference_start == 300
+    assert r1.next_reference_start == 301
+    assert r2.reference_start == 301
     assert r2.next_reference_start == 200
-    assert r1.template_length == 200
-    assert r2.template_length == -200
+    assert r1.template_length == 201
+    assert r2.template_length == -201
     assert r1.is_forward is True
     assert r2.is_reverse is True
     assert r1.mate_is_reverse is True

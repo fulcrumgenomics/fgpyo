@@ -771,7 +771,7 @@ def test_set_mate_info_one_unmapped() -> None:
 def test_set_mate_info_both_mapped() -> None:
     """Test set_mate_info sets mate info for two mapped records."""
     builder = SamBuilder()
-    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=301)
+    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=300)
     assert r1.is_mapped is True
     assert r2.is_mapped is True
 
@@ -791,11 +791,11 @@ def test_set_mate_info_both_mapped() -> None:
         assert rec.is_proper_pair is True
 
     assert r1.reference_start == 200
-    assert r1.next_reference_start == 301
-    assert r2.reference_start == 301
+    assert r1.next_reference_start == 300
+    assert r2.reference_start == 300
     assert r2.next_reference_start == 200
-    assert r1.template_length == 201
-    assert r2.template_length == -201
+    assert r1.template_length == 200
+    assert r2.template_length == -200
     assert r1.is_forward is True
     assert r2.is_reverse is True
     assert r1.mate_is_reverse is True

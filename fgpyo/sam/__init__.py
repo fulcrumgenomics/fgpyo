@@ -265,7 +265,8 @@ def _pysam_open(
             assert file_type is not None, "Must specify file_type when writing to standard output"
             path = sys.stdout
         else:
-            file_type = file_type or SamFileType.from_path(path)
+            if file_type is None:
+                file_type = SamFileType.from_path(path)
             path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
         open_type = "reading" if open_for_reading else "writing"
@@ -830,14 +831,17 @@ class Template:
     validations of the Template by default.  If constructing Template instances by construction
     users are encouraged to use the validate method post-construction.
 
+    In the special cases there are alignments records that are _*both secondary and supplementary*_
+    then they will be stored upon the `r1_supplementals` and `r2_supplementals` fields only.
+
     Attributes:
         name: the name of the template/query
-        r1: Primary alignment for read 1, or None if there is none
-        r2: Primary alignment for read 2, or None if there is none
+        r1: Primary non-supplementary alignment for read 1, or None if there is none
+        r2: Primary non-supplementary alignment for read 2, or None if there is none
         r1_supplementals: Supplementary alignments for read 1
         r2_supplementals: Supplementary alignments for read 2
-        r1_secondaries: Secondary (non-primary) alignments for read 1
-        r2_secondaries: Secondary (non-primary) alignments for read 2
+        r1_secondaries: Secondary (non-primary, non-supplementary) alignments for read 1
+        r2_secondaries: Secondary (non-primary, non-supplementary) alignments for read 2
     """
 
     name: str
@@ -883,7 +887,7 @@ class Template:
                     r1_supplementals.append(rec)
                 else:
                     r2_supplementals.append(rec)
-            if rec.is_secondary:
+            elif rec.is_secondary:
                 if is_r1:
                     r1_secondaries.append(rec)
                 else:
@@ -924,6 +928,7 @@ class Template:
         for rec in self.r1_secondaries:
             assert rec.is_read1 or not rec.is_paired, "R1 secondary not flagged as R1 or unpaired"
             assert rec.is_secondary, "R1 secondary not flagged as secondary"
+            assert not rec.is_supplementary, "R1 secondary supplementals belong with supplementals"
 
         for rec in self.r1_supplementals:
             assert rec.is_read1 or not rec.is_paired, "R1 supp. not flagged as R1 or unpaired"
@@ -932,6 +937,7 @@ class Template:
         for rec in self.r2_secondaries:
             assert rec.is_read2, "R2 secondary not flagged as R2"
             assert rec.is_secondary, "R2 secondary not flagged as secondary"
+            assert not rec.is_supplementary, "R2 secondary supplementals belong with supplementals"
 
         for rec in self.r2_supplementals:
             assert rec.is_read2, "R2 supp. not flagged as R2"

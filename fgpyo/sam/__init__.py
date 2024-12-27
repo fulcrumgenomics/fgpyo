@@ -962,38 +962,6 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
         supp.template_length = -mate_primary.template_length
 
 
-def set_as_pairs(
-    r1: AlignedSegment,
-    r2: AlignedSegment,
-    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
-) -> None:
-    """Forces the two reads to become pairs as long as they share the same query name.
-
-    This function will take two reads, as long as they have the same query name, and make them
-    pairs. The reads are marked as pairs and then first and second read flags are set. Finally, all
-    mate information is reset upon both reads.
-
-    This function is useful for taking once-single-end reads and making them pairs.
-
-    Args:
-        r1: Read 1 (first read in the template).
-        r2: Read 2 with the same query name as r1 (second read in the template).
-        is_proper_pair: A function that takes the two reads and determines proper pair status.
-    """
-    if r1.query_name != r2.query_name:
-        raise ValueError("Cannot pair reads with different query names!")
-
-    for r in [r1, r2]:
-        r.is_paired = True
-
-    r1.is_read1 = True
-    r1.is_read2 = False
-    r2.is_read2 = True
-    r2.is_read1 = False
-
-    set_mate_info(r1=r1, r2=r2, is_proper_pair=is_proper_pair)
-
-
 @deprecated("Use `set_mate_info()` instead. Deprecated after fgpyo 0.8.0.")
 def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
     """Resets mate pair information between reads in a pair.

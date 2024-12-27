@@ -863,6 +863,28 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
     return score
 
 
+def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> None:
+    """Set common mate info an alignment to its mate's primary alignment.
+
+    Args:
+        dest: The alignment to set the mate info upon.
+        source: The primary alignment to use as a mate reference.
+    """
+    if source.is_read1 is dest.is_read1 or source.is_secondary or source.is_supplementary:
+        raise ValueError("Mate info must be set from a primary of the next ordinal!")
+    if source.query_name != dest.query_name:
+        raise ValueError("Cannot set mate info on alignments with different query names!")
+
+    dest.next_reference_id = source.reference_id
+    dest.next_reference_name = source.reference_name
+    dest.next_reference_start = source.reference_start
+    dest.mate_is_forward = source.is_forward
+    dest.mate_is_mapped = source.is_mapped
+    dest.set_tag("MC", source.cigarstring)
+    dest.set_tag("MQ", source.mapping_quality)
+    dest.set_tag("ms", sum_of_base_qualities(source))
+
+
 def set_mate_info(
     r1: AlignedSegment,
     r2: AlignedSegment,
@@ -878,17 +900,8 @@ def set_mate_info(
     if r1.query_name != r2.query_name:
         raise ValueError("Cannot set mate info on alignments with different query names!")
 
-    for src, dest in [(r1, r2), (r2, r1)]:
-        dest.next_reference_id = src.reference_id
-        dest.next_reference_name = src.reference_name
-        dest.next_reference_start = src.reference_start
-        dest.mate_is_forward = src.is_forward
-        dest.mate_is_mapped = src.is_mapped
-        dest.set_tag("MC", src.cigarstring)
-        dest.set_tag("MQ", src.mapping_quality)
-
-    r1.set_tag("ms", sum_of_base_qualities(r2))
-    r2.set_tag("ms", sum_of_base_qualities(r1))
+    for dest, source in [(r1, r2), (r2, r1)]:
+        _set_common_mate_fields(dest=dest, source=source)
 
     template_length = isize(r1, r2)
     r1.template_length = template_length
@@ -897,34 +910,6 @@ def set_mate_info(
     proper_pair = is_proper_pair(r1, r2)
     r1.is_proper_pair = proper_pair
     r2.is_proper_pair = proper_pair
-
-
-def _set_non_primary_mate_fields(
-    secondary_or_supp: AlignedSegment, mate_primary: AlignedSegment
-) -> None:
-    """Set mate info on a secondary or supplementary alignment to its mate's primary alignment.
-
-    Args:
-        secondary_or_supp: A secondary or supplementary alignment.
-        mate_primary: The primary alignment of the secondary_or_supp mate.
-    """
-    if (
-        mate_primary.is_read1 == secondary_or_supp.is_read1
-        or mate_primary.is_secondary
-        or mate_primary.is_supplementary
-    ):
-        raise ValueError("Mate info must be set from a primary of the next ordinal!")
-    if mate_primary.query_name != secondary_or_supp.query_name:
-        raise ValueError("Cannot set mate info on alignments with different query names!")
-
-    secondary_or_supp.next_reference_id = mate_primary.reference_id
-    secondary_or_supp.next_reference_name = mate_primary.reference_name
-    secondary_or_supp.next_reference_start = mate_primary.reference_start
-    secondary_or_supp.mate_is_forward = mate_primary.is_forward
-    secondary_or_supp.mate_is_mapped = mate_primary.is_mapped
-    secondary_or_supp.set_tag("MC", mate_primary.cigarstring)
-    secondary_or_supp.set_tag("MQ", mate_primary.mapping_quality)
-    secondary_or_supp.set_tag("ms", sum_of_base_qualities(mate_primary))
 
 
 def set_mate_info_on_secondary(
@@ -947,7 +932,7 @@ def set_mate_info_on_secondary(
     if not secondary.is_secondary:
         raise ValueError("Cannot set mate info on an alignment not marked as secondary!")
 
-    _set_non_primary_mate_fields(secondary_or_supp=secondary, mate_primary=mate_primary)
+    _set_common_mate_fields(dest=secondary, source=mate_primary)
 
     # NB: calculate isize and proper pair as if this secondary alignment was the primary alignment.
     secondary.is_proper_pair = is_proper_pair(mate_primary, secondary)
@@ -969,7 +954,7 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
     if not supp.is_supplementary:
         raise ValueError("Cannot set mate info on an alignment not marked as supplementary!")
 
-    _set_non_primary_mate_fields(secondary_or_supp=supp, mate_primary=mate_primary)
+    _set_common_mate_fields(dest=supp, source=mate_primary)
 
     # NB: for a non-secondary supplemental alignment, set the following to the same as the primary.
     if not supp.is_secondary:

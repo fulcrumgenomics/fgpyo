@@ -670,7 +670,7 @@ DefaultProperlyPairedOrientations = {PairOrientation.FR}
 """The default orientations for properly paired reads."""
 
 
-def is_properly_paired(
+def is_proper_pair(
     r1: AlignedSegment,
     r2: Optional[AlignedSegment] = None,
     max_insert_size: int = 1000,

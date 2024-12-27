@@ -665,7 +665,7 @@ class PairOrientation(enum.Enum):
 
         if rec2 is None:
             if not rec1.has_tag("MC"):
-                raise ValueError('Cannot determine proper pair status without a mate cigar ("MC")!')
+                raise ValueError('Cannot determine pair orientation without a mate cigar ("MC")!')
             rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
             rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
         else:
@@ -879,7 +879,7 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
         proper_pair: whether the pair is proper or not.
     """
     if r1.query_name != r2.query_name:
-        raise ValueError("Cannot pair reads with different query names!")
+        raise ValueError("Cannot set pair info on reads with different query names!")
 
     for r in [r1, r2]:
         r.is_paired = True
@@ -888,6 +888,7 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     r1.is_read2 = False
     r2.is_read2 = True
     r2.is_read1 = False
+
     set_mate_info(r1=r1, r2=r2, is_proper_pair=lambda a, b: proper_pair)
 
 

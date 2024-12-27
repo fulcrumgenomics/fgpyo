@@ -857,7 +857,7 @@ def set_mate_info(
     r2.is_proper_pair = proper_pair
 
 
-@deprecated("Use `set_mate_info()` instead. Deprecated as of fgpyo 0.8.0.")
+@deprecated("Use `set_mate_info()` instead. Deprecated after fgpyo 0.8.0.")
 def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
     """Resets mate pair information between reads in a pair.
 

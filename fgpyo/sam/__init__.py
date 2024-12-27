@@ -806,10 +806,13 @@ def isize(r1: AlignedSegment, r2: AlignedSegment) -> int:
 
 def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
     """Calculate the sum of base qualities score for an alignment record.
+
     This function is useful for calculating the "mate score" as implemented in samtools fixmate.
+
     Args:
         rec: The alignment record to calculate the sum of base qualities from.
         min_quality_score: The minimum base quality score to use for summation.
+
     See:
         [`calc_sum_of_base_qualities()`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L227-L238)
         [`MD_MIN_QUALITY`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L42)

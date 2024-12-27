@@ -420,6 +420,8 @@ def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag_positive_f
     r1.set_tag("MC", None)  # Clear out the MC tag.
     r2.set_tag("MC", None)  # Clear out the MC tag.
 
+    assert PairOrientation.from_recs(r1, r2) is PairOrientation.FR
+
     with pytest.raises(ValueError):
         PairOrientation.from_recs(r1)
 
@@ -431,6 +433,9 @@ def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag_positive_r
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=16, cigar1="1M", start2=15, cigar2="1M")
     sam.set_pair_info(r1, r2)
+
+    assert PairOrientation.from_recs(r1, r2) is PairOrientation.RF
+
     r1.set_tag("MC", None)  # Clear out the MC tag.
     r2.set_tag("MC", None)  # Clear out the MC tag.
 

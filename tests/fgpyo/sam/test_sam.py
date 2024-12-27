@@ -589,11 +589,15 @@ def test_isize_when_r2_undefined_indels_in_r2_cigar() -> None:
     assert sam.isize(r1) == 190
 
 
-def test_isize_raises_when_r2_not_provided_and_no_mate_cigar_tag() -> None:
-    """Tests that an insert size can be calculated when both input records are defined."""
+def test_isize_raises_when_r2_not_provided_and_mate_cigar_tag_unset_r1() -> None:
+    """Tests an exception is raised when the mate cigar tag is not on rec1 and rec2 is missing."""
     builder = SamBuilder()
-    r1, _ = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
+
     r1.set_tag("MC", None)
+
+    assert sam.isize(r2) == -190
+
     with pytest.raises(
         ValueError, match="Cannot determine proper pair status without a mate cigar"
     ):

@@ -663,7 +663,7 @@ class PairOrientation(enum.Enum):
 
         if rec2 is None:
             if not rec1.has_tag("MC"):
-                raise ValueError('Cannot determine proper pair status without a mate cigar ("MC")!')
+                raise ValueError('Cannot determine pair orientation without a mate cigar ("MC")!')
             rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
             rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
         else:

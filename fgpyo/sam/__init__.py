@@ -870,8 +870,8 @@ def set_mate_info(
 def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
     """Resets mate pair information between reads in a pair.
 
-    Requires that both r1 and r2 are mapped. Can be handed reads that already have pairing flags
-    setup or independent R1 and R2 records that are currently flagged as SE reads.
+    Can be handed reads that already have pairing flags setup or independent R1 and R2 records that
+    are currently flagged as SE reads.
 
     Args:
         r1: Read 1 (first read in the template).

@@ -62,7 +62,7 @@ def test_record_alignment_mapped_record(record: pysam.AlignedSegment) -> None:
     assert progress.record_alignment(rec=record) is True
 
 
-def test_record_template() -> None:
+def test_record_multiple_alignments() -> None:
     builder: SamBuilder = SamBuilder()
     (r1, r2) = builder.add_pair(name="x", chrom="chr1", start1=1, start2=2)
     (r1_secondary, r2_secondary) = builder.add_pair(name="x", chrom="chr1", start1=10, start2=12)
@@ -95,7 +95,7 @@ def test_record_template() -> None:
     )
 
     # Assert record is logged
-    assert progress.record_template(template=expected) is True
+    assert progress.record_alignments(recs=template.all_recs()) is True
 
     # Assert every record was logged
     assert len(actual) == 6

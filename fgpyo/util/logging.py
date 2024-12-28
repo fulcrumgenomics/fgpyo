@@ -45,8 +45,6 @@ from typing import Union
 
 from pysam import AlignedSegment
 
-from fgpyo.sam import Template
-
 # Global that is set to True once logging initialization is run to prevent running > once.
 __FGPYO_LOGGING_SETUP: bool = False
 

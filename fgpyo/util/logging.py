@@ -38,6 +38,7 @@ from logging import Logger
 from threading import RLock
 from typing import Any
 from typing import Callable
+from typing import Iterable
 from typing import Literal
 from typing import Optional
 from typing import Union
@@ -165,20 +166,20 @@ class ProgressLogger(AbstractContextManager):
         else:
             return self.record(rec.reference_name, rec.reference_start + 1)
 
-    def record_template(
+    def record_alignments(
         self,
-        template: Template,
+        recs: Iterable[AlignedSegment],
     ) -> bool:
-        """Correctly record all records in a fgpyo.sam.Template (zero-based coordinates).
+        """Correctly record multiple pysam.AlignedSegments (zero-based coordinates).
 
         Args:
-            template: fgpyo.sam.Template objects
+            recs: pysam.AlignedSegment objects
 
         Returns:
             true if a message was logged, false otherwise
         """
         logged_message: bool = False
-        for rec in template.all_recs():
+        for rec in recs:
             logged_message = self.record_alignment(rec) or logged_message
         return logged_message
 

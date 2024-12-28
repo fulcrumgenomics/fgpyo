@@ -158,6 +158,8 @@ and slices):
 import enum
 import io
 import sys
+from collections.abc import Collection
+from itertools import chain
 from pathlib import Path
 from typing import IO
 from typing import Any
@@ -264,7 +266,8 @@ def _pysam_open(
             assert file_type is not None, "Must specify file_type when writing to standard output"
             path = sys.stdout
         else:
-            file_type = file_type or SamFileType.from_path(path)
+            if file_type is None:
+                file_type = SamFileType.from_path(path)
             path = str(path)
     elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
         open_type = "reading" if open_for_reading else "writing"
@@ -605,6 +608,118 @@ class Cigar:
         return self.elements[index]
 
 
+@enum.unique
+class PairOrientation(enum.Enum):
+    """Enumerations of read pair orientations."""
+
+    FR = "FR"
+    """A pair orientation for forward-reverse reads ("innie")."""
+
+    RF = "RF"
+    """A pair orientation for reverse-forward reads ("outie")."""
+
+    TANDEM = "TANDEM"
+    """A pair orientation for tandem (forward-forward or reverse-reverse) reads."""
+
+    @classmethod
+    def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
+        cls, rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None
+    ) -> Optional["PairOrientation"]:
+        """Returns the pair orientation if both reads are mapped to the same reference sequence.
+
+        Args:
+            rec1: The first record in the pair.
+            rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
+
+        See:
+            [`htsjdk.samtools.SamPairUtil.getPairOrientation()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102)
+        """
+
+        if rec2 is None:
+            rec2_is_unmapped = rec1.mate_is_unmapped
+            rec2_reference_id = rec1.next_reference_id
+        else:
+            rec2_is_unmapped = rec2.is_unmapped
+            rec2_reference_id = rec2.reference_id
+
+        if rec1.is_unmapped or rec2_is_unmapped or rec1.reference_id != rec2_reference_id:
+            return None
+
+        if rec2 is None:
+            rec2_is_forward = rec1.mate_is_forward
+            rec2_reference_start = rec1.next_reference_start
+        else:
+            rec2_is_forward = rec2.is_forward
+            rec2_reference_start = rec2.reference_start
+
+        if rec1.is_forward is rec2_is_forward:
+            return PairOrientation.TANDEM
+        if rec1.is_forward and rec1.reference_start <= rec2_reference_start:
+            return PairOrientation.FR
+        if rec1.is_reverse and rec2_reference_start < rec1.reference_end:
+            return PairOrientation.FR
+        if rec1.is_reverse and rec2_reference_start >= rec1.reference_end:
+            return PairOrientation.RF
+
+        if rec2 is None:
+            if not rec1.has_tag("MC"):
+                raise ValueError('Cannot determine pair orientation without a mate cigar ("MC")!')
+            rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
+            rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
+        else:
+            rec2_reference_end = rec2.reference_end
+
+        if rec1.reference_start < rec2_reference_end:
+            return PairOrientation.FR
+        else:
+            return PairOrientation.RF
+
+
+DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}
+"""The default orientations for properly paired reads."""
+
+
+def is_proper_pair(
+    rec1: AlignedSegment,
+    rec2: Optional[AlignedSegment] = None,
+    max_insert_size: int = 1000,
+    orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
+) -> bool:
+    """Determines if a pair of records are properly paired or not.
+
+    Criteria for records in a proper pair are:
+        - Both records are aligned
+        - Both records are aligned to the same reference sequence
+        - The pair orientation of the records is one of the valid pair orientations (default "FR")
+        - The inferred insert size is not more than a maximum length (default 1000)
+
+    Args:
+        rec1: The first record in the pair.
+        rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
+        max_insert_size: The maximum insert size to consider a pair "proper".
+        orientations: The valid set of orientations to consider a pair "proper".
+
+    See:
+        [`htsjdk.samtools.SamPairUtil.isProperPair()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L106-L125)
+    """
+    if rec2 is None:
+        rec2_is_mapped = rec1.mate_is_mapped
+        rec2_reference_id = rec1.next_reference_id
+    else:
+        rec2_is_mapped = rec2.is_mapped
+        rec2_reference_id = rec2.reference_id
+
+    return (
+        rec1.is_mapped
+        and rec2_is_mapped
+        and rec1.reference_id == rec2_reference_id
+        and PairOrientation.from_recs(rec1=rec1, rec2=rec2) in orientations
+        # TODO: consider replacing with `abs(isize(r1, r2)) <= max_insert_size`
+        #       which can only be done if isize() is modified to allow for an optional R2.
+        and 0 < abs(rec1.template_length) <= max_insert_size
+    )
+
+
 @attr.s(frozen=True, auto_attribs=True)
 class SupplementaryAlignment:
     """Stores a supplementary alignment record produced by BWA and stored in the SA SAM tag.
@@ -705,9 +820,8 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
         r1: read 1
         r2: read 2 with the same queryname as r1
     """
-    assert not r1.is_unmapped, f"Cannot process unmapped mate {r1.query_name}/1"
-    assert not r2.is_unmapped, f"Cannot process unmapped mate {r2.query_name}/2"
-    assert r1.query_name == r2.query_name, "Attempting to pair reads with different qnames."
+    if r1.query_name != r2.query_name:
+        raise ValueError("Cannot set pair info on reads with different query names!")
 
     for r in [r1, r2]:
         r.is_paired = True
@@ -722,8 +836,9 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
         dest.next_reference_id = src.reference_id
         dest.next_reference_start = src.reference_start
         dest.mate_is_reverse = src.is_reverse
-        dest.mate_is_unmapped = False
+        dest.mate_is_unmapped = src.mate_is_unmapped
         dest.set_tag("MC", src.cigarstring)
+        dest.set_tag("MQ", src.mapping_quality)
 
     insert_size = isize(r1, r2)
     r1.template_length = insert_size
@@ -829,14 +944,17 @@ class Template:
     validations of the Template by default.  If constructing Template instances by construction
     users are encouraged to use the validate method post-construction.
 
+    In the special cases there are alignments records that are _*both secondary and supplementary*_
+    then they will be stored upon the `r1_supplementals` and `r2_supplementals` fields only.
+
     Attributes:
         name: the name of the template/query
-        r1: Primary alignment for read 1, or None if there is none
-        r2: Primary alignment for read 2, or None if there is none
+        r1: Primary non-supplementary alignment for read 1, or None if there is none
+        r2: Primary non-supplementary alignment for read 2, or None if there is none
         r1_supplementals: Supplementary alignments for read 1
         r2_supplementals: Supplementary alignments for read 2
-        r1_secondaries: Secondary (non-primary) alignments for read 1
-        r2_secondaries: Secondary (non-primary) alignments for read 2
+        r1_secondaries: Secondary (non-primary, non-supplementary) alignments for read 1
+        r2_secondaries: Secondary (non-primary, non-supplementary) alignments for read 2
     """
 
     name: str
@@ -882,7 +1000,7 @@ class Template:
                     r1_supplementals.append(rec)
                 else:
                     r2_supplementals.append(rec)
-            if rec.is_secondary:
+            elif rec.is_secondary:
                 if is_r1:
                     r1_secondaries.append(rec)
                 else:
@@ -923,6 +1041,7 @@ class Template:
         for rec in self.r1_secondaries:
             assert rec.is_read1 or not rec.is_paired, "R1 secondary not flagged as R1 or unpaired"
             assert rec.is_secondary, "R1 secondary not flagged as secondary"
+            assert not rec.is_supplementary, "R1 secondary supplementals belong with supplementals"
 
         for rec in self.r1_supplementals:
             assert rec.is_read1 or not rec.is_paired, "R1 supp. not flagged as R1 or unpaired"
@@ -931,6 +1050,7 @@ class Template:
         for rec in self.r2_secondaries:
             assert rec.is_read2, "R2 secondary not flagged as R2"
             assert rec.is_secondary, "R2 secondary not flagged as secondary"
+            assert not rec.is_supplementary, "R2 secondary supplementals belong with supplementals"
 
         for rec in self.r2_supplementals:
             assert rec.is_read2, "R2 supp. not flagged as R2"
@@ -939,6 +1059,16 @@ class Template:
     def primary_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the primary records for the template."""
         return (r for r in (self.r1, self.r2) if r is not None)
+
+    def all_r1s(self) -> Iterator[AlignedSegment]:
+        """Yields all R1 alignments of this template including secondary and supplementary."""
+        r1_primary = [] if self.r1 is None else [self.r1]
+        return chain(r1_primary, self.r1_secondaries, self.r1_supplementals)
+
+    def all_r2s(self) -> Iterator[AlignedSegment]:
+        """Yields all R2 alignments of this template including secondary and supplementary."""
+        r2_primary = [] if self.r2 is None else [self.r2]
+        return chain(r2_primary, self.r2_secondaries, self.r2_supplementals)
 
     def all_recs(self) -> Iterator[AlignedSegment]:
         """Returns a list with all the records for the template."""

@@ -26,7 +26,7 @@ include = ["LICENSE"]
 python = ">=3.9.0,<4.0"
 attrs = ">=19.3.0"
 pysam = ">=0.22.1"
-typing_extensions = { version = ">=3.7.4", python = "<3.12" }
+typing_extensions = { version = ">=4.12.2", python = "<3.12" }
 numpy = [
   {version = "^1.26.4", python = ">=3.12"},
   {version = "^1.25.2", python = ">=3.9,<3.12"},

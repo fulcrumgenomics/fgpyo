@@ -20,6 +20,8 @@ from fgpyo.sam import CigarParsingException
 from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
 from fgpyo.sam import is_proper_pair
+from fgpyo.sam import set_mate_info
+from fgpyo.sam import sum_of_base_qualities
 from fgpyo.sam.builder import SamBuilder
 
 
@@ -313,7 +315,7 @@ def test_pair_orientation_build_with_r2() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1, r2) is PairOrientation.RF
     assert PairOrientation.from_recs(r1) is PairOrientation.RF
     assert PairOrientation.from_recs(r2) is PairOrientation.RF
@@ -321,7 +323,8 @@ def test_pair_orientation_build_with_r2() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1, r2) is PairOrientation.TANDEM
     assert PairOrientation.from_recs(r1) is PairOrientation.TANDEM
     assert PairOrientation.from_recs(r2) is PairOrientation.TANDEM
@@ -329,7 +332,8 @@ def test_pair_orientation_build_with_r2() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
-    sam.set_pair_info(r1, r2)
+
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1, r2) is PairOrientation.TANDEM
     assert PairOrientation.from_recs(r1) is PairOrientation.TANDEM
     assert PairOrientation.from_recs(r2) is PairOrientation.TANDEM
@@ -347,7 +351,8 @@ def test_pair_orientation_is_fr_if_opposite_directions_and_overlapping() -> None
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
     r1.is_reverse = True
     r2.is_reverse = False
-    sam.set_pair_info(r1, r2)
+
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1, r2) is PairOrientation.FR
     assert PairOrientation.from_recs(r1) is PairOrientation.FR
     assert PairOrientation.from_recs(r2) is PairOrientation.FR
@@ -396,27 +401,45 @@ def test_pair_orientation_build_with_no_r2_but_r2_mapped() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1) is PairOrientation.RF
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1) is PairOrientation.TANDEM
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert PairOrientation.from_recs(r1) is PairOrientation.TANDEM
+
+
+def test_pair_orientation_build_with_either_unmapped_but_no_r2() -> None:
+    """Test that we can return None with either R1 and R2 unmapped (or both), but no R2."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair()
+    assert r1.is_unmapped
+    assert r2.is_unmapped
+    assert PairOrientation.from_recs(r1) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start1=100)
+    assert r1.is_mapped
+    assert r2.is_unmapped
+    assert PairOrientation.from_recs(r1) is None
+
+    r1, r2 = builder.add_pair(chrom="chr1", start2=100)
+    assert r1.is_unmapped
+    assert r2.is_mapped
+    assert PairOrientation.from_recs(r1) is None
 
 
 def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag_positive_fr() -> None:
     """Test that an exception is raised if we cannot find the mate cigar tag."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=16, cigar1="10M", start2=15, cigar2="10M")
-    sam.set_pair_info(r1, r2)
     r1.set_tag("MC", None)  # Clear out the MC tag.
     r2.set_tag("MC", None)  # Clear out the MC tag.
 
@@ -432,7 +455,7 @@ def test_pair_orientation_build_raises_if_it_cant_find_mate_cigar_tag_positive_r
     """Test that an exception is raised if we cannot find the mate cigar tag."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=16, cigar1="1M", start2=15, cigar2="1M")
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
 
     assert PairOrientation.from_recs(r1, r2) is PairOrientation.RF
 
@@ -454,7 +477,7 @@ def test_is_proper_pair_when_actually_proper() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
     r1.is_reverse = True
     r2.is_reverse = False
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert is_proper_pair(r1, r2)
 
 
@@ -467,7 +490,7 @@ def test_is_proper_pair_when_actually_proper_and_no_r2() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="10M", start2=100, cigar2="10M")
     r1.is_reverse = True
     r2.is_reverse = False
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert is_proper_pair(r1)
 
 
@@ -477,19 +500,19 @@ def test_not_is_proper_pair_if_wrong_orientation() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1, r2)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1, r2)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1, r2)
 
 
@@ -499,19 +522,19 @@ def test_not_is_proper_pair_if_wrong_orientation_and_no_r2() -> None:
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = True
     r2.is_forward = True
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1)
 
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, cigar1="115M", start2=250, cigar2="40M")
     r1.is_forward = False
     r2.is_forward = False
-    sam.set_pair_info(r1, r2)
+    sam.set_mate_info(r1, r2)
     assert not is_proper_pair(r1)
 
 
@@ -519,7 +542,6 @@ def test_not_is_proper_pair_if_too_far_apart() -> None:
     """Test that reads are not properly paired if they are too far apart."""
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100 + 1000)
-    sam.set_pair_info(r1, r2)
     assert not is_proper_pair(r1, r2)
 
 
@@ -531,6 +553,18 @@ def test_isize() -> None:
 
     r2.is_unmapped = True
     assert sam.isize(r1, r2) == 0
+
+
+def test_sum_of_base_qualities() -> None:
+    builder = SamBuilder(r1_len=5, r2_len=5)
+    single = builder.add_single(quals=[1, 2, 3, 4, 5])
+    assert sum_of_base_qualities(single, min_quality_score=0) == 15
+
+
+def test_sum_of_base_qualities_some_below_minimum() -> None:
+    builder = SamBuilder(r1_len=5, r2_len=5)
+    single = builder.add_single(quals=[1, 2, 3, 4, 5])
+    assert sum_of_base_qualities(single, min_quality_score=4) == 9
 
 
 def test_calc_edit_info_no_edits() -> None:
@@ -598,3 +632,126 @@ def test_calc_edit_info_with_aligned_Ns() -> None:
     assert info.deletions == 0
     assert info.deleted_bases == 0
     assert info.nm == 5
+
+
+def test_set_mate_info_raises_mimatched_query_names() -> None:
+    """Test set_mate_info raises an exception for mismatched query names."""
+    builder = SamBuilder()
+    r1 = builder.add_single(read_num=1)
+    r2 = builder.add_single(read_num=2)
+    assert r1.query_name != r2.query_name
+    with pytest.raises(
+        ValueError, match="Cannot set mate info on alignments with different query names!"
+    ):
+        set_mate_info(r1, r2)
+
+
+def test_set_mate_info_both_unmapped() -> None:
+    """Test set_mate_info sets mate info for two unmapped records."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair()
+    assert r1.is_unmapped is True
+    assert r2.is_unmapped is True
+
+    set_mate_info(r1, r2)
+
+    for rec in (r1, r2):
+        assert rec.reference_id == sam.NO_REF_INDEX
+        assert rec.reference_name is None
+        assert rec.reference_start == sam.NO_REF_POS
+        assert rec.next_reference_id == sam.NO_REF_INDEX
+        assert rec.next_reference_name is None
+        assert rec.next_reference_start == sam.NO_REF_POS
+        assert not rec.has_tag("MC")
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 0
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.template_length == 0
+        assert rec.is_proper_pair is False
+
+    # NB: unmapped records are forward until proven otherwise
+    assert r1.is_forward is True
+    assert r2.is_forward is True
+    assert r1.mate_is_forward is True
+    assert r2.mate_is_forward is True
+
+
+def test_set_mate_info_one_unmapped() -> None:
+    """Test set_mate_info sets mate info for one mapped and one unmapped records."""
+    builder = SamBuilder()
+    r1_mapped, r2_unmapped = builder.add_pair(chrom="chr1", start1=200, strand1="-")
+    r1_unmapped, r2_mapped = builder.add_pair(chrom="chr1", start2=200, strand2="-")
+
+    for mapped, unmapped in [(r1_mapped, r2_unmapped), (r2_mapped, r1_unmapped)]:
+        assert mapped.is_mapped is True
+        assert unmapped.is_unmapped is True
+
+        set_mate_info(mapped, unmapped)
+
+        assert mapped.reference_id == mapped.header.get_tid("chr1")
+        assert mapped.reference_name == "chr1"
+        assert mapped.reference_start == 200
+        assert mapped.next_reference_id == sam.NO_REF_INDEX
+        assert mapped.next_reference_name is None
+        assert mapped.next_reference_start == sam.NO_REF_POS
+        assert not mapped.has_tag("MC")
+        assert mapped.has_tag("MQ")
+        assert mapped.get_tag("MQ") == 0
+        assert mapped.has_tag("ms")
+        assert mapped.get_tag("ms") == 3000
+        assert mapped.template_length == 0
+        assert mapped.is_forward is False
+        assert mapped.is_proper_pair is False
+        assert mapped.mate_is_forward is True
+
+        assert unmapped.reference_id == sam.NO_REF_INDEX
+        assert unmapped.reference_name is None
+        assert unmapped.reference_start == sam.NO_REF_POS
+        assert unmapped.next_reference_id == unmapped.header.get_tid("chr1")
+        assert unmapped.next_reference_name == "chr1"
+        assert unmapped.next_reference_start == 200
+        assert unmapped.has_tag("MC")
+        assert unmapped.get_tag("MC") == "100M"
+        assert unmapped.has_tag("MQ")
+        assert unmapped.get_tag("MQ") == 60
+        assert unmapped.has_tag("ms")
+        assert unmapped.get_tag("ms") == 3000
+        assert unmapped.template_length == 0
+        assert unmapped.is_forward is True
+        assert unmapped.is_proper_pair is False
+        assert unmapped.mate_is_forward is False
+
+
+def test_set_mate_info_both_mapped() -> None:
+    """Test set_mate_info sets mate info for two mapped records."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=300)
+    assert r1.is_mapped is True
+    assert r2.is_mapped is True
+
+    set_mate_info(r1, r2)
+
+    for rec in (r1, r2):
+        assert rec.reference_id == builder.header.get_tid("chr1")
+        assert rec.reference_name == "chr1"
+        assert rec.next_reference_id == builder.header.get_tid("chr1")
+        assert rec.next_reference_name == "chr1"
+        assert rec.has_tag("MC")
+        assert rec.get_tag("MC") == "100M"
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 60
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.is_proper_pair is True
+
+    assert r1.reference_start == 200
+    assert r1.next_reference_start == 300
+    assert r2.reference_start == 300
+    assert r2.next_reference_start == 200
+    assert r1.template_length == 200
+    assert r2.template_length == -200
+    assert r1.is_forward is True
+    assert r2.is_reverse is True
+    assert r1.mate_is_reverse is True
+    assert r2.mate_is_forward is True

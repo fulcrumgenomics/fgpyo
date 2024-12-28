@@ -144,8 +144,7 @@ def test_many_from_tag_invalid_number_of_commas() -> None:
 def test_many_from_tag_raises_for_invalid_stranded_start(stranded_start: str) -> None:
     """Test that we raise an exception when stranded start is malformed."""
     with pytest.raises(
-        ValueError,
-        match=f"The stranded start field is malformed: {stranded_start}"
+        ValueError, match=f"The stranded start field is malformed: {stranded_start}"
     ):
         SecondaryAlignment.from_tag_part(f"chr3,{stranded_start},49M,4")
 

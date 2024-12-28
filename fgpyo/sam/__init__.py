@@ -677,6 +677,49 @@ class PairOrientation(enum.Enum):
             return PairOrientation.RF
 
 
+def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
+    """Computes the insert size ("template length" or "TLEN") for a pair of records.
+
+    Args:
+        rec1: The first record in the pair.
+        rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
+    """
+    if rec2 is None:
+        rec2_is_unmapped = rec1.mate_is_unmapped
+        rec2_reference_id = rec1.next_reference_id
+    else:
+        rec2_is_unmapped = rec2.is_unmapped
+        rec2_reference_id = rec2.reference_id
+
+    if rec1.is_unmapped or rec2_is_unmapped or rec1.reference_id != rec2_reference_id:
+        return 0
+
+    if rec2 is None:
+        rec2_is_forward = rec1.mate_is_forward
+        rec2_reference_start = rec1.next_reference_start
+    else:
+        rec2_is_forward = rec2.is_forward
+        rec2_reference_start = rec2.reference_start
+
+    if rec1.is_forward and rec2_is_forward:
+        return rec2_reference_start - rec1.reference_start
+    if rec1.is_reverse and rec2_is_forward:
+        return rec2_reference_start - rec1.reference_end
+
+    if rec2 is None:
+        if not rec1.has_tag("MC"):
+            raise ValueError('Cannot determine proper pair status without a mate cigar ("MC")!')
+        rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
+        rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
+    else:
+        rec2_reference_end = rec2.reference_end
+
+    if rec1.is_forward:
+        return rec2_reference_end - rec1.reference_start
+    else:
+        return rec2_reference_end - rec1.reference_end
+
+
 DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}
 """The default orientations for properly paired reads."""
 
@@ -686,6 +729,7 @@ def is_proper_pair(
     rec2: Optional[AlignedSegment] = None,
     max_insert_size: int = 1000,
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
+    isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
 ) -> bool:
     """Determines if a pair of records are properly paired or not.
 
@@ -700,6 +744,7 @@ def is_proper_pair(
         rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
         max_insert_size: The maximum insert size to consider a pair "proper".
         orientations: The valid set of orientations to consider a pair "proper".
+        isize: A function that takes the two alignments and calculates their isize.
 
     See:
         [`htsjdk.samtools.SamPairUtil.isProperPair()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L106-L125)
@@ -716,9 +761,7 @@ def is_proper_pair(
         and rec2_is_mapped
         and rec1.reference_id == rec2_reference_id
         and PairOrientation.from_recs(rec1=rec1, rec2=rec2) in orientations
-        # TODO: consider replacing with `abs(isize(r1, r2)) <= max_insert_size`
-        #       which can only be done if isize() is modified to allow for an optional R2.
-        and 0 < abs(rec1.template_length) <= max_insert_size
+        and 0 < abs(isize(rec1, rec2)) <= max_insert_size
     )
 
 
@@ -801,16 +844,6 @@ class SupplementaryAlignment:
             return cls.parse_sa_tag(sa_tag)
         else:
             return []
-
-
-def isize(r1: AlignedSegment, r2: AlignedSegment) -> int:
-    """Computes the insert size for a pair of records."""
-    if r1.is_unmapped or r2.is_unmapped or r1.reference_id != r2.reference_id:
-        return 0
-    else:
-        r1_pos = r1.reference_end if r1.is_reverse else r1.reference_start
-        r2_pos = r2.reference_end if r2.is_reverse else r2.reference_start
-        return r2_pos - r1_pos
 
 
 def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:

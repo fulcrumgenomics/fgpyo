@@ -5,6 +5,7 @@ from fgpyo.sam import SupplementaryAlignment
 from fgpyo.sam.builder import SamBuilder
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_supplementary_alignment() -> None:
     # reverse
     assert SupplementaryAlignment.parse("chr1,123,-,100M50S,60,4") == SupplementaryAlignment(
@@ -31,6 +32,7 @@ def test_supplementary_alignment() -> None:
         SupplementaryAlignment.parse("chr1,123,+,50S100M,60")
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_parse_sa_tag() -> None:
     assert SupplementaryAlignment.parse_sa_tag("") == []
     assert SupplementaryAlignment.parse_sa_tag(";") == []
@@ -45,12 +47,14 @@ def test_parse_sa_tag() -> None:
     assert SupplementaryAlignment.parse_sa_tag(f"{s1};{s2};") == [sa1, sa2]
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_format_supplementary_alignment() -> None:
     for sa_string in ["chr1,123,-,100M50S,60,4", "chr1,123,+,100M50S,60,3"]:
         sa = SupplementaryAlignment.parse(sa_string)
         assert str(sa) == sa_string
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_from_read() -> None:
     """Test that we can construct a SupplementaryAlignment from an AlignedSegment."""
 
@@ -71,6 +75,7 @@ def test_from_read() -> None:
     assert SupplementaryAlignment.from_read(read) == [sa1, sa2]
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_end() -> None:
     """Test that we can get the end of a SupplementaryAlignment."""
 

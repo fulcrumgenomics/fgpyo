@@ -1271,7 +1271,7 @@ class SecondaryAlignment:
     Format of a single secondary alignment in the `XA` tag (`,`-delimited):
 
     ```text
-    chr:<orientation><position>,cigar,NM
+    chr,<orientation><position>,cigar,NM
     ```
 
     Full example of an `XA` tag value (`;`-delimited):
@@ -1283,7 +1283,7 @@ class SecondaryAlignment:
     Format of a single secondary alignment in the `XB` tag (`,`-delimited):
 
     ```text
-    chr:<orientation><position>,cigar,NM,AS,MapQ
+    chr,<orientation><position>,cigar,NM,AS,MapQ
     ```
 
     Full example of an `XB` tag value (`;`-delimited):

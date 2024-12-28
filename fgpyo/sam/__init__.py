@@ -153,12 +153,39 @@ and slices):
    >>> [str(sup.cigar) for sup in sups]
    ['50S100M', '75S75M']
 ```
+
+## Examples of parsing bwa's `XA` and `XB` tags into individual secondary alignments
+
+```python
+>>> from fgpyo.sam import SecondaryAlignment
+>>> xa = SecondaryAlignment.from_tag_part("chr9,-104599381,49M,4")
+>>> xa.reference_name
+'chr9'
+>>> xb = SecondaryAlignment.from_tag_part("chr9,-104599381,49M,4,0,30")
+>>> xb.reference_name
+'chr9'
+>>> xb.mapq
+30
+>>> xa.cigar == xb.cigar
+True
+>>> xb_tag = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;"
+>>> xb1, xb2 = SecondaryAlignment.many_from_tag(xb_tag)
+>>> xb1.is_forward
+False
+>>> xb1.is_forward
+True
+>>> xb1.mapq, xb2.mapq
+('30', '20')
+```
+
 """
 
 import enum
 import io
 import sys
 from collections.abc import Collection
+from dataclasses import dataclass
+from functools import cached_property
 from itertools import chain
 from pathlib import Path
 from typing import IO
@@ -182,6 +209,7 @@ from typing_extensions import deprecated
 
 import fgpyo.io
 from fgpyo.collections import PeekableIterator
+from fgpyo.sequence import reverse_complement
 
 SamPath = Union[IO[Any], Path, str]
 """The valid base classes for opening a SAM/BAM/CRAM file."""
@@ -194,6 +222,9 @@ NO_REF_NAME: str = "*"
 
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
+
+NO_QUERY_BASES: str = "*"
+"""The string to use for a SAM record with missing query bases."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -1231,3 +1262,212 @@ class SamOrder(enum.Enum):
     Coordinate = "coordinate"  #: coordinate sorted
     QueryName = "queryname"  #: queryname sorted
     Unknown = "unknown"  # Unknown SAM / BAM / CRAM sort order
+
+
+@dataclass(frozen=True)
+class SecondaryAlignment:
+    """A secondary alignment as encoded in one part of the `XA` or `XB` tag value on a SAM record.
+
+    Format of a single secondary alignment in the `XA` tag (`,`-delimited):
+
+    ```text
+    chr:<orientation><position>,cigar,NM
+    ```
+
+    Full example of an `XA` tag value (`;`-delimited):
+
+    ```text
+    XA:Z:chr9,-104599381,49M,4;chr3,+170653467,49M,4;chr12,+46991828,49M,5;
+    ```
+
+    Format of a single secondary alignment in the `XB` tag (`,`-delimited):
+
+    ```text
+    chr:<orientation><position>,cigar,NM,AS,MapQ
+    ```
+
+    Full example of an `XB` tag value (`;`-delimited):
+
+    ```text
+    XB:Z:chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;chr12,+46991828,49M,5,0,10;
+    ```
+
+    Args:
+        reference_name: The reference sequence name.
+        reference_start: The 0-based start position of the alignment.
+        is_forward: If the alignment is in the forward orientation or not.
+        cigar: The Cigar sequence representing the alignment.
+        edit_distance: The number of mismatches between the query and the target.
+        alignment_score: The aligner-reported alignment score, if available.
+        mapq: The aligner-reported probability of an incorrect mapping, if available.
+
+    See:
+        - [BWA User Manual](https://bio-bwa.sourceforge.net/bwa.shtml)
+        - [https://github.com/lh3/bwa/pull/292](https://github.com/lh3/bwa/pull/292)
+        - [https://github.com/lh3/bwa/pull/293](https://github.com/lh3/bwa/pull/293)
+        - [https://github.com/lh3/bwa/pull/355](https://github.com/lh3/bwa/pull/355)
+    """
+
+    reference_name: str
+    reference_start: int
+    is_forward: bool
+    cigar: Cigar
+    edit_distance: int
+    alignment_score: Optional[int] = None
+    mapq: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        """Perform post-initialization validation on this dataclass."""
+        if self.reference_start < 0:
+            raise ValueError(f"Start cannot be less zero! Found: {self.reference_start}")
+        if self.edit_distance < 0:
+            raise ValueError(f"Edit distance cannot be less zero! Found: {self.edit_distance}")
+        if self.alignment_score is not None and self.alignment_score < 0:
+            raise ValueError(f"Alignment score cannot be less zero! Found: {self.alignment_score}")
+        if self.mapq is not None and self.mapq < 0:
+            raise ValueError(f"Mapping quality cannot be less zero! Found: {self.mapq}")
+
+    @classmethod
+    def from_tag_part(cls, part: str) -> "SecondaryAlignment":
+        """Build a secondary alignment from a single `XA` or `XB` tag part.
+
+        Args:
+            part: A single element in an `XA` or `XB` tag value.
+        """
+        fields: list[str] = part.rstrip(",").split(",")
+
+        if len(fields) == 4:
+            reference_name, stranded_start, cigar, edit_distance = fields
+            alignment_score = None
+            mapq = None
+        elif len(fields) == 6:
+            reference_name, stranded_start, cigar, edit_distance, alignment_score, mapq = fields
+        else:
+            raise ValueError(f"XA or XB tag part does not have 4 or 6 ',' separated fields: {part}")
+
+        if len(stranded_start) <= 1 or stranded_start[0] not in {"+", "-"}:
+            raise ValueError(f"The stranded start field is malformed: {stranded_start}")
+
+        return cls(
+            reference_name=reference_name,
+            reference_start=int(stranded_start[1:]) - 1,
+            is_forward=stranded_start[0] == "+",
+            cigar=Cigar.from_cigarstring(cigar),
+            edit_distance=int(edit_distance),
+            alignment_score=None if alignment_score is None else int(alignment_score),
+            mapq=None if mapq is None else int(mapq),
+        )
+
+    @classmethod
+    def many_from_tag(cls, value: str) -> list["SecondaryAlignment"]:
+        """Build many secondary alignments from a single `XA` or `XB` tag value.
+
+        Args:
+            value: A single `XA` or `XB` tag value.
+        """
+        return list(map(cls.from_tag_part, value.rstrip(";").split(";")))
+
+    @classmethod
+    def many_from_rec(cls, rec: AlignedSegment) -> list["SecondaryAlignment"]:
+        """Build many secondary alignments from a single SAM record.
+
+        Args:
+            rec: The SAM record to generate secondary alignments from.
+        """
+        secondaries: list["SecondaryAlignment"] = []
+        if rec.has_tag("XA"):
+            secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XA"))))
+        if rec.has_tag("XB"):
+            secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XB"))))
+        return secondaries
+
+    @classmethod
+    def many_sam_from_rec(cls, rec: AlignedSegment) -> Iterator[AlignedSegment]:
+        """Build many SAM secondary alignments from a single SAM record.
+
+        All reconstituted secondary alignments will have the `rh` SAM tag set upon them.
+
+        By default, the query bases and qualities of the secondary alignment will be set to the
+        query bases and qualities of the record that created the secondary alignments. However, if
+        there are hard-clips in the record used to create the secondary alignments, then this
+        function will set the query qualities and bases to the space-saving and/or unknown marker
+        `*`. A future development for this function should correctly pad-out (with No-calls) or clip
+        the query sequence and qualities depending on the hard-clipping found in both ends of the
+        source (often a primary) record and both ends of the destination (secondary) record.
+
+        Args:
+            rec: The SAM record to generate secondary alignments from.
+        """
+        if (
+            rec.is_unmapped
+            or rec.cigarstring is None
+            or rec.query_sequence is None
+            or rec.query_qualities is None
+        ):
+            return
+
+        for hit in cls.many_from_rec(rec):
+            # TODO: When the original record has hard clips we must set the bases and quals to "*".
+            #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
+            if "H" in rec.cigarstring:
+                query_sequence = NO_QUERY_BASES
+                query_qualities = None
+            elif rec.is_forward and not hit.is_forward:
+                query_sequence = reverse_complement(rec.query_sequence)
+                query_qualities = rec.query_qualities[::-1]
+            else:
+                query_sequence = rec.query_sequence
+                query_qualities = rec.query_qualities
+
+            secondary = AlignedSegment(header=rec.header)
+            secondary.query_name = rec.query_name
+            secondary.reference_id = rec.header.get_tid(hit.reference_name)
+            secondary.reference_name = hit.reference_name
+            secondary.reference_start = hit.reference_start
+            secondary.mapping_quality = 0 if hit.mapq is None else hit.mapq
+            secondary.cigarstring = str(hit.cigar)
+            secondary.query_sequence = query_sequence
+            secondary.query_qualities = query_qualities
+            secondary.is_read1 = rec.is_read1
+            secondary.is_read2 = rec.is_read2
+            secondary.is_duplicate = rec.is_duplicate
+            secondary.is_paired = rec.is_paired
+            secondary.is_proper_pair = False
+            secondary.is_qcfail = rec.is_qcfail
+            secondary.is_forward = hit.is_forward
+            secondary.is_secondary = True
+            secondary.is_supplementary = False
+            secondary.is_mapped = True
+
+            # NB: mate information on a secondary alignment points to mate/next primary alignment.
+            secondary.next_reference_id = rec.next_reference_id
+            secondary.next_reference_name = rec.next_reference_name
+            secondary.next_reference_start = rec.next_reference_start
+            secondary.mate_is_mapped = rec.mate_is_mapped
+            secondary.mate_is_reverse = rec.mate_is_reverse
+            secondary.set_tag("MC", rec.get_tag("MC") if rec.has_tag("MC") else None)
+            secondary.set_tag("MQ", rec.get_tag("MQ") if rec.has_tag("MQ") else None)
+            secondary.set_tag("ms", rec.get_tag("ms") if rec.has_tag("ms") else None)
+
+            # NB: set some optional but highly recommended SAM tags on the secondary alignment.
+            secondary.set_tag("AS", hit.alignment_score)
+            secondary.set_tag("NM", hit.edit_distance)
+            secondary.set_tag("RG", rec.get_tag("RG") if rec.has_tag("RG") else None)
+            secondary.set_tag("RX", rec.get_tag("RX") if rec.has_tag("RX") else None)
+
+            # NB: set a tag that indicates this alignment was a reconstituted secondary alignment.
+            secondary.set_tag("rh", True)
+
+            yield secondary
+
+    @classmethod
+    def add_to_template(cls, template: Template) -> Template:
+        """Rebuild a template by adding secondary alignments from all R1/R2 `XA` and `XB` tags."""
+        r1_secondaries = iter([]) if template.r1 is None else cls.many_sam_from_rec(template.r1)
+        r2_secondaries = iter([]) if template.r2 is None else cls.many_sam_from_rec(template.r2)
+        return Template.build(chain(template.all_recs(), r1_secondaries, r2_secondaries))
+
+    @cached_property
+    def reference_end(self) -> int:
+        """Returns the 0-based half-open end coordinate of this secondary alignment."""
+        return self.reference_start + self.cigar.length_on_target()

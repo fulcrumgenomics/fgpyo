@@ -924,10 +924,7 @@ def set_mate_info(
     rec2.is_proper_pair = proper_pair
 
 
-def set_mate_info_on_secondary(
-    secondary: AlignedSegment,
-    mate_primary: AlignedSegment,
-) -> None:
+def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedSegment) -> None:
     """Set mate info on a secondary alignment to its mate's primary alignment.
 
     Args:
@@ -997,7 +994,7 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     r2.is_read2 = True
     r2.is_read1 = False
 
-    set_mate_info(r1=r1, r2=r2, is_proper_pair=lambda a, b: proper_pair)
+    set_mate_info(rec1=r1, rec2=r2, is_proper_pair=lambda a, b: proper_pair)
 
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -1242,24 +1239,26 @@ class Template:
     def set_mate_info(
         self,
         is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+        isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
     ) -> Self:
         """Reset all mate information on every record in the template.
 
         Args:
             is_proper_pair: A function that takes two alignments and determines proper pair status.
+            isize: A function that takes the two alignments and calculates their isize.
         """
         if self.r1 is not None and self.r2 is not None:
-            set_mate_info(self.r1, self.r2, is_proper_pair=is_proper_pair)
+            set_mate_info(self.r1, self.r2, is_proper_pair=is_proper_pair, isize=isize)
         if self.r1 is not None:
             for rec in self.r2_secondaries:
-                set_mate_info_on_secondary(rec, self.r1, is_proper_pair=is_proper_pair)
+                set_mate_info_on_secondary(secondary=rec, mate_primary=self.r1)
             for rec in self.r2_supplementals:
-                set_mate_info_on_supplementary(rec, self.r1)
+                set_mate_info_on_supplementary(supp=rec, mate_primary=self.r1)
         if self.r2 is not None:
             for rec in self.r1_secondaries:
-                set_mate_info_on_secondary(rec, self.r2, is_proper_pair=is_proper_pair)
+                set_mate_info_on_secondary(secondary=rec, mate_primary=self.r2)
             for rec in self.r1_supplementals:
-                set_mate_info_on_supplementary(rec, self.r2)
+                set_mate_info_on_supplementary(supp=rec, mate_primary=self.r2)
         return self
 
     def write_to(

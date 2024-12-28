@@ -140,6 +140,16 @@ def test_many_from_tag_invalid_number_of_commas() -> None:
         SecondaryAlignment.from_tag_part("chr9,-104599381,49M")
 
 
+@pytest.mark.parametrize(["stranded_start"], [["!1"], ["1"]])
+def test_many_from_tag_raises_for_invalid_stranded_start(stranded_start: str) -> None:
+    """Test that we raise an exception when stranded start is malformed."""
+    with pytest.raises(
+        ValueError,
+        match=f"The stranded start field is malformed: {stranded_start}"
+    ):
+        SecondaryAlignment.from_tag_part(f"chr3,{stranded_start},49M,4")
+
+
 @pytest.mark.parametrize(
     ["secondary", "expected"],
     [
@@ -222,6 +232,14 @@ def test_xbs_many_from_tag() -> None:
     ]
 
 
+def test_many_from_rec_returns_no_secondaries_when_unmapped() -> None:
+    """Test that many_from_rec returns no secondaries when unmapped."""
+    builder = SamBuilder()
+    rec = builder.add_single()
+    assert rec.is_unmapped
+    assert len(list(SecondaryAlignment.many_sam_from_rec(rec))) == 0
+
+
 def test_xa_many_from_rec() -> None:
     """Test that we return secondary alignments from a SAM record with multiple XAs."""
     value: str = "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;"  # with trailing ';'
@@ -230,7 +248,7 @@ def test_xa_many_from_rec() -> None:
 
     assert list(SecondaryAlignment.many_from_rec(rec)) == []
 
-    rec.set_tag("XB", value)
+    rec.set_tag("XA", value)
 
     assert list(SecondaryAlignment.many_from_rec(rec)) == [
         SecondaryAlignment(

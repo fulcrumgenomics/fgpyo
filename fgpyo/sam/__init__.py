@@ -865,11 +865,11 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
 
 
 def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> None:
-    """Set common mate info an alignment to its mate's primary alignment.
+    """Set common mate info on a destination alignment to its mate's primary alignment (source).
 
     Args:
         dest: The alignment to set the mate info upon.
-        source: The primary alignment to use as a mate reference.
+        source: The alignment to use as a mate reference.
 
     Raises:
         ValueError: If dest and source are not of the same read ordinal.
@@ -877,7 +877,7 @@ def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> Non
         ValueError: If dest and source do not share the same query name.
     """
     if source.is_read1 is dest.is_read1:
-        raise ValueError("The two records must be of different read ordinals!")
+        raise ValueError("source and dest records must be of different read ordinals!")
     if source.is_supplementary:
         raise ValueError("Mate info must be set from a non-supplementary source!")
     if source.query_name != dest.query_name:
@@ -894,50 +894,50 @@ def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> Non
 
 
 def set_mate_info(
-    r1: AlignedSegment,
-    r2: AlignedSegment,
+    rec1: AlignedSegment,
+    rec2: AlignedSegment,
     is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+    isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
 ) -> None:
     """Resets mate pair information between reads in a pair.
 
     Args:
-        r1: Read 1 (first read in the template).
-        r2: Read 2 with the same query name as r1 (second read in the template).
+        rec1: The first record in the pair.
+        rec2: The second record in the pair.
         is_proper_pair: A function that takes the two alignments and determines proper pair status.
+        isize: A function that takes the two alignments and calculates their isize.
 
     Raises:
-        ValueError: If r1 and r2 are not of the same read ordinal.
-        ValueError: If either r1 or r2 is supplementary (and not purely primary or secondary).
-        ValueError: If r1 and r2 do not share the same query name.
+        ValueError: If rec1 and rec2 are of the same read ordinal.
+        ValueError: If either rec1 or rec2 is supplementary (and not purely primary or secondary).
+        ValueError: If rec1 and rec2 do not share the same query name.
     """
-    for dest, source in [(r1, r2), (r2, r1)]:
+    for dest, source in [(rec1, rec2), (rec2, rec1)]:
         _set_common_mate_fields(dest=dest, source=source)
 
-    template_length = isize(r1, r2)
-    r1.template_length = template_length
-    r2.template_length = -template_length
+    template_length = isize(rec1, rec2)
+    rec1.template_length = template_length
+    rec2.template_length = -template_length
 
-    proper_pair = is_proper_pair(r1, r2)
-    r1.is_proper_pair = proper_pair
-    r2.is_proper_pair = proper_pair
+    proper_pair = is_proper_pair(rec1, rec2)
+    rec1.is_proper_pair = proper_pair
+    rec2.is_proper_pair = proper_pair
 
 
 def set_mate_info_on_secondary(
     secondary: AlignedSegment,
     mate_primary: AlignedSegment,
-    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
 ) -> None:
     """Set mate info on a secondary alignment to its mate's primary alignment.
 
     Args:
         secondary: The secondary alignment to set mate information upon.
         mate_primary: The primary alignment of the secondary's mate.
-        is_proper_pair: A function that takes the two alignments and determines proper pair status.
 
     Raises:
-        ValueError: If secondary and mate_primary are not of the same read ordinal.
-        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If secondary and mate_primary are of the same read ordinal.
         ValueError: If secondary and mate_primary do not share the same query name.
+        ValueError: If mate_primary is not purely a primary alignment.
         ValueError: If secondary is not marked as a secondary alignment.
     """
     if mate_primary.is_secondary or mate_primary.is_supplementary:
@@ -956,9 +956,9 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
         mate_primary: The primary alignment of the supplementary's mate.
 
     Raises:
-        ValueError: If supp and mate_primary are not of the same read ordinal.
-        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If supp and mate_primary are of the same read ordinal.
         ValueError: If supp and mate_primary do not share the same query name.
+        ValueError: If mate_primary is not purely a primary alignment.
         ValueError: If supp is not marked as a supplementary alignment.
     """
     if mate_primary.is_secondary or mate_primary.is_supplementary:

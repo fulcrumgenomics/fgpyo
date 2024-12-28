@@ -178,6 +178,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from typing_extensions import Self
 from typing_extensions import deprecated
 
 import fgpyo.io
@@ -870,8 +871,8 @@ def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> Non
         dest: The alignment to set the mate info upon.
         source: The primary alignment to use as a mate reference.
     """
-    if source.is_read1 is dest.is_read1 or source.is_secondary or source.is_supplementary:
-        raise ValueError("Mate info must be set from a primary of the next ordinal!")
+    if source.is_read1 is dest.is_read1 or source.is_supplementary:
+        raise ValueError("Mate info must be set from a primary or secondary of the next ordinal!")
     if source.query_name != dest.query_name:
         raise ValueError("Cannot set mate info on alignments with different query names!")
 
@@ -1227,9 +1228,28 @@ class Template:
             for rec in recs:
                 yield rec
 
-    def set_mate_info(self) -> "Template":
-        """Reset all mate information on every record in a template."""
-        return set_mate_info_for_template(self)
+    def set_mate_info(
+        self,
+        is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
+    ) -> Self:
+        """Reset all mate information on every record in the template.
+
+        Args:
+            is_proper_pair: A function that takes two alignments and determines proper pair status.
+        """
+        if self.r1 is not None and self.r2 is not None:
+            set_mate_info(self.r1, self.r2, is_proper_pair=is_proper_pair)
+        if self.r1 is not None:
+            for rec in self.r2_secondaries:
+                set_mate_info_on_secondary(rec, self.r1, is_proper_pair=is_proper_pair)
+            for rec in self.r2_supplementals:
+                set_mate_info_on_supplementary(rec, self.r1)
+        if self.r2 is not None:
+            for rec in self.r1_secondaries:
+                set_mate_info_on_secondary(rec, self.r2, is_proper_pair=is_proper_pair)
+            for rec in self.r1_supplementals:
+                set_mate_info_on_supplementary(rec, self.r2)
+        return self
 
     def write_to(
         self,
@@ -1287,31 +1307,6 @@ class TemplateIterator(Iterator[Template]):
         name = self._iter.peek().query_name
         recs = self._iter.takewhile(lambda r: r.query_name == name)
         return Template.build(recs, validate=False)
-
-
-def set_mate_info_for_template(
-    template: Template,
-    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
-) -> Template:
-    """Reset all mate information on every record in a template.
-
-    Args:
-        template: The template of alignments to reset all mate information on.
-        is_proper_pair: A function that takes two alignments and determines proper pair status.
-    """
-    if template.r1 is not None and template.r2 is not None:
-        set_mate_info(template.r1, template.r2, is_proper_pair=is_proper_pair)
-    if template.r1 is not None:
-        for rec in template.r2_secondaries:
-            set_mate_info_on_secondary(rec, template.r1, is_proper_pair=is_proper_pair)
-        for rec in template.r2_supplementals:
-            set_mate_info_on_supplementary(rec, template.r1)
-    if template.r2 is not None:
-        for rec in template.r1_secondaries:
-            set_mate_info_on_secondary(rec, template.r2, is_proper_pair=is_proper_pair)
-        for rec in template.r1_supplementals:
-            set_mate_info_on_supplementary(rec, template.r2)
-    return template
 
 
 class SamOrder(enum.Enum):

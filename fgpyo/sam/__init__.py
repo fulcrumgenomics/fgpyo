@@ -870,9 +870,16 @@ def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> Non
     Args:
         dest: The alignment to set the mate info upon.
         source: The primary alignment to use as a mate reference.
+
+    Raises:
+        ValueError: If dest and source are not of the same read ordinal.
+        ValueError: If source is supplementary (and not purely primary or secondary).
+        ValueError: If dest and source do not share the same query name.
     """
-    if source.is_read1 is dest.is_read1 or source.is_supplementary:
-        raise ValueError("Mate info must be set from a primary or secondary of the next ordinal!")
+    if source.is_read1 is dest.is_read1:
+        raise ValueError("The two records must be of different read ordinals!")
+    if source.is_supplementary:
+        raise ValueError("Mate info must be set from a non-supplementary source!")
     if source.query_name != dest.query_name:
         raise ValueError("Cannot set mate info on alignments with different query names!")
 
@@ -897,10 +904,12 @@ def set_mate_info(
         r1: Read 1 (first read in the template).
         r2: Read 2 with the same query name as r1 (second read in the template).
         is_proper_pair: A function that takes the two alignments and determines proper pair status.
-    """
-    if r1.query_name != r2.query_name:
-        raise ValueError("Cannot set mate info on alignments with different query names!")
 
+    Raises:
+        ValueError: If r1 and r2 are not of the same read ordinal.
+        ValueError: If either r1 or r2 is supplementary (and not purely primary or secondary).
+        ValueError: If r1 and r2 do not share the same query name.
+    """
     for dest, source in [(r1, r2), (r2, r1)]:
         _set_common_mate_fields(dest=dest, source=source)
 
@@ -926,18 +935,17 @@ def set_mate_info_on_secondary(
         is_proper_pair: A function that takes the two alignments and determines proper pair status.
 
     Raises:
-        ValueError: If primary and secondary are of the same read ordinal.
-        ValueError: If the primary is marked as either secondary or supplementary.
-        ValueError: If the secondary is not marked as secondary.
+        ValueError: If secondary and mate_primary are not of the same read ordinal.
+        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If secondary and mate_primary do not share the same query name.
+        ValueError: If secondary is not marked as a secondary alignment.
     """
+    if mate_primary.is_secondary or mate_primary.is_supplementary:
+        raise ValueError("The mate primary must not be secondary or supplementary!")
     if not secondary.is_secondary:
         raise ValueError("Cannot set mate info on an alignment not marked as secondary!")
 
     _set_common_mate_fields(dest=secondary, source=mate_primary)
-
-    # NB: calculate isize and proper pair as if this secondary alignment was the primary alignment.
-    secondary.is_proper_pair = is_proper_pair(mate_primary, secondary)
-    secondary.template_length = isize(mate_primary, secondary)
 
 
 def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
@@ -948,10 +956,13 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
         mate_primary: The primary alignment of the supplementary's mate.
 
     Raises:
-        ValueError: If primary and secondary are of the same read ordinal.
-        ValueError: If the primary is marked as either secondary or supplementary.
-        ValueError: If the secondary is not marked as secondary.
+        ValueError: If supp and mate_primary are not of the same read ordinal.
+        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If supp and mate_primary do not share the same query name.
+        ValueError: If supp is not marked as a supplementary alignment.
     """
+    if mate_primary.is_secondary or mate_primary.is_supplementary:
+        raise ValueError("The mate primary must not be secondary or supplementary!")
     if not supp.is_supplementary:
         raise ValueError("Cannot set mate info on an alignment not marked as supplementary!")
 

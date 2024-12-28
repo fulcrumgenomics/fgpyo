@@ -865,7 +865,7 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
 
 
 def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> None:
-    """Set common mate info on a destination alignment to its mate's primary alignment (source).
+    """Set common mate info on a destination alignment to its mate's non-supplementary alignment.
 
     Args:
         dest: The alignment to set the mate info upon.

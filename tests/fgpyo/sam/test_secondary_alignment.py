@@ -24,7 +24,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 0,
                 "mapq": 30,
             },
-            "Start cannot be less zero! Found: -1",
+            "Start cannot be <0! Found: -1",
         ),
         (
             {
@@ -36,7 +36,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 0,
                 "mapq": 30,
             },
-            "Edit distance cannot be less zero! Found: -1",
+            "Edit distance cannot be <0! Found: -1",
         ),
         (
             {
@@ -48,7 +48,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": -1,
                 "mapq": 30,
             },
-            "Alignment score cannot be less zero! Found: -1",
+            "Alignment score cannot be <0! Found: -1",
         ),
         (
             {
@@ -60,7 +60,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 4,
                 "mapq": -1,
             },
-            "Mapping quality cannot be less zero! Found: -1",
+            "Mapping quality cannot be <0! Found: -1",
         ),
     ],
 )

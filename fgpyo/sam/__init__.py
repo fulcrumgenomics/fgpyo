@@ -1319,13 +1319,13 @@ class SecondaryAlignment:
     def __post_init__(self) -> None:
         """Perform post-initialization validation on this dataclass."""
         if self.reference_start < 0:
-            raise ValueError(f"Start cannot be less zero! Found: {self.reference_start}")
+            raise ValueError(f"Start cannot be <0! Found: {self.reference_start}")
         if self.edit_distance < 0:
-            raise ValueError(f"Edit distance cannot be less zero! Found: {self.edit_distance}")
+            raise ValueError(f"Edit distance cannot be <0! Found: {self.edit_distance}")
         if self.alignment_score is not None and self.alignment_score < 0:
-            raise ValueError(f"Alignment score cannot be less zero! Found: {self.alignment_score}")
+            raise ValueError(f"Alignment score cannot be <0! Found: {self.alignment_score}")
         if self.mapq is not None and self.mapq < 0:
-            raise ValueError(f"Mapping quality cannot be less zero! Found: {self.mapq}")
+            raise ValueError(f"Mapping quality cannot be <0! Found: {self.mapq}")
 
     @classmethod
     def from_tag_part(cls, part: str) -> "SecondaryAlignment":
@@ -1365,7 +1365,7 @@ class SecondaryAlignment:
         Args:
             value: A single `XA` or `XB` tag value.
         """
-        return list(map(cls.from_tag_part, value.rstrip(";").split(";")))
+        return [cls.from_tag_part(part) for part in value.rstrip(";").split(";")]
 
     @classmethod
     def many_from_rec(cls, rec: AlignedSegment) -> list["SecondaryAlignment"]:

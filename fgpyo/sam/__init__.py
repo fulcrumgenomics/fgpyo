@@ -205,6 +205,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from typing_extensions import Self
 from typing_extensions import deprecated
 
 import fgpyo.io
@@ -1328,7 +1329,7 @@ class SecondaryAlignment:
             raise ValueError(f"Mapping quality cannot be <0! Found: {self.mapq}")
 
     @classmethod
-    def from_tag_part(cls, part: str) -> "SecondaryAlignment":
+    def from_tag_part(cls, part: str) -> Self:
         """Build a secondary alignment from a single `XA` or `XB` tag part.
 
         Args:
@@ -1359,7 +1360,7 @@ class SecondaryAlignment:
         )
 
     @classmethod
-    def many_from_tag(cls, value: str) -> list["SecondaryAlignment"]:
+    def many_from_tag(cls, value: str) -> list[Self]:
         """Build many secondary alignments from a single `XA` or `XB` tag value.
 
         Args:
@@ -1368,13 +1369,13 @@ class SecondaryAlignment:
         return [cls.from_tag_part(part) for part in value.rstrip(";").split(";")]
 
     @classmethod
-    def many_from_rec(cls, rec: AlignedSegment) -> list["SecondaryAlignment"]:
+    def many_from_rec(cls, rec: AlignedSegment) -> list[Self]:
         """Build many secondary alignments from a single SAM record.
 
         Args:
             rec: The SAM record to generate secondary alignments from.
         """
-        secondaries: list["SecondaryAlignment"] = []
+        secondaries: list[Self] = []
         if rec.has_tag("XA"):
             secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XA"))))
         if rec.has_tag("XB"):

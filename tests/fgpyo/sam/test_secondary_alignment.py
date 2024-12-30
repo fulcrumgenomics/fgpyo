@@ -236,7 +236,21 @@ def test_many_from_rec_returns_no_secondaries_when_unmapped() -> None:
     builder = SamBuilder()
     rec = builder.add_single()
     assert rec.is_unmapped
-    assert len(list(SecondaryAlignment.many_sam_from_rec(rec))) == 0
+    assert len(list(SecondaryAlignment.many_from_rec(rec))) == 0
+
+
+def test_many_from_rec_raises_with_more_context_when_fails() -> None:
+    """Test that many_from_rec raises exceptions with more context when it fails to parse."""
+    invalid_value: str = "chr9,104599381,49M,4"
+    builder = SamBuilder()
+    rec = builder.add_single(name="hi-mom")
+    rec.set_tag("XA", invalid_value)
+
+    with pytest.raises(
+        ValueError,
+        match="Could not parse secondary alignments for read: hi-mom",
+    ):
+        SecondaryAlignment.many_from_rec(rec)
 
 
 def test_xa_many_from_rec() -> None:
@@ -301,6 +315,14 @@ def test_xb_many_from_rec() -> None:
             mapq=20,
         ),
     ]
+
+
+def test_many_sam_from_rec_returns_no_secondaries_when_unmapped() -> None:
+    """Test that many_sam_from_rec returns no secondaries when unmapped."""
+    builder = SamBuilder()
+    rec = builder.add_single()
+    assert rec.is_unmapped
+    assert len(list(SecondaryAlignment.many_sam_from_rec(rec))) == 0
 
 
 def test_xa_many_sam_from_rec() -> None:

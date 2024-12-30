@@ -707,7 +707,7 @@ def test_set_mate_info_raises_when_second_rec_is_supplementary() -> None:
         set_mate_info(r1, r2)
 
 
-def test_set_mate_info_raises_mimatched_query_names() -> None:
+def test_set_mate_info_raises_mismatched_query_names() -> None:
     """Test set_mate_info raises an exception for mismatched query names."""
     builder = SamBuilder()
     r1 = builder.add_single(name="x", read_num=1)

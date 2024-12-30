@@ -24,7 +24,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 0,
                 "mapq": 30,
             },
-            "Start cannot be <0! Found: -1",
+            "Reference start cannot be <0! Found: -1",
         ),
         (
             {

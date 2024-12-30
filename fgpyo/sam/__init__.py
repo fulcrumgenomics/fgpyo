@@ -1272,7 +1272,7 @@ class SecondaryAlignment:
     Format of a single secondary alignment in the `XA` tag (`,`-delimited):
 
     ```text
-    chr,<orientation><position>,cigar,NM
+    chr,<orientation><1-based position>,cigar,NM
     ```
 
     Full example of an `XA` tag value (`;`-delimited):
@@ -1284,7 +1284,7 @@ class SecondaryAlignment:
     Format of a single secondary alignment in the `XB` tag (`,`-delimited):
 
     ```text
-    chr,<orientation><position>,cigar,NM,AS,MapQ
+    chr,<orientation><1-based position>,cigar,NM,AS,MapQ
     ```
 
     Full example of an `XB` tag value (`;`-delimited):
@@ -1295,7 +1295,9 @@ class SecondaryAlignment:
 
     Args:
         reference_name: The reference sequence name.
-        reference_start: The 0-based start position of the alignment.
+        reference_start: The 0-based start position of the alignment. Note that the start position
+            in the `XA` and `XB` tags text is 1-based; this dataclass contains a 0-based
+            representation consistent with Python and pysam convention.
         is_forward: If the alignment is in the forward orientation or not.
         cigar: The Cigar sequence representing the alignment.
         edit_distance: The number of mismatches between the query and the target.
@@ -1307,6 +1309,12 @@ class SecondaryAlignment:
         - [https://github.com/lh3/bwa/pull/292](https://github.com/lh3/bwa/pull/292)
         - [https://github.com/lh3/bwa/pull/293](https://github.com/lh3/bwa/pull/293)
         - [https://github.com/lh3/bwa/pull/355](https://github.com/lh3/bwa/pull/355)
+
+    Raises:
+        ValueError: If either reference_start is set to a value less than zero.
+        ValueError: If either edit_distance is set to a value less than zero.
+        ValueError: If either alignment_score is set to a value less than zero.
+        ValueError: If either mapq is set to a value less than zero.
     """
 
     reference_name: str
@@ -1319,14 +1327,17 @@ class SecondaryAlignment:
 
     def __post_init__(self) -> None:
         """Perform post-initialization validation on this dataclass."""
+        errors: list[str] = []
         if self.reference_start < 0:
-            raise ValueError(f"Start cannot be <0! Found: {self.reference_start}")
+            errors.append(f"Reference start cannot be <0! Found: {self.reference_start}")
         if self.edit_distance < 0:
-            raise ValueError(f"Edit distance cannot be <0! Found: {self.edit_distance}")
+            errors.append(f"Edit distance cannot be <0! Found: {self.edit_distance}")
         if self.alignment_score is not None and self.alignment_score < 0:
-            raise ValueError(f"Alignment score cannot be <0! Found: {self.alignment_score}")
+            errors.append(f"Alignment score cannot be <0! Found: {self.alignment_score}")
         if self.mapq is not None and self.mapq < 0:
-            raise ValueError(f"Mapping quality cannot be <0! Found: {self.mapq}")
+            errors.append(f"Mapping quality cannot be <0! Found: {self.mapq}")
+        if len(errors) > 0:
+            raise ValueError("\n".join(errors))
 
     @classmethod
     def from_tag_part(cls, part: str) -> Self:
@@ -1334,6 +1345,12 @@ class SecondaryAlignment:
 
         Args:
             part: A single element in an `XA` or `XB` tag value.
+
+        Raises:
+            ValueError: If an `XA` tag part does not have four comma-separated fields.
+            ValueError: If an `XB` tag part does not have six comma-separated fields.
+            ValueError: If the tag part's position is not represented as a stranded integer
+                (e.g. `+20` or `-150`)
         """
         fields: list[str] = part.rstrip(",").split(",")
 
@@ -1346,7 +1363,7 @@ class SecondaryAlignment:
         else:
             raise ValueError(f"XA or XB tag part does not have 4 or 6 ',' separated fields: {part}")
 
-        if len(stranded_start) <= 1 or stranded_start[0] not in {"+", "-"}:
+        if len(stranded_start) <= 1 or stranded_start[0] not in ("+", "-"):
             raise ValueError(f"The stranded start field is malformed: {stranded_start}")
 
         return cls(
@@ -1376,10 +1393,15 @@ class SecondaryAlignment:
             rec: The SAM record to generate secondary alignments from.
         """
         secondaries: list[Self] = []
-        if rec.has_tag("XA"):
-            secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XA"))))
-        if rec.has_tag("XB"):
-            secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XB"))))
+        try:
+            if rec.has_tag("XA"):
+                secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XA"))))
+            if rec.has_tag("XB"):
+                secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XB"))))
+        except ValueError as exception:
+            raise ValueError(
+                f"Could not parse secondary alignments for read: {rec.query_name}"
+            ) from exception
         return secondaries
 
     @classmethod

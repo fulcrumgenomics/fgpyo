@@ -956,11 +956,11 @@ def test_set_mate_info_on_supplementary_sets_additional_fields_for_primary_suppl
     r2.is_proper_pair = True
     r2.template_length = 100
 
-    assert not r1.is_proper_pair
+    assert r1.is_proper_pair is False
     assert r1.template_length == 0
     set_mate_info_on_supplementary(r1, r2)
-    assert r1.is_proper_pair
     assert r1.template_length == -100
+    assert r1.is_proper_pair is True
 
 
 def test_set_mate_info_on_supplementary_does_not_set_fields_for_secondary_supplemental() -> None:

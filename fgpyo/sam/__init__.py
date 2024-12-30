@@ -872,7 +872,7 @@ def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> Non
         source: The alignment to use as a mate reference.
 
     Raises:
-        ValueError: If dest and source are not of the same read ordinal.
+        ValueError: If dest and source are of the same read ordinal.
         ValueError: If source is supplementary (and not purely primary or secondary).
         ValueError: If dest and source do not share the same query name.
     """

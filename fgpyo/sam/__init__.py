@@ -158,10 +158,10 @@ and slices):
 
 ```python
 >>> from fgpyo.sam import SecondaryAlignment
->>> xa = SecondaryAlignment.from_tag_part("chr9,-104599381,49M,4")
+>>> xa = SecondaryAlignment.from_tag_item("chr9,-104599381,49M,4")
 >>> xa.reference_name
 'chr9'
->>> xb = SecondaryAlignment.from_tag_part("chr9,-104599381,49M,4,0,30")
+>>> xb = SecondaryAlignment.from_tag_item("chr9,-104599381,49M,4,0,30")
 >>> xb.reference_name
 'chr9'
 >>> xb.mapq
@@ -183,6 +183,8 @@ True
 import enum
 import io
 import sys
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Collection
 from dataclasses import dataclass
 from functools import cached_property
@@ -191,6 +193,7 @@ from pathlib import Path
 from typing import IO
 from typing import Any
 from typing import Callable
+from typing import ClassVar
 from typing import Dict
 from typing import Iterable
 from typing import Iterator
@@ -199,6 +202,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 from typing import cast
+from typing import override
 
 import attr
 import pysam
@@ -211,6 +215,7 @@ from typing_extensions import deprecated
 import fgpyo.io
 from fgpyo.collections import PeekableIterator
 from fgpyo.sequence import reverse_complement
+from fgpyo.util.types import DataclassInstance
 
 SamPath = Union[IO[Any], Path, str]
 """The valid base classes for opening a SAM/BAM/CRAM file."""
@@ -797,87 +802,6 @@ def is_proper_pair(
     )
 
 
-@attr.s(frozen=True, auto_attribs=True)
-class SupplementaryAlignment:
-    """Stores a supplementary alignment record produced by BWA and stored in the SA SAM tag.
-
-    Attributes:
-        reference_name: the name of the reference (i.e. contig, chromosome) aligned to
-        start: the 0-based start position of the alignment
-        is_forward: true if the alignment is in the forward strand, false otherwise
-        cigar: the cigar for the alignment
-        mapq: the mapping quality
-        nm: the number of edits
-    """
-
-    reference_name: str
-    start: int
-    is_forward: bool
-    cigar: Cigar
-    mapq: int
-    nm: int
-
-    def __str__(self) -> str:
-        return ",".join(
-            str(item)
-            for item in (
-                self.reference_name,
-                self.start + 1,
-                "+" if self.is_forward else "-",
-                self.cigar,
-                self.mapq,
-                self.nm,
-            )
-        )
-
-    @property
-    def end(self) -> int:
-        """The 0-based exclusive end position of the alignment."""
-        return self.start + self.cigar.length_on_target()
-
-    @staticmethod
-    def parse(string: str) -> "SupplementaryAlignment":
-        """Returns a supplementary alignment parsed from the given string.  The various fields
-        should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`)
-        """
-        fields = string.split(",")
-        return SupplementaryAlignment(
-            reference_name=fields[0],
-            start=int(fields[1]) - 1,
-            is_forward=fields[2] == "+",
-            cigar=Cigar.from_cigarstring(fields[3]),
-            mapq=int(fields[4]),
-            nm=int(fields[5]),
-        )
-
-    @staticmethod
-    def parse_sa_tag(tag: str) -> List["SupplementaryAlignment"]:
-        """Parses an SA tag of supplementary alignments from a BAM file. If the tag is empty
-        or contains just a single semi-colon then an empty list will be returned.  Otherwise
-        a list containing a SupplementaryAlignment per ;-separated value in the tag will
-        be returned.
-        """
-        return [SupplementaryAlignment.parse(a) for a in tag.split(";") if len(a) > 0]
-
-    @classmethod
-    def from_read(cls, read: pysam.AlignedSegment) -> List["SupplementaryAlignment"]:
-        """
-        Construct a list of SupplementaryAlignments from the SA tag in a pysam.AlignedSegment.
-
-        Args:
-            read: An alignment. The presence of the "SA" tag is not required.
-
-        Returns:
-            A list of all SupplementaryAlignments present in the SA tag.
-            If the SA tag is not present, or it is empty, an empty list will be returned.
-        """
-        if read.has_tag("SA"):
-            sa_tag: str = cast(str, read.get_tag("SA"))
-            return cls.parse_sa_tag(sa_tag)
-        else:
-            return []
-
-
 def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
     """Calculate the sum of base qualities score for an alignment record.
 
@@ -1266,8 +1190,217 @@ class SamOrder(enum.Enum):
 
 
 @dataclass(frozen=True)
-class SecondaryAlignment:
-    """A secondary alignment as encoded in one part of the `XA` or `XB` tag value on a SAM record.
+class AuxAlignment(ABC, DataclassInstance):
+    """An alignment parsed from the data stored in the SAM tags of a SAM record.
+
+    Args:
+        reference_name: The reference sequence name.
+        reference_start: The 0-based start position of the alignment.
+        cigar: The Cigar sequence representing the alignment.
+        mapq: The aligner-reported probability of an incorrect mapping, if available.
+        edit_distance: The number of mismatches between the query and the target, if available.
+        alignment_score: The aligner-reported alignment score, if available.
+
+    Raises:
+        ValueError: If reference_start is set to a value less than zero.
+        ValueError: If mapq is set to a value less than zero.
+        ValueError: If edit_distance is set to a value less than zero.
+        ValueError: If alignment_score is set to a value less than zero.
+    """
+
+    sam_tags: ClassVar[Collection[str]]
+    """The SAM tags this class is capable of parsing."""
+
+    reference_name: str
+    reference_start: int
+    is_forward: bool
+    cigar: Cigar
+    mapq: Optional[int] = None
+    edit_distance: Optional[int] = None
+    alignment_score: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        """Perform post-initialization validation on this dataclass."""
+        errors: list[str] = []
+        if self.reference_start < 0:
+            errors.append(f"Reference start cannot be less than 0! Found: {self.reference_start}")
+        if self.mapq is not None and self.mapq < 0:
+            errors.append(f"Mapping quality cannot be less than 0! Found: {self.mapq}")
+        if self.edit_distance < 0:
+            errors.append(f"Edit distance cannot be less than 0! Found: {self.edit_distance}")
+        if self.alignment_score is not None and self.alignment_score < 0:
+            errors.append(f"Alignment score cannot be less than 0! Found: {self.alignment_score}")
+        if len(errors) > 0:
+            raise ValueError("\n".join(errors))
+
+    @cached_property
+    def reference_end(self) -> int:
+        """Returns the 0-based half-open end coordinate of this auxiliary alignment."""
+        return self.reference_start + self.cigar.length_on_target()
+
+    @classmethod
+    @abstractmethod
+    def from_tag_item(cls, item: str) -> Self:
+        """Build an auxiliary alignment from a SAM tag item.
+
+        Args:
+            item: An individual string item stored in the SAM tag value.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def many_from_tag(cls, value: str) -> list[Self]:
+        """Build many auxiliary alignments from a SAM tag value.
+
+        Args:
+            value: The SAM tag value to reconstitute multiple auxiliary alignments.
+        """
+        return [cls.from_tag_item(item) for item in value.rstrip(";").split(";") if item != ""]
+
+    @classmethod
+    def many_from_primary(cls, primary: AlignedSegment) -> list[Self]:
+        """Build many auxiliary alignments from a single SAM primary alignment record.
+
+        Args:
+            primary: The primary SAM record to generate auxiliary alignments from.
+
+        Raises:
+            ValueError: If the record is a secondary or supplementary alignment.
+        """
+        if primary.is_secondary or primary.is_supplementary:
+            raise ValueError(
+                "Cannot derive auxiliary alignments from a non-primary record!"
+                f" Found: {primary.query_name}"
+            )
+        aux_alignments: list[Self] = []
+        try:
+            for tag in cls.sam_tags:
+                if primary.has_tag(tag):
+                    aux_alignments.extend(cls.many_from_tag(cast(str, primary.get_tag(tag))))
+        except ValueError as exception:
+            raise ValueError(
+                f"Could not parse auxiliary alignments for primary alignment: {primary.query_name}"
+            ) from exception
+        return aux_alignments
+
+    @classmethod
+    def many_sam_from_primary(cls, primary: AlignedSegment) -> Iterator[AlignedSegment]:
+        """Build many SAM auxiliary alignments from a single SAM primary alignment.
+
+        All reconstituted auxiliary alignments will have the `rh` SAM tag set upon them.
+
+        By default, the query bases and qualities of the auxiliary alignment will be set to the
+        query bases and qualities of the record that created the auxiliary alignments. However, if
+        there are hard-clips in the record used to create the auxiliary alignments, then this
+        function will set the query bases and qualities to the space-saving and/or unknown marker
+        `*`. A future development for this function should correctly pad-out (with No-calls) or clip
+        the query sequence and qualities depending on the hard-clipping found in both ends of the
+        source (often a primary) record and both ends of the destination (auxiliary) record.
+
+        Args:
+            primary: The SAM record to generate auxiliary alignments from.
+
+        Raises:
+            ValueError: If the record is a secondary or supplementary alignment.
+        """
+        if primary.is_secondary or primary.is_supplementary:
+            raise ValueError(
+                "Cannot derive auxiliary alignments from a non-primary record!"
+                f" Found: {primary.query_name}"
+            )
+        if (
+            primary.is_unmapped
+            or primary.cigarstring is None
+            or primary.query_sequence is None
+            or primary.query_qualities is None
+        ):
+            return
+
+        for hit in cls.many_from_primary(primary):
+            # TODO: When the original record has hard clips we must set the bases and quals to "*".
+            #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
+            if "H" in primary.cigarstring:
+                query_sequence = NO_QUERY_BASES
+                query_qualities = None
+            elif primary.is_forward and not hit.is_forward:
+                query_sequence = reverse_complement(primary.query_sequence)
+                query_qualities = primary.query_qualities[::-1]
+            else:
+                query_sequence = primary.query_sequence
+                query_qualities = primary.query_qualities
+
+            aux = AlignedSegment(header=primary.header)
+            aux.query_name = primary.query_name
+            aux.query_sequence = query_sequence
+            aux.query_qualities = query_qualities
+
+            # Set all alignment and mapping information for this auxiliary alignment.
+            aux.cigarstring = str(hit.cigar)
+            aux.mapping_quality = 0 if hit.mapq is None else hit.mapq
+            aux.reference_id = primary.header.get_tid(hit.reference_name)
+            aux.reference_name = hit.reference_name
+            aux.reference_start = hit.reference_start
+
+            # Set all fields that relate to the template or to any kind of auxiliary alignment.
+            aux.is_duplicate = primary.is_duplicate
+            aux.is_forward = hit.is_forward
+            aux.is_mapped = True
+            aux.is_paired = primary.is_paired
+            aux.is_qcfail = primary.is_qcfail
+            aux.is_read1 = primary.is_read1
+            aux.is_read2 = primary.is_read2
+
+            # Set some optional, but highly recommended, SAM tags on the secondary alignment.
+            aux.set_tag("AS", hit.alignment_score)
+            aux.set_tag("NM", hit.edit_distance)
+            aux.set_tag("RG", primary.get_tag("RG") if primary.has_tag("RG") else None)
+            aux.set_tag("RX", primary.get_tag("RX") if primary.has_tag("RX") else None)
+
+            # Auxiliary alignment mate information points to the mate/next primary alignment.
+            aux.next_reference_id = primary.next_reference_id
+            aux.next_reference_name = primary.next_reference_name
+            aux.next_reference_start = primary.next_reference_start
+            aux.mate_is_mapped = primary.mate_is_mapped
+            aux.mate_is_reverse = primary.mate_is_reverse
+            aux.set_tag("MC", primary.get_tag("MC") if primary.has_tag("MC") else None)
+            aux.set_tag("MQ", primary.get_tag("MQ") if primary.has_tag("MQ") else None)
+            aux.set_tag("ms", primary.get_tag("ms") if primary.has_tag("ms") else None)
+
+            # Finally, set a tag that marks this alignment as a reconstituted auxiliary alignment.
+            aux.set_tag("rh", True)
+
+            yield hit.after_sam_from_primary(aux=aux, primary=primary)
+
+    def after_sam_from_primary(
+        self, aux: AlignedSegment, primary: AlignedSegment
+    ) -> AlignedSegment:
+        """Post-processes the reconstituted auxiliary alignment specific to this implementation.
+
+        Args:
+            aux: The reconstituted auxiliary alignment.
+            primary: The primary alignment that reconstituted the auxiliary alignment.
+
+        Raises:
+            ValueError: If the primary record is a secondary or supplementary alignment.
+        """
+        if primary.is_secondary or primary.is_supplementary:
+            raise ValueError(
+                "Cannot derive auxiliary alignments from a non-primary record!"
+                f" Found: {primary.query_name}"
+            )
+        return aux
+
+    @classmethod
+    def add_to_template(cls, template: Template) -> Template:
+        """Rebuild a template by adding auxiliary alignments from the primary alignment tags."""
+        r1_secondaries = iter([]) if template.r1 is None else cls.many_sam_from_primary(template.r1)
+        r2_secondaries = iter([]) if template.r2 is None else cls.many_sam_from_primary(template.r2)
+        return Template.build(chain(template.all_recs(), r1_secondaries, r2_secondaries))
+
+
+@dataclass(frozen=True)
+class SecondaryAlignment(AuxAlignment):
+    """A secondary alignment as encoded in one item of the `XA` or `XB` tag value on a SAM record.
 
     Format of a single secondary alignment in the `XA` tag (`,`-delimited):
 
@@ -1295,73 +1428,50 @@ class SecondaryAlignment:
 
     Args:
         reference_name: The reference sequence name.
-        reference_start: The 0-based start position of the alignment. Note that the start position
-            in the `XA` and `XB` tags text is 1-based; this dataclass contains a 0-based
-            representation consistent with Python and pysam convention.
-        is_forward: If the alignment is in the forward orientation or not.
+        reference_start: The 0-based start position of the alignment.
         cigar: The Cigar sequence representing the alignment.
-        edit_distance: The number of mismatches between the query and the target.
-        alignment_score: The aligner-reported alignment score, if available.
         mapq: The aligner-reported probability of an incorrect mapping, if available.
+        edit_distance: The number of mismatches between the query and the target, if available.
+        alignment_score: The aligner-reported alignment score, if available.
+
+    Raises:
+        ValueError: If reference_start is set to a value less than zero.
+        ValueError: If mapq is set to a value less than zero.
+        ValueError: If edit_distance is set to a value less than zero.
+        ValueError: If alignment_score is set to a value less than zero.
 
     See:
         - [BWA User Manual](https://bio-bwa.sourceforge.net/bwa.shtml)
         - [https://github.com/lh3/bwa/pull/292](https://github.com/lh3/bwa/pull/292)
         - [https://github.com/lh3/bwa/pull/293](https://github.com/lh3/bwa/pull/293)
         - [https://github.com/lh3/bwa/pull/355](https://github.com/lh3/bwa/pull/355)
-
-    Raises:
-        ValueError: If either reference_start is set to a value less than zero.
-        ValueError: If either edit_distance is set to a value less than zero.
-        ValueError: If either alignment_score is set to a value less than zero.
-        ValueError: If either mapq is set to a value less than zero.
     """
 
-    reference_name: str
-    reference_start: int
-    is_forward: bool
-    cigar: Cigar
-    edit_distance: int
-    alignment_score: Optional[int] = None
-    mapq: Optional[int] = None
-
-    def __post_init__(self) -> None:
-        """Perform post-initialization validation on this dataclass."""
-        errors: list[str] = []
-        if self.reference_start < 0:
-            errors.append(f"Reference start cannot be <0! Found: {self.reference_start}")
-        if self.edit_distance < 0:
-            errors.append(f"Edit distance cannot be <0! Found: {self.edit_distance}")
-        if self.alignment_score is not None and self.alignment_score < 0:
-            errors.append(f"Alignment score cannot be <0! Found: {self.alignment_score}")
-        if self.mapq is not None and self.mapq < 0:
-            errors.append(f"Mapping quality cannot be <0! Found: {self.mapq}")
-        if len(errors) > 0:
-            raise ValueError("\n".join(errors))
+    sam_tags: ClassVar[Collection[str]] = {"XA", "XB"}
+    """The SAM tags this class is capable of parsing."""
 
     @classmethod
-    def from_tag_part(cls, part: str) -> Self:
-        """Build a secondary alignment from a single `XA` or `XB` tag part.
+    def from_tag_item(cls, item: str) -> Self:
+        """Build a secondary alignment from a single `XA` or `XB` tag item.
 
         Args:
-            part: A single element in an `XA` or `XB` tag value.
+            item: A single element in an `XA` or `XB` tag value.
 
         Raises:
-            ValueError: If an `XA` tag part does not have four comma-separated fields.
-            ValueError: If an `XB` tag part does not have six comma-separated fields.
-            ValueError: If the tag part's position is not represented as a stranded integer
-                (e.g. `+20` or `-150`)
+            ValueError: If the `XA` tag item does not have four comma-separated fields.
+            ValueError: If the `XB` tag item does not have six comma-separated fields.
+            ValueError: If the tag item's position is not represented as a stranded integer.
         """
-        fields: list[str] = part.rstrip(",").split(",")
+        fields: list[str] = item.rstrip(",").split(",")
 
         if len(fields) == 4:
-            reference_name, stranded_start, cigar, edit_distance = fields
-            alignment_score = None
             mapq = None
+            alignment_score = None
+            reference_name, stranded_start, cigar, edit_distance = fields
         elif len(fields) == 6:
             reference_name, stranded_start, cigar, edit_distance, alignment_score, mapq = fields
         else:
-            raise ValueError(f"XA or XB tag part does not have 4 or 6 ',' separated fields: {part}")
+            raise ValueError(f"XA or XB tag item does not have 4 or 6 ',' separated fields: {item}")
 
         if len(stranded_start) <= 1 or stranded_start[0] not in ("+", "-"):
             raise ValueError(f"The stranded start field is malformed: {stranded_start}")
@@ -1371,126 +1481,159 @@ class SecondaryAlignment:
             reference_start=int(stranded_start[1:]) - 1,
             is_forward=stranded_start[0] == "+",
             cigar=Cigar.from_cigarstring(cigar),
+            mapq=None if mapq is None else int(mapq),
             edit_distance=int(edit_distance),
             alignment_score=None if alignment_score is None else int(alignment_score),
-            mapq=None if mapq is None else int(mapq),
         )
 
-    @classmethod
-    def many_from_tag(cls, value: str) -> list[Self]:
-        """Build many secondary alignments from a single `XA` or `XB` tag value.
+    @override
+    def after_sam_from_primary(
+        self, aux: AlignedSegment, primary: AlignedSegment
+    ) -> AlignedSegment:
+        """Post-processes the reconstituted auxiliary alignment as a secondary alignment.
 
         Args:
-            value: A single `XA` or `XB` tag value.
+            aux: The reconstituted auxiliary alignment.
+            primary: The primary alignment that reconstituted the auxiliary alignment.
+
+        Raises:
+            ValueError: If the primary record is a secondary or supplementary alignment.
         """
-        return [cls.from_tag_part(part) for part in value.rstrip(";").split(";")]
+        aux = super().after_sam_from_primary(aux=aux, primary=primary)
+        aux.is_secondary = True
+        aux.is_supplementary = False
+        aux.is_proper_pair = False
+        return aux
+
+
+@dataclass(frozen=True)
+class SupplementaryAlignment(AuxAlignment):
+    """A secondary alignment as encoded in one item of the `SA` tag value on a SAM record.
+
+    Format of a single secondary alignment in the `SA` tag (`,`-delimited):
+
+    ```text
+    chr,<1-based position>,strand,cigar,MapQ,NM
+    ```
+
+    Full example of an `SA` tag value (`;`-delimited):
+
+    ```text
+    XA:Z:chr9,104599381,-,49M,60,4;chr3,170653467,+,49M,40,4;chr12,46991828,+,49M,40,5;
+    ```
+
+    Args:
+        reference_name: The reference sequence name.
+        reference_start: The 0-based start position of the alignment.
+        cigar: The Cigar sequence representing the alignment.
+        mapq: The aligner-reported probability of an incorrect mapping, if available.
+        edit_distance: The number of mismatches between the query and the target, if available.
+        alignment_score: The aligner-reported alignment score, if available.
+
+    Raises:
+        ValueError: If reference_start is set to a value less than zero.
+        ValueError: If mapq is set to a value less than zero.
+        ValueError: If edit_distance is set to a value less than zero.
+        ValueError: If alignment_score is set to a value less than zero.
+    """
+
+    sam_tags: ClassVar[Collection[str]] = {"SA"}
+    """The SAM tags this class is capable of parsing."""
 
     @classmethod
-    def many_from_rec(cls, rec: AlignedSegment) -> list[Self]:
-        """Build many secondary alignments from a single SAM record.
+    def from_tag_item(cls, item: str) -> Self:
+        """Build a secondary alignment from a single SA` tag item.
 
         Args:
-            rec: The SAM record to generate secondary alignments from.
+            item: A single element in an `SA` tag value.
+
+        Raises:
+            ValueError: If the `SA` tag item does not have 6 comma-separated fields.
+            ValueError: If the tag item does not have a '+' or '-' strand.
         """
-        secondaries: list[Self] = []
-        try:
-            if rec.has_tag("XA"):
-                secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XA"))))
-            if rec.has_tag("XB"):
-                secondaries.extend(cls.many_from_tag(cast(str, rec.get_tag("XB"))))
-        except ValueError as exception:
-            raise ValueError(
-                f"Could not parse secondary alignments for read: {rec.query_name}"
-            ) from exception
-        return secondaries
+        fields: list[str] = item.rstrip(",").split(",")
 
-    @classmethod
-    def many_sam_from_rec(cls, rec: AlignedSegment) -> Iterator[AlignedSegment]:
-        """Build many SAM secondary alignments from a single SAM record.
+        if len(fields) == 6:
+            reference_name, reference_start, strand, cigar, mapq, edit_distance = fields
+        else:
+            raise ValueError(f"SA tag item does not have 6 ',' separated fields: {item}")
 
-        All reconstituted secondary alignments will have the `rh` SAM tag set upon them.
+        if strand not in ("+", "-"):
+            raise ValueError(f"The strand field is not either '+' or '-': {strand}")
 
-        By default, the query bases and qualities of the secondary alignment will be set to the
-        query bases and qualities of the record that created the secondary alignments. However, if
-        there are hard-clips in the record used to create the secondary alignments, then this
-        function will set the query qualities and bases to the space-saving and/or unknown marker
-        `*`. A future development for this function should correctly pad-out (with No-calls) or clip
-        the query sequence and qualities depending on the hard-clipping found in both ends of the
-        source (often a primary) record and both ends of the destination (secondary) record.
+        return cls(
+            reference_name=reference_name,
+            reference_start=int(reference_start) - 1,
+            is_forward=strand == "+",
+            cigar=Cigar.from_cigarstring(cigar),
+            mapq=None if mapq is None else int(mapq),
+            edit_distance=int(edit_distance),
+        )
+
+    @override
+    def after_sam_from_primary(
+        self, aux: AlignedSegment, primary: AlignedSegment
+    ) -> AlignedSegment:
+        """Post-processes the reconstituted auxiliary alignment as a supplementary alignment.
 
         Args:
-            rec: The SAM record to generate secondary alignments from.
+            aux: The reconstituted supplementary alignment.
+            primary: The primary alignment that reconstituted the auxiliary alignment.
+
+        Raises:
+            ValueError: If the primary record is a secondary or supplementary alignment.
         """
-        if (
-            rec.is_unmapped
-            or rec.cigarstring is None
-            or rec.query_sequence is None
-            or rec.query_qualities is None
-        ):
-            return
+        aux = super().after_sam_from_primary(aux=aux, primary=primary)
+        aux.is_secondary = False
+        aux.is_supplementary = True
+        aux.is_proper_pair = primary.is_proper_pair
+        return aux
 
-        for hit in cls.many_from_rec(rec):
-            # TODO: When the original record has hard clips we must set the bases and quals to "*".
-            #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
-            if "H" in rec.cigarstring:
-                query_sequence = NO_QUERY_BASES
-                query_qualities = None
-            elif rec.is_forward and not hit.is_forward:
-                query_sequence = reverse_complement(rec.query_sequence)
-                query_qualities = rec.query_qualities[::-1]
-            else:
-                query_sequence = rec.query_sequence
-                query_qualities = rec.query_qualities
+    def __str__(self) -> str:
+        """Returns a string representation of this supplementary alignment."""
+        return ",".join(
+            str(item)
+            for item in (
+                self.reference_name,
+                self.reference_start + 1,
+                "+" if self.is_forward else "-",
+                self.cigar,
+                self.mapq,
+                self.edit_distance,
+            )
+        )
 
-            secondary = AlignedSegment(header=rec.header)
-            secondary.query_name = rec.query_name
-            secondary.reference_id = rec.header.get_tid(hit.reference_name)
-            secondary.reference_name = hit.reference_name
-            secondary.reference_start = hit.reference_start
-            secondary.mapping_quality = 0 if hit.mapq is None else hit.mapq
-            secondary.cigarstring = str(hit.cigar)
-            secondary.query_sequence = query_sequence
-            secondary.query_qualities = query_qualities
-            secondary.is_read1 = rec.is_read1
-            secondary.is_read2 = rec.is_read2
-            secondary.is_duplicate = rec.is_duplicate
-            secondary.is_paired = rec.is_paired
-            secondary.is_proper_pair = False
-            secondary.is_qcfail = rec.is_qcfail
-            secondary.is_forward = hit.is_forward
-            secondary.is_secondary = True
-            secondary.is_supplementary = False
-            secondary.is_mapped = True
+    # DEPRECATED FOR BACKWARDS COMPAT ##############################################################
 
-            # NB: mate information on a secondary alignment points to mate/next primary alignment.
-            secondary.next_reference_id = rec.next_reference_id
-            secondary.next_reference_name = rec.next_reference_name
-            secondary.next_reference_start = rec.next_reference_start
-            secondary.mate_is_mapped = rec.mate_is_mapped
-            secondary.mate_is_reverse = rec.mate_is_reverse
-            secondary.set_tag("MC", rec.get_tag("MC") if rec.has_tag("MC") else None)
-            secondary.set_tag("MQ", rec.get_tag("MQ") if rec.has_tag("MQ") else None)
-            secondary.set_tag("ms", rec.get_tag("ms") if rec.has_tag("ms") else None)
+    @property
+    @deprecated("The `start` property is deprecated, use `reference_start`.")
+    def start(self) -> int:
+        """The 0-based start position of the alignment."""
+        return self.reference_start
 
-            # NB: set some optional but highly recommended SAM tags on the secondary alignment.
-            secondary.set_tag("AS", hit.alignment_score)
-            secondary.set_tag("NM", hit.edit_distance)
-            secondary.set_tag("RG", rec.get_tag("RG") if rec.has_tag("RG") else None)
-            secondary.set_tag("RX", rec.get_tag("RX") if rec.has_tag("RX") else None)
+    @property
+    @deprecated("The `nm` property is deprecated, use `edit_distance`.")
+    def nm(self) -> int:
+        """The number of mismatches between the query and the target."""
+        return self.edit_distance
 
-            # NB: set a tag that indicates this alignment was a reconstituted secondary alignment.
-            secondary.set_tag("rh", True)
-
-            yield secondary
+    @property
+    @deprecated("The `end` property is deprecated, use `reference_end`.")
+    def end(self) -> int:
+        """The 0-based exclusive end position of the alignment."""
+        return self.reference_end
 
     @classmethod
-    def add_to_template(cls, template: Template) -> Template:
-        """Rebuild a template by adding secondary alignments from all R1/R2 `XA` and `XB` tags."""
-        r1_secondaries = iter([]) if template.r1 is None else cls.many_sam_from_rec(template.r1)
-        r2_secondaries = iter([]) if template.r2 is None else cls.many_sam_from_rec(template.r2)
-        return Template.build(chain(template.all_recs(), r1_secondaries, r2_secondaries))
+    @deprecated("The `parse` method is deprecated, use `from_tag_item`.")
+    def parse(cls, string: str) -> Self:
+        return cls.from_tag_item(string)
 
-    @cached_property
-    def reference_end(self) -> int:
-        """Returns the 0-based half-open end coordinate of this secondary alignment."""
-        return self.reference_start + self.cigar.length_on_target()
+    @classmethod
+    @deprecated("The `parse_sa_tag` method is deprecated, use `many_from_tag`.")
+    def parse_sa_tag(cls, tag: str) -> List[Self]:
+        return [cls.from_tag_item(a) for a in tag.split(";") if len(a) > 0]
+
+    @classmethod
+    @deprecated("The `from_read` method is deprecated, use `many_from_primary`.")
+    def from_read(cls, read: pysam.AlignedSegment) -> List[Self]:
+        return cls.many_from_primary(read)

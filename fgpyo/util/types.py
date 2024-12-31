@@ -1,11 +1,15 @@
 import collections
 import inspect
 import typing
+from dataclasses import Field
 from enum import Enum
 from functools import partial
+from typing import Any
 from typing import Callable
+from typing import ClassVar
 from typing import Iterable
 from typing import Literal
+from typing import Protocol
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -20,6 +24,12 @@ LiteralType = TypeVar("LiteralType")
 
 class InspectException(Exception):
     pass
+
+
+class DataclassInstance(Protocol):
+    """A structural type for data class instances."""
+
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
 
 def parse_bool(string: str) -> bool:

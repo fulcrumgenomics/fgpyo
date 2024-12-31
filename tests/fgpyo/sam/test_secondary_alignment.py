@@ -24,7 +24,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 0,
                 "mapq": 30,
             },
-            "Reference start cannot be <0! Found: -1",
+            "Reference start cannot be less than 0! Found: -1",
         ),
         (
             {
@@ -36,7 +36,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 0,
                 "mapq": 30,
             },
-            "Edit distance cannot be <0! Found: -1",
+            "Edit distance cannot be less than 0! Found: -1",
         ),
         (
             {
@@ -48,7 +48,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": -1,
                 "mapq": 30,
             },
-            "Alignment score cannot be <0! Found: -1",
+            "Alignment score cannot be less than 0! Found: -1",
         ),
         (
             {
@@ -60,7 +60,7 @@ from fgpyo.sequence import reverse_complement
                 "alignment_score": 4,
                 "mapq": -1,
             },
-            "Mapping quality cannot be <0! Found: -1",
+            "Mapping quality cannot be less than 0! Found: -1",
         ),
     ],
 )
@@ -127,26 +127,26 @@ def test_secondary_alignment_validation(kwargs: dict[str, Any], error: str) -> N
         ],
     ],
 )
-def test_secondary_alignment_from_part(part: str, expected: SecondaryAlignment) -> None:
-    """Test that we can build an XA or XB from a part of the tag value."""
-    assert SecondaryAlignment.from_tag_part(part) == expected
+def test_secondary_alignment_from_tag_item(part: str, expected: SecondaryAlignment) -> None:
+    """Test that we can build an XA or XB from a item of the tag value."""
+    assert SecondaryAlignment.from_tag_item(part) == expected
 
 
-def test_many_from_tag_invalid_number_of_commas() -> None:
+def test_many_from_tag_item_invalid_number_of_commas() -> None:
     """Test that we raise an exception if we don't have 6 or 8 fields."""
     with pytest.raises(
-        ValueError, match="XA or XB tag part does not have 4 or 6 ',' separated fields:"
+        ValueError, match="XA or XB tag item does not have 4 or 6 ',' separated fields:"
     ):
-        SecondaryAlignment.from_tag_part("chr9,-104599381,49M")
+        SecondaryAlignment.from_tag_item("chr9,-104599381,49M")
 
 
 @pytest.mark.parametrize(["stranded_start"], [["!1"], ["1"]])
-def test_many_from_tag_raises_for_invalid_stranded_start(stranded_start: str) -> None:
+def test_many_from_tag_item_raises_for_invalid_stranded_start(stranded_start: str) -> None:
     """Test that we raise an exception when stranded start is malformed."""
     with pytest.raises(
         ValueError, match=f"The stranded start field is malformed: {stranded_start}"
     ):
-        SecondaryAlignment.from_tag_part(f"chr3,{stranded_start},49M,4")
+        SecondaryAlignment.from_tag_item(f"chr3,{stranded_start},49M,4")
 
 
 @pytest.mark.parametrize(
@@ -231,16 +231,16 @@ def test_xbs_many_from_tag() -> None:
     ]
 
 
-def test_many_from_rec_returns_no_secondaries_when_unmapped() -> None:
-    """Test that many_from_rec returns no secondaries when unmapped."""
+def test_many_from_primary_returns_no_secondaries_when_unmapped() -> None:
+    """Test that many_from_primary returns no secondaries when unmapped."""
     builder = SamBuilder()
     rec = builder.add_single()
     assert rec.is_unmapped
-    assert len(list(SecondaryAlignment.many_from_rec(rec))) == 0
+    assert len(list(SecondaryAlignment.many_from_primary(rec))) == 0
 
 
-def test_many_from_rec_raises_with_more_context_when_fails() -> None:
-    """Test that many_from_rec raises exceptions with more context when it fails to parse."""
+def test_many_from_primary_raises_with_more_context_when_fails() -> None:
+    """Test that many_from_primary raises exceptions with more context when it fails to parse."""
     invalid_value: str = "chr9,104599381,49M,4"
     builder = SamBuilder()
     rec = builder.add_single(name="hi-mom")
@@ -248,22 +248,22 @@ def test_many_from_rec_raises_with_more_context_when_fails() -> None:
 
     with pytest.raises(
         ValueError,
-        match="Could not parse secondary alignments for read: hi-mom",
+        match="Could not parse auxiliary alignments for primary alignment: hi-mom",
     ):
-        SecondaryAlignment.many_from_rec(rec)
+        SecondaryAlignment.many_from_primary(rec)
 
 
-def test_xa_many_from_rec() -> None:
+def test_xa_many_from_primary() -> None:
     """Test that we return secondary alignments from a SAM record with multiple XAs."""
     value: str = "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;"  # with trailing ';'
     builder = SamBuilder()
     rec = builder.add_single(chrom="chr1", start=32)
 
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XA", value)
 
-    assert list(SecondaryAlignment.many_from_rec(rec)) == [
+    assert list(SecondaryAlignment.many_from_primary(rec)) == [
         SecondaryAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -285,17 +285,17 @@ def test_xa_many_from_rec() -> None:
     ]
 
 
-def test_xb_many_from_rec() -> None:
+def test_xb_many_from_primary() -> None:
     """Test that we return secondary alignments from a SAM record with multiple XBs."""
     value: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
     builder = SamBuilder()
     rec = builder.add_single(chrom="chr1", start=32)
 
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XB", value)
 
-    assert list(SecondaryAlignment.many_from_rec(rec)) == [
+    assert list(SecondaryAlignment.many_from_primary(rec)) == [
         SecondaryAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -317,15 +317,15 @@ def test_xb_many_from_rec() -> None:
     ]
 
 
-def test_many_sam_from_rec_returns_no_secondaries_when_unmapped() -> None:
-    """Test that many_sam_from_rec returns no secondaries when unmapped."""
+def test_many_sam_from_primary_returns_no_secondaries_when_unmapped() -> None:
+    """Test that many_sam_from_primary returns no secondaries when unmapped."""
     builder = SamBuilder()
     rec = builder.add_single()
     assert rec.is_unmapped
-    assert len(list(SecondaryAlignment.many_sam_from_rec(rec))) == 0
+    assert len(list(SecondaryAlignment.many_sam_from_primary(rec))) == 0
 
 
-def test_xa_many_sam_from_rec() -> None:
+def test_xa_many_sam_from_primary() -> None:
     """Test that we return secondary alignments as SAM records from a record with multiple XAs."""
     value: str = "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;"  # with trailing ';'
     builder = SamBuilder()
@@ -334,10 +334,10 @@ def test_xa_many_sam_from_rec() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XB", value)
-    first, second = list(SecondaryAlignment.many_sam_from_rec(rec))
+    first, second = list(SecondaryAlignment.many_sam_from_primary(rec))
 
     assert first.reference_name == "chr9"
     assert first.reference_id == rec.header.get_tid("chr9")
@@ -387,7 +387,7 @@ def test_xa_many_sam_from_rec() -> None:
         assert result.get_tag("RX") == rec.get_tag("RX")
 
 
-def test_xb_many_sam_from_rec() -> None:
+def test_xb_many_sam_from_primary() -> None:
     """Test that we return secondary alignments as SAM records from a record with multiple XBs."""
     value: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
     builder = SamBuilder()
@@ -396,10 +396,10 @@ def test_xb_many_sam_from_rec() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XB", value)
-    first, second = list(SecondaryAlignment.many_sam_from_rec(rec))
+    first, second = list(SecondaryAlignment.many_sam_from_primary(rec))
 
     assert first.reference_name == "chr9"
     assert first.reference_id == rec.header.get_tid("chr9")
@@ -449,7 +449,7 @@ def test_xb_many_sam_from_rec() -> None:
         assert result.get_tag("RX") == rec.get_tag("RX")
 
 
-def test_many_sam_from_rec_with_hard_clips() -> None:
+def test_many_sam_from_primary_with_hard_clips() -> None:
     """Test that we can't reconstruct the bases and qualities if there are hard clips."""
     value: str = "chr9,-104599381,31M,4,0,30"
     builder = SamBuilder()
@@ -457,11 +457,11 @@ def test_many_sam_from_rec_with_hard_clips() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XB", value)
 
-    (actual,) = SecondaryAlignment.many_sam_from_rec(rec)
+    (actual,) = SecondaryAlignment.many_sam_from_primary(rec)
 
     assert actual.query_sequence == NO_QUERY_BASES
 
@@ -473,11 +473,11 @@ def test_add_to_template() -> None:
     rec = builder.add_single(chrom="chr1", start=32)
     rec.set_tag("RX", "ACGT")
 
-    assert list(SecondaryAlignment.many_from_rec(rec)) == []
+    assert list(SecondaryAlignment.many_from_primary(rec)) == []
 
     rec.set_tag("XB", value)
 
     actual = SecondaryAlignment.add_to_template(Template.build([rec]))
-    expected = Template.build([rec] + list(SecondaryAlignment.many_sam_from_rec(rec)))
+    expected = Template.build([rec] + list(SecondaryAlignment.many_sam_from_primary(rec)))
 
     assert actual == expected

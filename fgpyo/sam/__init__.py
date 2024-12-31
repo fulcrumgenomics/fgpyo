@@ -202,7 +202,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 from typing import cast
-from typing import override
 
 import attr
 import pysam
@@ -211,6 +210,7 @@ from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 from typing_extensions import Self
 from typing_extensions import deprecated
+from typing_extensions import override
 
 import fgpyo.io
 from fgpyo.collections import PeekableIterator

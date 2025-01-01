@@ -1215,9 +1215,9 @@ class AuxAlignment(ABC, DataclassInstance):
     reference_start: int
     is_forward: bool
     cigar: Cigar
-    mapq: Optional[int] = None
-    edit_distance: Optional[int] = None
-    alignment_score: Optional[int] = None
+    mapq: int | None = None
+    edit_distance: int | None = None
+    alignment_score: int | None = None
 
     def __post_init__(self) -> None:
         """Perform post-initialization validation on this dataclass."""
@@ -1630,10 +1630,10 @@ class SupplementaryAlignment(AuxAlignment):
 
     @classmethod
     @deprecated("The `parse_sa_tag` method is deprecated, use `many_from_tag`.")
-    def parse_sa_tag(cls, tag: str) -> List[Self]:
-        return [cls.from_tag_item(a) for a in tag.split(";") if len(a) > 0]
+    def parse_sa_tag(cls, tag: str) -> list[Self]:
+        return cls.many_from_tag(tag)
 
     @classmethod
     @deprecated("The `from_read` method is deprecated, use `many_from_primary`.")
-    def from_read(cls, read: pysam.AlignedSegment) -> List[Self]:
+    def from_read(cls, read: pysam.AlignedSegment) -> list[Self]:
         return cls.many_from_primary(read)

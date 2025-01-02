@@ -1215,9 +1215,9 @@ class AuxAlignment(ABC, DataclassInstance):
     reference_start: int
     is_forward: bool
     cigar: Cigar
-    mapq: int | None = None
-    edit_distance: int | None = None
-    alignment_score: int | None = None
+    mapq: Optional[int] = None
+    edit_distance: Optional[int] = None
+    alignment_score: Optional[int] = None
 
     def __post_init__(self) -> None:
         """Perform post-initialization validation on this dataclass."""

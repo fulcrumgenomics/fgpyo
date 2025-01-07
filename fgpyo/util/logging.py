@@ -38,6 +38,7 @@ from logging import Logger
 from threading import RLock
 from typing import Any
 from typing import Callable
+from typing import Iterable
 from typing import Literal
 from typing import Optional
 from typing import Union
@@ -162,6 +163,23 @@ class ProgressLogger(AbstractContextManager):
             return self.record(None, None)
         else:
             return self.record(rec.reference_name, rec.reference_start + 1)
+
+    def record_alignments(
+        self,
+        recs: Iterable[AlignedSegment],
+    ) -> bool:
+        """Correctly record multiple pysam.AlignedSegments (zero-based coordinates).
+
+        Args:
+            recs: pysam.AlignedSegment objects
+
+        Returns:
+            true if a message was logged, false otherwise
+        """
+        logged_message: bool = False
+        for rec in recs:
+            logged_message = self.record_alignment(rec) or logged_message
+        return logged_message
 
     def _log(
         self,

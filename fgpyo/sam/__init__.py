@@ -865,11 +865,11 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
 
 
 def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> None:
-    """Set common mate info on a destination alignment to its mate's non-supplementary alignment.
+    """Set common mate info on a destination alignment from its mate's non-supplementary alignment.
 
     Args:
         dest: The alignment to set the mate info upon.
-        source: The alignment to use as a mate reference.
+        source: The non-supplementary alignment to use as a mate reference.
 
     Raises:
         ValueError: If dest and source are of the same read ordinal.
@@ -899,7 +899,7 @@ def set_mate_info(
     is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
     isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
 ) -> None:
-    """Resets mate pair information between reads in a pair.
+    """Resets mate pair information between two records that share a query name.
 
     Args:
         rec1: The first record in the pair.
@@ -925,7 +925,7 @@ def set_mate_info(
 
 
 def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedSegment) -> None:
-    """Set mate info on a secondary alignment to its mate's primary alignment.
+    """Set mate info on a secondary alignment from its mate's primary alignment.
 
     Args:
         secondary: The secondary alignment to set mate information upon.
@@ -946,7 +946,7 @@ def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedS
 
 
 def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
-    """Set mate info on a supplementary alignment to its mate's primary alignment.
+    """Set mate info on a supplementary alignment from its mate's primary alignment.
 
     Args:
         supp: The supplementary alignment to set mate information upon.
@@ -1241,7 +1241,7 @@ class Template:
         is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
         isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
     ) -> Self:
-        """Reset all mate information on every record in the template.
+        """Reset all mate information on every alignment in the template.
 
         Args:
             is_proper_pair: A function that takes two alignments and determines proper pair status.

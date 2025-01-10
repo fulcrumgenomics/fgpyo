@@ -864,33 +864,33 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
     return score
 
 
-def _set_common_mate_fields(dest: AlignedSegment, source: AlignedSegment) -> None:
-    """Set common mate info on a destination alignment from its mate's non-supplementary alignment.
+def _set_common_mate_fields(dest: AlignedSegment, mate_primary: AlignedSegment) -> None:
+    """Set common mate info on a destination alignment from its mate's primary alignment.
 
     Args:
         dest: The alignment to set the mate info upon.
-        source: The non-supplementary alignment to use as a mate reference.
+        mate_primary: The primary alignment to use as a mate reference.
 
     Raises:
-        ValueError: If dest and source are of the same read ordinal.
-        ValueError: If source is supplementary (and not purely primary or secondary).
-        ValueError: If dest and source do not share the same query name.
+        ValueError: If dest and mate_primary are of the same read ordinal.
+        ValueError: If mate_primary is secondary or supplementary.
+        ValueError: If dest and mate_primary do not share the same query name.
     """
-    if source.is_read1 is dest.is_read1:
-        raise ValueError("source and dest records must be of different read ordinals!")
-    if source.is_supplementary:
-        raise ValueError("Mate info must be set from a non-supplementary source!")
-    if source.query_name != dest.query_name:
+    if mate_primary.is_read1 is dest.is_read1:
+        raise ValueError("mate_primary and dest records must be of different read ordinals!")
+    if mate_primary.is_supplementary or mate_primary.is_secondary:
+        raise ValueError("Mate info must be set from a non-supplementary non-secondary record!")
+    if mate_primary.query_name != dest.query_name:
         raise ValueError("Cannot set mate info on alignments with different query names!")
 
-    dest.next_reference_id = source.reference_id
-    dest.next_reference_name = source.reference_name
-    dest.next_reference_start = source.reference_start
-    dest.mate_is_forward = source.is_forward
-    dest.mate_is_mapped = source.is_mapped
-    dest.set_tag("MC", source.cigarstring)
-    dest.set_tag("MQ", source.mapping_quality)
-    dest.set_tag("ms", sum_of_base_qualities(source))
+    dest.next_reference_id = mate_primary.reference_id
+    dest.next_reference_name = mate_primary.reference_name
+    dest.next_reference_start = mate_primary.reference_start
+    dest.mate_is_forward = mate_primary.is_forward
+    dest.mate_is_mapped = mate_primary.is_mapped
+    dest.set_tag("MC", mate_primary.cigarstring)
+    dest.set_tag("MQ", mate_primary.mapping_quality)
+    dest.set_tag("ms", sum_of_base_qualities(mate_primary))
 
 
 def set_mate_info(
@@ -899,7 +899,7 @@ def set_mate_info(
     is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
     isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
 ) -> None:
-    """Resets mate pair information between two records that share a query name.
+    """Resets mate pair information between two primary alignments that share a query name.
 
     Args:
         rec1: The first record in the pair.
@@ -909,11 +909,11 @@ def set_mate_info(
 
     Raises:
         ValueError: If rec1 and rec2 are of the same read ordinal.
-        ValueError: If either rec1 or rec2 is supplementary (and not purely primary or secondary).
+        ValueError: If either rec1 or rec2 is secondary or supplementary.
         ValueError: If rec1 and rec2 do not share the same query name.
     """
     for dest, source in [(rec1, rec2), (rec2, rec1)]:
-        _set_common_mate_fields(dest=dest, source=source)
+        _set_common_mate_fields(dest=dest, mate_primary=source)
 
     template_length = isize(rec1, rec2)
     rec1.template_length = template_length
@@ -934,15 +934,13 @@ def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedS
     Raises:
         ValueError: If secondary and mate_primary are of the same read ordinal.
         ValueError: If secondary and mate_primary do not share the same query name.
-        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If mate_primary is secondary or supplementary.
         ValueError: If secondary is not marked as a secondary alignment.
     """
-    if mate_primary.is_secondary or mate_primary.is_supplementary:
-        raise ValueError("The mate primary must not be secondary or supplementary!")
     if not secondary.is_secondary:
         raise ValueError("Cannot set mate info on an alignment not marked as secondary!")
 
-    _set_common_mate_fields(dest=secondary, source=mate_primary)
+    _set_common_mate_fields(dest=secondary, mate_primary=mate_primary)
 
 
 def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
@@ -955,15 +953,13 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
     Raises:
         ValueError: If supp and mate_primary are of the same read ordinal.
         ValueError: If supp and mate_primary do not share the same query name.
-        ValueError: If mate_primary is not purely a primary alignment.
+        ValueError: If mate_primary is secondary or supplementary.
         ValueError: If supp is not marked as a supplementary alignment.
     """
-    if mate_primary.is_secondary or mate_primary.is_supplementary:
-        raise ValueError("The mate primary must not be secondary or supplementary!")
     if not supp.is_supplementary:
         raise ValueError("Cannot set mate info on an alignment not marked as supplementary!")
 
-    _set_common_mate_fields(dest=supp, source=mate_primary)
+    _set_common_mate_fields(dest=supp, mate_primary=mate_primary)
 
     # NB: for a non-secondary supplemental alignment, set the following to the same as the primary.
     if not supp.is_secondary:

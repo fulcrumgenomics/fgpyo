@@ -692,7 +692,7 @@ def test_set_mate_info_raises_not_opposite_read_ordinals() -> None:
     r1 = builder.add_single(name="x", read_num=1)
     r2 = builder.add_single(name="x", read_num=1)
     with pytest.raises(
-        ValueError, match="source and dest records must be of different read ordinals!"
+        ValueError, match="mate_primary and dest records must be of different read ordinals!"
     ):
         set_mate_info(r1, r2)
 
@@ -703,7 +703,9 @@ def test_set_mate_info_raises_when_second_rec_is_supplementary() -> None:
     r1 = builder.add_single(name="x", read_num=1)
     r2 = builder.add_single(name="x", read_num=2)
     r2.is_supplementary = True
-    with pytest.raises(ValueError, match="Mate info must be set from a non-supplementary source!"):
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
         set_mate_info(r1, r2)
 
 
@@ -864,15 +866,16 @@ def test_set_mate_info_on_secondary_raises_for_secondary_or_supp_rec2() -> None:
     builder = SamBuilder()
     r1 = builder.add_single(name="x", read_num=1)
     r2 = builder.add_single(name="x", read_num=2)
+    r1.is_secondary = True
     r2.is_secondary = True
     with pytest.raises(
-        ValueError, match="The mate primary must not be secondary or supplementary!"
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
     ):
         set_mate_info_on_secondary(r1, r2)
     r2.is_secondary = False
     r2.is_supplementary = True
     with pytest.raises(
-        ValueError, match="The mate primary must not be secondary or supplementary!"
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
     ):
         set_mate_info_on_secondary(r1, r2)
 
@@ -923,15 +926,16 @@ def test_set_mate_info_on_supplementary_raises_for_secondary_or_supp_rec2() -> N
     builder = SamBuilder()
     r1 = builder.add_single(name="x", read_num=1)
     r2 = builder.add_single(name="x", read_num=2)
+    r1.is_supplementary = True
     r2.is_secondary = True
     with pytest.raises(
-        ValueError, match="The mate primary must not be secondary or supplementary!"
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
     ):
         set_mate_info_on_supplementary(r1, r2)
     r2.is_secondary = False
     r2.is_supplementary = True
     with pytest.raises(
-        ValueError, match="The mate primary must not be secondary or supplementary!"
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
     ):
         set_mate_info_on_supplementary(r1, r2)
 

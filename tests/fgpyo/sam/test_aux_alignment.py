@@ -5,7 +5,6 @@ import pytest
 from fgpyo.sam import NO_QUERY_BASES
 from fgpyo.sam import AuxAlignment
 from fgpyo.sam import Cigar
-from fgpyo.sam import Template
 from fgpyo.sam import sum_of_base_qualities
 from fgpyo.sam.builder import SamBuilder
 from fgpyo.sequence import reverse_complement
@@ -172,22 +171,28 @@ def test_auxiliary_alignment_validation(kwargs: dict[str, Any], error: str) -> N
         ],
     ],
 )
-def test_auxiliary_alignment_from_tag_item(tag: str, value: str, expected: AuxAlignment) -> None:
+def test_auxiliary_alignment_from_tag_value(tag: str, value: str, expected: AuxAlignment) -> None:
     """Test that we can build an SA, XA, or XB from a item of the tag value."""
     assert AuxAlignment.from_tag_value(tag, value) == expected
 
 
 @pytest.mark.parametrize("tag", ["SA", "XA", "XB"])
-def test_many_from_tag_item_invalid_number_of_commas(tag: str) -> None:
+def test_from_tag_value_invalid_number_of_commas(tag: str) -> None:
     """Test that we raise an exception if we don't have the right number of fields."""
     with pytest.raises(
-        ValueError, match=rf"{tag} tag value has the incorrect number of fields: chr9\,104599381"
+        ValueError, match=rf"{tag} tag value has the incorrect number of fields: chr9,104599381"
     ):
         AuxAlignment.from_tag_value(tag, "chr9,104599381")
 
 
+def test_from_tag_value_raises_invalid_tag() -> None:
+    """Test that we raise an exception if we receive an unsupported SAM tag."""
+    with pytest.raises(ValueError, match="Tag XF is not one of SA, XA, XB!"):
+        AuxAlignment.from_tag_value("XF", "chr3,+170653467,49M,4")
+
+
 @pytest.mark.parametrize("stranded_start", ["!1", "1"])
-def test_many_from_tag_item_raises_for_invalid_xa_stranded_start(stranded_start: str) -> None:
+def test_from_tag_value_raises_for_invalid_xa_stranded_start(stranded_start: str) -> None:
     """Test that we raise an exception when stranded start is malformed for an XA value."""
     with pytest.raises(
         ValueError, match=f"The stranded start field is malformed: {stranded_start}"
@@ -196,7 +201,7 @@ def test_many_from_tag_item_raises_for_invalid_xa_stranded_start(stranded_start:
 
 
 @pytest.mark.parametrize("stranded_start", ["!1", "1"])
-def test_many_from_tag_item_raises_for_invalid_xb_stranded_start(stranded_start: str) -> None:
+def test_from_tag_value_raises_for_invalid_xb_stranded_start(stranded_start: str) -> None:
     """Test that we raise an exception when stranded start is malformed for an XA value."""
     with pytest.raises(
         ValueError, match=f"The stranded start field is malformed: {stranded_start}"
@@ -591,22 +596,3 @@ def test_many_pysam_from_primary_with_hard_clips() -> None:
     (actual,) = AuxAlignment.many_pysam_from_primary(rec)
 
     assert actual.query_sequence == NO_QUERY_BASES
-
-
-def test_add_to_template() -> None:
-    """Test that we add secondary alignments as SAM records to a template."""
-    supplementary: str = "chr9,104599381,-,39M,50,2"
-    secondary: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
-    builder = SamBuilder()
-    rec = builder.add_single(chrom="chr1", start=32)
-    rec.set_tag("RX", "ACGT")
-
-    assert list(AuxAlignment.many_from_primary(rec)) == []
-
-    rec.set_tag("SA", supplementary)
-    rec.set_tag("XB", secondary)
-
-    actual = AuxAlignment.add_all_to_template(Template.build([rec]))
-    expected = Template.build([rec] + list(AuxAlignment.many_pysam_from_primary(rec)))
-
-    assert actual == expected

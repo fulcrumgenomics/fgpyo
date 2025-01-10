@@ -1222,6 +1222,12 @@ class Template:
         for rec in self.all_recs():
             rec.set_tag(tag, value)
 
+    def with_aux_alignments(self) -> "Template":
+        """Rebuild this template by adding auxiliary alignments from primary alignment tags."""
+        r1_aux = iter([]) if self.r1 is None else AuxAlignment.many_pysam_from_primary(self.r1)
+        r2_aux = iter([]) if self.r2 is None else AuxAlignment.many_pysam_from_primary(self.r2)
+        return self.build(recs=chain(self.all_recs(), r1_aux, r2_aux))
+
 
 class TemplateIterator(Iterator[Template]):
     """
@@ -1352,13 +1358,14 @@ class AuxAlignment:
 
     @classmethod
     def from_tag_value(cls, tag: str, value: str) -> Self:
-        """Parse a single auxiliary alignment from a single value from a given SAM tag.
+        """Parse a single auxiliary alignment from a single value in a given SAM tag.
 
         Args:
             tag: The SAM tag used to store the value.
             value: The SAM tag value encoding a single auxiliary alignment.
 
         Raises:
+            ValueError: If `tag` is not one of `SA`, `XA`, or `XB`.
             ValueError: If `tag` is `SA` and `value` does not have 6 comma-separated fields.
             ValueError: If `tag` is `XA` and `value` does not have 4 comma-separated fields.
             ValueError: If `tag` is `XA` and `value` does not have 6 comma-separated fields.
@@ -1370,7 +1377,10 @@ class AuxAlignment:
 
         fields: list[str] = value.rstrip(",").split(",")
 
-        if tag == "SA" and len(fields) == 6:
+        if tag not in cls.SAM_TAGS:
+            raise ValueError(f"Tag {tag} is not one of {", ".join(cls.SAM_TAGS)}!")
+
+        elif tag == "SA" and len(fields) == 6:
             reference_name, reference_start, strand, cigar, mapq, edit_distance = fields
 
             if strand not in ("+", "-"):
@@ -1525,10 +1535,3 @@ class AuxAlignment:
             aux.set_tag("rh", True)
 
             yield aux
-
-    @classmethod
-    def add_all_to_template(cls, template: Template) -> Template:
-        """Rebuild a template by adding auxiliary alignments from the primary alignment tags."""
-        r1_aux = iter([]) if template.r1 is None else cls.many_pysam_from_primary(template.r1)
-        r2_aux = iter([]) if template.r2 is None else cls.many_pysam_from_primary(template.r2)
-        return Template.build(recs=chain(template.all_recs(), r1_aux, r2_aux))

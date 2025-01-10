@@ -239,13 +239,13 @@ def test_auxiliary_alignment_reference_end_property(auxiliary: AuxAlignment, exp
     assert auxiliary.reference_end == expected
 
 
-def test_many_from_primary() -> None:
+def test_many_from_rec() -> None:
     """Test that we can build many auxiliary alignments from multiple parts in a tag value."""
     builder = SamBuilder()
     rec = builder.add_single()
     rec.set_tag("XA", "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;")
 
-    assert AuxAlignment.many_from_primary(rec) == [
+    assert AuxAlignment.many_from_rec(rec) == [
         AuxAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -271,25 +271,25 @@ def test_many_from_primary() -> None:
     ]
 
 
-def test_many_from_primary_returns_no_auxiliaries_when_unmapped() -> None:
-    """Test that many_from_primary returns no auxiliary alignments when unmapped."""
+def test_many_from_rec_returns_no_auxiliaries_when_unmapped() -> None:
+    """Test that many_from_rec returns no auxiliary alignments when unmapped."""
     builder = SamBuilder()
     rec = builder.add_single()
     assert rec.is_unmapped
-    assert len(list(AuxAlignment.many_from_primary(rec))) == 0
+    assert len(list(AuxAlignment.many_from_rec(rec))) == 0
 
 
-def test_sa_many_from_primary() -> None:
+def test_sa_many_from_rec() -> None:
     """Test that we return supplementary alignments from a SAM record with multiple SAs."""
     value: str = "chr9,104599381,-,49M,20,4;chr3,170653467,+,49M,30,4;;;"  # with trailing ';'
     builder = SamBuilder()
     rec = builder.add_single(chrom="chr1", start=32)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("SA", value)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == [
+    assert list(AuxAlignment.many_from_rec(rec)) == [
         AuxAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -315,17 +315,17 @@ def test_sa_many_from_primary() -> None:
     ]
 
 
-def test_xa_many_from_primary() -> None:
+def test_xa_many_from_rec() -> None:
     """Test that we return secondary alignments from a SAM record with multiple XAs."""
     value: str = "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;"  # with trailing ';'
     builder = SamBuilder()
     rec = builder.add_single(chrom="chr1", start=32)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("XA", value)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == [
+    assert list(AuxAlignment.many_from_rec(rec)) == [
         AuxAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -351,17 +351,17 @@ def test_xa_many_from_primary() -> None:
     ]
 
 
-def test_xb_many_from_primary() -> None:
+def test_xb_many_from_rec() -> None:
     """Test that we return secondary alignments from a SAM record with multiple XBs."""
     value: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
     builder = SamBuilder()
     rec = builder.add_single(chrom="chr1", start=32)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("XB", value)
 
-    assert list(AuxAlignment.many_from_primary(rec)) == [
+    assert list(AuxAlignment.many_from_rec(rec)) == [
         AuxAlignment(
             reference_name="chr9",
             reference_start=104599380,
@@ -387,15 +387,15 @@ def test_xb_many_from_primary() -> None:
     ]
 
 
-def test_many_pysam_from_primary_returns_no_auxiliaries_when_unmapped() -> None:
-    """Test that many_pysam_from_primary returns no auxiliaries when unmapped."""
+def test_many_pysam_from_rec_returns_no_auxiliaries_when_unmapped() -> None:
+    """Test that many_pysam_from_rec returns no auxiliaries when unmapped."""
     builder = SamBuilder()
     rec = builder.add_single()
     assert rec.is_unmapped
-    assert len(list(AuxAlignment.many_pysam_from_primary(rec))) == 0
+    assert len(list(AuxAlignment.many_pysam_from_rec(rec))) == 0
 
 
-def test_sa_many_pysam_from_primary() -> None:
+def test_sa_many_pysam_from_rec() -> None:
     """Test that we return supp. alignments as SAM records from a record with multiple SAs."""
     value: str = "chr9,104599381,-,49M,20,4;chr3,170653467,+,49M,20,4;;;"  # with trailing ';'
     builder = SamBuilder()
@@ -404,10 +404,10 @@ def test_sa_many_pysam_from_primary() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("SA", value)
-    first, second = list(AuxAlignment.many_pysam_from_primary(rec))
+    first, second = list(AuxAlignment.many_pysam_from_rec(rec))
 
     assert first.reference_name == "chr9"
     assert first.reference_id == rec.header.get_tid("chr9")
@@ -457,7 +457,7 @@ def test_sa_many_pysam_from_primary() -> None:
         assert result.get_tag("RX") == rec.get_tag("RX")
 
 
-def test_xa_many_pysam_from_primary() -> None:
+def test_xa_many_pysam_from_rec() -> None:
     """Test that we return secondary alignments as SAM records from a record with multiple XAs."""
     value: str = "chr9,-104599381,49M,4;chr3,+170653467,49M,4;;;"  # with trailing ';'
     builder = SamBuilder()
@@ -466,10 +466,10 @@ def test_xa_many_pysam_from_primary() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("XB", value)
-    first, second = list(AuxAlignment.many_pysam_from_primary(rec))
+    first, second = list(AuxAlignment.many_pysam_from_rec(rec))
 
     assert first.reference_name == "chr9"
     assert first.reference_id == rec.header.get_tid("chr9")
@@ -519,7 +519,7 @@ def test_xa_many_pysam_from_primary() -> None:
         assert result.get_tag("RX") == rec.get_tag("RX")
 
 
-def test_xb_many_pysam_from_primary() -> None:
+def test_xb_many_pysam_from_rec() -> None:
     """Test that we return secondary alignments as SAM records from a record with multiple XBs."""
     value: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
     builder = SamBuilder()
@@ -528,10 +528,10 @@ def test_xb_many_pysam_from_primary() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_from_rec(rec)) == []
 
     rec.set_tag("XB", value)
-    first, second = list(AuxAlignment.many_pysam_from_primary(rec))
+    first, second = list(AuxAlignment.many_pysam_from_rec(rec))
 
     assert first.reference_name == "chr9"
     assert first.reference_id == rec.header.get_tid("chr9")
@@ -581,7 +581,7 @@ def test_xb_many_pysam_from_primary() -> None:
         assert result.get_tag("RX") == rec.get_tag("RX")
 
 
-def test_many_pysam_from_primary_with_hard_clips() -> None:
+def test_many_pysam_from_rec_with_hard_clips() -> None:
     """Test that we can't reconstruct the bases and qualities if there are hard clips."""
     value: str = "chr9,-104599381,31M,4,0,30"
     builder = SamBuilder()
@@ -589,10 +589,10 @@ def test_many_pysam_from_primary_with_hard_clips() -> None:
 
     assert rec.query_sequence is not None  # for type narrowing
     assert rec.query_qualities is not None  # for type narrowing
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_pysam_from_rec(rec)) == []
 
     rec.set_tag("XB", value)
 
-    (actual,) = AuxAlignment.many_pysam_from_primary(rec)
+    (actual,) = AuxAlignment.many_pysam_from_rec(rec)
 
     assert actual.query_sequence == NO_QUERY_BASES

@@ -1224,8 +1224,8 @@ class Template:
 
     def with_aux_alignments(self) -> "Template":
         """Rebuild this template by adding auxiliary alignments from primary alignment tags."""
-        r1_aux = iter([]) if self.r1 is None else AuxAlignment.many_pysam_from_primary(self.r1)
-        r2_aux = iter([]) if self.r2 is None else AuxAlignment.many_pysam_from_primary(self.r2)
+        r1_aux = iter([]) if self.r1 is None else AuxAlignment.many_pysam_from_rec(self.r1)
+        r2_aux = iter([]) if self.r2 is None else AuxAlignment.many_pysam_from_rec(self.r2)
         return self.build(recs=chain(self.all_recs(), r1_aux, r2_aux))
 
 
@@ -1424,30 +1424,24 @@ class AuxAlignment:
             raise ValueError(f"{tag} tag value has the incorrect number of fields: {value}")
 
     @classmethod
-    def many_from_primary(cls, primary: AlignedSegment) -> list[Self]:
-        """Build all auxiliary alignments for a given primary alignment.
+    def many_from_rec(cls, rec: AlignedSegment) -> list[Self]:
+        """Build many auxiliary alignments from a single pysam alignment.
 
         Args:
-            primary: The primary alignment to build auxiliary alignments from.
-
-        Raises:
-            ValueError: If the input record is a secondary or supplementary alignment.
+            rec: The SAM record to generate auxiliary alignments from.
         """
-        if primary.is_secondary or primary.is_supplementary:
-            raise ValueError("Cannot build auxiliary alignments from a non-primary alignment!")
-
         aux_alignments: list[Self] = []
 
-        for tag in filter(lambda tag: primary.has_tag(tag), cls.SAM_TAGS):
-            values: list[str] = cast(str, primary.get_tag(tag)).rstrip(";").split(";")
+        for tag in filter(lambda tag: rec.has_tag(tag), cls.SAM_TAGS):
+            values: list[str] = cast(str, rec.get_tag(tag)).rstrip(";").split(";")
             for value in filter(lambda value: value != "", values):
                 aux_alignments.append(cls.from_tag_value(tag, value))
 
         return aux_alignments
 
     @classmethod
-    def many_pysam_from_primary(cls, primary: AlignedSegment) -> Iterator[AlignedSegment]:
-        """Build many SAM auxiliary alignments from a single pysam primary alignment.
+    def many_pysam_from_rec(cls, rec: AlignedSegment) -> Iterator[AlignedSegment]:
+        """Build many SAM auxiliary alignments from a single pysam alignment.
 
         All reconstituted auxiliary alignments will have the `rh` SAM tag set upon them.
 
@@ -1460,76 +1454,68 @@ class AuxAlignment:
         source (often a primary) record and both ends of the destination (auxiliary) record.
 
         Args:
-            primary: The SAM record to generate auxiliary alignments from.
-
-        Raises:
-            ValueError: If the input record is a secondary or supplementary alignment.
+            rec: The SAM record to generate auxiliary alignments from.
         """
-        if primary.is_secondary or primary.is_supplementary:
-            raise ValueError(
-                "Cannot reconstitute auxiliary alignments from a non-primary record!"
-                f" Found: {primary.query_name}"
-            )
         if (
-            primary.is_unmapped
-            or primary.cigarstring is None
-            or primary.query_sequence is None
-            or primary.query_qualities is None
+            rec.is_unmapped
+            or rec.cigarstring is None
+            or rec.query_sequence is None
+            or rec.query_qualities is None
         ):
             return
 
-        for hit in cls.many_from_primary(primary):
+        for hit in cls.many_from_rec(rec):
             # TODO: When the original record has hard clips we must set the bases and quals to "*".
             #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
-            if "H" in primary.cigarstring:
+            if "H" in rec.cigarstring:
                 query_sequence = NO_QUERY_BASES
                 query_qualities = None
-            elif primary.is_forward and not hit.is_forward:
-                query_sequence = reverse_complement(primary.query_sequence)
-                query_qualities = primary.query_qualities[::-1]
+            elif rec.query_sequence != NO_QUERY_BASES and rec.is_forward and not hit.is_forward:
+                query_sequence = reverse_complement(rec.query_sequence)
+                query_qualities = rec.query_qualities[::-1]
             else:
-                query_sequence = primary.query_sequence
-                query_qualities = primary.query_qualities
+                query_sequence = rec.query_sequence
+                query_qualities = rec.query_qualities
 
-            aux = AlignedSegment(header=primary.header)
-            aux.query_name = primary.query_name
+            aux = AlignedSegment(header=rec.header)
+            aux.query_name = rec.query_name
             aux.query_sequence = query_sequence
             aux.query_qualities = query_qualities
 
             # Set all alignment and mapping information for this auxiliary alignment.
             aux.cigarstring = str(hit.cigar)
             aux.mapping_quality = 0 if hit.mapping_quality is None else hit.mapping_quality
-            aux.reference_id = primary.header.get_tid(hit.reference_name)
+            aux.reference_id = rec.header.get_tid(hit.reference_name)
             aux.reference_name = hit.reference_name
             aux.reference_start = hit.reference_start
             aux.is_secondary = hit.is_secondary
             aux.is_supplementary = hit.is_supplementary
-            aux.is_proper_pair = primary.is_proper_pair if hit.is_supplementary else False
+            aux.is_proper_pair = rec.is_proper_pair if hit.is_supplementary else False
 
             # Set all fields that relate to the template.
-            aux.is_duplicate = primary.is_duplicate
+            aux.is_duplicate = rec.is_duplicate
             aux.is_forward = hit.is_forward
             aux.is_mapped = True
-            aux.is_paired = primary.is_paired
-            aux.is_qcfail = primary.is_qcfail
-            aux.is_read1 = primary.is_read1
-            aux.is_read2 = primary.is_read2
+            aux.is_paired = rec.is_paired
+            aux.is_qcfail = rec.is_qcfail
+            aux.is_read1 = rec.is_read1
+            aux.is_read2 = rec.is_read2
 
             # Set some optional, but highly recommended, SAM tags on the auxiliary alignment.
             aux.set_tag("AS", hit.alignment_score)
             aux.set_tag("NM", hit.edit_distance)
-            aux.set_tag("RG", primary.get_tag("RG") if primary.has_tag("RG") else None)
-            aux.set_tag("RX", primary.get_tag("RX") if primary.has_tag("RX") else None)
+            aux.set_tag("RG", rec.get_tag("RG") if rec.has_tag("RG") else None)
+            aux.set_tag("RX", rec.get_tag("RX") if rec.has_tag("RX") else None)
 
             # Auxiliary alignment mate information points to the mate/next primary alignment.
-            aux.next_reference_id = primary.next_reference_id
-            aux.next_reference_name = primary.next_reference_name
-            aux.next_reference_start = primary.next_reference_start
-            aux.mate_is_mapped = primary.mate_is_mapped
-            aux.mate_is_reverse = primary.mate_is_reverse
-            aux.set_tag("MC", primary.get_tag("MC") if primary.has_tag("MC") else None)
-            aux.set_tag("MQ", primary.get_tag("MQ") if primary.has_tag("MQ") else None)
-            aux.set_tag("ms", primary.get_tag("ms") if primary.has_tag("ms") else None)
+            aux.next_reference_id = rec.next_reference_id
+            aux.next_reference_name = rec.next_reference_name
+            aux.next_reference_start = rec.next_reference_start
+            aux.mate_is_mapped = rec.mate_is_mapped
+            aux.mate_is_reverse = rec.mate_is_reverse
+            aux.set_tag("MC", rec.get_tag("MC") if rec.has_tag("MC") else None)
+            aux.set_tag("MQ", rec.get_tag("MQ") if rec.has_tag("MQ") else None)
+            aux.set_tag("ms", rec.get_tag("ms") if rec.has_tag("ms") else None)
 
             # Finally, set a tag that marks this alignment as a reconstituted auxiliary alignment.
             aux.set_tag("rh", True)

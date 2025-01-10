@@ -230,12 +230,12 @@ def test_with_aux_alignments() -> None:
     rec = builder.add_single(chrom="chr1", start=32)
     rec.set_tag("RX", "ACGT")
 
-    assert list(AuxAlignment.many_from_primary(rec)) == []
+    assert list(AuxAlignment.many_pysam_from_rec(rec)) == []
 
     rec.set_tag("SA", supplementary)
     rec.set_tag("XB", secondary)
 
     actual = Template.build([rec]).with_aux_alignments()
-    expected = Template.build([rec] + list(AuxAlignment.many_pysam_from_primary(rec)))
+    expected = Template.build([rec] + list(AuxAlignment.many_pysam_from_rec(rec)))
 
     assert actual == expected

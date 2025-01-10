@@ -1378,7 +1378,7 @@ class AuxAlignment:
         fields: list[str] = value.rstrip(",").split(",")
 
         if tag not in cls.SAM_TAGS:
-            raise ValueError(f"Tag {tag} is not one of {", ".join(cls.SAM_TAGS)}!")
+            raise ValueError(f"Tag {tag} is not one of {', '.join(cls.SAM_TAGS)}!")
 
         elif tag == "SA" and len(fields) == 6:
             reference_name, reference_start, strand, cigar, mapq, edit_distance = fields

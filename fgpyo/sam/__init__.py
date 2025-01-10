@@ -1223,7 +1223,7 @@ class Template:
             rec.set_tag(tag, value)
 
     def with_aux_alignments(self) -> "Template":
-        """Rebuild this template by adding auxiliary alignments from primary alignment tags."""
+        """Rebuild this template by adding auxiliary alignments from the primary alignment tags."""
         r1_aux = iter([]) if self.r1 is None else AuxAlignment.many_pysam_from_rec(self.r1)
         r2_aux = iter([]) if self.r2 is None else AuxAlignment.many_pysam_from_rec(self.r2)
         return self.build(recs=chain(self.all_recs(), r1_aux, r2_aux))

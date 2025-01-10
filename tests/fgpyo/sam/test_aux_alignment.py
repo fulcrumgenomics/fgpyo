@@ -185,10 +185,28 @@ def test_from_tag_value_invalid_number_of_commas(tag: str) -> None:
         AuxAlignment.from_tag_value(tag, "chr9,104599381")
 
 
+def test_from_tag_value_raises_invalid_multi_value() -> None:
+    """Test that we raise an exception if we receive a multi-value."""
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"Cannot parse a multi-value string! Found: "
+            + r"chr3,\+170653467,49M,4;chr3,\+170653467,49M,4 for tag XA"
+        ),
+    ):
+        AuxAlignment.from_tag_value("XA", "chr3,+170653467,49M,4;chr3,+170653467,49M,4")
+
+
 def test_from_tag_value_raises_invalid_tag() -> None:
     """Test that we raise an exception if we receive an unsupported SAM tag."""
     with pytest.raises(ValueError, match="Tag XF is not one of SA, XA, XB!"):
         AuxAlignment.from_tag_value("XF", "chr3,+170653467,49M,4")
+
+
+def test_from_tag_value_raises_for_invalid_sa_strand() -> None:
+    """Test that we raise an exception when strand is malformed for an SA value."""
+    with pytest.raises(ValueError, match=r"The strand field is not either '\+' or '-': !"):
+        AuxAlignment.from_tag_value("SA", "chr3,2000,!,49M,60,4")
 
 
 @pytest.mark.parametrize("stranded_start", ["!1", "1"])

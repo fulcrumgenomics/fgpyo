@@ -1467,10 +1467,10 @@ class AuxAlignment:
         for hit in cls.many_from_rec(rec):
             # TODO: When the original record has hard clips we must set the bases and quals to "*".
             #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
-            if "H" in rec.cigarstring:
+            if "H" in rec.cigarstring or rec.query_sequence == NO_QUERY_BASES:
                 query_sequence = NO_QUERY_BASES
                 query_qualities = None
-            elif rec.query_sequence != NO_QUERY_BASES and rec.is_forward and not hit.is_forward:
+            elif rec.is_forward and not hit.is_forward:
                 query_sequence = reverse_complement(rec.query_sequence)
                 query_qualities = rec.query_qualities[::-1]
             else:

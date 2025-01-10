@@ -37,19 +37,6 @@ from fgpyo.sequence import reverse_complement
             },
             "Edit distance cannot be less than 0! Found: -1",
         ),
-        # TODO: figure out if we want this check.
-        #       (
-        #           {
-        #               "reference_name": "chr9",
-        #               "reference_start": 123232,
-        #               "is_forward": False,
-        #               "cigar": Cigar.from_cigarstring("49M"),
-        #               "edit_distance": 4,
-        #               "alignment_score": -1,
-        #               "mapping_quality": 30,
-        #           },
-        #           "Alignment score cannot be less than 0! Found: -1",
-        #       ),
         (
             {
                 "reference_name": "chr9",

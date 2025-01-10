@@ -1345,9 +1345,6 @@ class AuxAlignment:
             errors.append(f"Mapping quality cannot be less than 0! Found: {self.mapping_quality}")
         if self.edit_distance is not None and self.edit_distance < 0:
             errors.append(f"Edit distance cannot be less than 0! Found: {self.edit_distance}")
-        # TODO: Some aligners might allow for a score <0 but I'm not sure bwa does... Keep this?
-        # if self.alignment_score is not None and self.alignment_score < 0:
-        #    errors.append(f"Alignment score cannot be less than 0! Found: {self.alignment_score}")
         if len(errors) > 0:
             raise ValueError("\n".join(errors))
 

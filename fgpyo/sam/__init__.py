@@ -139,43 +139,28 @@ and slices):
 ## Examples of parsing the SA tag and individual supplementary alignments
 
 ```python
-   >>> from fgpyo.sam import SupplementaryAlignment
-   >>> sup = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
-   >>> sup.reference_name
-   'chr1
-   >>> sup.nm
-   0
-   >>> from typing import List
-   >>> sa_tag = "chr1,123,+,50S100M,60,0;chr2,456,-,75S75M,60,1"
-   >>> sups: List[SupplementaryAlignment] = SupplementaryAlignment.parse_sa_tag(tag=sa_tag)
-   >>> len(sups)
-   2
-   >>> [str(sup.cigar) for sup in sups]
-   ['50S100M', '75S75M']
+>>> from fgpyo.sam import AuxAlignment
+>>> supp = AuxAlignment.from_tag_value("SA", "chr1,123,+,50S100M,60,0")
+>>> supp.reference_name
+'chr1'
+>>> supp.edit_distance
+0
 ```
 
 ## Examples of parsing bwa's `XA` and `XB` tags into individual secondary alignments
 
 ```python
->>> from fgpyo.sam import SecondaryAlignment
->>> xa = SecondaryAlignment.from_tag_item("chr9,-104599381,49M,4")
+>>> from fgpyo.sam import AuxAlignment
+>>> xa = AuxAlignment.from_tag_value("XA", "chr9,-104599381,49M,4")
 >>> xa.reference_name
 'chr9'
->>> xb = SecondaryAlignment.from_tag_item("chr9,-104599381,49M,4,0,30")
+>>> xb = AuxAlignment.from_tag_value("XB", "chr9,-104599381,49M,4,0,30")
 >>> xb.reference_name
 'chr9'
->>> xb.mapq
+>>> xb.mapping_quality
 30
 >>> xa.cigar == xb.cigar
 True
->>> xb_tag = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;"
->>> xb1, xb2 = SecondaryAlignment.many_from_tag(xb_tag)
->>> xb1.is_forward
-False
->>> xb1.is_forward
-True
->>> xb1.mapq, xb2.mapq
-('30', '20')
 ```
 
 """

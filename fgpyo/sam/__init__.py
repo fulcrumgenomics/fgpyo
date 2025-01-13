@@ -168,6 +168,7 @@ True
 import enum
 import io
 import sys
+from array import array
 from collections.abc import Collection
 from dataclasses import dataclass
 from functools import cached_property
@@ -191,6 +192,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from pysam import qualitystring_to_array
 from typing_extensions import Self
 from typing_extensions import deprecated
 
@@ -212,6 +214,9 @@ NO_REF_POS: int = -1
 
 NO_QUERY_BASES: str = "*"
 """The string to use for a SAM record with missing query bases."""
+
+NO_QUERY_QUALS: array = qualitystring_to_array("*")
+"""The array to use for a SAM record with missing query qualities."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -1458,14 +1463,16 @@ class AuxAlignment:
             or rec.cigarstring is None
             or rec.query_sequence is None
             or rec.query_qualities is None
+            or rec.query_sequence == NO_QUERY_BASES
+            or rec.query_qualities == NO_QUERY_QUALS
         ):
             return
 
         for hit in cls.many_from_rec(rec):
             # TODO: When the original record has hard clips we must set the bases and quals to "*".
             #       It would be smarter to pad/clip the sequence to be compatible with new cigar...
-            if "H" in rec.cigarstring or rec.query_sequence == NO_QUERY_BASES:
-                query_sequence = NO_QUERY_BASES
+            if "H" in rec.cigarstring:
+                query_sequence = None
                 query_qualities = None
             elif rec.is_forward and not hit.is_forward:
                 query_sequence = reverse_complement(rec.query_sequence)

@@ -2,7 +2,6 @@ from typing import Any
 
 import pytest
 
-from fgpyo.sam import NO_QUERY_BASES
 from fgpyo.sam import AuxAlignment
 from fgpyo.sam import Cigar
 from fgpyo.sam import sum_of_base_qualities
@@ -600,4 +599,5 @@ def test_many_pysam_from_rec_with_hard_clips() -> None:
 
     (actual,) = AuxAlignment.many_pysam_from_rec(rec)
 
-    assert actual.query_sequence == NO_QUERY_BASES
+    assert actual.query_sequence is None
+    assert actual.query_qualities is None

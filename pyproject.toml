@@ -88,3 +88,8 @@ warn_unused_configs         = true
 warn_unused_ignores         = true
 enable_error_code           = "ignore-without-code"
 exclude                     = ["site/", "docs/"]
+
+[tool.coverage.report]
+exclude_lines =
+    pragma: not covered
+    @overload

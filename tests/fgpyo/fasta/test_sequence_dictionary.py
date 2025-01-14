@@ -339,6 +339,8 @@ def test_sequence_dictionary_to_and_from_sam() -> None:
     assert SequenceDictionary.from_sam(mapping) == sd
     assert SequenceDictionary.from_sam(header) == sd
     assert sd.to_sam_header(extra_header={"RG": [{"ID": "foo"}]})
+    with pytest.raises(ValueError):
+        SequenceDictionary.from_sam([{}])
 
 
 def test_sequence_dictionary_mapping() -> None:

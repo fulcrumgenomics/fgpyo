@@ -12,7 +12,7 @@ from fgpyo.fasta.sequence_dictionary import Keys
 from fgpyo.fasta.sequence_dictionary import SequenceDictionary
 from fgpyo.fasta.sequence_dictionary import SequenceMetadata
 from fgpyo.fasta.sequence_dictionary import Topology
-from fgpyo.sam import SamFileType
+from fgpyo.sam import builder
 from fgpyo.sam import reader
 
 
@@ -332,8 +332,8 @@ def test_sequence_dictionary_to_and_from_sam() -> None:
     header = pysam.AlignmentHeader.from_dict(
         header_dict={"HD": {"VN": "1.5"}, "SQ": mapping, "RG": [{"ID": "foo"}]}
     )
-    samfile = Path(__file__).parent / "data" / "sequence.dict"
-    alignment: pysam.AlignmentFile = reader(samfile, file_type=SamFileType.SAM)
+    samfile: Path = builder.SamBuilder(sd=mapping).to_path()
+    alignment: pysam.AlignmentFile = reader(samfile)
     assert SequenceDictionary.from_sam(samfile) == sd
     assert SequenceDictionary.from_sam(alignment) == sd
     assert SequenceDictionary.from_sam(mapping) == sd

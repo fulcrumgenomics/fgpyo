@@ -478,19 +478,25 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         Returns:
             A `SequenceDictionary` mapping refrence names to their metadata.
         """
+        seq_dict: SequenceDictionary
         if isinstance(data, pysam.AlignmentHeader):
-            return SequenceDictionary.from_sam(data.to_dict()["SQ"])
-        if isinstance(data, pysam.AlignmentFile):
-            return SequenceDictionary.from_sam(data.header.to_dict()["SQ"])
-        if isinstance(data, Path):
-            with sam.reader(data, file_type=sam.SamFileType.SAM) as fh:
-                return SequenceDictionary.from_sam(fh.header)
+            seq_dict = SequenceDictionary.from_sam(data.to_dict()["SQ"])
+        elif isinstance(data, pysam.AlignmentFile):
+            seq_dict = SequenceDictionary.from_sam(data.header.to_dict()["SQ"])
+        elif isinstance(data, Path):
+            with sam.reader(data) as fh:
+                seq_dict = SequenceDictionary.from_sam(fh.header)
+        else:  # assuming `data` is a `list[dict[str, Any]]`
+            try:
+                infos: List[SequenceMetadata] = [
+                    SequenceMetadata.from_sam(meta=meta, index=index)
+                    for index, meta in enumerate(data)
+                ]
+                seq_dict = SequenceDictionary(infos=infos)
+            except Exception as e:
+                raise ValueError(f"Could not parse sequence information from data: {data}") from e
 
-        infos: List[SequenceMetadata] = [
-            SequenceMetadata.from_sam(meta=meta, index=index) for index, meta in enumerate(data)
-        ]
-
-        return SequenceDictionary(infos=infos)
+        return seq_dict
 
     # TODO: mypy doesn't like these
     # @overload

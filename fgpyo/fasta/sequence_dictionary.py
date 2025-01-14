@@ -467,8 +467,17 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
     def from_sam(
         data: Union[Path, pysam.AlignmentFile, pysam.AlignmentHeader, List[Dict[str, Any]]],
     ) -> "SequenceDictionary":
-        """Creates a `SequenceDictionary` from either a `pysam.AlignmentHeader` or from
-        the list of sequences returned by `pysam.AlignmentHeader.to_dict()["SQ"]`."""
+        """Creates a `SequenceDictionary` from a SAM file or its header.
+
+        Args:
+            data: The input may be any of:
+                - a path to a SAM file
+                - an open `pysam.AlignmentFile`
+                - the `pysam.AlignmentHeader` associated with a `pysam.AlignmentFile`
+                - the contents of a header's `SQ` fields, as returned by `AlignmentHeader.to_dict()`
+        Returns:
+            A `SequenceDictionary` mapping refrence names to their metadata.
+        """
         if isinstance(data, pysam.AlignmentHeader):
             return SequenceDictionary.from_sam(data.to_dict()["SQ"])
         if isinstance(data, pysam.AlignmentFile):

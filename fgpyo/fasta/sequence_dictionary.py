@@ -498,13 +498,6 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
         return seq_dict
 
-    # TODO: mypy doesn't like these
-    # @overload
-    # def __getitem__(self, key: str) -> SequenceMetadata: ...
-    #
-    # @overload
-    # def __getitem__(self, index: int) -> SequenceMetadata: ...
-
     def __getitem__(self, key: Union[str, int]) -> SequenceMetadata:
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 

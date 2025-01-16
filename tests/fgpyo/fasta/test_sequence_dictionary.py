@@ -333,9 +333,9 @@ def test_sequence_dictionary_to_and_from_sam() -> None:
         header_dict={"HD": {"VN": "1.5"}, "SQ": mapping, "RG": [{"ID": "foo"}]}
     )
     samfile: Path = builder.SamBuilder(sd=mapping).to_path()
-    alignment: pysam.AlignmentFile = reader(samfile)
+    with reader(samfile) as alignment_fh:  # pysam.AlignmentFile
+        assert SequenceDictionary.from_sam(alignment_fh) == sd
     assert SequenceDictionary.from_sam(samfile) == sd
-    assert SequenceDictionary.from_sam(alignment) == sd
     assert SequenceDictionary.from_sam(mapping) == sd
     assert SequenceDictionary.from_sam(header) == sd
     assert sd.to_sam_header(extra_header={"RG": [{"ID": "foo"}]})

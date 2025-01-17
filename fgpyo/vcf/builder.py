@@ -331,11 +331,13 @@ class VariantBuilder:
             version: the version of the field
         """
         if field_type == VcfFieldType.FLAG:
-            number = 0  # FLAGs always have number = 0
+            num = "0"  # FLAGs always have number = 0
         elif isinstance(number, VcfFieldNumber):
-            number = number.value
+            num = number.value
+        else:
+            num = str(number)
 
-        header_line = f"##INFO=<ID={name},Number={number},Type={field_type.value}"
+        header_line = f"##INFO=<ID={name},Number={num},Type={field_type.value}"
         if description is not None:
             header_line += f",Description={description}"
         if source is not None:
@@ -362,9 +364,11 @@ class VariantBuilder:
             description: the description of the field
         """
         if isinstance(number, VcfFieldNumber):
-            number = number.value
+            num = number.value
+        else:
+            num = str(number)
 
-        header_line = f"##FORMAT=<ID={name},Number={number},Type={field_type.value}"
+        header_line = f"##FORMAT=<ID={name},Number={num},Type={field_type.value}"
         if description is not None:
             header_line += f",Description={description}"
         header_line += ">"

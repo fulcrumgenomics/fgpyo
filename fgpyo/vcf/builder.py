@@ -14,6 +14,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import pysam
 from pysam import VariantHeader
 from pysam import VariantRecord
 
@@ -279,6 +280,9 @@ class VariantBuilder:
             for variant in self.to_sorted_list():
                 writer.write(variant)
 
+        if str(path.suffix) == ".gz":
+            pysam.tabix_index(str(path), preset="vcf")
+
         return path
 
     @staticmethod
@@ -291,7 +295,7 @@ class VariantBuilder:
             path: optionally the path to the VCF, or a directory to create a temporary VCF.
         """
         if path is None:
-            with NamedTemporaryFile(suffix=".vcf", delete=False) as fp:
+            with NamedTemporaryFile(suffix=".vcf.gz", delete=False) as fp:
                 path = Path(fp.name)
             assert path.is_file()
         return path

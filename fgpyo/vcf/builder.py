@@ -332,6 +332,9 @@ class VariantBuilder:
         """
         if field_type == VcfFieldType.FLAG:
             number = 0  # FLAGs always have number = 0
+        elif isinstance(number, VcfFieldNumber):
+            number = number.value
+
         header_line = f"##INFO=<ID={name},Number={number},Type={field_type.value}"
         if description is not None:
             header_line += f",Description={description}"
@@ -358,6 +361,9 @@ class VariantBuilder:
             number: the number of the field
             description: the description of the field
         """
+        if isinstance(number, VcfFieldNumber):
+            number = number.value
+
         header_line = f"##FORMAT=<ID={name},Number={number},Type={field_type.value}"
         if description is not None:
             header_line += f",Description={description}"

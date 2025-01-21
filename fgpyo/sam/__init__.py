@@ -158,6 +158,7 @@ and slices):
 import enum
 import io
 import sys
+from array import array
 from collections.abc import Collection
 from itertools import chain
 from pathlib import Path
@@ -178,6 +179,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from pysam import qualitystring_to_array
 from typing_extensions import deprecated
 
 import fgpyo.io
@@ -194,6 +196,12 @@ NO_REF_NAME: str = "*"
 
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
+
+STRING_PLACEHOLDER: str = "*"
+"""The value to use when a string field's information is unavailable."""
+
+NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
+"""The quality array corresponding to an unavailable query quality string ("*")."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -864,7 +872,7 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
         [`calc_sum_of_base_qualities()`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L227-L238)
         [`MD_MIN_QUALITY`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L42)
     """
-    if rec.query_qualities is None:
+    if rec.query_qualities is None or rec.query_qualities == NO_QUERY_QUALITIES:
         return 0
 
     score: int = sum(qual for qual in rec.query_qualities if qual >= min_quality_score)

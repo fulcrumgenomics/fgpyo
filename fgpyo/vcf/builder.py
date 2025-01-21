@@ -286,7 +286,7 @@ class VariantBuilder:
                 writer.write(variant)
 
         if str(path.suffix) == ".gz":
-            pysam.tabix_index(str(path), preset="vcf")
+            pysam.tabix_index(str(path), preset="vcf", force=True)
 
         return path
 

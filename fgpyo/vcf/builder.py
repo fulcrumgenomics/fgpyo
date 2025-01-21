@@ -14,6 +14,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import pysam
 from pysam import VariantHeader
 from pysam import VariantRecord
 
@@ -267,7 +268,12 @@ class VariantBuilder:
         return variant
 
     def to_path(self, path: Optional[Path] = None) -> Path:
-        """Returns a path to a VCF for variants added to this builder.
+        """
+        Returns a path to a VCF for variants added to this builder.
+
+        If the path given ends in ".gz" then the generated file will be bgzipped and
+        a tabix index generated for the file with the suffix ".gz.tbi".
+
         Args:
             path: optional path to the VCF
         """
@@ -278,6 +284,9 @@ class VariantBuilder:
         with PysamWriter(path, header=self.header) as writer:
             for variant in self.to_sorted_list():
                 writer.write(variant)
+
+        if str(path.suffix) == ".gz":
+            pysam.tabix_index(str(path), preset="vcf", force=True)
 
         return path
 
@@ -291,7 +300,7 @@ class VariantBuilder:
             path: optionally the path to the VCF, or a directory to create a temporary VCF.
         """
         if path is None:
-            with NamedTemporaryFile(suffix=".vcf", delete=False) as fp:
+            with NamedTemporaryFile(suffix=".vcf.gz", delete=False) as fp:
                 path = Path(fp.name)
             assert path.is_file()
         return path

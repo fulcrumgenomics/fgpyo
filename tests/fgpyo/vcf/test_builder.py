@@ -11,6 +11,7 @@ from typing import Tuple
 
 import pysam
 import pytest
+from pysam.libcbcf import VariantFile
 
 from fgpyo.vcf import reader as vcf_reader
 from fgpyo.vcf.builder import VariantBuilder
@@ -249,6 +250,25 @@ def test_zero_sample_vcf_round_trip(
     with vcf_reader(vcf) as reader:
         for vcf_record, builder_record in zip(reader, variant_builder.to_sorted_list()):
             _assert_equal(expected_value=builder_record, actual_value=vcf_record)
+
+
+def test_indexing_gzipped_vcf(temp_path: Path) -> None:
+    vcf = temp_path / "test.vcf.gz"
+    builder = VariantBuilder()
+    _add_headers(builder)
+    builder.add(contig="chr1", pos=1000, ref="A", alts="G")
+    builder.add(contig="chr1", pos=2000, ref="A", alts="G")
+    builder.add(contig="chr1", pos=3000, ref="A", alts="G")
+    builder.add(contig="chr2", pos=1000, ref="A", alts="G")
+    builder.to_path(vcf)
+
+    reader: VariantFile
+    with vcf_reader(vcf) as reader:
+        assert len(list(reader.fetch(contig="chr1", start=900, end=1100))) == 1
+        assert len(list(reader.fetch(contig="chr1", start=900, end=2100))) == 2
+        assert len(list(reader.fetch(contig="chr1", start=900, end=3100))) == 3
+        assert len(list(reader.fetch(contig="chr2", start=900, end=1100))) == 1
+        assert len(list(reader.fetch(contig="chr2", start=5000, end=6000))) == 0
 
 
 def _add_random_genotypes(

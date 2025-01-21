@@ -268,7 +268,12 @@ class VariantBuilder:
         return variant
 
     def to_path(self, path: Optional[Path] = None) -> Path:
-        """Returns a path to a VCF for variants added to this builder.
+        """
+        Returns a path to a VCF for variants added to this builder.
+
+        If the path given ends in ".gz" then the generated file will be bgzipped and
+        a tabix index generated for the file with the suffix ".gz.tbi".
+
         Args:
             path: optional path to the VCF
         """

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from fgpyo.sam import AuxAlignment
 from fgpyo.sam import Template
 from fgpyo.sam import TemplateIterator
 from fgpyo.sam import reader
@@ -219,3 +220,22 @@ def test_set_tag() -> None:
     for bad_tag in ["", "A", "ABC", "ABCD"]:
         with pytest.raises(AssertionError, match="Tags must be 2 characters"):
             template.set_tag(bad_tag, VALUE)
+
+
+def test_with_aux_alignments() -> None:
+    """Test that we add auxiliary alignments as SAM records to a template."""
+    secondary: str = "chr9,-104599381,49M,4,0,30;chr3,+170653467,49M,4,0,20;;;"  # with trailing ';'
+    supplementary: str = "chr9,104599381,-,39M,50,2"
+    builder = SamBuilder()
+    rec = builder.add_single(chrom="chr1", start=32)
+    rec.set_tag("RX", "ACGT")
+
+    assert list(AuxAlignment.many_pysam_from_rec(rec)) == []
+
+    rec.set_tag("SA", supplementary)
+    rec.set_tag("XB", secondary)
+
+    actual = Template.build([rec]).with_aux_alignments()
+    expected = Template.build([rec] + list(AuxAlignment.many_pysam_from_rec(rec)))
+
+    assert actual == expected

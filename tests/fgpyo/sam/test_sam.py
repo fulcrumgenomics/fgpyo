@@ -10,6 +10,8 @@ from typing import Union
 
 import pysam
 import pytest
+from pysam import AlignedSegment
+from pysam import AlignmentFile
 from pysam import AlignmentHeader
 
 import fgpyo.sam as sam
@@ -614,6 +616,32 @@ def test_sum_of_base_qualities_some_below_minimum() -> None:
     builder = SamBuilder(r1_len=5, r2_len=5)
     single = builder.add_single(quals=[1, 2, 3, 4, 5])
     assert sum_of_base_qualities(single, min_quality_score=4) == 9
+
+
+def test_sum_of_base_qualities_unmapped(tmp_path: Path) -> None:
+    builder = SamBuilder(r1_len=5, r2_len=5)
+    single: AlignedSegment = builder.add_single()
+
+    # NB: assigning to `query_qualities` does not affect the cached object returned by the property,
+    # but it does change the underlying attribute used when constructing the string representation
+    single.query_qualities = None
+    record_str = single.to_string()
+
+    bam_path: Path = tmp_path / "no_qualities.bam"
+
+    with bam_path.open("w") as bam_file:
+        bam_file.write(str(builder.header))
+        bam_file.write(f"{record_str}\n")
+
+    with AlignmentFile(str(bam_path)) as bam:
+        record = next(bam)
+
+    # NB: writing to the temp file above is necessary to construct an `AlignedSegment` with no base
+    # qualities, as `SamBuilder` does not currently permit the construction of such records.
+    # TODO simplify this after `SamBuilder` is updated to support this.
+    # https://github.com/fulcrumgenomics/fgpyo/issues/211
+    assert record.query_qualities is None
+    assert sum_of_base_qualities(record) == 0
 
 
 def test_calc_edit_info_no_edits() -> None:

@@ -191,14 +191,14 @@ SamPath = Union[IO[Any], Path, str]
 NO_REF_INDEX: int = -1
 """The reference index to use to indicate no reference in SAM/BAM."""
 
-NO_REF_NAME: str = "*"
+STRING_PLACEHOLDER: str = "*"
+"""The value to use when a string field's information is unavailable."""
+
+NO_REF_NAME: str = STRING_PLACEHOLDER
 """The reference name to use to indicate no reference in SAM/BAM."""
 
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
-
-STRING_PLACEHOLDER: str = "*"
-"""The value to use when a string field's information is unavailable."""
 
 NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
 """The quality array corresponding to an unavailable query quality string ("*")."""

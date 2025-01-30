@@ -126,6 +126,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import replace
 from enum import unique
+from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -136,6 +137,8 @@ from typing import Optional
 from typing import Pattern
 from typing import Union
 from typing import overload
+
+from fgpyo import sam
 
 if sys.version_info[0] == 3 and sys.version_info[1] < 11:
     from strenum import StrEnum
@@ -214,7 +217,7 @@ SEQUENCE_NAME_PATTERN: Pattern = re.compile(
 class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
     """Stores information about a single Sequence (ex. chromosome, contig).
 
-    Implements the mutable mapping interface, which provide access to the attributes of this
+    Implements the mutable mapping interface, which provides access to the attributes of this
     sequence, including name, length, but not index.  When using the mapping interface, for example
     getting, setting, deleting, as well as iterating over keys, values, and items, the _values_ will
     always be strings (`str` type).  For example, the length will be an `str` when accessing via
@@ -446,33 +449,54 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
     @staticmethod
     @overload
-    def from_sam(header: pysam.AlignmentHeader) -> "SequenceDictionary": ...
+    def from_sam(data: Path) -> "SequenceDictionary": ...
 
     @staticmethod
     @overload
-    def from_sam(header: List[Dict[str, Any]]) -> "SequenceDictionary": ...
+    def from_sam(data: pysam.AlignmentFile) -> "SequenceDictionary": ...
+
+    @staticmethod
+    @overload
+    def from_sam(data: pysam.AlignmentHeader) -> "SequenceDictionary": ...
+
+    @staticmethod
+    @overload
+    def from_sam(data: List[Dict[str, Any]]) -> "SequenceDictionary": ...
 
     @staticmethod
     def from_sam(
-        header: Union[pysam.AlignmentHeader, List[Dict[str, Any]]],
+        data: Union[Path, pysam.AlignmentFile, pysam.AlignmentHeader, List[Dict[str, Any]]],
     ) -> "SequenceDictionary":
-        """Creates a `SequenceDictionary` from either a `pysam.AlignmentHeader` or from
-        the list of sequences returned by `pysam.AlignmentHeader#to_dict()["SQ"]`."""
-        if isinstance(header, pysam.AlignmentHeader):
-            return SequenceDictionary.from_sam(header=header.to_dict()["SQ"])
+        """Creates a `SequenceDictionary` from a SAM file or its header.
 
-        infos: List[SequenceMetadata] = [
-            SequenceMetadata.from_sam(meta=meta, index=index) for index, meta in enumerate(header)
-        ]
+        Args:
+            data: The input may be any of:
+                - a path to a SAM file
+                - an open `pysam.AlignmentFile`
+                - the `pysam.AlignmentHeader` associated with a `pysam.AlignmentFile`
+                - the contents of a header's `SQ` fields, as returned by `AlignmentHeader.to_dict()`
+        Returns:
+            A `SequenceDictionary` mapping refrence names to their metadata.
+        """
+        seq_dict: SequenceDictionary
+        if isinstance(data, pysam.AlignmentHeader):
+            seq_dict = SequenceDictionary.from_sam(data.to_dict()["SQ"])
+        elif isinstance(data, pysam.AlignmentFile):
+            seq_dict = SequenceDictionary.from_sam(data.header.to_dict()["SQ"])
+        elif isinstance(data, Path):
+            with sam.reader(data) as fh:
+                seq_dict = SequenceDictionary.from_sam(fh.header)
+        else:  # assuming `data` is a `list[dict[str, Any]]`
+            try:
+                infos: List[SequenceMetadata] = [
+                    SequenceMetadata.from_sam(meta=meta, index=index)
+                    for index, meta in enumerate(data)
+                ]
+                seq_dict = SequenceDictionary(infos=infos)
+            except Exception as e:
+                raise ValueError(f"Could not parse sequence information from data: {data}") from e
 
-        return SequenceDictionary(infos=infos)
-
-    # TODO: mypyp doesn't like these
-    # @overload
-    # def __getitem__(self, key: str) -> SequenceMetadata: ...
-    #
-    # @overload
-    # def __getitem__(self, index: int) -> SequenceMetadata: ...
+        return seq_dict
 
     def __getitem__(self, key: Union[str, int]) -> SequenceMetadata:
         return self._dict[key] if isinstance(key, str) else self.infos[key]

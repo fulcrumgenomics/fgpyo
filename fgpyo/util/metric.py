@@ -450,6 +450,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         delimiter: str = "\t",
         include_fields: Optional[List[str]] = None,
         exclude_fields: Optional[List[str]] = None,
+        **kwargs: Any,
     ) -> None:
         """
         Args:
@@ -464,6 +465,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             exclude_fields: If specified, any listed fieldnames will be excluded when writing
                 records to file.
                 May not be used together with `include_fields`.
+            kwargs: any keyword arguments to be passed to csv.DictWriter.
 
         Raises:
             TypeError: If the provided metric class is not a dataclass- or attr-decorated
@@ -506,6 +508,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             f=self._fout,
             fieldnames=self._fieldnames,
             delimiter=delimiter,
+            **kwargs,
         )
 
         # If we aren't appending to an existing file, write the header before any rows

@@ -613,7 +613,26 @@ def test_writer_from_str(tmp_path: Path) -> None:
 
     with fpath.open("r") as f:
         assert next(f) == "foo\tbar\n"
+        assert repr(f.newlines) == repr("\r\n")
         assert next(f) == "abc\t1\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
+def test_writer_with_kwargs(tmp_path: Path) -> None:
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(
+        filename=fpath, append=False, metric_class=FakeMetric, lineterminator="\n"
+    ) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+        writer.write(FakeMetric(foo="def", bar=2))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert repr(f.newlines) == repr("\n")
+        assert next(f) == "abc\t1\n"
+        assert next(f) == "def\t2\n"
         with pytest.raises(StopIteration):
             next(f)
 

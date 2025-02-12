@@ -279,7 +279,7 @@ def _pysam_open(
             if file_type is None:
                 file_type = SamFileType.from_path(path)
             path = str(path)
-    elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
+    elif not isinstance(path, _IOClasses):
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")
 

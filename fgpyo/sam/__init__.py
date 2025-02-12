@@ -265,8 +265,7 @@ def _pysam_open(
         file_type: the file type to assume when opening the file.  If None, then the file type
             will be auto-detected for reading and must be a path-like object for writing.
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
-        kwargs: any keyword arguments to be passed to
-        `pysam.AlignmentFile`; may not include "mode".
+        kwargs: any keyword arguments to be passed to `pysam.AlignmentFile`; may not include "mode".
     """
 
     if isinstance(path, (str, Path)):
@@ -279,7 +278,7 @@ def _pysam_open(
             if file_type is None:
                 file_type = SamFileType.from_path(path)
             path = str(path)
-    elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
+    elif not isinstance(path, _IOClasses):
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")
 

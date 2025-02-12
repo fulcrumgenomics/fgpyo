@@ -394,8 +394,8 @@ class Metric(ABC, Generic[MetricType]):
 
         Args:
             reader: An open, readable file handle.
-            file_format: A dataclass containing (at minimum) the file's delimiter and the string
-                prefixing any comment lines.
+            delimiter: The delimiter character used to separate fields in the file.
+            comment_prefix: The prefix for comment lines in the file.
 
         Returns:
             A `MetricFileHeader` containing the field names and any preceding lines.

@@ -618,6 +618,23 @@ def test_writer_from_str(tmp_path: Path) -> None:
             next(f)
 
 
+@pytest.mark.parametrize("lineterminator", ["\n", "\r", "\r\n"])
+def test_writer_lineterminator(tmp_path: Path, lineterminator: str) -> None:
+    fpath = tmp_path / "test.txt"
+
+    with MetricWriter(
+        filename=fpath, append=False, metric_class=FakeMetric, lineterminator=lineterminator
+    ) as writer:
+        writer.write(FakeMetric(foo="abc", bar=1))
+
+    with fpath.open("r") as f:
+        assert next(f) == "foo\tbar\n"
+        assert repr(f.newlines) == repr(lineterminator)
+        assert next(f) == "abc\t1\n"
+        with pytest.raises(StopIteration):
+            next(f)
+
+
 def test_writer_writeall(tmp_path: Path) -> None:
     fpath = tmp_path / "test.txt"
 

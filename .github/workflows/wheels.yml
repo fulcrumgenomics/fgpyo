@@ -1,0 +1,34 @@
+name: build wheels
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-wheels:
+    name: Build wheels for ${{ matrix.python }}
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+
+      - name: Set up Python ${{ matrix.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Build wheels
+        run: pip wheel --no-deps -w wheelhouse .
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: prymer-wheels-${{ matrix.python }}
+          path: ./wheelhouse/prymer*.whl
+          if-no-files-found: error

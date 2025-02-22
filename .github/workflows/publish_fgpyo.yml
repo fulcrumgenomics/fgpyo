@@ -19,7 +19,7 @@ jobs:
       - name: git config --global remote.origin.followRemoteHEAD never
         shell: bash
         run: git config --global remote.origin.followRemoteHEAD never
-        
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -58,9 +58,9 @@ jobs:
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
-            version: ${{env.POETRY_VERSION}}
-            installer-parallel: true
-            virtualenvs-in-project: true
+          version: ${{env.POETRY_VERSION}}
+          installer-parallel: true
+          virtualenvs-in-project: true
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-root --without=dev

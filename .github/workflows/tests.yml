@@ -22,74 +22,74 @@ jobs:
       matrix:
         PYTHON_VERSION: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{matrix.PYTHON_VERSION}}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{matrix.PYTHON_VERSION}}
+      - name: Set up Python ${{matrix.PYTHON_VERSION}}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.PYTHON_VERSION}}
 
-    - name: Get full Python version
-      id: full-python-version
-      shell: bash
-      run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
+      - name: Get full Python version
+        id: full-python-version
+        shell: bash
+        run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
-    - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: ${{env.POETRY_VERSION}}
-        installer-parallel: true
-        virtualenvs-in-project: true
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{env.POETRY_VERSION}}
+          installer-parallel: true
+          virtualenvs-in-project: true
 
-    - name: Set up cache
-      uses: actions/cache@v4
-      id: cache
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Set up cache
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Ensure cache is healthy
-      if: steps.cache.outputs.cache-hit == 'true'
-      shell: bash
-      run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
+      - name: Ensure cache is healthy
+        if: steps.cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
-    - name: Check that the lock file is up to date
-      shell: bash
-      run: |
-        poetry lock --check
+      - name: Check that the lock file is up to date
+        shell: bash
+        run: |
+          poetry lock --check
 
-    - name: Install deps
-      shell: bash
-      run: |
-        poetry install
+      - name: Install deps
+        shell: bash
+        run: |
+          poetry install
 
-    - name: Style checking
-      shell: bash
-      run: |
-        poetry run ruff format --check fgpyo tests
+      - name: Style checking
+        shell: bash
+        run: |
+          poetry run ruff format --check fgpyo tests
 
-    - name: Run lint
-      shell: bash
-      run: |
-        poetry run ruff check fgpyo tests
+      - name: Run lint
+        shell: bash
+        run: |
+          poetry run ruff check fgpyo tests
 
-    - name: Run mypy
-      shell: bash
-      run: |
-        poetry run mypy fgpyo tests --config=pyproject.toml
+      - name: Run mypy
+        shell: bash
+        run: |
+          poetry run mypy fgpyo tests --config=pyproject.toml
 
-    - name: Run pytest
-      shell: bash
-      run: |
-        poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
+      - name: Run pytest
+        shell: bash
+        run: |
+          poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
 
-    - name: Run docs
-      shell: bash
-      run: |
-        set -euo pipefail
-        poetry run mkdocs build --strict
+      - name: Run docs
+        shell: bash
+        run: |
+          set -euo pipefail
+          poetry run mkdocs build --strict
 
-    - name: Upload code coverage
-      uses: codecov/codecov-action@v4.5.0
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v4.5.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

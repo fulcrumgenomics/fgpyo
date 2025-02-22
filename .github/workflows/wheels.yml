@@ -29,6 +29,6 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: prymer-wheels-${{ matrix.python }}
-          path: ./wheelhouse/prymer*.whl
+          name: fgpyo-wheels-${{ matrix.python }}
+          path: ./wheelhouse/fgpyo*.whl
           if-no-files-found: error

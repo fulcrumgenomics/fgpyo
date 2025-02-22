@@ -1,4 +1,4 @@
-name: tets
+name: test
 
 on:
   push:

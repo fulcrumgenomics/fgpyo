@@ -31,7 +31,6 @@ jobs:
 
       - name: Get full Python version
         id: full-python-version
-        shell: bash
         run: echo ::set-output name=version::$(python -c "import sys; print('-'.join(str(v) for v in sys.version_info))")
 
       - name: Install and configure Poetry
@@ -50,41 +49,33 @@ jobs:
 
       - name: Ensure cache is healthy
         if: steps.cache.outputs.cache-hit == 'true'
-        shell: bash
         run: poetry run pip --version >/dev/null 2>&1 || rm -rf .venv
 
       - name: Check that the lock file is up to date
-        shell: bash
         run: |
           poetry lock --check
 
       - name: Install deps
-        shell: bash
         run: |
           poetry install
 
       - name: Style checking
-        shell: bash
         run: |
           poetry run ruff format --check fgpyo tests
 
       - name: Run lint
-        shell: bash
         run: |
           poetry run ruff check fgpyo tests
 
       - name: Run mypy
-        shell: bash
         run: |
           poetry run mypy fgpyo tests --config=pyproject.toml
 
       - name: Run pytest
-        shell: bash
         run: |
           poetry run python -m pytest --cov=fgpyo --cov-report=xml --cov-branch 
 
       - name: Run docs
-        shell: bash
         run: |
           set -euo pipefail
           poetry run mkdocs build --strict

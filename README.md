@@ -50,24 +50,11 @@ Quality of life improvements for Bioinformatics in Python.
 
 **Requires python 3.9+**
 
-See documentation on [fgpyo.readthedocs.org][rtd-link].
+See documentation on [fgpyo.readthedocs.org](http://fgpyo.readthedocs.org/en/stable).
 
 
 # Getting Setup
 
-[Poetry][poetry-link] is used to manage the python development environment. 
+## Development and Testing
 
-A simple way to create an environment with the desired version of python and poetry is to use [conda][conda-link].  E.g.:
-
-```bash
-conda create -n fgpyo -c conda-forge "python>=3.9" poetry
-conda activate fgpyo
-
-# --all-extras is required to install `mkdocs` and associated dependencies,
-# which are required for development 
-poetry install --all-extras
-```
-
-[rtd-link]:    http://fgpyo.readthedocs.org/en/stable
-[poetry-link]: https://github.com/python-poetry/poetry
-[conda-link]:  https://docs.conda.io/en/latest/miniconda.html
+See the [developer's instructions](CONTRIBUTING.md) for more information.

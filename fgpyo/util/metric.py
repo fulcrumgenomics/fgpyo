@@ -211,7 +211,7 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def read(
-        cls, path: Path, ignore_extra_fields: bool = True, strip_whitespace: bool = True
+        cls, path: Path, ignore_extra_fields: bool = True, strip_whitespace: bool = False
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -223,7 +223,8 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
-            strip_whitespace: True to strip leading and trailing whitespace, False to keep as-is.
+            strip_whitespace: True to strip leading and trailing whitespace from each field, 
+                               False to keep as-is.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
@@ -358,7 +359,7 @@ class Metric(ABC, Generic[MetricType]):
                     + "}"
                 )
         elif isinstance(value, float):
-            return f"{round(value, 5)}".strip()
+            return f"{round(value, 5)}"
         elif value is None:
             return ""
         else:

@@ -13,7 +13,6 @@
 [![PyPI download total][pypi-downloads-badge]][pypi-downloads-link]
 
 ---
-
 [language-badge]:       http://img.shields.io/badge/language-python-brightgreen.svg
 [language-link]:        http://www.python.org/
 [code-style-badge]:     https://img.shields.io/badge/code%20style-black-000000.svg
@@ -26,8 +25,8 @@
 [code-coverage-link]:   https://codecov.io/gh/fulcrumgenomics/fgpyo
 [license-badge]:        http://img.shields.io/badge/license-MIT-blue.svg
 [license-link]:         https://github.com/fulcrumgenomics/fgpyo/blob/main/LICENSE
-[python-package-badge]: https://github.com/fulcrumgenomics/fgpyo/workflows/Python%20package/badge.svg
-[python-package-link]:  https://github.com/fulcrumgenomics/fgpyo/actions?query=workflow%3A%22Python+package%22
+[python-package-badge]: https://github.com/fulcrumgenomics/fgpyo/actions/workflows/tests.yml/badge.svg?branch=main
+[python-package-link]:  https://github.com/fulcrumgenomics/fgpyo/actions/workflows/tests.yml
 [pypi-badge]:           https://badge.fury.io/py/fgpyo.svg
 [pypi-link]:            https://pypi.python.org/pypi/fgpyo
 [pypi-downloads-badge]: https://img.shields.io/pypi/dm/fgpyo

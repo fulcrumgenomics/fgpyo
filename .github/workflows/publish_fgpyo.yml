@@ -2,7 +2,7 @@ name: publish fgpyo
 
 on:
   push:
-    tags: '\d+.\d+.\d+'
+    tags: '[0-9]+.[0-9]+.[0-9]+'
 
 env:
   POETRY_VERSION: 1.8.2

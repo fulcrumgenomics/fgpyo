@@ -53,8 +53,6 @@ Quality of life improvements for Bioinformatics in Python.
 See documentation on [fgpyo.readthedocs.org](http://fgpyo.readthedocs.org/en/stable).
 
 
-# Getting Setup
-
 ## Development and Testing
 
 See the [developer's instructions](CONTRIBUTING.md) for more information.

@@ -155,6 +155,11 @@ class DataBuilder:
             age: int = 0
 
         @make_dataclass(use_attr=use_attr)
+        class PersonAgeFloat(Metric["PersonAgeFloat"]):
+            name: Optional[str]
+            age: Optional[float]
+
+        @make_dataclass(use_attr=use_attr)
         class ListPerson(Metric["ListPerson"]):
             name: List[Optional[str]]
             age: List[Optional[int]]
@@ -401,6 +406,42 @@ def test_metric_keys(data_and_classes: DataBuilder) -> None:
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_values(data_and_classes: DataBuilder) -> None:
     assert list(data_and_classes.Person(name="name", age=42).values()) == ["name", 42]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_round_floats(data_and_classes: DataBuilder) -> None:
+    assert list(data_and_classes.Person(name="John Doe", age=42.123456).formatted_values()) == [
+        "John Doe",
+        "42.12346",
+    ]
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_metric_strips_trailing_whitespace(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    test_tsv = tmp_path / "test.tsv"
+    with test_tsv.open("w") as fout:
+        fout.write("name\tage\n")
+        fout.write(" John Doe \t42\n")  # whitespace around name
+        fout.write("Jane Doe\t 35 \n")  # whitespace around age
+        fout.write(" Someone Else \t 47 \n")  # whitespace around both
+
+    persons = list(data_and_classes.Person.read(test_tsv))
+    assert len(persons) == 3
+    assert persons[0].name == " John Doe "
+    assert persons[0].age == 42
+    assert persons[1].name == "Jane Doe"
+    assert persons[1].age == 35
+    assert persons[2].name == " Someone Else "
+    assert persons[2].age == 47
+
+    persons = list(data_and_classes.Person.read(test_tsv, strip_whitespace=True))
+    assert len(persons) == 3
+    assert persons[0].name == "John Doe"
+    assert persons[0].age == 42
+    assert persons[1].name == "Jane Doe"
+    assert persons[1].age == 35
+    assert persons[2].name == "Someone Else"
+    assert persons[2].age == 47
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

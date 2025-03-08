@@ -210,7 +210,9 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(
+        cls, path: Path, ignore_extra_fields: bool = True, strip_whitespace: bool = False
+    ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
@@ -221,6 +223,8 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
+            strip_whitespace: True to strip leading and trailing whitespace from each field,
+                               False to keep as-is.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
@@ -263,6 +267,8 @@ class Metric(ABC, Generic[MetricType]):
             for lineno, line in enumerate(reader, 2):
                 # parse the raw values
                 values: List[str] = line.rstrip("\r\n").split("\t")
+                if strip_whitespace:
+                    values = [v.strip() for v in values]
 
                 # raise an exception if there aren't the same number of values as the header
                 if len(header) != len(values):
@@ -353,11 +359,11 @@ class Metric(ABC, Generic[MetricType]):
                     + "}"
                 )
         elif isinstance(value, float):
-            return str(round(value, 5))
+            return f"{round(value, 5)}"
         elif value is None:
             return ""
         else:
-            return str(value)
+            return f"{value}"
 
     @classmethod
     def to_list(cls, value: str) -> List[Any]:

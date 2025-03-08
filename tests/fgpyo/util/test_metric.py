@@ -427,20 +427,20 @@ def test_metric_strips_trailing_whitespace(tmp_path: Path, data_and_classes: Dat
 
     persons = list(data_and_classes.Person.read(test_tsv))
     assert len(persons) == 3
-    assert persons[0].name == "John Doe"
-    assert persons[0].age == 42
-    assert persons[1].name == "Jane Doe"
-    assert persons[1].age == 35
-    assert persons[2].name == "Someone Else"
-    assert persons[2].age == 47
-
-    persons = list(data_and_classes.Person.read(test_tsv, strip_whitespace=False))
-    assert len(persons) == 3
     assert persons[0].name == " John Doe "
     assert persons[0].age == 42
     assert persons[1].name == "Jane Doe"
     assert persons[1].age == 35
     assert persons[2].name == " Someone Else "
+    assert persons[2].age == 47
+
+    persons = list(data_and_classes.Person.read(test_tsv, strip_whitespace=True))
+    assert len(persons) == 3
+    assert persons[0].name == "John Doe"
+    assert persons[0].age == 42
+    assert persons[1].name == "Jane Doe"
+    assert persons[1].age == 35
+    assert persons[2].name == "Someone Else"
     assert persons[2].age == 47
 
 

@@ -1,6 +1,7 @@
 import collections
 import inspect
 import sys
+import types
 import typing
 from enum import Enum
 from functools import partial
@@ -85,7 +86,7 @@ def is_constructible_from_str(type_: type) -> bool:
 
 
 # NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
-TypeAnnotation: TypeAlias = Union[type, typing._GenericAlias, UnionType]  # type: ignore[name-defined]
+TypeAnnotation: TypeAlias = Union[type, typing._GenericAlias, UnionType, types.GenericAlias]  # type: ignore[name-defined]
 """
 A function parameter's type annotation may be any of the following:
     1) `type`, when declaring any of the built-in Python types
@@ -101,20 +102,27 @@ not and must be considered explicitly.
 # TODO When dropping support for Python 3.9, deprecate this in favor of performing instance checks
 # directly on the `TypeAnnotation` union type.
 # NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
-TYPE_ANNOTATION_TYPES = (type, typing._GenericAlias, UnionType)  # type: ignore[attr-defined]
+TYPE_ANNOTATION_TYPES = (type, typing._GenericAlias, UnionType, types.GenericAlias)  # type: ignore[attr-defined]
 
 
 def _is_optional(dtype: TypeAnnotation) -> bool:
-    """Check if a type is `Optional`.
+    """
+    Check if a type is `Optional`.
+
     An optional type may be declared using three syntaxes: `Optional[T]`, `Union[T, None]`, or `T |
-    None`. All of these syntaxes is supported by this function.
+    None`. All of these syntaxes are supported by this function.
+
     Args:
         dtype: A type.
+
     Returns:
         True if the type is a union type with exactly two elements, one of which is `None`.
         False otherwise.
+
     Raises:
-        TypeError: If the input is not a valid `TypeAnnotation` type (see above).
+        TypeError: If the input is not a valid `TypeAnnotation` type.
+        Type annotations may be any of `type`, `types.UnionType`, `types.GenericAlias`,
+        or `typing._GenericAlias`.
     """
     if not isinstance(dtype, TYPE_ANNOTATION_TYPES):
         raise TypeError(f"Expected type annotation, got {type(dtype)}: {dtype}")

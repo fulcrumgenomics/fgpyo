@@ -23,6 +23,9 @@ from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
 from fgpyo.sam import is_proper_pair
 from fgpyo.sam import set_mate_info
+from fgpyo.sam import set_mate_info_on_secondary
+from fgpyo.sam import set_mate_info_on_supplementary
+from fgpyo.sam import set_pair_info
 from fgpyo.sam import sum_of_base_qualities
 from fgpyo.sam.builder import SamBuilder
 
@@ -711,12 +714,34 @@ def test_calc_edit_info_with_aligned_Ns() -> None:
     assert info.nm == 5
 
 
-def test_set_mate_info_raises_mimatched_query_names() -> None:
+def test_set_mate_info_raises_not_opposite_read_ordinals() -> None:
+    """Test set_mate_info raises an exception for mismatched read ordinals."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=1)
+    with pytest.raises(
+        ValueError, match="mate_primary and dest records must be of different read ordinals!"
+    ):
+        set_mate_info(r1, r2)
+
+
+def test_set_mate_info_raises_when_second_rec_is_supplementary() -> None:
+    """Test set_mate_info raises an exception when the second record is supplementary."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    r2.is_supplementary = True
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
+        set_mate_info(r1, r2)
+
+
+def test_set_mate_info_raises_mismatched_query_names() -> None:
     """Test set_mate_info raises an exception for mismatched query names."""
     builder = SamBuilder()
-    r1 = builder.add_single(read_num=1)
-    r2 = builder.add_single(read_num=2)
-    assert r1.query_name != r2.query_name
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="y", read_num=2)
     with pytest.raises(
         ValueError, match="Cannot set mate info on alignments with different query names!"
     ):
@@ -821,6 +846,207 @@ def test_set_mate_info_both_mapped() -> None:
         assert rec.has_tag("ms")
         assert rec.get_tag("ms") == 3000
         assert rec.is_proper_pair is True
+
+    assert r1.reference_start == 200
+    assert r1.next_reference_start == 300
+    assert r2.reference_start == 300
+    assert r2.next_reference_start == 200
+    assert r1.template_length == 200
+    assert r2.template_length == -200
+    assert r1.is_forward is True
+    assert r2.is_reverse is True
+    assert r1.mate_is_reverse is True
+    assert r2.mate_is_forward is True
+
+
+def test_set_mate_info_on_secondary() -> None:
+    """Test set_mate_info_on_secondary sets mate info for a secondary record."""
+    builder = SamBuilder()
+    secondary, primary = builder.add_pair()
+    secondary.is_secondary = True
+
+    assert secondary.is_unmapped is True
+    assert primary.is_unmapped is True
+
+    set_mate_info_on_secondary(secondary, primary)
+
+    assert secondary.reference_id == sam.NO_REF_INDEX
+    assert secondary.reference_name is None
+    assert secondary.reference_start == sam.NO_REF_POS
+    assert secondary.next_reference_id == sam.NO_REF_INDEX
+    assert secondary.next_reference_name is None
+    assert secondary.next_reference_start == sam.NO_REF_POS
+    assert not secondary.has_tag("MC")
+    assert secondary.has_tag("MQ")
+    assert secondary.get_tag("MQ") == 0
+    assert secondary.has_tag("ms")
+    assert secondary.get_tag("ms") == 3000
+    assert secondary.template_length == 0
+    assert secondary.is_proper_pair is False
+
+    # NB: unmapped records are forward until proven otherwise
+    assert secondary.is_forward is True
+    assert secondary.mate_is_forward is True
+
+
+def test_set_mate_info_on_secondary_raises_for_secondary_or_supp_rec2() -> None:
+    """Test that set_mate_info_on_secondary raises an exception if rec2 is secondary or supp."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    r1.is_secondary = True
+    r2.is_secondary = True
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
+        set_mate_info_on_secondary(r1, r2)
+    r2.is_secondary = False
+    r2.is_supplementary = True
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
+        set_mate_info_on_secondary(r1, r2)
+
+
+def test_set_mate_info_on_secondary_raises_for_non_secondary_rec1() -> None:
+    """Test that set_mate_info_on_secondary raises an exception if rec1 is not secondary."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    with pytest.raises(
+        ValueError, match="Cannot set mate info on an alignment not marked as secondary!"
+    ):
+        set_mate_info_on_secondary(r1, r2)
+
+
+def test_set_mate_info_on_supplementary() -> None:
+    """Test set_mate_info_on_supplementary sets mate info for a supplementary record."""
+    builder = SamBuilder()
+    supplementary, primary = builder.add_pair()
+    supplementary.is_supplementary = True
+
+    assert supplementary.is_unmapped is True
+    assert primary.is_unmapped is True
+
+    set_mate_info_on_supplementary(supplementary, primary)
+
+    assert supplementary.reference_id == sam.NO_REF_INDEX
+    assert supplementary.reference_name is None
+    assert supplementary.reference_start == sam.NO_REF_POS
+    assert supplementary.next_reference_id == sam.NO_REF_INDEX
+    assert supplementary.next_reference_name is None
+    assert supplementary.next_reference_start == sam.NO_REF_POS
+    assert not supplementary.has_tag("MC")
+    assert supplementary.has_tag("MQ")
+    assert supplementary.get_tag("MQ") == 0
+    assert supplementary.has_tag("ms")
+    assert supplementary.get_tag("ms") == 3000
+    assert supplementary.template_length == 0
+    assert supplementary.is_proper_pair is False
+
+    # NB: unmapped records are forward until proven otherwise
+    assert supplementary.is_forward is True
+    assert supplementary.mate_is_forward is True
+
+
+def test_set_mate_info_on_supplementary_raises_for_secondary_or_supp_rec2() -> None:
+    """Test that set_mate_info_on_supplementary raises an exception if rec2 is secondary or supp."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    r1.is_supplementary = True
+    r2.is_secondary = True
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
+        set_mate_info_on_supplementary(r1, r2)
+    r2.is_secondary = False
+    r2.is_supplementary = True
+    with pytest.raises(
+        ValueError, match="Mate info must be set from a non-supplementary non-secondary record!"
+    ):
+        set_mate_info_on_supplementary(r1, r2)
+
+
+def test_set_mate_info_on_supplementary_raises_for_non_secondary_rec1() -> None:
+    """Test that set_mate_info_on_supplementary raises an exception if rec1 is not supplementary."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    with pytest.raises(
+        ValueError, match="Cannot set mate info on an alignment not marked as supplementary!"
+    ):
+        set_mate_info_on_supplementary(r1, r2)
+
+
+def test_set_mate_info_on_supplementary_sets_additional_fields_for_primary_supplemental() -> None:
+    """Tests that set_mate_info_on_supplementary sets additional fields for primary supplements."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    r1.is_supplementary = True
+    r2.is_proper_pair = True
+    r2.template_length = 100
+
+    assert r1.is_proper_pair is False
+    assert r1.template_length == 0
+    set_mate_info_on_supplementary(r1, r2)
+    assert r1.template_length == -100
+    assert r1.is_proper_pair is True
+
+
+def test_set_mate_info_on_supplementary_does_not_set_fields_for_secondary_supplemental() -> None:
+    """Tests that set_mate_info_on_supplementary does not set fields for secondary supplements."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="x", read_num=2)
+    r1.is_secondary = True
+    r1.is_supplementary = True
+    r2.is_proper_pair = True
+    r2.template_length = 100
+
+    assert not r1.is_proper_pair
+    assert r1.template_length == 0
+    set_mate_info_on_supplementary(r1, r2)
+    assert not r1.is_proper_pair
+    assert r1.template_length == 0
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_set_pair_info_raises_exception_for_mismatched_query_names() -> None:
+    """Test that set_pair_info raises an exception for mismatched query names."""
+    builder = SamBuilder()
+    r1 = builder.add_single(name="x", read_num=1)
+    r2 = builder.add_single(name="y", read_num=2)
+    with pytest.raises(
+        ValueError,
+        match="Cannot set pair info on reads with different query names!",
+    ):
+        set_pair_info(r1, r2)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_set_pair_info_both_mapped() -> None:
+    """Test set_pair_info sets mate info for two mapped records."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(chrom="chr1", start1=200, start2=300)
+    assert r1.is_mapped is True
+    assert r2.is_mapped is True
+
+    set_pair_info(r1, r2, proper_pair=False)
+
+    for rec in (r1, r2):
+        assert rec.reference_id == builder.header.get_tid("chr1")
+        assert rec.reference_name == "chr1"
+        assert rec.next_reference_id == builder.header.get_tid("chr1")
+        assert rec.next_reference_name == "chr1"
+        assert rec.has_tag("MC")
+        assert rec.get_tag("MC") == "100M"
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 60
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.is_proper_pair is False
 
     assert r1.reference_start == 200
     assert r1.next_reference_start == 300

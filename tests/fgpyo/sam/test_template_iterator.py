@@ -219,3 +219,171 @@ def test_set_tag() -> None:
     for bad_tag in ["", "A", "ABC", "ABCD"]:
         with pytest.raises(AssertionError, match="Tags must be 2 characters"):
             template.set_tag(bad_tag, VALUE)
+
+
+def test_template_set_mate_info() -> None:
+    """Test that Template set_mate_info fixes up all records in a template."""
+    builder = SamBuilder()
+
+    r1, r2 = builder.add_pair(name="x", chrom="chr1", start1=200, start2=300)
+    r1_secondary = builder.add_single(name="x", read_num=1, chrom="chr1", start=2)
+    r2_secondary = builder.add_single(name="x", read_num=2, chrom="chr1", start=5)
+    r1_secondary.is_secondary = True
+    r2_secondary.is_secondary = True
+
+    r1_supp = builder.add_single(name="x", read_num=1, chrom="chr1", start=4)
+    r2_supp = builder.add_single(name="x", read_num=2, chrom="chr1", start=5)
+    r1_supp.is_supplementary = True
+    r2_supp.is_supplementary = True
+
+    r1_secondary_supp = builder.add_single(name="x", read_num=1, chrom="chr1", start=6)
+    r2_secondary_supp = builder.add_single(name="x", read_num=2, chrom="chr1", start=7)
+    r1_secondary_supp.is_secondary = True
+    r2_secondary_supp.is_secondary = True
+    r1_secondary_supp.is_supplementary = True
+    r2_secondary_supp.is_supplementary = True
+
+    template = Template.build(
+        [
+            r1,
+            r2,
+            r1_secondary,
+            r2_secondary,
+            r1_supp,
+            r2_supp,
+            r1_secondary_supp,
+            r2_secondary_supp,
+        ]
+    )
+
+    template.set_mate_info()
+
+    # Assert the state of both the R1 and R2 alignments
+    for rec in (template.r1, template.r2):
+        assert rec.reference_id == builder.header.get_tid("chr1")
+        assert rec.reference_name == "chr1"
+        assert rec.next_reference_id == builder.header.get_tid("chr1")
+        assert rec.next_reference_name == "chr1"
+        assert rec.has_tag("MC")
+        assert rec.get_tag("MC") == "100M"
+        assert rec.has_tag("MQ")
+        assert rec.get_tag("MQ") == 60
+        assert rec.has_tag("ms")
+        assert rec.get_tag("ms") == 3000
+        assert rec.is_proper_pair is True
+
+    assert template.r1.reference_start == 200
+    assert template.r1.next_reference_start == 300
+    assert template.r2.reference_start == 300
+    assert template.r2.next_reference_start == 200
+    assert template.r1.template_length == 200
+    assert template.r2.template_length == -200
+    assert template.r1.is_forward is True
+    assert template.r2.is_reverse is True
+    assert template.r1.mate_is_reverse is True
+    assert template.r2.mate_is_forward is True
+
+    # Assert the state of the two secondary non-supplementary alignments
+    assert template.r1_secondaries[0].reference_id == builder.header.get_tid("chr1")
+    assert template.r1_secondaries[0].reference_name == "chr1"
+    assert template.r1_secondaries[0].reference_start == 2
+    assert template.r1_secondaries[0].next_reference_id == template.r2.reference_id
+    assert template.r1_secondaries[0].next_reference_name == template.r2.reference_name
+    assert template.r1_secondaries[0].next_reference_start == template.r2.reference_start
+    assert template.r1_secondaries[0].has_tag("MC")
+    assert template.r1_secondaries[0].get_tag("MC") == template.r2.cigarstring
+    assert template.r1_secondaries[0].has_tag("MQ")
+    assert template.r1_secondaries[0].get_tag("MQ") == template.r2.mapping_quality
+    assert template.r1_secondaries[0].has_tag("ms")
+    assert template.r1_secondaries[0].get_tag("ms") == 3000
+    assert template.r1_secondaries[0].template_length == 0
+    assert template.r1_secondaries[0].is_proper_pair is False
+    assert template.r1_secondaries[0].is_forward is True
+    assert template.r1_secondaries[0].mate_is_forward is template.r2.is_forward
+
+    assert template.r2_secondaries[0].reference_id == builder.header.get_tid("chr1")
+    assert template.r2_secondaries[0].reference_name == "chr1"
+    assert template.r2_secondaries[0].reference_start == 5
+    assert template.r2_secondaries[0].next_reference_id == template.r1.reference_id
+    assert template.r2_secondaries[0].next_reference_name == template.r1.reference_name
+    assert template.r2_secondaries[0].next_reference_start == template.r1.reference_start
+    assert template.r2_secondaries[0].has_tag("MC")
+    assert template.r2_secondaries[0].get_tag("MC") == template.r1.cigarstring
+    assert template.r2_secondaries[0].has_tag("MQ")
+    assert template.r2_secondaries[0].get_tag("MQ") == template.r1.mapping_quality
+    assert template.r2_secondaries[0].has_tag("ms")
+    assert template.r2_secondaries[0].get_tag("ms") == 3000
+    assert template.r2_secondaries[0].template_length == 0
+    assert template.r2_secondaries[0].is_proper_pair is False
+    assert template.r2_secondaries[0].is_forward is True
+    assert template.r2_secondaries[0].mate_is_forward is template.r1.is_forward
+
+    # Assert the state of the two non-secondary supplemental alignments
+    assert template.r1_supplementals[0].reference_id == builder.header.get_tid("chr1")
+    assert template.r1_supplementals[0].reference_name == "chr1"
+    assert template.r1_supplementals[0].reference_start == 4
+    assert template.r1_supplementals[0].next_reference_id == template.r2.reference_id
+    assert template.r1_supplementals[0].next_reference_name == template.r2.reference_name
+    assert template.r1_supplementals[0].next_reference_start == template.r2.reference_start
+    assert template.r1_supplementals[0].has_tag("MC")
+    assert template.r1_supplementals[0].get_tag("MC") == template.r2.cigarstring
+    assert template.r1_supplementals[0].has_tag("MQ")
+    assert template.r1_supplementals[0].get_tag("MQ") == template.r2.mapping_quality
+    assert template.r1_supplementals[0].has_tag("ms")
+    assert template.r1_supplementals[0].get_tag("ms") == 3000
+    assert template.r1_supplementals[0].template_length == 200
+    assert template.r1_supplementals[0].is_proper_pair is True
+    assert template.r1_supplementals[0].is_forward is True
+    assert template.r1_supplementals[0].mate_is_forward is template.r2.is_forward
+
+    assert template.r2_supplementals[0].reference_id == builder.header.get_tid("chr1")
+    assert template.r2_supplementals[0].reference_name == "chr1"
+    assert template.r2_supplementals[0].reference_start == 5
+    assert template.r2_supplementals[0].next_reference_id == template.r1.reference_id
+    assert template.r2_supplementals[0].next_reference_name == template.r1.reference_name
+    assert template.r2_supplementals[0].next_reference_start == template.r1.reference_start
+    assert template.r2_supplementals[0].has_tag("MC")
+    assert template.r2_supplementals[0].get_tag("MC") == template.r1.cigarstring
+    assert template.r2_supplementals[0].has_tag("MQ")
+    assert template.r2_supplementals[0].get_tag("MQ") == template.r1.mapping_quality
+    assert template.r2_supplementals[0].has_tag("ms")
+    assert template.r2_supplementals[0].get_tag("ms") == 3000
+    assert template.r2_supplementals[0].template_length == -200
+    assert template.r2_supplementals[0].is_proper_pair is True
+    assert template.r2_supplementals[0].is_forward is True
+    assert template.r2_supplementals[0].mate_is_forward is template.r1.is_forward
+
+    # Assert the state of the two secondary supplemental alignments
+    assert template.r1_supplementals[1].reference_id == builder.header.get_tid("chr1")
+    assert template.r1_supplementals[1].reference_name == "chr1"
+    assert template.r1_supplementals[1].reference_start == 6
+    assert template.r1_supplementals[1].next_reference_id == template.r2.reference_id
+    assert template.r1_supplementals[1].next_reference_name == template.r2.reference_name
+    assert template.r1_supplementals[1].next_reference_start == template.r2.reference_start
+    assert template.r1_supplementals[1].has_tag("MC")
+    assert template.r1_supplementals[1].get_tag("MC") == template.r2.cigarstring
+    assert template.r1_supplementals[1].has_tag("MQ")
+    assert template.r1_supplementals[1].get_tag("MQ") == template.r2.mapping_quality
+    assert template.r1_supplementals[1].has_tag("ms")
+    assert template.r1_supplementals[1].get_tag("ms") == 3000
+    assert template.r1_supplementals[1].template_length == 0
+    assert template.r1_supplementals[1].is_proper_pair is False
+    assert template.r1_supplementals[1].is_forward is True
+    assert template.r1_supplementals[1].mate_is_forward is template.r2.is_forward
+
+    assert template.r2_supplementals[1].reference_id == builder.header.get_tid("chr1")
+    assert template.r2_supplementals[1].reference_name == "chr1"
+    assert template.r2_supplementals[1].reference_start == 7
+    assert template.r2_supplementals[1].next_reference_id == template.r1.reference_id
+    assert template.r2_supplementals[1].next_reference_name == template.r1.reference_name
+    assert template.r2_supplementals[1].next_reference_start == template.r1.reference_start
+    assert template.r2_supplementals[1].has_tag("MC")
+    assert template.r2_supplementals[1].get_tag("MC") == template.r1.cigarstring
+    assert template.r2_supplementals[1].has_tag("MQ")
+    assert template.r2_supplementals[1].get_tag("MQ") == template.r1.mapping_quality
+    assert template.r2_supplementals[1].has_tag("ms")
+    assert template.r2_supplementals[1].get_tag("ms") == 3000
+    assert template.r2_supplementals[1].template_length == 0
+    assert template.r2_supplementals[1].is_proper_pair is False
+    assert template.r2_supplementals[1].is_forward is True
+    assert template.r2_supplementals[1].mate_is_forward is template.r1.is_forward

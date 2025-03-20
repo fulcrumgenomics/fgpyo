@@ -158,6 +158,7 @@ and slices):
 import enum
 import io
 import sys
+from array import array
 from collections.abc import Collection
 from itertools import chain
 from pathlib import Path
@@ -178,6 +179,7 @@ import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
+from pysam import qualitystring_to_array
 from typing_extensions import Self
 from typing_extensions import deprecated
 
@@ -190,11 +192,17 @@ SamPath = Union[IO[Any], Path, str]
 NO_REF_INDEX: int = -1
 """The reference index to use to indicate no reference in SAM/BAM."""
 
-NO_REF_NAME: str = "*"
+STRING_PLACEHOLDER: str = "*"
+"""The value to use when a string field's information is unavailable."""
+
+NO_REF_NAME: str = STRING_PLACEHOLDER
 """The reference name to use to indicate no reference in SAM/BAM."""
 
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
+
+NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
+"""The quality array corresponding to an unavailable query quality string ("*")."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -258,8 +266,7 @@ def _pysam_open(
         file_type: the file type to assume when opening the file.  If None, then the file type
             will be auto-detected for reading and must be a path-like object for writing.
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
-        kwargs: any keyword arguments to be passed to
-        `pysam.AlignmentFile`; may not include "mode".
+        kwargs: any keyword arguments to be passed to `pysam.AlignmentFile`; may not include "mode".
     """
 
     if isinstance(path, (str, Path)):
@@ -272,7 +279,7 @@ def _pysam_open(
             if file_type is None:
                 file_type = SamFileType.from_path(path)
             path = str(path)
-    elif not isinstance(path, _IOClasses):  # type: ignore[unreachable]
+    elif not isinstance(path, _IOClasses):
         open_type = "reading" if open_for_reading else "writing"
         raise TypeError(f"Cannot open '{type(path)}' for {open_type}.")
 
@@ -850,16 +857,24 @@ class SupplementaryAlignment:
 def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
     """Calculate the sum of base qualities score for an alignment record.
 
-    This function is useful for calculating the "mate score" as implemented in samtools fixmate.
+    This function is useful for calculating the "mate score" as implemented in `samtools fixmate`.
+    Consistently with `samtools fixmate`, this function returns 0 if the record has no base
+    qualities.
 
     Args:
         rec: The alignment record to calculate the sum of base qualities from.
         min_quality_score: The minimum base quality score to use for summation.
 
+    Returns:
+        The sum of base qualities on the input record. 0 if the record has no base qualities.
+
     See:
         [`calc_sum_of_base_qualities()`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L227-L238)
         [`MD_MIN_QUALITY`](https://github.com/samtools/samtools/blob/4f3a7397a1f841020074c0048c503a01a52d5fa2/bam_mate.c#L42)
     """
+    if rec.query_qualities is None or rec.query_qualities == NO_QUERY_QUALITIES:
+        return 0
+
     score: int = sum(qual for qual in rec.query_qualities if qual >= min_quality_score)
     return score
 

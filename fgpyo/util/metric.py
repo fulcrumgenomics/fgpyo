@@ -210,7 +210,9 @@ class Metric(ABC, Generic[MetricType]):
         return {}
 
     @classmethod
-    def read(cls, path: Path, ignore_extra_fields: bool = True) -> Iterator[Any]:
+    def read(
+        cls, path: Path, ignore_extra_fields: bool = True, strip_whitespace: bool = False
+    ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
@@ -221,6 +223,8 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: the path to the metrics file.
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
+            strip_whitespace: True to strip leading and trailing whitespace from each field,
+                               False to keep as-is.
         """
         parsers = cls._parsers()
         with io.to_reader(path) as reader:
@@ -263,6 +267,8 @@ class Metric(ABC, Generic[MetricType]):
             for lineno, line in enumerate(reader, 2):
                 # parse the raw values
                 values: List[str] = line.rstrip("\r\n").split("\t")
+                if strip_whitespace:
+                    values = [v.strip() for v in values]
 
                 # raise an exception if there aren't the same number of values as the header
                 if len(header) != len(values):
@@ -353,11 +359,11 @@ class Metric(ABC, Generic[MetricType]):
                     + "}"
                 )
         elif isinstance(value, float):
-            return str(round(value, 5))
+            return f"{round(value, 5)}"
         elif value is None:
             return ""
         else:
-            return str(value)
+            return f"{value}"
 
     @classmethod
     def to_list(cls, value: str) -> List[Any]:
@@ -394,8 +400,8 @@ class Metric(ABC, Generic[MetricType]):
 
         Args:
             reader: An open, readable file handle.
-            file_format: A dataclass containing (at minimum) the file's delimiter and the string
-                prefixing any comment lines.
+            delimiter: The delimiter character used to separate fields in the file.
+            comment_prefix: The prefix for comment lines in the file.
 
         Returns:
             A `MetricFileHeader` containing the field names and any preceding lines.
@@ -450,6 +456,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         delimiter: str = "\t",
         include_fields: Optional[List[str]] = None,
         exclude_fields: Optional[List[str]] = None,
+        lineterminator: str = "\n",
     ) -> None:
         """
         Args:
@@ -464,6 +471,8 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             exclude_fields: If specified, any listed fieldnames will be excluded when writing
                 records to file.
                 May not be used together with `include_fields`.
+            lineterminator: The string used to terminate lines produced by the MetricWriter.
+                Default = "\n".
 
         Raises:
             TypeError: If the provided metric class is not a dataclass- or attr-decorated
@@ -506,6 +515,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             f=self._fout,
             fieldnames=self._fieldnames,
             delimiter=delimiter,
+            lineterminator=lineterminator,
         )
 
         # If we aren't appending to an existing file, write the header before any rows

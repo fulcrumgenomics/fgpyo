@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fgpyo"
-version = "0.8.1-dev"
+version = "1.0.1-dev"
 description = "Python bioinformatics and genomics library"
 authors = ["Nils Homer", "Tim Fennell", "Nathan Roach"]
 license = "MIT"
@@ -27,11 +27,6 @@ python = ">=3.9.0,<4.0"
 attrs = ">=19.3.0"
 pysam = ">=0.22.1"
 typing_extensions = { version = ">=4.12.2", python = "<3.12" }
-numpy = [
-  {version = "^1.26.4", python = ">=3.12"},
-  {version = "^1.25.2", python = ">=3.9,<3.12"},
-  {version = "^1.24.4", python = "<3.9"}
-]
 strenum = "^0.4.15"
 
 [tool.poetry.group.dev.dependencies]
@@ -54,6 +49,11 @@ mkdocs-literate-nav = { version = ">=0.6.1" }
 mkdocs-section-index = { version = ">=0.3.9" }
 mkdocstrings-python = { version = ">=1.6.2" }
 mkdocstrings = { version = ">=0.23.0" }
+numpy = [
+  {version = "^1.26.4", python = ">=3.12"},
+  {version = "^1.25.2", python = ">=3.9,<3.12"},
+  {version = "^1.24.4", python = "<3.9"}
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -88,3 +88,9 @@ warn_unused_configs         = true
 warn_unused_ignores         = true
 enable_error_code           = "ignore-without-code"
 exclude                     = ["site/", "docs/"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: not covered",
+    "@overload"
+]

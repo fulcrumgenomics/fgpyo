@@ -317,10 +317,10 @@ def _get_parser(  # noqa: C901
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
-        parsers)
+            parsers)
         type_: the type of the attribute to be parsed
         parsers: an optional mapping from type to the function to use for parsing that type (allows
-        for parsing of more complex types)
+            for parsing of more complex types)
     """
     parser: partial[type_]
     if parsers is None:

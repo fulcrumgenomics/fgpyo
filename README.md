@@ -11,9 +11,9 @@
 [![Python package][python-package-badge]][python-package-link]
 [![PyPI version][pypi-badge]][pypi-link]
 [![PyPI download total][pypi-downloads-badge]][pypi-downloads-link]
+[![DOI][zenodo-badge]][zenodo-link]
 
 ---
-
 [language-badge]:       http://img.shields.io/badge/language-python-brightgreen.svg
 [language-link]:        http://www.python.org/
 [code-style-badge]:     https://img.shields.io/badge/code%20style-black-000000.svg
@@ -26,36 +26,34 @@
 [code-coverage-link]:   https://codecov.io/gh/fulcrumgenomics/fgpyo
 [license-badge]:        http://img.shields.io/badge/license-MIT-blue.svg
 [license-link]:         https://github.com/fulcrumgenomics/fgpyo/blob/main/LICENSE
-[python-package-badge]: https://github.com/fulcrumgenomics/fgpyo/workflows/Python%20package/badge.svg
-[python-package-link]:  https://github.com/fulcrumgenomics/fgpyo/actions?query=workflow%3A%22Python+package%22
+[python-package-badge]: https://github.com/fulcrumgenomics/fgpyo/actions/workflows/tests.yml/badge.svg?branch=main
+[python-package-link]:  https://github.com/fulcrumgenomics/fgpyo/actions/workflows/tests.yml
 [pypi-badge]:           https://badge.fury.io/py/fgpyo.svg
 [pypi-link]:            https://pypi.python.org/pypi/fgpyo
 [pypi-downloads-badge]: https://img.shields.io/pypi/dm/fgpyo
 [pypi-downloads-link]:  https://pypi.python.org/pypi/fgpyo
-
+[zenodo-badge]:         https://zenodo.org/badge/431553243.svg
+[zenodo-link]:          https://doi.org/10.5281/zenodo.10694617
 # fgpyo
+
+Quality of life improvements for Bioinformatics in Python.
+
+<p>
+<a href float="left"="https://fulcrumgenomics.com"><img src=".github/logos/fulcrumgenomics.svg" alt="Fulcrum Genomics" height="100"/></a>
+</p>
+
+[Visit us at Fulcrum Genomics](https://www.fulcrumgenomics.com) to learn more about how we can power your Bioinformatics with fgpyo and beyond.
+
+<a href="mailto:contact@fulcrumgenomics.com?subject=[GitHub inquiry]"><img src="https://img.shields.io/badge/Email_us-brightgreen.svg?&style=for-the-badge&logo=gmail&logoColor=white"/></a>
+<a href="https://www.fulcrumgenomics.com"><img src="https://img.shields.io/badge/Visit_Us-blue.svg?&style=for-the-badge&logo=wordpress&logoColor=white"/></a>
 
 `pip install fgpyo`
 
 **Requires python 3.9+**
 
-See documentation on [fgpyo.readthedocs.org][rtd-link].
+See documentation on [fgpyo.readthedocs.org](http://fgpyo.readthedocs.org/en/stable).
 
-# Getting Setup
 
-[Poetry][poetry-link] is used to manage the python development environment. 
+## Development and Testing
 
-A simple way to create an environment with the desired version of python and poetry is to use [conda][conda-link].  E.g.:
-
-```bash
-conda create -n fgpyo -c conda-forge "python>=3.9" poetry
-conda activate fgpyo
-
-# --all-extras is required to install `mkdocs` and associated dependencies,
-# which are required for development 
-poetry install --all-extras
-```
-
-[rtd-link]:    http://fgpyo.readthedocs.org/en/stable
-[poetry-link]: https://github.com/python-poetry/poetry
-[conda-link]:  https://docs.conda.io/en/latest/miniconda.html
+See the [developer's instructions](CONTRIBUTING.md) for more information.

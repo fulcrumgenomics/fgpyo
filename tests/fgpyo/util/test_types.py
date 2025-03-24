@@ -33,7 +33,24 @@ def test_is_optional(tpe: Type, expected: bool) -> None:
     assert types._is_optional(tpe) == expected
 
 
+def test_is_optional_wrong_type() -> None:
+    with pytest.raises(TypeError, match="Expected type annotation"):
+        types._is_optional(None)
+
+
 if sys.version_info >= (3, 10):
 
     def test_is_optional_python_310() -> None:
         assert types._is_optional(str | None)
+
+
+def test_make_union_parser_worker_exception() -> None:
+    class Foo:
+        pass
+
+    class Bar:
+        pass
+
+    with pytest.raises(ValueError, match="foo could not be parsed"):
+        types._make_union_parser_worker(type(Foo | Bar), parsers=[], value="foo")
+        pass

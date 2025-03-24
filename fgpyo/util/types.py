@@ -112,6 +112,9 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
     An optional type may be declared using three syntaxes: `Optional[T]`, `Union[T, None]`, or `T |
     None`. All of these syntaxes are supported by this function.
 
+    Type annotations may be any of `type`, `UnionType`, `types.GenericAlias`,
+    or `typing._GenericAlias`.
+
     Args:
         dtype: A type.
 
@@ -121,8 +124,6 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
 
     Raises:
         TypeError: If the input is not a valid `TypeAnnotation` type.
-        Type annotations may be any of `type`, `types.UnionType`, `types.GenericAlias`,
-        or `typing._GenericAlias`.
     """
     if not isinstance(dtype, TYPE_ANNOTATION_TYPES):
         raise TypeError(f"Expected type annotation, got {type(dtype)}: {dtype}")

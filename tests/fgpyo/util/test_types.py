@@ -53,5 +53,3 @@ if sys.version_info >= (3, 10):
         with pytest.raises(ValueError, match="foo could not be parsed"):
             type_ = type((Foo | Bar))
             types._make_union_parser_worker(union=type_, parsers=[], value="foo")
-            pass
-

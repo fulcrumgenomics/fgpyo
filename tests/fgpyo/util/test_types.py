@@ -43,15 +43,15 @@ if sys.version_info >= (3, 10):
     def test_is_optional_python_310() -> None:
         assert types._is_optional(str | None)
 
+    def test_make_union_parser_worker_exception() -> None:
+        class Foo:
+            pass
 
-def test_make_union_parser_worker_exception() -> None:
-    class Foo:
-        pass
+        class Bar:
+            pass
 
-    class Bar:
-        pass
+        with pytest.raises(ValueError, match="foo could not be parsed"):
+            type_ = type((Foo | Bar))
+            types._make_union_parser_worker(union=type_, parsers=[], value="foo")
+            pass
 
-    with pytest.raises(ValueError, match="foo could not be parsed"):
-        type_ = type((Foo | Bar))
-        types._make_union_parser_worker(union=type_, parsers=[], value="foo")
-        pass

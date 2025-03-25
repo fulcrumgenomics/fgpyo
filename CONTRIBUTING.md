@@ -4,11 +4,11 @@
 
 [Poetry][poetry-link] is used to manage the python development environment. 
 
-A simple way to create an environment with the desired version of python and poetry is to use [conda][conda-link].  E.g.:
+A simple way to create an environment with the desired version of python and poetry is to use [mamba][mamba-link].  E.g.:
 
 ```bash
-conda create -n fgpyo -c conda-forge "python>=3.9" poetry
-conda activate fgpyo
+mamba create -n fgpyo -c conda-forge --override-channels "python>=3.9" poetry
+mamba activate fgpyo
 
 # --all-extras is required to install `mkdocs` and associated dependencies,
 # which are required for development 
@@ -17,7 +17,7 @@ poetry install --all-extras
 
 [rtd-link]:    http://fgpyo.readthedocs.org/en/stable
 [poetry-link]: https://github.com/python-poetry/poetry
-[conda-link]:  https://github.com/mamba-org/mamba
+[mamba-link]:  https://github.com/mamba-org/mamba
 
 ## Primary Development Commands
 

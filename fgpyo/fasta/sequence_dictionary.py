@@ -140,7 +140,7 @@ from typing import overload
 
 from fgpyo import sam
 
-if sys.version_info[0] == 3 and sys.version_info[1] < 11:
+if sys.version_info[:2] < (3, 11):
     from strenum import StrEnum
 else:
     from enum import StrEnum

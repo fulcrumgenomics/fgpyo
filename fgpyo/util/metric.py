@@ -137,7 +137,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-if sys.version_info >= (3, 10):
+if sys.version_info[:2] >= (3, 10):
     from typing import TypeGuard
 else:
     from typing_extensions import TypeGuard

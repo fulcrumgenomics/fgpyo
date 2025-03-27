@@ -18,7 +18,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-if sys.version_info >= (3, 12):
+if sys.version_info[:2] >= (3, 12):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias

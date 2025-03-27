@@ -14,7 +14,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-if sys.version_info >= (3, 10):
+if sys.version_info[:2] >= (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias

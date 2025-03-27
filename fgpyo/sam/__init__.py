@@ -181,12 +181,12 @@ from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 from pysam import qualitystring_to_array
 
-if sys.version_info >= (3, 10):
+if sys.version_info > (3, 10):
     from typing import Self
 else:
     from typing_extensions import Self
 
-if sys.version_info >= (3, 13):
+if sys.version_info > (3, 12):
     from warnings import deprecated
 else:
     from typing_extensions import deprecated

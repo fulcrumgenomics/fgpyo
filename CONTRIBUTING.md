@@ -7,14 +7,13 @@
 A simple way to create an environment with the desired version of `python` and `uv` is to use a virtual environment.  E.g.:
 
 ```console
-uv venv --python 3.12
+uv venv --python 3.12 --seed
 source .venv/bin/activate
-# --group is required to install `mkdocs` and associated dependencies,
-# which are required for development 
+# `--group docs` is required to install `mkdocs` and associated dependencies
+# `--group dev` is required to install test and build dependencies
 uv pip install --group dev --group docs
 ```
 
-[rtd-link]:        http://fgpyo.readthedocs.org/en/stable
 [uv-link]:         https://docs.astral.sh/uv/
 [uv-install-link]: https://docs.astral.sh/uv/getting-started/installation/
 

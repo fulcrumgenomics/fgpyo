@@ -36,7 +36,7 @@ function run() {
 }
 
 if [ ! -f ".venv/bin/activate" ]; then
-    banner "Virtual environment not present in .venv.\nPlease use \`uv venv\` to create one."
+    banner "Virtual environment not present in .venv.\nPlease use \`uv venv --seed\` to create one."
     exit 1
 fi
 if [ "${VIRTUAL_ENV}" == "" ]; then

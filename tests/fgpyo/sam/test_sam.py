@@ -669,17 +669,25 @@ def test_calc_edit_info_no_edits_with_zero_offset() -> None:
     assert info.md == "30"
 
 
-def test_calc_edit_info_no_edits_with_nonzero_offset() -> None:
-    """Assert that a non-zero offset slides ref start position as expected."""
-    chrom = "ACGCTAGACT"
+def test_calc_edit_info_edits_with_nonzero_offset() -> None:
+    """
+    Assert that a non-zero offset slides ref start position as expected.
+
+    The query sequence does not extend past the reference sequence.
+    """
+    chrom = "ACGCAGTCTATCTA"
     builder = SamBuilder(r1_len=10)
     rec = builder.add_single(bases="ACGCAGTCTA", chrom="chr1", start=0, cigar="10M")
     info = sam.calculate_edit_info(
         rec=rec, reference_sequence=chrom, reference_offset=4, n_as_match=False
     )
-    assert info.mismatches == 5
-    assert info.nm == 5  # TA<matched G>ACT
-    assert info.md == "0T0A1A0C0T0"
+    # Offset Ref: AGTCTATCTA
+    #             |xx|xx||||
+    #      Query: ACGCAGTCTA
+    assert info.matches == 6
+    assert info.mismatches == 4
+    assert info.nm == 4
+    assert info.md == "1G0T1T0A4"
 
 
 def test_calc_edit_info_with_mms_and_insertions() -> None:
@@ -758,13 +766,9 @@ def test_calc_edit_info_with_consecutive_mismatches(n_as_match: bool) -> None:
         attrs={"MD": "0T2A0T2A0t2a0t2a0", "NM": 8},
     )
 
-    generated_result = sam.calculate_edit_info(
-        rec=rec, reference_sequence=chrom, n_as_match=n_as_match
-    )
-    expected_md: str = str(rec.get_tag("MD"))
-    expected_nm: int = int(rec.get_tag("NM"))
-    assert expected_md.upper() == generated_result.md
-    assert expected_nm == generated_result.nm
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=n_as_match)
+    assert info.md == str(rec.get_tag("MD")).upper()
+    assert info.nm == int(rec.get_tag("NM"))
 
 
 @pytest.mark.parametrize("n_as_match", [True, False])
@@ -776,14 +780,10 @@ def test_calc_edit_info_with_soft_clip_at_end(n_as_match: bool) -> None:
         bases="TCGACGAA", chrom="chr2", start=0, cigar="4M1D2M2S", attrs={"MD": "4^T2", "NM": 1}
     )
 
-    generated_result = sam.calculate_edit_info(
-        rec=rec, reference_sequence=chrom, n_as_match=n_as_match
-    )
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=n_as_match)
 
-    expected_md: str = str(rec.get_tag("MD"))
-    expected_nm: int = int(rec.get_tag("NM"))
-    assert expected_md.upper() == generated_result.md
-    assert expected_nm == generated_result.nm
+    assert info.md == str(rec.get_tag("MD")).upper()
+    assert info.nm == int(rec.get_tag("NM"))
 
 
 def test_calc_edit_info_with_skipped_region() -> None:
@@ -794,12 +794,10 @@ def test_calc_edit_info_with_skipped_region() -> None:
         bases="TCGACG", chrom="chr2", start=0, cigar="4M1D2M2N", attrs={"MD": "4^T2", "NM": 1}
     )
 
-    generated_result = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
 
-    expected_md: str = str(rec.get_tag("MD"))
-    expected_nm: int = int(rec.get_tag("NM"))
-    assert expected_md.upper() == generated_result.md
-    assert expected_nm == generated_result.nm
+    assert info.md == str(rec.get_tag("MD")).upper()
+    assert info.nm == int(rec.get_tag("NM"))
 
 
 def test_calc_edit_info_with_deletion_out_of_bounds() -> None:

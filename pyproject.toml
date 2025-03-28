@@ -1,70 +1,79 @@
-[tool.poetry]
+[project]
 name = "fgpyo"
 version = "1.1.0"
 description = "Python bioinformatics and genomics library"
-authors = ["Nils Homer", "Tim Fennell", "Nathan Roach"]
-license = "MIT"
+authors = [
+    { name = "Nils Homer" },
+    { name = "Tim Fennell" },
+    { name = "Nathan Roach" },
+]
+requires-python = ">=3.9.0,<4.0"
 readme = "README.md"
-homepage = "https://github.com/fulcrumgenomics/fgpyo"
-repository = "https://github.com/fulcrumgenomics/fgpyo"
+license = "MIT"
 keywords = ["bioinformatics"]
 classifiers = [
-	"Development Status :: 5 - Production/Stable",
-	"Environment :: Console",
-	"Intended Audience :: Developers",
-	"Intended Audience :: Science/Research",
-	"License :: OSI Approved :: MIT License",
-	"Natural Language :: English",
-	"Operating System :: OS Independent",
-	"Programming Language :: Python :: 3",
-	"Programming Language :: Python :: 3.9",
-	"Programming Language :: Python :: 3.10",
-	"Programming Language :: Python :: 3.11",
-	"Programming Language :: Python :: 3.12",
-	"Programming Language :: Python :: 3.13",
-	"Topic :: Scientific/Engineering :: Bio-Informatics",
-	"Topic :: Software Development :: Documentation",
-	"Topic :: Software Development :: Libraries :: Python Modules",
-	"Typing :: Typed",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
-include = ["LICENSE"]
+dependencies = [
+    "attrs>=19.3.0",
+    "pysam>=0.22.1",
+    "typing_extensions>=4.12.2 ; python_version < '3.13'",
+    "strenum>=0.4.15,<0.5",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9.0,<4.0"
-attrs = ">=19.3.0"
-pysam = ">=0.22.1"
-typing_extensions = { version = ">=4.12.2", python = "<3.13" }  # needed in 3.12 for @deprecated
-strenum = "^0.4.15"
+[project.urls]
+Homepage = "https://github.com/fulcrumgenomics/fgpyo"
+Repository = "https://github.com/fulcrumgenomics/fgpyo"
 
-[tool.poetry.group.dev.dependencies]
-# dependencies for linting, style checking, and unit testing
-mypy = ">=1.7.0"
-pytest = ">=7.4.0"
-pytest-cov = ">=2.8.1"
-ruff = "0.4.8"
-setuptools = ">=68.0.0"
+[dependency-groups]
+dev = [
+    "mypy>=1.7.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=2.8.1",
+    "ruff==0.4.8",
+    "setuptools>=68.0.0",
+]
+docs = [
+    "mkdocs-autorefs>=0.5.0",
+    "mkdocs-include-markdown-plugin>=6.0.1",
+    "mkdocs-material>=9.2.8",
+    "mkdocs-table-reader-plugin>=2.0.1",
+    "mkdocs>=1.5.2",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.1",
+    "mkdocs-section-index>=0.3.9",
+    "mkdocstrings-python>=1.6.2",
+    "mkdocstrings>=0.23.0",
+    "numpy>=1.26.4,<2 ; python_version >= '3.12'",
+    "numpy>=1.25.2,<2 ; python_version >= '3.9' and python_version < '3.12'",
+    "numpy>=1.24.4,<2 ; python_version < '3.9'",
+]
 
-[tool.poetry.group.docs.dependencies]
-# dependencies for building docs 
-mkdocs-autorefs = { version = ">=0.5.0" }
-mkdocs-include-markdown-plugin = { version = ">=6.0.1" }
-mkdocs-material = { version = ">=9.2.8" }
-mkdocs-table-reader-plugin = { version = ">=2.0.1" }
-mkdocs = { version = ">=1.5.2" }
-mkdocs-gen-files = { version = ">=0.5.0" }
-mkdocs-literate-nav = { version = ">=0.6.1" }
-mkdocs-section-index = { version = ">=0.3.9" }
-mkdocstrings-python = { version = ">=1.6.2" }
-mkdocstrings = { version = ">=0.23.0" }
-numpy = [
-  {version = "^1.26.4", python = ">=3.12"},
-  {version = "^1.25.2", python = ">=3.9,<3.12"},
-  {version = "^1.24.4", python = "<3.9"}
+[tool.uv]
+default-groups = [
+    "dev",
+    "docs",
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length    = 100

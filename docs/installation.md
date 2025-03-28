@@ -1,19 +1,23 @@
 # Installation
 
-[Poetry](https://github.com/python-poetry/poetry) is used to manage the
-python development environment.
+[`uv`][uv-link] is used to manage the python development environment; [installation instructions for `uv` are here][uv-install-link].
 
-A simple way to create an environment with the desired version of python
-and poetry is to use
-[conda](https://docs.conda.io/en/latest/miniconda.html). E.g.:
+A simple way to create an environment with the desired version of `python` and `uv` is to use a virtual environment.  E.g.:
 
-    conda create -n fgpyo python=3.6 poetry
-    conda activate fgpyo
-    poetry install
+```console
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+# --group is required to install `mkdocs` and associated dependencies,
+# which are required for development
+uv pip install --group dev --group docs
+```
 
-If, during `poetry install` on Mac OS X errors are
+[uv-link]:         https://docs.astral.sh/uv/
+[uv-install-link]: https://docs.astral.sh/uv/getting-started/installation/
+
+If, during `uv pip install` on Mac OS X errors are
 encountered running gcc/clang to build `pybedtools` or other
 packages with native code, try setting the following and re-running
-\`poetry install\`:
+\`uv pip install\`:
 
     export CFLAGS="-stdlib=libc++"

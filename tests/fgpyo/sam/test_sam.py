@@ -818,18 +818,21 @@ def test_calc_edit_info_with_deletion_out_of_bounds() -> None:
 
 def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     """Assert expected behavior for matches that extends out of bounds of the read."""
-    chrom = "AGTCCGTTAGC"
+    chrom = "AGTCCGTTA"
     builder = SamBuilder(r1_len=4)
     rec = builder.add_single(bases="TTAG", chrom="chr1", start=0, cigar="6D4M")
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    # Offset Ref: AGTCCGTTA
+    #             xxxxxx|||.
+    #      Query: ------TTAG
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
     assert info.deletions == 1
     assert info.deleted_bases == 6
     assert info.nm == 6  # mms + ins_bases + del_bases = 0 + 0 + 6
-    assert info.md == "0^AGTCCG4"  # 4 matches for TTAG, C is out of bounds
+    assert info.md == "0^AGTCCG3"  # 3 matches for TTA, G is out of bounds
 
 
 def test_set_mate_info_raises_not_opposite_read_ordinals() -> None:

@@ -180,8 +180,16 @@ from pysam import AlignedSegment
 from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 from pysam import qualitystring_to_array
-from typing_extensions import Self
-from typing_extensions import deprecated
+
+if sys.version_info[:2] > (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+
+if sys.version_info[:2] > (3, 12):
+    from warnings import deprecated
+else:
+    from typing_extensions import deprecated
 
 import fgpyo.io
 from fgpyo.collections import PeekableIterator

@@ -33,7 +33,7 @@ include = ["LICENSE"]
 python = ">=3.9.0,<4.0"
 attrs = ">=19.3.0"
 pysam = ">=0.22.1"
-typing_extensions = { version = ">=4.12.2", python = "<3.12" }
+typing_extensions = { version = ">=4.12.2", python = "<3.13" }  # needed in 3.12 for @deprecated
 strenum = "^0.4.15"
 
 [tool.poetry.group.dev.dependencies]

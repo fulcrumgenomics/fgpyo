@@ -40,7 +40,7 @@ if [ ! -f ".venv/bin/activate" ]; then
     exit 1
 fi
 if [ "${VIRTUAL_ENV}" == "" ]; then
-    banner "Virtual environment has not been activated.\nPlease use \`source .venv/bin/activate\` to activate .it "
+    banner "Virtual environment has not been activated.\nPlease use \`source .venv/bin/activate\` to activate it."
     exit 1
 fi
 

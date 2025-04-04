@@ -49,7 +49,7 @@ To re-generate a code coverage report after testing locally, run:
 uv run coverage html
 ```
 
-To check the lock file is up to date:
+To check the lock file is up-to-date:
 
 ```console
 uv lock --check

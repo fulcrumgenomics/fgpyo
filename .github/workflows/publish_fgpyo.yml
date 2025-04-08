@@ -4,9 +4,6 @@ on:
   push:
     tags: '[0-9]+.[0-9]+.[0-9]+'
 
-env:
-  POETRY_VERSION: 1.8.2
-
 jobs:
   on-main-branch-check:
     runs-on: ubuntu-24.04
@@ -54,21 +51,11 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{env.POETRY_VERSION}}
-          installer-parallel: true
-          virtualenvs-in-project: true
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --without=dev
-
-      - name: Install project
-        run: poetry install --no-interaction --without=dev
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Build package
-        run: poetry build --format=sdist
+        run: uv build --sdist -out-dir dist
 
       - uses: actions/upload-artifact@v4
         with:

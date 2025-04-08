@@ -2,75 +2,73 @@
 
 ## Installation for Local Development
 
-[Poetry][poetry-link] is used to manage the python development environment. 
+[`uv`][uv-link] is used to manage the python development environment; [installation instructions for `uv` are here][uv-install-link].
 
-A simple way to create an environment with the desired version of python and poetry is to use [conda][conda-link].  E.g.:
+A simple way to create an environment with the desired version of `python` and `uv` is to use a virtual environment.  E.g.:
 
-```bash
-conda create -n fgpyo -c conda-forge "python>=3.9" poetry
-conda activate fgpyo
-
-# --all-extras is required to install `mkdocs` and associated dependencies,
-# which are required for development 
-poetry install --all-extras
+```console
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+# `--group docs` is required to install `mkdocs` and associated dependencies
+# `--group dev` is required to install test and build dependencies
+uv pip install --group dev --group docs
 ```
 
-[rtd-link]:    http://fgpyo.readthedocs.org/en/stable
-[poetry-link]: https://github.com/python-poetry/poetry
-[conda-link]:  https://github.com/mamba-org/mamba
+[uv-link]:         https://docs.astral.sh/uv/
+[uv-install-link]: https://docs.astral.sh/uv/getting-started/installation/
 
 ## Primary Development Commands
 
 To check and resolve linting issues in the codebase, run:
 
 ```console
-poetry run ruff check --fix fgpyo tests
+uv run ruff check --fix fgpyo tests
 ```
 
 To check and resolve formatting issues in the codebase, run:
 
 ```console
-poetry run ruff format fgpyo tests
+uv run ruff format fgpyo tests
 ```
 
 To check the unit tests in the codebase, run:
 
 ```console
-poetry run pytest --cov=fgpyo --cov-report=html --cov-branch
+uv run pytest --cov=fgpyo --cov-report=html --cov-branch
 ```
 
 To check the typing in the codebase, run:
 
 ```console
-poetry run mypy fgpyo tests
+uv run mypy fgpyo tests --config=pyproject.toml
 ```
 
 To re-generate a code coverage report after testing locally, run:
 
 ```console
-poetry run coverage html
+uv run coverage html
 ```
 
-To check the lock file is up to date:
+To check the lock file is up-to-date:
 
 ```console
-poetry check --lock
+uv lock --check
 ```
-
 
 ## Building the Documentation
 
 Use `mkdocs` to build and serve the documentation.
 
 ```console
-poetry run mkdocs build && poetry run mkdocs serve
+uv run mkdocs build --strict
+uv run mkdocs serve --watch docs
 ```
 
 ## Creating a Release on PyPI
 
 1. Clone the repository recursively and ensure you are on the `main` (un-dirty) branch
 2. Checkout a new branch to prepare the library for release
-3. Bump the version of the library to the desired SemVer with `poetry version #.#.#`
+3. Bump the version of the library to the desired SemVer (in the `pyproject.toml`)
 4. Commit the version bump changes with a Git commit message like `chore(release): bump to #.#.#`
 5. Push the commit to the upstream remote, open a PR, ensure tests pass, and seek reviews
 6. Squash merge the PR

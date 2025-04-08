@@ -5,8 +5,7 @@ build:
     python: "3.11"
   jobs:
     post_install:
-      - pip install poetry==1.8.3
-      - poetry config virtualenvs.create false
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install
+      - pip install uv==0.6.10
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH uv pip install --group docs .
 mkdocs:
   configuration: mkdocs.yml

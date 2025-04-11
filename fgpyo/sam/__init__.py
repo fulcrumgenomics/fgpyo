@@ -1046,31 +1046,42 @@ class ReadEditInfo:
 def calculate_edit_info(  # noqa: C901 (11 > 10)
     rec: AlignedSegment,
     reference_sequence: str,
-    n_as_match: bool,
+    n_as_match: bool = True,
     reference_offset: Optional[int] = None,
-) -> ReadEditInfo:
+) -> ReadEditInfo | None:
     """
     Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
     reference.  Computes the number of mismatches, indels, indel bases as well as the
     SAM NM and MD tags.
 
-    The read must be aligned.
+    Calculation of NM and MD tags is based off of htsjdk:
+    https://github.com/samtools/htsjdk/blob/7034b33636b4cb9fec300a2136588e7c12c7ccd5/src/main/java/htsjdk/samtools/util/SequenceUtil.java#L964:L1029
+
+    Per the SAM specification (https://samtools.github.io/hts-specs/SAMtags.pdf), the NM tag
+    encapsulates the number of differences between the query read and reference sequence, counting
+    only A, C, G and T bases (case-insensitive). Everything else should be considered a mismatch
+    (e.g., ambiguity codes like R and N). We set the default of `n_as_match` to True to be
+    concordant with `htsjdk`, which treats an N->N as a match.
+
+    If the read is unmapped or the query sequence contains missing bases (`*`), returns None, as it
+    is not possible to recalculate the MD and NM tags without access to the query sequence and
+    reference sequence.
 
     Args:
         rec: the read/record for which to calculate values
         reference_sequence: the reference sequence (or fragment thereof) to which the read is
             aligned
         n_as_match: if True, mirror htsjdk `calculateMdAndNmTags` and treat N->N as a match. If
-            False, N->N is treated as a mismatch.
+            False, N->N is treated as a mismatch. (default: True)
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
             first base aligned to in reference_sequence, otherwise use r.reference_start
 
     Returns:
         a ReadEditInfo with information about how the read differs from the reference
     """
-    assert (
-        not rec.is_unmapped and rec.query_sequence != NO_QUERY_BASES
-    ), f"Cannot calculate edit info for unmapped and/or empty read: {rec}"
+    if rec.is_unmapped or rec.query_sequence is None or rec.query_sequence == NO_QUERY_BASES:
+        return None
+
     query_offset: int = 0
     target_offset: int = reference_offset if reference_offset is not None else rec.reference_start
     cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
@@ -1084,7 +1095,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
         # TODO: use match-case statements after we drop Python 3.9 support
         if op == CigarOp.N:  # skipped region from ref, consumes ref
             target_offset += elem.length
-        elif op in [CigarOp.I, CigarOp.S]:  # consumes query
+        elif op in (CigarOp.I, CigarOp.S):  # consumes query
             query_offset += elem.length
             if op == CigarOp.I:
                 insertions += 1
@@ -1098,7 +1109,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
             current_match_count = 0
             md_edits.append(f"^{reference_sequence[target_offset:target_offset + elem.length]}")
             target_offset += elem.length
-        elif op in [CigarOp.M, CigarOp.X, CigarOp.EQ]:
+        elif op in (CigarOp.M, CigarOp.X, CigarOp.EQ):
             for in_block_offset in range(0, elem.length):
                 if (target_offset + in_block_offset) >= len(reference_sequence):
                     break  # out of bounds
@@ -1113,9 +1124,10 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
                 else:  # match
                     matches += 1
                     current_match_count += 1
-
             query_offset += elem.length_on_query
             target_offset += elem.length_on_target
+        elif op not in (CigarOp.H, CigarOp.P):  # if we come across an unexpected CIGAR operation
+            raise ValueError(f"Invalid CIGAR operation: {op}")
 
     md_edits.append(str(current_match_count))
 

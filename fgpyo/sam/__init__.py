@@ -1048,7 +1048,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     reference_sequence: str,
     n_as_match: bool = True,
     reference_offset: Optional[int] = None,
-) -> ReadEditInfo | None:
+) -> Optional[ReadEditInfo]:
     """
     Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
     reference.  Computes the number of mismatches, indels, indel bases as well as the

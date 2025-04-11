@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile as NamedTemp
 from typing import Any
 from typing import Generator
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -833,6 +834,17 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     assert info.deleted_bases == 6
     assert info.nm == 6  # mms + ins_bases + del_bases = 0 + 0 + 6
     assert info.md == "0^AGTCCG3"  # 3 matches for TTA, G is out of bounds
+
+
+@pytest.mark.parametrize("query_sequence", [None, "*"])
+def test_calc_edit_info_with_missing_query_bases(query_sequence: Optional[str]) -> None:
+    """Assert expected behavior for a read that has missing query bases."""
+    chrom = "AGTCCGTTA"
+    builder = SamBuilder(r1_len=10)
+    rec = builder.add_single(chrom="chr1", start=0)
+    rec.query_sequence = query_sequence  # set those bases to `None` or missing (`*`)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    assert info is None
 
 
 def test_set_mate_info_raises_not_opposite_read_ordinals() -> None:

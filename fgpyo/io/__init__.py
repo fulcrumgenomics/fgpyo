@@ -251,12 +251,12 @@ def redirect_to_dev_null(file_num: int) -> Generator[None, None, None]:
     # save old file descriptor and redirect stderr to /dev/null
     save_stderr = os.dup(file_num)
     os.dup2(f_devnull, file_num)
-
-    yield
-
-    # restore file descriptor and close devnull
-    os.dup2(save_stderr, file_num)
-    os.close(f_devnull)
+    try:
+        yield
+    finally:
+        # _always_ restore file descriptor and close devnull
+        os.dup2(save_stderr, file_num)
+        os.close(f_devnull)
 
 
 @contextmanager

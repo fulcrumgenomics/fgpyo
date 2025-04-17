@@ -159,7 +159,7 @@ def list_parser(
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
     """
-    Returns a function that parses a stringified list into a `List` of the correct type.
+    Returns a function that parses a "stringified" list into a `List` of the correct type.
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for

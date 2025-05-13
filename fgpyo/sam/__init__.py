@@ -1046,7 +1046,7 @@ class ReadEditInfo:
 def calculate_edit_info(  # noqa: C901 (11 > 10)
     rec: AlignedSegment,
     reference_sequence: str,
-    n_as_match: bool = True,
+    n_as_match: bool = False,
     reference_offset: Optional[int] = None,
 ) -> Optional[ReadEditInfo]:
     """
@@ -1060,12 +1060,15 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     Per the SAM specification (https://samtools.github.io/hts-specs/SAMtags.pdf), the NM tag
     encapsulates the number of differences between the query read and reference sequence, counting
     only A, C, G and T bases (case-insensitive). Everything else should be considered a mismatch
-    (e.g., ambiguity codes like R and N). We set the default of `n_as_match` to True to be
-    concordant with `htsjdk`, which treats an N->N as a match.
+    (e.g., ambiguity codes like R and N). We set the default of `n_as_match` to False to be
+    concordant with the SAM specification. Conversely, `htsjdk` treats an N->N as a match.
 
     If the read is unmapped or the query sequence contains missing bases (`*`), returns None, as it
     is not possible to recalculate the MD and NM tags without access to the query sequence and
     reference sequence.
+
+    The order of the CIGAR operator checks is for performance and modeled after htsjdk's
+    `calculateMdAndNmTags`.
 
     Args:
         rec: the read/record for which to calculate values
@@ -1087,46 +1090,52 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
 
     matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
-    ok_bases: set[str] = {"A", "C", "G", "T"}
+    ok_bases: set[str] = {"A", "C", "G", "T", "="}
     md_edits: list[str] = []
     current_match_count: int = 0
     for elem in cigar.elements:
         op = elem.operator
         # TODO: use match-case statements after we drop Python 3.9 support
-        if op == CigarOp.N:  # skipped region from ref, consumes ref
-            target_offset += elem.length
-        elif op in (CigarOp.I, CigarOp.S):  # consumes query
-            query_offset += elem.length
-            if op == CigarOp.I:
-                insertions += 1
-                ins_bases += elem.length
-        elif op == CigarOp.D:  # consumes ref
-            if target_offset + elem.length >= len(reference_sequence):
-                break  # out of bounds
-            deletions += 1
-            del_bases += elem.length
-            md_edits.append(str(current_match_count))  # append match count and reset
-            current_match_count = 0
-            md_edits.append(f"^{reference_sequence[target_offset:target_offset + elem.length]}")
-            target_offset += elem.length
-        elif op in (CigarOp.M, CigarOp.X, CigarOp.EQ):
+        if op in (CigarOp.M, CigarOp.X, CigarOp.EQ):
             for in_block_offset in range(0, elem.length):
                 if (target_offset + in_block_offset) >= len(reference_sequence):
                     break  # out of bounds
                 query_base: str = rec.query_sequence[query_offset + in_block_offset].upper()
                 ref_base: str = reference_sequence[target_offset + in_block_offset].upper()
 
-                if query_base != ref_base or (query_base not in ok_bases and not n_as_match):
-                    mms += 1
-                    md_edits.append(str(current_match_count))
+                if (query_base != ref_base and query_base != "=") or (
+                    query_base not in ok_bases and not n_as_match
+                ):
+                    md_edits.append(str(current_match_count))  # append match count and reset
                     current_match_count = 0
                     md_edits.append(ref_base)  # grab mismatched base from the reference
+                    mms += 1
                 else:  # match
                     matches += 1
                     current_match_count += 1
             query_offset += elem.length_on_query
             target_offset += elem.length_on_target
-        elif op not in (CigarOp.H, CigarOp.P):  # if we come across an unexpected CIGAR operation
+        elif op == CigarOp.D:  # consumes ref
+            md_edits.append(str(current_match_count))  # append match count and reset
+            md_edits.append("^")
+            for in_block_offset in range(0, elem.length):
+                if (target_offset + in_block_offset) >= len(reference_sequence):
+                    break  # out of bounds
+            md_edits.append(f"{reference_sequence[target_offset:target_offset + elem.length]}")
+            current_match_count = 0
+            if target_offset < elem.length:
+                break
+            target_offset += elem.length
+            deletions += 1
+            del_bases += elem.length
+        elif op in (CigarOp.I, CigarOp.S):  # consumes query
+            query_offset += elem.length
+            if op == CigarOp.I:
+                insertions += 1
+                ins_bases += elem.length
+        elif op == CigarOp.N:  # skipped region from ref, consumes ref
+            target_offset += elem.length
+        elif op not in (CigarOp.H, CigarOp.P):  # pragma: no cover
             raise ValueError(f"Invalid CIGAR operation: {op}")
 
     md_edits.append(str(current_match_count))

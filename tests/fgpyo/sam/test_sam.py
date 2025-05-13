@@ -787,12 +787,43 @@ def test_calc_edit_info_with_soft_clip_at_end(n_as_match: bool) -> None:
     assert info.nm == int(rec.get_tag("NM"))
 
 
-def test_calc_edit_info_with_skipped_region() -> None:
-    """Assert expected behavior for skipped regions in CIGAR."""
+@pytest.mark.parametrize("cigar", ["4M1D2M2N", "4M1D2M2H", "4M1D2M2P"])
+def test_calc_edit_info_with_ignored_operations(cigar: str) -> None:
+    """Assert expected behavior for skipped, padded, and hard-clipped regions in CIGAR."""
     chrom = "TCGATCGAtcgatcga"
     builder = SamBuilder(r1_len=8)
     rec = builder.add_single(
-        bases="TCGACG", chrom="chr2", start=0, cigar="4M1D2M2N", attrs={"MD": "4^T2", "NM": 1}
+        bases="TCGACG", chrom="chr2", start=0, cigar=cigar, attrs={"MD": "4^T2", "NM": 1}
+    )
+
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+
+    assert info.md == str(rec.get_tag("MD")).upper()
+    assert info.nm == int(rec.get_tag("NM"))
+
+
+def test_calc_edit_info_with_equals_in_query() -> None:
+    """Assert that we treat `=` in query as a match always, regardless of reference."""
+    chrom = "TCgAtCgatcgatcga"
+    builder = SamBuilder(r1_len=8)
+    rec = builder.add_single(
+        bases="TC=A=C==", chrom="chr2", start=0, cigar="8M", attrs={"MD": "8", "NM": 0}
+    )
+
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+
+    assert info.md == str(rec.get_tag("MD")).upper()
+    assert info.nm == int(rec.get_tag("NM"))
+
+
+def test_calc_edit_info_all_matches() -> None:
+    """Assert that a simple read with all consecutive matches yields expected results.
+
+    Read 4 from `htsjdk` testing data."""
+    chrom = "TCGATCGAtcgatcga"
+    builder = SamBuilder(r1_len=8)
+    rec = builder.add_single(
+        bases="TCGATCGA", chrom="chr2", start=0, cigar="8M", attrs={"MD": "8", "NM": 0}
     )
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
@@ -811,10 +842,10 @@ def test_calc_edit_info_with_deletion_out_of_bounds() -> None:
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
-    assert info.deletions == 0
-    assert info.deleted_bases == 0
-    assert info.nm == 0
-    assert info.md == "6"
+    assert info.deletions == 1
+    assert info.deleted_bases == 4
+    assert info.nm == 4
+    assert info.md == "6^TTAG0"
 
 
 def test_calc_edit_info_with_matches_out_of_bounds() -> None:
@@ -830,10 +861,10 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
-    assert info.deletions == 1
-    assert info.deleted_bases == 6
-    assert info.nm == 6  # mms + ins_bases + del_bases = 0 + 0 + 6
-    assert info.md == "0^AGTCCG3"  # 3 matches for TTA, G is out of bounds
+    assert info.deletions == 0
+    assert info.deleted_bases == 0
+    assert info.nm == 0
+    assert info.md == "0^AGTCCG0"  # report AGTCCG deletion, 3 matches are out of bounds
 
 
 @pytest.mark.parametrize("query_sequence", [None, "*"])

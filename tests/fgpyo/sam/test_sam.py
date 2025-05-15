@@ -648,11 +648,41 @@ def test_sum_of_base_qualities_unmapped(tmp_path: Path) -> None:
     assert sum_of_base_qualities(record) == 0
 
 
+@pytest.mark.parametrize(
+    "match_htsjdk, query_base, ref_base, expected_result",
+    [
+        # match_htsjdk is True, where N->N should be considered a match
+        (True, "A", "A", True),  # true match: A matches A
+        (True, "=", "A", True),  # true match: = is considered a match for any base
+        (True, "A", "C", False),  # true mismatch: A does not match C
+        (True, "R", "N", False),  # true mismatch (ambiguous bases): R does not match N
+        (True, "N", "N", True),  # elected match: N matches N
+        # match_htsjdk is False, where N->N is not considered a match
+        (False, "A", "A", True),  # true match: A matches A
+        (False, "=", "N", True),  # true match: = is considered a match for any base (including N)
+        (False, "A", "C", False),  # true mismatch: A does not match C
+        (False, "R", "N", False),  # true mismatch (ambiguous bases): R does not match N
+        (False, "N", "N", False),  # elected mismatch: N does not match N
+    ],
+)
+def test_calc_edit_info_is_match(
+    match_htsjdk: bool,
+    query_base: str,
+    ref_base: str,
+    expected_result: bool,
+) -> None:
+    """A tiny unit-test to make sure `is_match` is working as expected in `calculate_edit_info`."""
+    generated_result: bool = sam._is_match_base(
+        query_base=query_base, ref_base=ref_base, match_htsjdk=match_htsjdk
+    )
+    assert expected_result == generated_result
+
+
 def test_calc_edit_info_no_edits() -> None:
     chrom = "ACGCTAGACTGCTAGCAGCATCTCATAGCACTTCGCGCTATAGCGATATAAATATCGCGATCTAGCG"
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     assert info.mismatches == 0
     assert info.nm == 0
     assert info.md == "30"
@@ -663,7 +693,7 @@ def test_calc_edit_info_no_edits_with_zero_offset() -> None:
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
     info = sam.calculate_edit_info(
-        rec=rec, reference_sequence=chrom[10:40], reference_offset=0, n_as_match=False
+        rec=rec, reference_sequence=chrom[10:40], reference_offset=0, match_htsjdk=False
     )
     assert info.mismatches == 0
     assert info.nm == 0
@@ -680,7 +710,7 @@ def test_calc_edit_info_edits_with_nonzero_offset() -> None:
     builder = SamBuilder(r1_len=10)
     rec = builder.add_single(bases="ACGCAGTCTA", chrom="chr1", start=0, cigar="10M")
     info = sam.calculate_edit_info(
-        rec=rec, reference_sequence=chrom, reference_offset=4, n_as_match=False
+        rec=rec, reference_sequence=chrom, reference_offset=4, match_htsjdk=False
     )
     # Offset Ref: AGTCTATCTA
     #             |xx|xx||||
@@ -698,7 +728,7 @@ def test_calc_edit_info_with_mms_and_insertions() -> None:
         bases="AAAAACAAAAAAAAGGGAAAAAAAAAAAAA", chrom="chr1", start=10, cigar="14M3I13M"
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     assert info.mismatches == 1
     assert info.insertions == 1
     assert info.inserted_bases == 3
@@ -715,7 +745,7 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
         bases="NNNNACGTGTACGTACGTACGTACGTACGT", chrom="chr1", start=8, cigar="4S4M2D22M"
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
@@ -725,8 +755,8 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
     assert info.md == "4^AC22"
 
 
-@pytest.mark.parametrize("n_as_match", [True, False])
-def test_calc_edit_info_with_aligned_Ns(n_as_match: bool) -> None:
+@pytest.mark.parametrize("match_htsjdk", [True, False])
+def test_calc_edit_info_with_aligned_Ns(match_htsjdk: bool) -> None:
     """Ns in query match Ns in reference, but should be counted as mismatches for NM when
     n_as_match is set to `False`."""
     chrom = "ACGTNCGTACNTACGTACGTANNNACGTACACGTACGTACGTACGTACGTACGTACGTAT"
@@ -735,12 +765,12 @@ def test_calc_edit_info_with_aligned_Ns(n_as_match: bool) -> None:
         bases="ACGTNCGTACNTACGTACGTANNNACGTAC", chrom="chr1", start=0, cigar="30M"
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=n_as_match)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
     assert info.insertions == 0
     assert info.inserted_bases == 0
     assert info.deletions == 0
     assert info.deleted_bases == 0
-    if n_as_match:
+    if match_htsjdk:
         assert info.nm == 0
         assert info.mismatches == 0
         assert info.md == "30"
@@ -752,11 +782,11 @@ def test_calc_edit_info_with_aligned_Ns(n_as_match: bool) -> None:
         )  # expect all matches (numbers only) except where an N interrupts
 
 
-@pytest.mark.parametrize("n_as_match", [True, False])
-def test_calc_edit_info_with_consecutive_mismatches(n_as_match: bool) -> None:
+@pytest.mark.parametrize("match_htsjdk", [True, False])
+def test_calc_edit_info_with_consecutive_mismatches(match_htsjdk: bool) -> None:
     """`htsjdk` testing data with consecutive mismatches and no match to start.
 
-    `n_as_match` should have no effect."""
+    `match_htsjdk` should have no effect."""
     chrom = "TCGATCGAtcgatcga"
     builder = SamBuilder(r1_len=16)
     rec = builder.add_single(
@@ -767,21 +797,21 @@ def test_calc_edit_info_with_consecutive_mismatches(n_as_match: bool) -> None:
         attrs={"MD": "0T2A0T2A0t2a0t2a0", "NM": 8},
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=n_as_match)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
 
-@pytest.mark.parametrize("n_as_match", [True, False])
-def test_calc_edit_info_with_soft_clip_at_end(n_as_match: bool) -> None:
-    """`htsjdk` testing data with soft clips and deletions. `n_as_match` should have no effect."""
+@pytest.mark.parametrize("match_htsjdk", [True, False])
+def test_calc_edit_info_with_soft_clip_at_end(match_htsjdk: bool) -> None:
+    """`htsjdk` testing data with soft clips and deletions. `match_htsjdk` should have no effect."""
     chrom = "TCGATCGAtcgatcga"
     builder = SamBuilder(r1_len=8)
     rec = builder.add_single(
         bases="TCGACGAA", chrom="chr2", start=0, cigar="4M1D2M2S", attrs={"MD": "4^T2", "NM": 1}
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=n_as_match)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
 
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
@@ -796,7 +826,7 @@ def test_calc_edit_info_with_ignored_operations(cigar: str) -> None:
         bases="TCGACG", chrom="chr2", start=0, cigar=cigar, attrs={"MD": "4^T2", "NM": 1}
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
@@ -810,7 +840,7 @@ def test_calc_edit_info_with_equals_in_query() -> None:
         bases="TC=A=C==", chrom="chr2", start=0, cigar="8M", attrs={"MD": "8", "NM": 0}
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
@@ -826,7 +856,7 @@ def test_calc_edit_info_all_matches() -> None:
         bases="TCGATCGA", chrom="chr2", start=0, cigar="8M", attrs={"MD": "8", "NM": 0}
     )
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
@@ -838,7 +868,7 @@ def test_calc_edit_info_with_deletion_out_of_bounds() -> None:
     builder = SamBuilder(r1_len=5)
     rec = builder.add_single(bases="AGTCCG", chrom="chr1", start=0, cigar="6M4D")
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
@@ -854,7 +884,7 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     builder = SamBuilder(r1_len=4)
     rec = builder.add_single(bases="TTAG", chrom="chr1", start=0, cigar="6D4M")
 
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     # Offset Ref: AGTCCGTTA
     #             xxxxxx|||.
     #      Query: ------TTAG
@@ -874,7 +904,7 @@ def test_calc_edit_info_with_missing_query_bases(query_sequence: Optional[str]) 
     builder = SamBuilder(r1_len=10)
     rec = builder.add_single(chrom="chr1", start=0)
     rec.query_sequence = query_sequence  # set those bases to `None` or missing (`*`)
-    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, n_as_match=False)
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     assert info is None
 
 

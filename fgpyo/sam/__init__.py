@@ -207,6 +207,9 @@ NO_QUERY_BASES: str = "*"
 NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
 """The quality array corresponding to an unavailable query quality string ("*")."""
 
+OK_BASES: set[str] = {"A", "C", "G", "T", "="}
+"""The non-ambiguous bases we expect to encounter in a SAM record."""
+
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
@@ -1043,10 +1046,22 @@ class ReadEditInfo:
     md: str
 
 
+def _is_match_base(query_base: str, ref_base: str, match_htsjdk: bool) -> bool:
+    """Returns whether a query base matches the reference base based on match_htsjdk flag."""
+    if match_htsjdk:
+        # `htsjdk` implementation: treats N->N as a match
+        is_match: bool = query_base == ref_base or query_base == "="
+    else:
+        # SAM spec: N->N is not a match
+        is_match = query_base == "=" or (query_base == ref_base and query_base in OK_BASES)
+
+    return is_match
+
+
 def calculate_edit_info(  # noqa: C901 (11 > 10)
     rec: AlignedSegment,
     reference_sequence: str,
-    n_as_match: bool = False,
+    match_htsjdk: bool = False,
     reference_offset: Optional[int] = None,
 ) -> Optional[ReadEditInfo]:
     """
@@ -1074,8 +1089,10 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
         rec: the read/record for which to calculate values
         reference_sequence: the reference sequence (or fragment thereof) to which the read is
             aligned
-        n_as_match: if True, mirror htsjdk `calculateMdAndNmTags` and treat N->N as a match. If
-            False, N->N is treated as a mismatch. (default: True)
+        match_htsjdk: if True, mirror htsjdk `calculateMdAndNmTags` -- only match is the bases are
+            equal, including ambiguity codes (e.g., R->R is counted as a match, but R->A is not a
+            match). If False, follow SAM spec (everything else should be considered a mismatch,
+            including ambiguity codes like R and N).
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
             first base aligned to in reference_sequence, otherwise use r.reference_start
 
@@ -1090,7 +1107,6 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
 
     matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
-    ok_bases: set[str] = {"A", "C", "G", "T", "="}
     md_edits: list[str] = []
     current_match_count: int = 0
     for elem in cigar.elements:
@@ -1102,17 +1118,18 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
                     break  # out of bounds
                 query_base: str = rec.query_sequence[query_offset + in_block_offset].upper()
                 ref_base: str = reference_sequence[target_offset + in_block_offset].upper()
+                is_match = _is_match_base(
+                    query_base=query_base, ref_base=ref_base, match_htsjdk=match_htsjdk
+                )
 
-                if (query_base != ref_base and query_base != "=") or (
-                    query_base not in ok_bases and not n_as_match
-                ):
+                if is_match:
+                    matches += 1
+                    current_match_count += 1
+                else:  # mismatch
                     md_edits.append(str(current_match_count))  # append match count and reset
                     current_match_count = 0
                     md_edits.append(ref_base)  # grab mismatched base from the reference
                     mms += 1
-                else:  # match
-                    matches += 1
-                    current_match_count += 1
             query_offset += elem.length_on_query
             target_offset += elem.length_on_target
         elif op == CigarOp.D:  # consumes ref

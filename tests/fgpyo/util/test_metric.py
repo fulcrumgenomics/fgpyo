@@ -11,7 +11,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Type
@@ -93,10 +92,10 @@ class DataBuilder:
             str_value: str
             bool_val: bool
             enum_val: EnumTest
-            optional_str_value: Optional[str]
-            optional_int_value: Optional[int]
-            optional_bool_value: Optional[bool]
-            optional_enum_value: Optional[EnumTest]
+            optional_str_value: str | None
+            optional_int_value: int | None
+            optional_bool_value: bool | None
+            optional_enum_value: EnumTest | None
             dict_value: Dict[int, str]
             tuple_value: Tuple[int, str]
             list_value: List[str]
@@ -110,8 +109,8 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class Person(Metric["Person"]):
-            name: Optional[str]
-            age: Optional[int]
+            name: str | None
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class Name:
@@ -147,7 +146,7 @@ class DataBuilder:
         @make_dataclass(use_attr=use_attr)
         class PersonMaybeAge(Metric["PersonMaybeAge"]):
             name: str
-            age: Optional[int]
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class PersonDefault(Metric["PersonDefault"]):
@@ -156,13 +155,13 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class PersonAgeFloat(Metric["PersonAgeFloat"]):
-            name: Optional[str]
-            age: Optional[float]
+            name: str | None
+            age: float | None
 
         @make_dataclass(use_attr=use_attr)
         class ListPerson(Metric["ListPerson"]):
-            name: List[Optional[str]]
-            age: List[Optional[int]]
+            name: List[str | None]
+            age: List[int | None]
 
         self.DummyMetric = DummyMetric
         self.Person = Person

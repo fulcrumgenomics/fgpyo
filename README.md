@@ -11,6 +11,7 @@
 [![Python package][python-package-badge]][python-package-link]
 [![PyPI version][pypi-badge]][pypi-link]
 [![PyPI download total][pypi-downloads-badge]][pypi-downloads-link]
+[![Bioconda][bioconda-badge]][bioconda-link]
 [![DOI][zenodo-badge]][zenodo-link]
 
 ---
@@ -32,8 +33,11 @@
 [pypi-link]:            https://pypi.python.org/pypi/fgpyo
 [pypi-downloads-badge]: https://img.shields.io/pypi/dm/fgpyo
 [pypi-downloads-link]:  https://pypi.python.org/pypi/fgpyo
+[bioconda-badge]:       https://img.shields.io/conda/dn/bioconda/fgpyo.svg?label=Bioconda
+[bioconda-link]:        http://bioconda.github.io/recipes/fgpyo/README.html
 [zenodo-badge]:         https://zenodo.org/badge/431553243.svg
 [zenodo-link]:          https://doi.org/10.5281/zenodo.10694617
+
 # fgpyo
 
 Quality of life improvements for Bioinformatics in Python.

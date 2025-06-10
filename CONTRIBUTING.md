@@ -2,7 +2,7 @@
 
 ## Installation for Local Development
 
-[`uv`][uv-link] is used to manage the python development environment.
+[`uv`][uv-link] is used to manage the Python development environment.
 Follow Astral's [instructions to install `uv`][uv-install-link].
 
 After installing `uv`, create the development environment:

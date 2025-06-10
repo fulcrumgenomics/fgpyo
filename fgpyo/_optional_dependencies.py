@@ -1,9 +1,18 @@
-try:
-    import pysam  # noqa: F401
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pysam
 
     HAS_PYSAM = True
-except ImportError:
-    HAS_PYSAM = False
+
+else:
+    try:
+        import pysam  # noqa: F401
+
+        HAS_PYSAM = True
+    except ImportError:
+        HAS_PYSAM = False
+        pysam = None
 
 
 def require_pysam() -> None:

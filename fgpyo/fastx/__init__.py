@@ -28,7 +28,6 @@ the state of all previously iterated records, set the parameter ``persist`` to `
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import Optional
 from typing import Set
@@ -36,16 +35,8 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-from fgpyo._optional_dependencies import HAS_PYSAM
+from fgpyo._optional_dependencies import pysam
 from fgpyo._optional_dependencies import require_pysam
-
-if TYPE_CHECKING:
-    import pysam
-else:
-    if HAS_PYSAM:
-        import pysam
-    else:
-        pysam = None
 
 
 class FastxZipped(AbstractContextManager, Iterator[Tuple[pysam.FastxRecord, ...]]):

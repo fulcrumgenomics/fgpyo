@@ -35,6 +35,13 @@ function run() {
     fi
 }
 
+# Require uv
+if [ ! -x "$(command -v uv)" ]; then
+    echo >&2 "Error: 'uv' not found."
+    echo >&2 "Install via https://docs.astral.sh/uv/getting-started/installation/"
+    exit 1
+fi
+
 run "Checking lockfile"    "uv lock --check"
 run "Updating environment" "uv sync --locked"
 run "Style Checking"       "uv run ruff format fgpyo tests"

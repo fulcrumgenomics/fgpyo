@@ -29,16 +29,25 @@ seq2: GGGG, seq2: TTTT
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
+from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import List
 from typing import Tuple
 from typing import Type
 
-from pysam import FastxFile
-from pysam import FastxRecord
+from fgpyo._optional_dependencies import HAS_PYSAM
+from fgpyo._optional_dependencies import require_pysam
+
+if TYPE_CHECKING:
+    import pysam
+else:
+    if HAS_PYSAM:
+        import pysam
+    else:
+        pysam = None
 
 
-class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
+class FastxZipped(AbstractContextManager, Iterator[Tuple[pysam.FastxRecord, ...]]):
     """A context manager that will lazily zip over any number of FASTA/FASTQ files.
 
     Args:
@@ -49,6 +58,8 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     def __init__(self, *paths: Path | str, persist: bool = False) -> None:
         """Instantiate a `FastxZipped` context manager and iterator."""
+        require_pysam()
+
         if len(paths) <= 0:
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
@@ -60,7 +71,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         """Return the name of the FASTX record minus its ordinal suffix (e.g. "/1" or "/2")."""
         return name[: len(name) - 2] if len(name) >= 2 and name[-2] == "/" else name
 
-    def __next__(self) -> Tuple[FastxRecord, ...]:
+    def __next__(self) -> Tuple[pysam.FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
         records = tuple(next(handle, None) for handle in self._fastx)
         if all(record is None for record in records):

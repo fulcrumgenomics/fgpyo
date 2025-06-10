@@ -35,11 +35,11 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-from pysam import FastxFile
-from pysam import FastxRecord
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 
 
-class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
+class FastxZipped(AbstractContextManager, Iterator[Tuple[pysam.FastxRecord, ...]]):
     """A context manager that will lazily zip over any number of FASTA/FASTQ files.
 
     Args:
@@ -50,18 +50,22 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     def __init__(self, *paths: Union[Path, str], persist: bool = False) -> None:
         """Instantiate a `FastxZipped` context manager and iterator."""
+        require_pysam()
+
         if len(paths) <= 0:
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
         self._paths: Tuple[Union[Path, str], ...] = paths
-        self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
+        self._fastx = tuple(
+            pysam.FastxFile(str(path), persist=self._persist) for path in self._paths
+        )
 
     @staticmethod
     def _name_minus_ordinal(name: str) -> str:
         """Return the name of the FASTX record minus its ordinal suffix (e.g. "/1" or "/2")."""
         return name[: len(name) - 2] if len(name) >= 2 and name[-2] == "/" else name
 
-    def __next__(self) -> Tuple[FastxRecord, ...]:
+    def __next__(self) -> Tuple[pysam.FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
         records = tuple(next(handle, None) for handle in self._fastx)
         if all(record is None for record in records):

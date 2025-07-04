@@ -215,7 +215,7 @@ class Metric(ABC, Generic[MetricType]):
         path: Path,
         ignore_extra_fields: bool = True,
         strip_whitespace: bool = False,
-        threads: int | None = None,
+        threads: Optional[Int] = None,
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -300,7 +300,7 @@ class Metric(ABC, Generic[MetricType]):
         return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
+    def write(cls, path: Path, *values: MetricType, threads: Optional[Int] = None) -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.
@@ -463,7 +463,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         include_fields: Optional[List[str]] = None,
         exclude_fields: Optional[List[str]] = None,
         lineterminator: str = "\n",
-        threads: int | None = None,
+        threads: Optional[Int] = None,
     ) -> None:
         """
         Args:

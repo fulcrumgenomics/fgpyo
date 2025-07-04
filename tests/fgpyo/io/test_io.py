@@ -102,7 +102,7 @@ def test_assert_path_is_writeable_raises_deprecation_warning(tmp_path: Path) -> 
         (".fa", io.TextIOWrapper, None),
     ],
 )
-def test_reader(suffix: str, expected: Any, threads: int | None) -> None:
+def test_reader(suffix: str, expected: Any, threads: Optional[Int]) -> None:
     """Tests fgpyo.io.to_reader"""
     with NamedTemporaryFile(suffix=suffix, mode="r", delete=True) as read_file:
         with fio.to_reader(path=Path(read_file.name), threads=threads) as reader:
@@ -117,7 +117,7 @@ def test_reader(suffix: str, expected: Any, threads: int | None) -> None:
         (".fa", io.TextIOWrapper, None),
     ],
 )
-def test_writer(suffix: str, expected: Any, threads: int | None) -> None:
+def test_writer(suffix: str, expected: Any, threads: Optional[Int]) -> None:
     """Tests fgpyo.io.to_writer()"""
     with NamedTemporaryFile(suffix=suffix, mode="w", delete=True) as write_file:
         with fio.to_writer(path=Path(write_file.name), threads=threads) as writer:
@@ -136,7 +136,7 @@ def test_writer(suffix: str, expected: Any, threads: int | None) -> None:
 def test_read_and_write_lines(
     suffix: str,
     list_to_write: List[Any],
-    threads: int | None,
+    threads: Optional[Int],
 ) -> None:
     """Test fgpyo.fio.read_lines and write_lines"""
     with NamedTemporaryFile(suffix=suffix, mode="w", delete=True) as read_file:

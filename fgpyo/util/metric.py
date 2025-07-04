@@ -211,7 +211,11 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def read(
-        cls, path: Path, ignore_extra_fields: bool = True, strip_whitespace: bool = False
+        cls,
+        path: Path,
+        ignore_extra_fields: bool = True,
+        strip_whitespace: bool = False,
+        threads: int | None = None,
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -225,9 +229,10 @@ class Metric(ABC, Generic[MetricType]):
             ignore_extra_fields: True to ignore any extra columns, False to raise an exception.
             strip_whitespace: True to strip leading and trailing whitespace from each field,
                                False to keep as-is.
+            threads: the number of threads to use when decompressing gzip files
         """
         parsers = cls._parsers()
-        with io.to_reader(path) as reader:
+        with io.to_reader(path, threads=threads) as reader:
             header: List[str] = reader.readline().rstrip("\r\n").split("\t")
             # check the header
             class_fields = set(cls.header())
@@ -295,7 +300,7 @@ class Metric(ABC, Generic[MetricType]):
         return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType) -> None:
+    def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.
@@ -303,9 +308,10 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: Path to the output file.
             values: Zero or more metrics.
+            threads: the number of threads to use when decompressing gzip files
 
         """
-        with MetricWriter[MetricType](path, metric_class=cls) as writer:
+        with MetricWriter[MetricType](path, metric_class=cls, threads=threads) as writer:
             writer.writeall(values)
 
     @classmethod
@@ -457,6 +463,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         include_fields: Optional[List[str]] = None,
         exclude_fields: Optional[List[str]] = None,
         lineterminator: str = "\n",
+        threads: int | None = None,
     ) -> None:
         """
         Args:
@@ -473,6 +480,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
                 May not be used together with `include_fields`.
             lineterminator: The string used to terminate lines produced by the MetricWriter.
                 Default = "\n".
+            threads: the number of threads to use when compressing gzip files
 
         Raises:
             TypeError: If the provided metric class is not a dataclass- or attr-decorated
@@ -510,7 +518,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
         self._metric_class = metric_class
         self._fieldnames = ordered_fieldnames
-        self._fout = io.to_writer(filepath, append=append)
+        self._fout = io.to_writer(filepath, append=append, threads=threads)
         self._writer = DictWriter(
             f=self._fout,
             fieldnames=self._fieldnames,

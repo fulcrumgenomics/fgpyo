@@ -53,6 +53,7 @@ from typing import Any
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
+from typing import Optional
 from typing import Set
 from typing import cast
 

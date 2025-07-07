@@ -308,7 +308,7 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: Path to the output file.
             values: Zero or more metrics.
-            threads: the number of threads to use when decompressing gzip files
+            threads: the number of threads to use when compressing gzip files
 
         """
         with MetricWriter[MetricType](path, metric_class=cls, threads=threads) as writer:

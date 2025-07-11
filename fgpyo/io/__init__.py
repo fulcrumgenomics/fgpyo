@@ -42,7 +42,6 @@ The functions in this module make it easy to:
 
 """
 
-import gzip
 import os
 import sys
 import warnings
@@ -54,8 +53,12 @@ from typing import Any
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
+from typing import Optional
 from typing import Set
 from typing import cast
+
+from zlib_ng import gzip_ng
+from zlib_ng import gzip_ng_threaded
 
 COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
 
@@ -135,7 +138,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
         assert path.is_file(), f"Cannot read path becasue it is not a file: {path}"
         assert os.access(path, os.W_OK), f"File exists but is not writable: {path}"
 
-    # Else if file doesnt exist and parent_must_exist is True then check
+    # Else if file doesn't exist and parent_must_exist is True then check
     # that path.absolute().parent exists, is a directory and is writable
     elif parent_must_exist:
         parent = path.absolute().parent
@@ -154,11 +157,12 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
             raise AssertionError(f"No parent directories exist for: {path}")
 
 
-def to_reader(path: Path) -> TextIOWrapper:
-    """Opens a Path for reading and based on extension uses open() or gzip.open()
+def to_reader(path: Path, threads: Optional[int] = None) -> TextIOWrapper:
+    """Opens a Path for reading and based on extension uses open() or gzip_ng.open()
 
     Args:
         path: Path to read from
+        threads: the number of threads to use when decompressing gzip files
 
     Example:
         >>> reader = fio.to_reader(path = Path("reader.txt"))
@@ -167,16 +171,22 @@ def to_reader(path: Path) -> TextIOWrapper:
 
     """
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
-        return TextIOWrapper(cast(IO[bytes], gzip.open(path, mode="rb")), encoding="utf-8")
+        if threads is None:
+            reader = gzip_ng.open(path, mode="rb")  # type: ignore[no-untyped-call]
+        else:
+            reader = gzip_ng_threaded.open(path, mode="rb", threads=threads)  # type: ignore[no-untyped-call]
+        return TextIOWrapper(cast(IO[bytes], reader), encoding="utf-8")
     else:
         return path.open(mode="r")
 
 
-def to_writer(path: Path, append: bool = False) -> TextIOWrapper:
-    """Opens a Path for writing (or appending) and based on extension uses open() or gzip.open()
+def to_writer(path: Path, append: bool = False, threads: Optional[int] = None) -> TextIOWrapper:
+    """Opens a Path for writing (or appending) and based on extension uses open() or gzip_ng.open()
 
     Args:
         path: Path to write (or append) to
+        append: open the file for appending
+        threads: the number of threads to use when compressing gzip files
 
     Example:
         >>> writer = fio.to_writer(path = Path("writer.txt"))
@@ -187,8 +197,13 @@ def to_writer(path: Path, append: bool = False) -> TextIOWrapper:
     mode_prefix: str = "a" if append else "w"
 
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
+        if threads is None:
+            reader = gzip_ng.open(path, mode=mode_prefix + "b")  # type: ignore[no-untyped-call]
+        else:
+            reader = gzip_ng_threaded.open(path, mode=mode_prefix + "b", threads=threads)  # type: ignore[no-untyped-call]
         return TextIOWrapper(
-            cast(IO[bytes], gzip.open(path, mode=mode_prefix + "b")), encoding="utf-8"
+            cast(IO[bytes], reader),
+            encoding="utf-8",
         )
     else:
         # NB: the `cast` here is necessary because `path.open()` may return
@@ -199,20 +214,21 @@ def to_writer(path: Path, append: bool = False) -> TextIOWrapper:
         return cast(TextIOWrapper, path.open(mode=mode_prefix))
 
 
-def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
+def read_lines(path: Path, strip: bool = False, threads: Optional[int] = None) -> Iterator[str]:
     """Takes a path and reads each line into a generator, removing line terminators
-    along the way. By default only line terminators (CR/LF) are stripped.  The `strip`
+    along the way. By default, only line terminators (CR/LF) are stripped.  The `strip`
     parameter may be used to strip both leading and trailing whitespace from each line.
 
     Args:
         path: Path to read from
         strip: True to strip lines of all leading and trailing whitespace,
             False to only remove trailing CR/LF characters.
+        threads: the number of threads to use when decompressing gzip files
 
     Example:
         read_back = fio.read_lines(path)
     """
-    with to_reader(path=path) as reader:
+    with to_reader(path=path, threads=threads) as reader:
         if strip:
             for line in reader:
                 yield line.strip()
@@ -221,19 +237,23 @@ def read_lines(path: Path, strip: bool = False) -> Iterator[str]:
                 yield line.rstrip("\r\n")
 
 
-def write_lines(path: Path, lines_to_write: Iterable[Any], append: bool = False) -> None:
+def write_lines(
+    path: Path, lines_to_write: Iterable[Any], append: bool = False, threads: Optional[int] = None
+) -> None:
     """Writes (or appends) a file with one line per item in provided iterable
 
     Args:
         path: Path to write (or append) to
         lines_to_write: items to write (or append) to file
+        append: open the file for appending
+        threads: the number of threads to use when compressing gzip files
 
     Example:
         lines: List[Any] = ["things to write", 100]
         path_to_write_to: Path = Path("file_to_write_to.txt")
         fio.write_lines(path = path_to_write_to, lines_to_write = lines)
     """
-    with to_writer(path=path, append=append) as writer:
+    with to_writer(path=path, append=append, threads=threads) as writer:
         for line in lines_to_write:
             writer.write(str(line))
             writer.write("\n")

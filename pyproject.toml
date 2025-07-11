@@ -35,6 +35,7 @@ dependencies = [
     "pysam>=0.22.1",
     "typing_extensions>=4.12.2 ; python_version < '3.13'",
     "strenum>=0.4.15,<0.5",
+    "zlib-ng>=0.5.1",
 ]
 
 [project.urls]

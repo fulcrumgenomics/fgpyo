@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 from typing import List
+from typing import Optional
 
 import pytest
 
@@ -95,51 +96,53 @@ def test_assert_path_is_writeable_raises_deprecation_warning(tmp_path: Path) -> 
 
 
 @pytest.mark.parametrize(
-    "suffix, expected",
+    "suffix, expected, threads",
     [
-        (".gz", io.TextIOWrapper),
-        (".fa", io.TextIOWrapper),
+        (".gz", io.TextIOWrapper, None),
+        (".gz", io.TextIOWrapper, 2),
+        (".fa", io.TextIOWrapper, None),
     ],
 )
-def test_reader(
-    suffix: str,
-    expected: Any,
-) -> None:
+def test_reader(suffix: str, expected: Any, threads: Optional[int]) -> None:
     """Tests fgpyo.io.to_reader"""
     with NamedTemporaryFile(suffix=suffix, mode="r", delete=True) as read_file:
-        with fio.to_reader(path=Path(read_file.name)) as reader:
+        with fio.to_reader(path=Path(read_file.name), threads=threads) as reader:
             assert isinstance(reader, expected)
 
 
 @pytest.mark.parametrize(
-    "suffix, expected",
+    "suffix, expected, threads",
     [
-        (".gz", io.TextIOWrapper),
-        (".fa", io.TextIOWrapper),
+        (".gz", io.TextIOWrapper, None),
+        (".gz", io.TextIOWrapper, 2),
+        (".fa", io.TextIOWrapper, None),
     ],
 )
-def test_writer(
-    suffix: str,
-    expected: Any,
-) -> None:
+def test_writer(suffix: str, expected: Any, threads: Optional[int]) -> None:
     """Tests fgpyo.io.to_writer()"""
     with NamedTemporaryFile(suffix=suffix, mode="w", delete=True) as write_file:
-        with fio.to_writer(path=Path(write_file.name)) as writer:
+        with fio.to_writer(path=Path(write_file.name), threads=threads) as writer:
             assert isinstance(writer, expected)
 
 
 @pytest.mark.parametrize(
-    "suffix, list_to_write",
-    [(".txt", ["Test with a flat file", 10]), (".gz", ["Test with a gzip file", 10])],
+    "suffix, list_to_write, threads",
+    [
+        (".txt", ["Test with a flat file", 10], None),
+        (".gz", ["Test with a gzip file", 10], None),
+        (".gz", ["Test with a gzip file", 10], 1),
+        (".gz", ["Test with a gzip file", 10], 2),
+    ],
 )
 def test_read_and_write_lines(
     suffix: str,
     list_to_write: List[Any],
+    threads: Optional[int],
 ) -> None:
     """Test fgpyo.fio.read_lines and write_lines"""
     with NamedTemporaryFile(suffix=suffix, mode="w", delete=True) as read_file:
-        fio.write_lines(path=Path(read_file.name), lines_to_write=list_to_write)
-        read_back = fio.read_lines(path=Path(read_file.name))
+        fio.write_lines(path=Path(read_file.name), lines_to_write=list_to_write, threads=threads)
+        read_back = fio.read_lines(path=Path(read_file.name), threads=threads)
         assert next(read_back) == list_to_write[0]
         assert int(next(read_back)) == list_to_write[1]
 

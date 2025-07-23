@@ -285,7 +285,7 @@ class VariantBuilder:
             info: the info dictionary if one was given
         """
         if end is not None and info is not None and "END" in info:
-            raise ValueError(f"Two end positions given; end={end} and info.END={info["END"]}")
+            raise ValueError(f"Two end positions given; end={end} and info.END={info['END']}")
         elif end is None:
             if info is not None and "END" in info:
                 end = info["END"]

@@ -281,14 +281,14 @@ class VariantBuilder:
         Args:
             pos: the 1-based position of the record
             ref: the reference allele of the record
-            end: the provided end position if one was given
+            end: the provided 1-based end position if one was given
             info: the info dictionary if one was given
         """
         if end is not None and info is not None and "END" in info:
             raise ValueError(f"Two end positions given; end={end} and info.END={info['END']}")
         elif end is None:
             if info is not None and "END" in info:
-                end = info["END"]
+                end = int(info["END"])
             else:
                 end = pos + len(ref) - 1
 

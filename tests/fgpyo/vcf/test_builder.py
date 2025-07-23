@@ -240,6 +240,16 @@ def test_end_setting_vs_calculation() -> None:
             info={"END": 3400},
         )
 
+    with pytest.raises(ValueError):
+        # End cannot be <= pos no matter which way it comes in
+        builder.add(
+            contig="chr1",
+            pos=3000,
+            ref="ACGTG",
+            alts=["A", "<NON_REF>"],
+            info={"END": 2900},
+        )
+
 
 def _get_is_compressed(input_file: Path) -> bool:
     """Returns True if the input file is gzip-compressed, False otherwise."""

@@ -171,7 +171,7 @@ class VariantBuilder:
         self,
         contig: Optional[str] = None,
         pos: int = 1000,
-        end: int | None = None,
+        end: Optional[int] = None,
         id: str = ".",
         ref: str = "A",
         alts: Union[None, str, Iterable[str]] = (".",),
@@ -268,7 +268,7 @@ class VariantBuilder:
         return variant
 
     def _compute_and_check_end(
-        self, pos: int, ref: str, end: int | None, info: Optional[dict[str, Any]]
+        self, pos: int, ref: str, end: Optional[int], info: Optional[dict[str, Any]]
     ) -> int:
         """
         Derives the END/stop position for a new record based on the optionally provided `end`

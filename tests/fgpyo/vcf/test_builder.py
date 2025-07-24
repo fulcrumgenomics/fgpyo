@@ -216,6 +216,41 @@ def test_zero_sample_records_match_inputs(
             _assert_equal(expected_value=value, actual_value=getattr(variant_record, key))
 
 
+def test_end_setting_vs_calculation() -> None:
+    builder = VariantBuilder()
+    v = builder.add(contig="chr1", pos=1000, ref="ACGTG", alts="A")
+    assert v.stop == 1004
+
+    v = builder.add(contig="chr1", pos=2000, end=2500, ref="ACGTG", alts=["A", "<NON_REF>"])
+    assert v.stop == 2500
+
+    v = builder.add(
+        contig="chr1", pos=3000, ref="ACGTG", alts=["A", "<NON_REF>"], info={"END": 3400}
+    )
+    assert v.stop == 3400
+
+    with pytest.raises(ValueError):
+        # Can't specify both end and info.END
+        builder.add(
+            contig="chr1",
+            pos=3000,
+            end=3300,
+            ref="ACGTG",
+            alts=["A", "<NON_REF>"],
+            info={"END": 3400},
+        )
+
+    with pytest.raises(ValueError):
+        # End cannot be <= pos no matter which way it comes in
+        builder.add(
+            contig="chr1",
+            pos=3000,
+            ref="ACGTG",
+            alts=["A", "<NON_REF>"],
+            info={"END": 2900},
+        )
+
+
 def _get_is_compressed(input_file: Path) -> bool:
     """Returns True if the input file is gzip-compressed, False otherwise."""
     with gzip.open(f"{input_file}", "r") as f_in:

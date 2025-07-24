@@ -171,6 +171,7 @@ class VariantBuilder:
         self,
         contig: Optional[str] = None,
         pos: int = 1000,
+        end: Optional[int] = None,
         id: str = ".",
         ref: str = "A",
         alts: Union[None, str, Iterable[str]] = (".",),
@@ -193,6 +194,8 @@ class VariantBuilder:
             contig: the chromosome name. If None, will use the first contig in the sequence
                     dictionary.
             pos: the 1-based position of the variant
+            end: an optional 1-based inclusive END position; if not specified a value will be looked
+                 for in info["END"], or calculated from the length of the reference allele
             id: the variant id
             ref: the reference allele
             alts: the list of alternate alleles, None if no alternates. If a single string is
@@ -249,13 +252,10 @@ class VariantBuilder:
                 {**sample_formats.get(sample_id, {})} for sample_id in self.sample_ids
             ]
 
-        # pysam is zero based, half-open [start, stop)
-        start = pos - 1  # pysam "start" is zero-based
-        stop = start + len(ref)
         variant = self.header.new_record(
             contig=contig,
-            start=start,
-            stop=stop,
+            start=pos - 1,  # start is 0-based
+            stop=self._compute_and_check_end(pos, ref, end, info),
             id=id,
             alleles=alleles,
             qual=qual,
@@ -266,6 +266,36 @@ class VariantBuilder:
 
         self.records.append(variant)
         return variant
+
+    def _compute_and_check_end(
+        self, pos: int, ref: str, end: Optional[int], info: Optional[dict[str, Any]]
+    ) -> int:
+        """
+        Derives the END/stop position for a new record based on the optionally provided `end`
+        parameter, the presence/absence of END in the info dictionary and/or the length of the
+        reference allele.
+
+        Also checks that any given or calculated end position is at least greater than or equal
+        to the record's position.
+
+        Args:
+            pos: the 1-based position of the record
+            ref: the reference allele of the record
+            end: the provided 1-based end position if one was given
+            info: the info dictionary if one was given
+        """
+        if end is not None and info is not None and "END" in info:
+            raise ValueError(f"Two end positions given; end={end} and info.END={info['END']}")
+        elif end is None:
+            if info is not None and "END" in info:
+                end = int(info["END"])
+            else:
+                end = pos + len(ref) - 1
+
+        if end < pos:
+            raise ValueError(f"Invalid end position, {end}, given for variant as pos {pos}.")
+
+        return end
 
     def to_path(self, path: Optional[Path] = None) -> Path:
         """

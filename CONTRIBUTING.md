@@ -66,13 +66,17 @@ uv run mkdocs serve --watch docs
 
 ## Creating a Release on PyPI
 
-1. Clone the repository recursively and ensure you are on the `main` (un-dirty) branch
-2. Checkout a new branch to prepare the library for release
-3. Bump the version of the library to the desired SemVer (in the `pyproject.toml`)
-4. Commit the version bump changes with a Git commit message like `chore(release): bump to #.#.#`
-5. Push the commit to the upstream remote, open a PR, ensure tests pass, and seek reviews
-6. Squash merge the PR
-7. Tag the new commit on the main branch of the origin repository with the new SemVer
+1. Decide on the new version number to be released
+   - Go to the [latest release](https://github.com/fulcrumgenomics/fgpyo/releases/latest) and see what's been commited since then!
+   - Pick the SemVer appropriate new version number
+2. Clone the repository recursively and ensure you are on the `main` (un-dirty) branch
+3. Checkout a new branch to prepare the library for release
+4. Bump the version of the library to the desired SemVer (in the `pyproject.toml`) 
+5. Commit the version bump changes with a Git commit message like `chore(release): bump to #.#.#`
+6. Push the commit to the upstream remote, open a PR, ensure tests pass, and seek reviews
+    - When opening the PR, also prefix the PR title with `chore(release):` to ensure the merged commit has an appropriate message
+7. Squash merge the PR
+8. Tag the new commit on the main branch of the origin repository with the new SemVer
 
 > NOTE:
 > This project follows [Semantic Versioning](https://semver.org/).

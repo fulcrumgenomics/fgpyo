@@ -3,7 +3,7 @@
 from typing import Optional
 
 
-class RequirementError(ValueError):
+class RequirementError(Exception):
     """Exception raised when a requirement is not satisfied."""
 
 

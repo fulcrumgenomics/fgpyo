@@ -20,6 +20,6 @@ def test_require_raises() -> None:
 def test_require_raises_with_message() -> None:
     """Require the requirements."""
     with pytest.raises(RequirementError, match="Message!") as excinfo:
-        require(False, msg="Message!")
+        require(False, message="Message!")
 
     assert str(excinfo.value) == "Message!"

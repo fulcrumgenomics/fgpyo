@@ -7,18 +7,18 @@ class RequirementError(ValueError):
     """Exception raised when a requirement is not satisfied."""
 
 
-def require(condition: bool, msg: Optional[str] = None) -> None:
+def require(condition: bool, message: Optional[str] = None) -> None:
     """Require a condition be satisfied.
 
     Args:
         condition: The condition to satisfy.
-        msg: An optional message to include with the error when the condition is false.
+        message: An optional message to include with the error when the condition is false.
 
     Raises:
         RequirementError: If the condition is false.
     """
     if not condition:
-        if msg is not None:
-            raise RequirementError(msg)
+        if message is not None:
+            raise RequirementError(message)
         else:
-            raise RequirementError
+            raise RequirementError()

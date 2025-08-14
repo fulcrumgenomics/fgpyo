@@ -23,3 +23,10 @@ def test_require_raises_with_message() -> None:
         require(False, message="Message!")
 
     assert str(excinfo.value) == "Message!"
+
+
+def test_require_raises_with_message_callable() -> None:
+    with pytest.raises(RequirementError, match="Message!") as excinfo:
+        require(False, message=lambda: "Message!")
+
+    assert str(excinfo.value) == "Message!"

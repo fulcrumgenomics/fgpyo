@@ -954,3 +954,26 @@ def test_assert_file_header_matches_metric_raises(
 
     with pytest.raises(ValueError, match="The provided file does not have the same field names"):
         _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
+
+
+if sys.version_info >= (3, 10):
+    @pytest.mark.parametrize("use_attr", [False, True])
+    def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
+        @make_dataclass(use_attr=use_attr)
+        class PersonMaybeAge(Metric["PersonMaybeAge"]):
+            first: str
+            last: str | None = None
+
+        path: Path = tmp_path / "metrics.txt"
+
+        in_metrics = [
+            PersonMaybeAge(first="Jane", last="Doe"),
+            PersonMaybeAge(first="John"),
+        ]
+
+        PersonMaybeAge.write(path, *in_metrics)
+        out_metrics: List[PersonMaybeAge] = list(PersonMaybeAge.read(path=path))
+
+        assert len(out_metrics) == 2
+        assert out_metrics[0] == in_metrics[0]
+        assert out_metrics[1] == in_metrics[1]

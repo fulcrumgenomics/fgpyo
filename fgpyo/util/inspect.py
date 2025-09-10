@@ -363,7 +363,7 @@ def _get_parser(  # noqa: C901
                 return functools.partial(type_)
             elif type_ == NoneType:
                 return functools.partial(types.none_parser)
-            elif typing.get_origin(type_) is Union:
+            elif types._is_optional(type_):
                 return types.make_union_parser(
                     union=type_,
                     parsers=[_get_parser(cls, arg, parsers) for arg in typing.get_args(type_)],

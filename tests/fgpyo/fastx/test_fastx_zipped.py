@@ -154,12 +154,17 @@ def tests_fastx_zipped_raises_exception_on_mismatched_sequence_names(tmp_path: P
     input.mkdir()
     fasta1 = input / "input1.fasta"
     fasta2 = input / "input2.fasta"
+    fasta3 = input / "input3.fasta"
     fasta1.write_text(">seq1\nAAAA\n")
     fasta2.write_text(">seq2\nCCCC\n")
+    fasta3.write_text(">seq1\nGGGG\n")
 
-    context_manager = FastxZipped(fasta1, fasta2)
+    context_manager = FastxZipped(fasta1, fasta2, fasta3)
     with context_manager as handle:
-        with pytest.raises(ValueError, match=r"FASTX record names do not all match"):
+        with pytest.raises(
+            ValueError,
+            match=r"FASTX record names do not all match, found: \['seq1', 'seq2', 'seq1'\]",
+        ):
             next(handle)
 
     assert all(fastx.closed for fastx in context_manager._fastx)

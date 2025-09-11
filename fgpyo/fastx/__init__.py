@@ -29,8 +29,8 @@ from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
 from typing import Iterator
+from typing import List
 from typing import Optional
-from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -76,9 +76,9 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
                 )
             )
         else:
-            record_names: Set[str] = {self._name_minus_ordinal(record.name) for record in records}
-            if len(record_names) != 1:
-                raise ValueError(f"FASTX record names do not all match: {record_names}")
+            record_names: List[str] = [self._name_minus_ordinal(record.name) for record in records]
+            if len(set(record_names)) != 1:
+                raise ValueError(f"FASTX record names do not all match, found: {record_names}")
             return records
 
     def __exit__(

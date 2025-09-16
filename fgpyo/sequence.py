@@ -11,6 +11,7 @@ ex. https://pypi.org/project/Distance/
 
 from typing import Dict
 from typing import List
+from typing import Optional
 
 _COMPLEMENTS: Dict[str, str] = {
     # Discrete bases
@@ -56,6 +57,12 @@ _COMPLEMENTS: Dict[str, str] = {
 }
 
 
+_COMPLEMENTS_TABLE: tuple[Optional[int], ...] = tuple(
+    ord(_COMPLEMENTS.get(chr(key_idx))) if chr(key_idx) in _COMPLEMENTS else None
+    for key_idx in range(256)
+)
+
+
 def complement(base: str) -> str:
     """Returns the complement of any base."""
     if len(base) != 1:
@@ -73,7 +80,10 @@ def reverse_complement(bases: str) -> str:
     Returns:
         the reverse complement of the provided base string
     """
-    return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
+    rev_comp = bases.translate(_COMPLEMENTS_TABLE)[::-1]
+    if len(rev_comp) != len(bases):
+        raise KeyError(next(base for base in bases if base not in _COMPLEMENTS))
+    return rev_comp
 
 
 def gc_content(bases: str) -> float:

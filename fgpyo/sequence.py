@@ -9,8 +9,10 @@ If you are performing many distance calculations, using a C based method is pref
 ex. https://pypi.org/project/Distance/
 """
 
+from types import MappingProxyType
 from typing import Dict
 from typing import List
+from typing import Mapping
 
 _COMPLEMENTS: Dict[str, str] = {
     # Discrete bases
@@ -55,6 +57,10 @@ _COMPLEMENTS: Dict[str, str] = {
     "n": "n",
 }
 
+_COMPLEMENTS_TABLE: Mapping[int, int] = MappingProxyType(
+    {ord(key): ord(value) for key, value in _COMPLEMENTS.items()}
+)
+
 
 def complement(base: str) -> str:
     """Returns the complement of any base."""
@@ -62,6 +68,18 @@ def complement(base: str) -> str:
         raise ValueError(f"complement() may only be called with 1-character strings: {base}")
     else:
         return _COMPLEMENTS[base]
+
+
+def reverse_complement_old(bases: str) -> str:
+    """Reverse complements a base sequence.
+
+    Arguments:
+        bases: the bases to be reverse complemented.
+
+    Returns:
+        the reverse complement of the provided base string
+    """
+    return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
 
 
 def reverse_complement(bases: str) -> str:
@@ -73,7 +91,7 @@ def reverse_complement(bases: str) -> str:
     Returns:
         the reverse complement of the provided base string
     """
-    return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
+    return bases.translate(_COMPLEMENTS_TABLE)[::-1]
 
 
 def gc_content(bases: str) -> float:

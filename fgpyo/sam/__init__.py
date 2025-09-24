@@ -607,24 +607,6 @@ class Cigar:
             raise ValueError(f"Cigar {self} has no aligned bases")
         return start_offset, end_offset
 
-    def __getitem__(
-        self, index: Union[int, slice]
-    ) -> Union[CigarElement, Tuple[CigarElement, ...]]:
-        """Returns the cigar element indexed by index
-
-        Arguments:
-            index: int The index of the requested cigar element(s)
-
-        Returns: CigarElement or Tuple[CigarElement,...]
-            The element(s) selected by index
-
-        Throws:
-            TypeError if index isn't an integer or a slice
-            IndexError: if there's no such element
-
-        """
-        return self.elements[index]
-
 
 @enum.unique
 class PairOrientation(enum.Enum):

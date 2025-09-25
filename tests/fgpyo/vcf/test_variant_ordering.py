@@ -1,8 +1,9 @@
 import pytest
+from pysam import VariantHeader
 
 from fgpyo.vcf.builder import VariantBuilder
 from fgpyo.vcf.variant_ordering import VariantOrdering
-from pysam import VariantHeader
+
 
 @pytest.mark.parametrize(
     "rec1_contig,rec1_pos,rec2_contig,rec2_pos,expected",
@@ -115,7 +116,7 @@ def test_variant_ordering_invalid_contig() -> None:
     builder: VariantBuilder = VariantBuilder()
     rec1 = builder.add(contig="chr1", pos=100)
 
-    ordering_header = VariantHeader() # Empty header with no contigs
+    ordering_header = VariantHeader()  # Empty header with no contigs
     vo = VariantOrdering(header=ordering_header)
 
     with pytest.raises(ValueError, match="Contig 'chr1' not found in VCF header."):

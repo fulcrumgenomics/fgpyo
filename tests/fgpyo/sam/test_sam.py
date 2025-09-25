@@ -119,6 +119,11 @@ def test_unmapped_sam_file_open_reading_with_reader(unmapped_sam: Path) -> None:
         assert len([read for read in samfile.fetch() if read.is_unmapped]) == 1
 
 
+def test_unmapped_sam_open_reading_exception(unmapped_sam: Path) -> None:
+    with pytest.raises(ValueError):
+        sam.reader(path=unmapped_sam)
+
+
 @pytest.fixture
 def expected_records(valid_sam: Path) -> List[pysam.AlignedSegment]:
     """Returns the records that are found in the valid_sam."""

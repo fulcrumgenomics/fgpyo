@@ -306,19 +306,23 @@ def _pysam_open(  # noqa: C901
     if unmapped and open_for_reading:
         kwargs["check_sq"] = False
 
-    # Open it alignment file, suppressing stderr in case index files are older than SAM file
+    # Open the alignment file, suppressing stderr in case index files are older than the SAM/BAM.
     try:
         with fgpyo.io.suppress_stderr():
             alignment_file = pysam.AlignmentFile(path, **kwargs)
-    except ValueError as ex:
-        if "Consider opening with check_sq=False" in f"{ex}":
+    except (ValueError, OSError) as ex:
+        msg = str(ex).lower()
+        if (
+            ("check_sq=false" in msg)
+            or ("no sq" in msg)
+            or ("no @sq" in msg)
+            or ("sequence dictionary" in msg and "missing" in msg)
+        ):
             raise ValueError(
-                "No SQ (sequence) lines in the header."
-                " Is this SAM/BAM unmapped?"
-                " Consider opening with `unmapped=True`"
+                f"No sequence dictionary found (@SQ header lines missing). Path: {path!r}. "
+                "If this file is unmapped, open with unmapped=True (sets check_sq=False)."
             ) from ex
-        else:
-            raise ex
+        raise
 
     # now restore stderr and return the alignment file
     return alignment_file

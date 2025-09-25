@@ -120,8 +120,9 @@ def test_unmapped_sam_file_open_reading_with_reader(unmapped_sam: Path) -> None:
 
 
 def test_unmapped_sam_open_reading_exception(unmapped_sam: Path) -> None:
-    with pytest.raises(ValueError):
-        sam.reader(path=unmapped_sam)
+    with pytest.raises(ValueError, match=r"unmapped=True"):
+        with sam.reader(path=unmapped_sam):
+            pass
 
 
 @pytest.fixture

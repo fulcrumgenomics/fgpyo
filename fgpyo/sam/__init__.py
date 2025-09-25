@@ -253,7 +253,7 @@ class SamFileType(enum.Enum):
             raise ValueError(f"Could not infer file type from {path}") from ex
 
 
-def _pysam_open(
+def _pysam_open(  # noqa: C901
     path: SamPath,
     open_for_reading: bool,
     file_type: Optional[SamFileType] = None,
@@ -306,9 +306,24 @@ def _pysam_open(
     if unmapped and open_for_reading:
         kwargs["check_sq"] = False
 
-    # Open it alignment file, suppressing stderr in case index files are older than SAM file
-    with fgpyo.io.suppress_stderr():
-        alignment_file = pysam.AlignmentFile(path, **kwargs)
+    # Open the alignment file, suppressing stderr in case index files are older than the SAM/BAM.
+    try:
+        with fgpyo.io.suppress_stderr():
+            alignment_file = pysam.AlignmentFile(path, **kwargs)
+    except (ValueError, OSError) as ex:
+        msg = str(ex).lower()
+        if (
+            ("check_sq=false" in msg)
+            or ("no sq" in msg)
+            or ("no @sq" in msg)
+            or ("sequence dictionary" in msg and "missing" in msg)
+        ):
+            raise ValueError(
+                f"No sequence dictionary found (@SQ header lines missing). Path: {path!r}. "
+                "If this file is unmapped, open with unmapped=True (sets check_sq=False)."
+            ) from ex
+        raise
+
     # now restore stderr and return the alignment file
     return alignment_file
 

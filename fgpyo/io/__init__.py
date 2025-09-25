@@ -266,17 +266,21 @@ def redirect_to_dev_null(file_num: int) -> Generator[None, None, None]:
     Args:
         file_num: number of filehandle to redirect.
     """
-    # open /dev/null for writing
-    f_devnull = os.open(os.devnull, os.O_RDWR)
-    # save old file descriptor and redirect stderr to /dev/null
-    save_stderr = os.dup(file_num)
-    os.dup2(f_devnull, file_num)
-
-    yield
-
-    # restore file descriptor and close devnull
-    os.dup2(save_stderr, file_num)
-    os.close(f_devnull)
+    f_devnull = save_fd = None
+    try:
+        # open /dev/null for writing
+        f_devnull = os.open(os.devnull, os.O_RDWR)
+        # save old file descriptor and redirect stderr to /dev/null
+        save_fd = os.dup(file_num)
+        os.dup2(f_devnull, file_num)
+        yield
+    finally:
+        # restore file descriptor and close devnull
+        if save_fd is not None:
+            os.dup2(save_fd, file_num)
+            os.close(save_fd)
+        if f_devnull is not None:
+            os.close(f_devnull)
 
 
 @contextmanager

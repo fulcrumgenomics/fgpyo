@@ -330,3 +330,15 @@ def test_custom_rg() -> None:
     builder = SamBuilder(rg={"ID": "novel", "SM": "custom_rg", "LB": "foo", "PL": "ILLUMINA"})
     for rec in builder.add_pair(chrom="chr1", start1=100, start2=200):
         assert rec.get_tag("RG") == "novel"
+
+
+@pytest.mark.parametrize("file_type", list(sam.SamFileType))
+def test_to_path_file_type(file_type: sam.SamFileType) -> None:
+    builder = SamBuilder()
+    for _ in range(10):
+        builder.add_pair(chrom="chr1", start1=200, start2=400)
+    out_sam = builder.to_path(file_type=file_type)
+
+    with sam.reader(out_sam) as reader:
+        assert len(list(reader)) == 20
+        assert len(reader.header.to_dict()) > 0

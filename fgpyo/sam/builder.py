@@ -519,7 +519,7 @@ class SamBuilder:
         Returns:
             Path: The path to the sorted (and possibly indexed) file.
         """
-        ext = ".sam" if file_type == sam.SamFileType.SAM else ".bam"
+        ext = file_type.extension
 
         if path is None:
             with NamedTemporaryFile(suffix=ext, delete=False) as fp:

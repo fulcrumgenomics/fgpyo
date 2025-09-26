@@ -50,6 +50,7 @@ dev = [
     "pytest-cov>=2.8.1",
     "ruff==0.13.2",
     "setuptools>=68.0.0",
+    "poethepoet ~=0.37",
 ]
 docs = [
     "mkdocs-autorefs>=0.5.0",
@@ -91,6 +92,7 @@ unfixable = ["B"]
 force-single-line = true
 
 [tool.mypy]
+files                       = ["./"]
 strict_optional             = false
 check_untyped_defs          = true
 disallow_incomplete_defs    = true
@@ -112,3 +114,50 @@ exclude_lines = [
     "pragma: not covered",
     "@overload"
 ]
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths  = "tests"
+addopts    = [
+    "--verbosity=2",
+    "-r=sx",
+    "--color=yes",
+    "--import-mode=importlib",
+    "--cov"
+]
+
+[tool.poe.tasks]
+fix-format = "ruff format"
+fix-lint   = "ruff check --fix"
+
+fix-all.ignore_fail = "return_non_zero"
+fix-all.sequence    = [
+    "fix-format",
+    "fix-lint"
+]
+
+check-lock   = "uv lock --check"
+check-format = "ruff format --check --diff"
+check-lint   = "ruff check"
+check-tests  = "pytest"
+check-typing = "mypy"
+
+check-all.ignore_fail = "return_non_zero"
+check-all.sequence    = [
+    "check-lock",
+    "check-format",
+    "check-lint",
+    "check-typing",
+    "check-tests"
+]
+
+fix-and-check-all.ignore_fail = "return_non_zero"
+fix-and-check-all.sequence    = [
+    "check-lock",
+    "fix-format",
+    "fix-lint",
+    "check-typing",
+    "check-tests"
+]
+
+build-docs = "mkdocs build --strict"

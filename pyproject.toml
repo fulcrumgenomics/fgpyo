@@ -93,7 +93,8 @@ force-single-line = true
 
 [tool.mypy]
 files                       = ["./"]
-strict_optional             = false
+strict_optional             = true
+strict_equality             = true
 check_untyped_defs          = true
 disallow_incomplete_defs    = true
 disallow_untyped_calls      = true
@@ -106,8 +107,15 @@ warn_return_any             = true
 warn_unreachable            = true
 warn_unused_configs         = true
 warn_unused_ignores         = true
-enable_error_code           = "ignore-without-code"
-exclude                     = ["site/", "docs/"]
+enable_error_code           = [
+    "ignore-without-code",
+    "possibly-undefined",
+    "exhaustive-match",
+]
+exclude                     = [
+    "docs/",
+    "site/",
+]
 
 [tool.coverage.report]
 exclude_lines = [

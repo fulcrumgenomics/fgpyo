@@ -35,20 +35,20 @@ function run() {
     fi
 }
 
-if [ ! -f ".venv/bin/activate" ]; then
-    banner "Virtual environment not present in .venv.\nPlease use \`uv venv --python 3.12 --seed\` to create one."
-    exit 1
-fi
-if [ "${VIRTUAL_ENV}" == "" ]; then
-    banner "Virtual environment has not been activated.\nPlease use \`source .venv/bin/activate\` to activate it."
+# Require uv
+if [ ! -x "$(command -v uv)" ]; then
+    echo >&2 "Error: 'uv' not found."
+    echo >&2 "Install via https://docs.astral.sh/uv/getting-started/installation/"
     exit 1
 fi
 
-run "Style Checking" "uv run ruff format fgpyo tests"
-run "Linting"        "uv run ruff check --fix fgpyo tests"
-run "Type Checking"  "uv run mypy fgpyo tests --config pyproject.toml"
-run "Unit Tests"     "uv run pytest -vv -r sx tests"
-run "Make docs"      "uv run mkdocs build --strict"
+run "Checking lockfile"    "uv lock --check"
+run "Updating environment" "uv sync --locked"
+run "Style Checking"       "uv run ruff format fgpyo tests"
+run "Linting"              "uv run ruff check --fix fgpyo tests"
+run "Type Checking"        "uv run mypy fgpyo tests --config pyproject.toml"
+run "Unit Tests"           "uv run pytest -vv -r sx tests"
+run "Make docs"            "uv run mkdocs build --strict"
 
 if [ -z "$failures" ]; then
     banner "Checks Passed"

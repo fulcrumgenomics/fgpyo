@@ -2,22 +2,25 @@
 
 ## Installation for Local Development
 
-[`uv`][uv-link] is used to manage the python development environment; [installation instructions for `uv` are here][uv-install-link].
+[`uv`][uv-link] is used to manage the Python development environment.
+Follow Astral's [instructions to install `uv`][uv-install-link].
 
-A simple way to create an environment with the desired version of `python` and `uv` is to use a virtual environment.  E.g.:
+After installing `uv`, create the development environment:
 
 ```console
-uv venv --python 3.12 --seed
-source .venv/bin/activate
-# `--group docs` is required to install `mkdocs` and associated dependencies
-# `--group dev` is required to install test and build dependencies
-uv pip install --group dev --group docs
+uv sync --locked --python 3.12
 ```
 
 [uv-link]:         https://docs.astral.sh/uv/
 [uv-install-link]: https://docs.astral.sh/uv/getting-started/installation/
 
 ## Primary Development Commands
+
+To run all static analysis checks, run:
+
+```console
+./ci/check.sh
+```
 
 To check and resolve linting issues in the codebase, run:
 

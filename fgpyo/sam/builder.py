@@ -498,7 +498,7 @@ class SamBuilder:
         self._records.append(rec)
         return rec
 
-    def to_path(
+    def to_path(  # noqa: C901
         self,
         path: Optional[Path] = None,
         index: bool = True,
@@ -518,7 +518,7 @@ class SamBuilder:
 
         Args:
             path: a path at which to write the file, otherwise a temp file is used.
-            index: if True and `sort_order` is `Coordinate` and output is a BAM file, then
+            index: if True and `sort_order` is `Coordinate` and output is a BAM/CRAM file, then
                    an index is generated, otherwise not.
             pred: optional predicate to specify which reads should be output
             tmp_file_type: the file type to output when a path is not provided (default is BAM)
@@ -526,14 +526,18 @@ class SamBuilder:
         Returns:
             Path: The path to the sorted (and possibly indexed) file.
         """
-        if path is not None and tmp_file_type is not None:
-            raise ValueError("Both `path` and `tmp_file_type` cannot be provided.")
-
-        if tmp_file_type is None:
+        if path is not None:
+            # Get the file type if a path was given (in this case, a file type may not be
+            # provided too)
+            if tmp_file_type is not None:
+                raise ValueError("Both `path` and `tmp_file_type` cannot be provided.")
+            tmp_file_type = sam.SamFileType.from_path(path)
+        elif tmp_file_type is None:
+            # Use the provided file type
             tmp_file_type = sam.SamFileType.BAM
 
+        # Get the extension, and create a path if none was given
         ext = tmp_file_type.extension
-
         if path is None:
             with NamedTemporaryFile(suffix=ext, delete=False) as fp:
                 path = Path(fp.name)

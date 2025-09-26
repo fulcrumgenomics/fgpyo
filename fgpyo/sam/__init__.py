@@ -242,7 +242,7 @@ class SamFileType(enum.Enum):
     @property
     def indexable(self) -> bool:
         """True if the file type can be indexed, false otherwise."""
-        return self == SamFileType.BAM or self == SamFileType.CRAM
+        return self is SamFileType.BAM or self is SamFileType.CRAM
 
     @classmethod
     def from_path(cls, path: Union[Path, str]) -> "SamFileType":

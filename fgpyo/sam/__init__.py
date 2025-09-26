@@ -209,7 +209,9 @@ NO_REF_NAME: str = STRING_PLACEHOLDER
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
 
-NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
+# The cast is necessary because qualitystring_to_array returns array | None, but will always
+# return array when provided with a string literal
+NO_QUERY_QUALITIES: array = cast(array, qualitystring_to_array(STRING_PLACEHOLDER))
 """The quality array corresponding to an unavailable query quality string ("*")."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
@@ -667,6 +669,8 @@ class PairOrientation(enum.Enum):
             rec2_is_forward = rec2.is_forward
             rec2_reference_start = rec2.reference_start
 
+        assert rec1.reference_end is not None  # type narrowing
+
         if rec1.is_forward is rec2_is_forward:
             return PairOrientation.TANDEM
         if rec1.is_forward and rec1.reference_start <= rec2_reference_start:
@@ -682,6 +686,7 @@ class PairOrientation(enum.Enum):
             rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
             rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
         else:
+            assert rec2.reference_end is not None  # type narrowing
             rec2_reference_end = rec2.reference_end
 
         if rec1.reference_start < rec2_reference_end:
@@ -697,6 +702,7 @@ def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
         rec1: The first record in the pair.
         rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
     """
+
     if rec2 is None:
         rec2_is_unmapped = rec1.mate_is_unmapped
         rec2_reference_id = rec1.next_reference_id
@@ -717,6 +723,7 @@ def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
     if rec1.is_forward and rec2_is_forward:
         return rec2_reference_start - rec1.reference_start
     if rec1.is_reverse and rec2_is_forward:
+        assert rec1.reference_end is not None  # type narrowing
         return rec2_reference_start - rec1.reference_end
 
     if rec2 is None:
@@ -725,11 +732,13 @@ def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
         rec2_cigar = Cigar.from_cigarstring(str(rec1.get_tag("MC")))
         rec2_reference_end = rec1.next_reference_start + rec2_cigar.length_on_target()
     else:
+        assert rec2.reference_end is not None  # type narrowing
         rec2_reference_end = rec2.reference_end
 
     if rec1.is_forward:
         return rec2_reference_end - rec1.reference_start
     else:
+        assert rec1.reference_end is not None  # type narrowing
         return rec2_reference_end - rec1.reference_end
 
 
@@ -742,7 +751,7 @@ def is_proper_pair(
     rec2: Optional[AlignedSegment] = None,
     max_insert_size: int = 1000,
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
-    isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
+    isize: Callable[[AlignedSegment, Optional[AlignedSegment]], int] = isize,
 ) -> bool:
     """Determines if a pair of records are properly paired or not.
 
@@ -1062,6 +1071,7 @@ def calculate_edit_info(
         a ReadEditInfo with information about how the read differs from the reference
     """
     assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
+    assert rec.query_sequence is not None  # type narrowing
 
     query_offset = 0
     target_offset = reference_offset if reference_offset is not None else rec.reference_start

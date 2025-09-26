@@ -503,23 +503,36 @@ class SamBuilder:
         path: Optional[Path] = None,
         index: bool = True,
         pred: Callable[[AlignedSegment], bool] = lambda r: True,
-        file_type: sam.SamFileType = sam.SamFileType.BAM,
+        tmp_file_type: Optional[sam.SamFileType] = None,
     ) -> Path:
         """Write the accumulated records to a file, sorts & indexes it, and returns the Path.
         If a path is provided, it will be written to, otherwise a temporary file is created
         and returned.
+
+        If `path` is provided, `tmp_file_type` may not be provided. In this case, the file type
+        (SAM/BAM/CRAM) will be automatically determined by the file extension when a path
+        is provided.  See `~pysam` for more details.
+
+        If `path` is not provided, the file type will default to BAM unless `tmp_file_type` is
+        provided.
 
         Args:
             path: a path at which to write the file, otherwise a temp file is used.
             index: if True and `sort_order` is `Coordinate` and output is a BAM file, then
                    an index is generated, otherwise not.
             pred: optional predicate to specify which reads should be output
-            file_type: the file type to output (default is BAM)
+            tmp_file_type: the file type to output when a path is not provided (default is BAM)
 
         Returns:
             Path: The path to the sorted (and possibly indexed) file.
         """
-        ext = file_type.extension
+        if path is not None and tmp_file_type is not None:
+            raise ValueError("Both `path` and `tmp_file_type` cannot be provided.")
+
+        if tmp_file_type is None:
+            tmp_file_type = sam.SamFileType.BAM
+
+        ext = tmp_file_type.extension
 
         if path is None:
             with NamedTemporaryFile(suffix=ext, delete=False) as fp:
@@ -532,7 +545,7 @@ class SamBuilder:
             else:
                 file_handle = fp.file
 
-            with sam.writer(file_handle, header=self._samheader, file_type=file_type) as writer:
+            with sam.writer(file_handle, header=self._samheader, file_type=tmp_file_type) as writer:
                 for rec in self._records:
                     if pred(rec):
                         writer.write(rec)
@@ -543,7 +556,7 @@ class SamBuilder:
             if self._sort_order == SamOrder.QueryName:
                 pysam.sort("-n", *samtools_sort_args)
             elif self._sort_order == SamOrder.Coordinate:
-                if index and file_type == sam.SamFileType.BAM:
+                if index and tmp_file_type == sam.SamFileType.BAM:
                     samtools_sort_args.insert(0, "--write-index")
                 pysam.sort(*samtools_sort_args)
 

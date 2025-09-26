@@ -7,6 +7,7 @@ from typing import Optional
 import pytest
 
 from fgpyo import sam
+from fgpyo.sam import SamFileType
 from fgpyo.sam import SamOrder
 from fgpyo.sam.builder import SamBuilder
 
@@ -337,8 +338,18 @@ def test_to_path_file_type(file_type: sam.SamFileType) -> None:
     builder = SamBuilder()
     for _ in range(10):
         builder.add_pair(chrom="chr1", start1=200, start2=400)
-    out_sam = builder.to_path(file_type=file_type)
+    out_sam = builder.to_path(tmp_file_type=file_type)
 
     with sam.reader(out_sam) as reader:
         assert len(list(reader)) == 20
         assert len(reader.header.to_dict()) > 0
+
+
+def test_to_path_exception(tmp_path: Path) -> None:
+    bam_path = tmp_path / "test.bam"
+
+    builder = SamBuilder()
+    for _ in range(10):
+        builder.add_pair(chrom="chr1", start1=200, start2=400)
+    with pytest.raises(ValueError, match="Both `path` and `tmp_file_type` cannot be provided"):
+        builder.to_path(path=bam_path, tmp_file_type=SamFileType.BAM)

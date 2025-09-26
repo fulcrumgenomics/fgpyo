@@ -1,4 +1,5 @@
 import functools
+from collections.abc import Callable
 from typing import Iterable
 
 from pysam import VariantHeader
@@ -34,6 +35,27 @@ class VariantOrdering:
         if rec.contig not in self.header.contigs:
             raise ValueError(f"Contig '{rec.contig}' not found in VCF header.")
 
+    @staticmethod
+    def _validate_contigs(
+        func: Callable[["VariantOrdering", VariantRecord, VariantRecord], bool],
+    ) -> Callable[["VariantOrdering", VariantRecord, VariantRecord], bool]:
+        """Decorator to validate contigs of two VariantRecords before comparison.
+
+        Args:
+            func: The comparison function to decorate.
+
+        Returns:
+            A decorated function that validates contigs before calling the original function.
+        """
+
+        def wrapper(self: "VariantOrdering", rec1: VariantRecord, rec2: VariantRecord) -> bool:
+            self.validate_contig(rec1)
+            self.validate_contig(rec2)
+            return func(self, rec1, rec2)
+
+        return wrapper
+
+    @_validate_contigs
     def eq(self, rec1: VariantRecord, rec2: VariantRecord) -> bool:
         """Check if two VariantRecords share the same start coordinate.
 
@@ -44,10 +66,9 @@ class VariantOrdering:
         Returns:
             bool: True if the variant records share the same start coordinate, False otherwise.
         """
-        self.validate_contig(rec1)
-        self.validate_contig(rec2)
         return rec1.contig == rec2.contig and rec1.pos == rec2.pos
 
+    @_validate_contigs
     def lt(self, rec1: VariantRecord, rec2: VariantRecord) -> bool:
         """Check if the first VariantRecord is less than the second based on genomic coordinates.
 
@@ -58,12 +79,11 @@ class VariantOrdering:
         Returns:
             bool: True if the first variant record is less than the second, False otherwise.
         """
-        self.validate_contig(rec1)
-        self.validate_contig(rec2)
         return self.header.contigs.get(rec1.contig).id < self.header.contigs.get(
             rec2.contig
         ).id or (rec1.contig == rec2.contig and rec1.pos < rec2.pos)
 
+    @_validate_contigs
     def gt(self, rec1: VariantRecord, rec2: VariantRecord) -> bool:
         """Check if the first VariantRecord is greater than the second based on genomic coordinates.
 
@@ -74,8 +94,6 @@ class VariantOrdering:
         Returns:
             bool: True if the first variant record is greater than the second, False otherwise.
         """
-        self.validate_contig(rec1)
-        self.validate_contig(rec2)
         return self.header.contigs.get(rec1.contig).id > self.header.contigs.get(
             rec2.contig
         ).id or (rec1.contig == rec2.contig and rec1.pos > rec2.pos)

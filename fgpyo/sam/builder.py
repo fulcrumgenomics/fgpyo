@@ -498,39 +498,58 @@ class SamBuilder:
         self._records.append(rec)
         return rec
 
-    def to_path(
+    def to_path(  # noqa: C901
         self,
         path: Optional[Path] = None,
         index: bool = True,
         pred: Callable[[AlignedSegment], bool] = lambda r: True,
+        tmp_file_type: Optional[sam.SamFileType] = None,
     ) -> Path:
         """Write the accumulated records to a file, sorts & indexes it, and returns the Path.
         If a path is provided, it will be written to, otherwise a temporary file is created
         and returned.
 
+        If `path` is provided, `tmp_file_type` may not be provided. In this case, the file type
+        (SAM/BAM/CRAM) will be automatically determined by the file extension when a path
+        is provided.  See `~pysam` for more details.
+
+        If `path` is not provided, the file type will default to BAM unless `tmp_file_type` is
+        provided.
+
         Args:
             path: a path at which to write the file, otherwise a temp file is used.
-            index: if True and `sort_order` is `Coordinate` index is generated, otherwise not.
+            index: if True and `sort_order` is `Coordinate` and output is a BAM/CRAM file, then
+                   an index is generated, otherwise not.
             pred: optional predicate to specify which reads should be output
+            tmp_file_type: the file type to output when a path is not provided (default is BAM)
 
         Returns:
             Path: The path to the sorted (and possibly indexed) file.
         """
+        if path is not None:
+            # Get the file type if a path was given (in this case, a file type may not be
+            # provided too)
+            if tmp_file_type is not None:
+                raise ValueError("Both `path` and `tmp_file_type` cannot be provided.")
+            tmp_file_type = sam.SamFileType.from_path(path)
+        elif tmp_file_type is None:
+            # Use the provided file type
+            tmp_file_type = sam.SamFileType.BAM
 
+        # Get the extension, and create a path if none was given
+        ext = tmp_file_type.extension
         if path is None:
-            with NamedTemporaryFile(suffix=".bam", delete=False) as fp:
+            with NamedTemporaryFile(suffix=ext, delete=False) as fp:
                 path = Path(fp.name)
 
-        with NamedTemporaryFile(suffix=".bam", delete=True) as fp:
+        with NamedTemporaryFile(suffix=ext, delete=True) as fp:
             file_handle: IO
             if self._sort_order in {SamOrder.Unsorted, SamOrder.Unknown}:
                 file_handle = path.open("w")
             else:
                 file_handle = fp.file
 
-            with sam.writer(
-                file_handle, header=self._samheader, file_type=sam.SamFileType.BAM
-            ) as writer:
+            with sam.writer(file_handle, header=self._samheader, file_type=tmp_file_type) as writer:
                 for rec in self._records:
                     if pred(rec):
                         writer.write(rec)
@@ -541,7 +560,7 @@ class SamBuilder:
             if self._sort_order == SamOrder.QueryName:
                 pysam.sort("-n", *samtools_sort_args)
             elif self._sort_order == SamOrder.Coordinate:
-                if index:
+                if index and tmp_file_type.indexable:
                     samtools_sort_args.insert(0, "--write-index")
                 pysam.sort(*samtools_sort_args)
 

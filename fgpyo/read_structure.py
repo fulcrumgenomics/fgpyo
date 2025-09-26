@@ -167,9 +167,9 @@ class ReadSegment:
         given read."""
         bases_len = len(bases)
         assert bases_len >= self.offset, f"Read ends before the segment starts: {self}"
-        assert (
-            self.length is None or bases_len >= self.offset + self.length
-        ), f"Read ends before end of segment: {self}"
+        assert self.length is None or bases_len >= self.offset + self.length, (
+            f"Read ends before end of segment: {self}"
+        )
         if self.has_fixed_length:
             return min(self.offset + self.fixed_length, bases_len)
         else:

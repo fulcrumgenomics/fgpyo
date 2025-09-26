@@ -556,7 +556,7 @@ class SamBuilder:
             if self._sort_order == SamOrder.QueryName:
                 pysam.sort("-n", *samtools_sort_args)
             elif self._sort_order == SamOrder.Coordinate:
-                if index and tmp_file_type == sam.SamFileType.BAM:
+                if index and tmp_file_type.indexable:
                     samtools_sort_args.insert(0, "--write-index")
                 pysam.sort(*samtools_sort_args)
 

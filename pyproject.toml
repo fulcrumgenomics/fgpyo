@@ -7,7 +7,6 @@ authors = [
     { name = "Tim Fennell" },
     { name = "Nathan Roach" },
 ]
-requires-python = ">=3.9.0,<4.0"
 readme = "README.md"
 license = "MIT"
 keywords = ["bioinformatics"]
@@ -30,6 +29,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+requires-python = ">=3.9.0,<4.0"
 dependencies = [
     "attrs>=19.3.0",
     "pysam>=0.22.1",
@@ -41,6 +41,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/fulcrumgenomics/fgpyo"
 Repository = "https://github.com/fulcrumgenomics/fgpyo"
+"Bug Tracker" = "https://github.com/fulcrumgenomics/fgpyo/issues"
 
 [dependency-groups]
 dev = [

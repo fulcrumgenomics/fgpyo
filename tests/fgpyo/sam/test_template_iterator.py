@@ -23,6 +23,7 @@ def test_template_init_function() -> None:
         r1_secondaries=[],
         r2_secondaries=[r2],
     )
+    assert template.r1 is not None and template.r2 is not None  # type narrowing
     assert template.r1.query_name == "x"
     assert template.r2.reference_start == 2
     assert len([t for t in template.r1_supplementals]) == 1
@@ -79,6 +80,7 @@ def test_to_templates() -> None:
     template1, template2 = templates
 
     # Check template 1
+    assert template1.r1 is not None and template1.r2 is not None  # type narrowing
     assert template1.name == "q1"
     assert template1.r1.query_name == "q1"
     assert template1.r2.query_name == "q1"
@@ -90,6 +92,7 @@ def test_to_templates() -> None:
     assert len(list(template1.all_recs())) == 7
 
     # Check template 2
+    assert template2.r1 is not None  # type narrowing
     assert template2.name == "q2"
     assert template2.r1.query_name == "q2"
     assert template2.r2 is None
@@ -204,6 +207,8 @@ def test_set_tag() -> None:
         with pytest.raises(KeyError):
             read.get_tag(TAG)
 
+    assert template.r1 is not None and template.r2 is not None  # type narrowing
+
     # test setting
     template.set_tag(TAG, VALUE)
     assert template.r1.get_tag(TAG) == VALUE
@@ -257,6 +262,8 @@ def test_template_set_mate_info() -> None:
     )
 
     template.set_mate_info()
+
+    assert template.r1 is not None and template.r2 is not None  # type narrowing
 
     # Assert the state of both the R1 and R2 alignments
     for rec in (template.r1, template.r2):

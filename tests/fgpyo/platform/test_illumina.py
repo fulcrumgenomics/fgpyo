@@ -149,6 +149,7 @@ def test_copy_invalid_umi_from_read_name_raises() -> None:
     when strict is True."""
     builder = SamBuilder()
     read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:uvw+xyz")
+    assert read.query_name is not None  # type narrowing
     assert _is_valid_umi(read.query_name) is False
     with pytest.raises(ValueError, match="Invalid UMIs found in read name:"):
         copy_umi_from_read_name(read, strict=True, remove_umi=True)

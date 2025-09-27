@@ -7,7 +7,6 @@ authors = [
     { name = "Tim Fennell" },
     { name = "Nathan Roach" },
 ]
-requires-python = ">=3.9.0,<4.0"
 readme = "README.md"
 license = "MIT"
 keywords = ["bioinformatics"]
@@ -30,6 +29,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+requires-python = ">=3.9.0,<4.0"
 dependencies = [
     "attrs>=19.3.0",
     "pysam>=0.22.1",
@@ -41,14 +41,16 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/fulcrumgenomics/fgpyo"
 Repository = "https://github.com/fulcrumgenomics/fgpyo"
+"Bug Tracker" = "https://github.com/fulcrumgenomics/fgpyo/issues"
 
 [dependency-groups]
 dev = [
-    "mypy>=1.7.0",
+    "mypy==1.18.2",
     "pytest>=7.4.0",
     "pytest-cov>=2.8.1",
-    "ruff==0.4.8",
+    "ruff==0.13.2",
     "setuptools>=68.0.0",
+    "poethepoet ~=0.37",
 ]
 docs = [
     "mkdocs-autorefs>=0.5.0",
@@ -78,7 +80,7 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length    = 100
-target-version = "py38"
+target-version = "py39"
 output-format  = "full"
 
 [tool.ruff.lint]
@@ -90,6 +92,7 @@ unfixable = ["B"]
 force-single-line = true
 
 [tool.mypy]
+files                       = ["./"]
 strict_optional             = false
 check_untyped_defs          = true
 disallow_incomplete_defs    = true
@@ -111,3 +114,50 @@ exclude_lines = [
     "pragma: not covered",
     "@overload"
 ]
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths  = "tests"
+addopts    = [
+    "--verbosity=2",
+    "-r=sx",
+    "--color=yes",
+    "--import-mode=importlib",
+    "--cov"
+]
+
+[tool.poe.tasks]
+fix-format = "ruff format"
+fix-lint   = "ruff check --fix"
+
+fix-all.ignore_fail = "return_non_zero"
+fix-all.sequence    = [
+    "fix-format",
+    "fix-lint"
+]
+
+check-lock   = "uv lock --check"
+check-format = "ruff format --check --diff"
+check-lint   = "ruff check"
+check-tests  = "pytest"
+check-typing = "mypy"
+
+check-all.ignore_fail = "return_non_zero"
+check-all.sequence    = [
+    "check-lock",
+    "check-format",
+    "check-lint",
+    "check-typing",
+    "check-tests"
+]
+
+fix-and-check-all.ignore_fail = "return_non_zero"
+fix-and-check-all.sequence    = [
+    "check-lock",
+    "fix-format",
+    "fix-lint",
+    "check-typing",
+    "check-tests"
+]
+
+build-docs = "mkdocs build --strict"

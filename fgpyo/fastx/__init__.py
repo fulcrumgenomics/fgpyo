@@ -38,6 +38,8 @@ from typing import Union
 from pysam import FastxFile
 from pysam import FastxRecord
 
+from fgpyo.util.types import all_not_none
+
 
 class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
     """A context manager that will lazily zip over any number of FASTA/FASTQ files.
@@ -64,10 +66,20 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
     def __next__(self) -> Tuple[FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
         records = tuple(next(handle, None) for handle in self._fastx)
+
         if all(record is None for record in records):
             raise StopIteration
-        elif any(record is None for record in records):
-            sequence_name: str = [record.name for record in records if record is not None][0]
+
+        elif not all_not_none(records):
+            non_null_names: List[Optional[str]] = [
+                record.name for record in records if record is not None
+            ]
+            assert all_not_none(non_null_names)  # type narrowing
+            # We know there is at least one non-null record because the previous conditional covers
+            # the case where all records are null, so it is safe to index into the first element of
+            # non_null_names.
+            sequence_name: str = non_null_names[0]
+
             raise ValueError(
                 "One or more of the FASTX files is truncated for sequence "
                 + f"{self._name_minus_ordinal(sequence_name)}:\n\t"
@@ -75,11 +87,16 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
                     str(self._paths[i]) for i, record in enumerate(records) if record is None
                 )
             )
-        else:
-            record_names: List[str] = [self._name_minus_ordinal(record.name) for record in records]
-            if len(set(record_names)) != 1:
-                raise ValueError(f"FASTX record names do not all match, found: {record_names}")
-            return records
+
+        names_with_ordinals: List[Optional[str]] = [record.name for record in records]
+
+        assert all_not_none(names_with_ordinals)  # type narrowing
+        record_names: List[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]
+
+        if len(set(record_names)) != 1:
+            raise ValueError(f"FASTX record names do not all match, found: {record_names}")
+
+        return records
 
     def __exit__(
         self,

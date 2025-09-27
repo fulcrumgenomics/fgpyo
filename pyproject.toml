@@ -82,14 +82,47 @@ build-backend = "hatchling.build"
 line-length    = 100
 target-version = "py39"
 output-format  = "full"
+preview        = true
 
 [tool.ruff.lint]
-select    = ["C901", "B", "E", "F", "I", "W", "Q"]
-ignore    = ["E203", "E701"]
+select    = [
+    "A",      # Builtin shadowing
+    "ARG",    # Unused arguments
+    "C901",   # McCabe complexity
+    "B",      # bugbear
+    "D",      # pydocstyle (docstrings. We have the "google" convention enabled)
+    "D204",   # Blank line between class docstring and first (__init__) method
+    "D213",   # Summary line should be located on the line after opening quotes
+    "E",      # pycodestyle errors
+    "LOG",    # flake8-logging
+    "LOG015", # (preview rule) Prohibit calls to the root logger
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # PEP8 naming
+    "W",      # pycodestyle warnings
+    "Q",      # flake8-quotes
+]
+ignore    = [
+    "E203",
+    "E701",
+    "D212",  # summary line should be located on the same line as opening quotes
+    "D100",  # missing docstring in public module
+    "D104",  # missing docstring in public package
+]
 unfixable = ["B"]
+# NB: only preview rules explicitly selected above (e.g. LOG015) will be enforced
+preview = true
+explicit-preview-rules = true
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `D103` Missing docstring in public function in test files
+"tests/**.py" = ["D103"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
 files                       = ["./"]

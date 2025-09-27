@@ -145,6 +145,9 @@ class ReadSegment:
         lengths!"""
         if not self.has_fixed_length:
             raise AttributeError(f"fixed_length called on a variable length segment: {self}")
+
+        assert self.length is not None  # type narrowing
+
         return self.length
 
     def extract(self, bases: str) -> SubReadWithoutQuals:
@@ -205,7 +208,10 @@ class ReadStructure(Iterable[ReadSegment]):
     @property
     def _min_length(self) -> int:
         """The minimum length read that this read structure can process"""
-        return sum(segment.length for segment in self.segments if segment.has_fixed_length)
+        # NB: the type-ignore is necessary because `length` is typed as `int | None`, but the
+        # requirement for each segment to have a fixed length ensures that this attribute will be
+        # `int` for all elements of this comprehension.
+        return sum(segment.length for segment in self.segments if segment.has_fixed_length)  # type: ignore[misc]
 
     @property
     def has_fixed_length(self) -> bool:
@@ -287,7 +293,11 @@ class ReadStructure(Iterable[ReadSegment]):
             segs = []
             for seg in segments:
                 seg = attr.evolve(seg, offset=off)
-                off += seg.length if seg.has_fixed_length else 0
+
+                # `length` is typed as `int | None`, but will always be `int` if has_fixed_length
+                # is True.
+                off += seg.length if seg.has_fixed_length else 0  # type: ignore[operator]
+
                 segs.append(seg)
             segments = tuple(segs)
 

@@ -8,6 +8,7 @@ from types import UnionType
 from typing import Callable
 from typing import Iterable
 from typing import Literal
+from typing import Optional
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -131,7 +132,7 @@ def _make_union_parser_worker(
     union: Type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
-) -> UnionType:
+) -> Optional[UnionType]:
     """Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise, raises an error if none
     work"""

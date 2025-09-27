@@ -423,6 +423,7 @@ class Metric(ABC, Generic[MetricType]):
         """
 
         preamble: List[str] = []
+        fieldnames: List[str] = []
 
         for line in reader:
             if line.strip().startswith(comment_prefix) or line.strip() == "":
@@ -432,9 +433,6 @@ class Metric(ABC, Generic[MetricType]):
                 # The first line with any other content is assumed to be the header
                 fieldnames = line.strip().split(delimiter)
                 break
-        else:
-            # If the file was empty, kick back an empty header
-            fieldnames = []
 
         return MetricFileHeader(preamble=preamble, fieldnames=fieldnames)
 
@@ -541,9 +539,9 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
     def __exit__(
         self,
-        exc_type: Type[BaseException],
-        exc_value: BaseException,
-        traceback: TracebackType,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         self.close()
         super().__exit__(exc_type, exc_value, traceback)

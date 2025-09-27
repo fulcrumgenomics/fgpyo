@@ -502,9 +502,10 @@ def test_metric_formatted_values_with_empty_string(data_and_classes: DataBuilder
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_list_format(data_and_classes: DataBuilder) -> None:
-    assert data_and_classes.ListPerson(name=["Max", "Sally"], age=[43, 55]).formatted_values() == (
-        ["Max,Sally", "43,55"]
-    )
+    assert data_and_classes.ListPerson(name=["Max", "Sally"], age=[43, 55]).formatted_values() == ([
+        "Max,Sally",
+        "43,55",
+    ])
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -518,15 +519,18 @@ def test_metric_list_parse(data_and_classes: DataBuilder) -> None:
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_list_format_with_empty_string(data_and_classes: DataBuilder) -> None:
     ListPerson: TypeAlias = data_and_classes.ListPerson
-    assert ListPerson(name=[None, "Sally"], age=[43, 55]).formatted_values() == (
-        [",Sally", "43,55"]
-    )
-    assert ListPerson(name=[None, "Sally"], age=[None, 55]).formatted_values() == (
-        [",Sally", ",55"]
-    )
-    assert ListPerson(name=["Max", "Sally"], age=[None, None]).formatted_values() == (
-        ["Max,Sally", ","]
-    )
+    assert ListPerson(name=[None, "Sally"], age=[43, 55]).formatted_values() == ([
+        ",Sally",
+        "43,55",
+    ])
+    assert ListPerson(name=[None, "Sally"], age=[None, 55]).formatted_values() == ([
+        ",Sally",
+        ",55",
+    ])
+    assert ListPerson(name=["Max", "Sally"], age=[None, None]).formatted_values() == ([
+        "Max,Sally",
+        ",",
+    ])
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

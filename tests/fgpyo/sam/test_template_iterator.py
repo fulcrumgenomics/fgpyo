@@ -108,12 +108,10 @@ def test_write_template(
     tmp_path: Path,
 ) -> None:
     builder = SamBuilder()
-    template = Template.build(
-        [
-            *builder.add_pair(name="r1", chrom="chr1", start1=100, start2=200),
-            builder.add_single(name="r1", chrom="chr1", start=350, supplementary=True),
-        ]
-    )
+    template = Template.build([
+        *builder.add_pair(name="r1", chrom="chr1", start1=100, start2=200),
+        builder.add_single(name="r1", chrom="chr1", start=350, supplementary=True),
+    ])
 
     bam_path = tmp_path / "test.bam"
 
@@ -172,18 +170,16 @@ def test_template_treats_secondary_supplementary_as_supplementary() -> None:
     r1_secondary_supp.is_supplementary = True
     r2_secondary_supp.is_supplementary = True
 
-    actual = Template.build(
-        [
-            r1,
-            r2,
-            r1_secondary,
-            r2_secondary,
-            r1_supp,
-            r2_supp,
-            r1_secondary_supp,
-            r2_secondary_supp,
-        ]
-    )
+    actual = Template.build([
+        r1,
+        r2,
+        r1_secondary,
+        r2_secondary,
+        r1_supp,
+        r2_supp,
+        r1_secondary_supp,
+        r2_secondary_supp,
+    ])
     expected = Template(
         name="x",
         r1=r1,
@@ -248,18 +244,16 @@ def test_template_set_mate_info() -> None:
     r1_secondary_supp.is_supplementary = True
     r2_secondary_supp.is_supplementary = True
 
-    template = Template.build(
-        [
-            r1,
-            r2,
-            r1_secondary,
-            r2_secondary,
-            r1_supp,
-            r2_supp,
-            r1_secondary_supp,
-            r2_secondary_supp,
-        ]
-    )
+    template = Template.build([
+        r1,
+        r2,
+        r1_secondary,
+        r2_secondary,
+        r1_supp,
+        r2_supp,
+        r1_secondary_supp,
+        r2_secondary_supp,
+    ])
 
     template.set_mate_info()
 

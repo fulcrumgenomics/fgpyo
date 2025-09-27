@@ -42,13 +42,11 @@ def _get_random_contig(
 
 
 _ALL_FILTERS = frozenset({"MAYBE", "FAIL", "SOMETHING"})
-_INFO_FIELD_TYPES = MappingProxyType(
-    {
-        "TEST_INT": VcfFieldType.INTEGER,
-        "TEST_STR": VcfFieldType.STRING,
-        "TEST_FLOAT": VcfFieldType.FLOAT,
-    }
-)
+_INFO_FIELD_TYPES = MappingProxyType({
+    "TEST_INT": VcfFieldType.INTEGER,
+    "TEST_STR": VcfFieldType.STRING,
+    "TEST_FLOAT": VcfFieldType.FLOAT,
+})
 
 
 def _get_random_variant_inputs(
@@ -91,16 +89,14 @@ def _get_random_variant_inputs(
         for key, value_type in _INFO_FIELD_TYPES.items()
     }
 
-    return MappingProxyType(
-        {
-            "contig": contig,
-            "pos": start,
-            "ref": ref,
-            "alts": (alt,),
-            "filter": filter,
-            "info": info,
-        }
-    )
+    return MappingProxyType({
+        "contig": contig,
+        "pos": start,
+        "ref": ref,
+        "alts": (alt,),
+        "filter": filter,
+        "info": info,
+    })
 
 
 @pytest.fixture(scope="function")
@@ -314,18 +310,16 @@ def _add_random_genotypes(
     """Add random genotypes to the record input."""
     genotypes = {
         sample_id: {
-            "GT": random_generator.choice(
-                [
-                    (None,),
-                    (0, 0),
-                    (0, 1),
-                    (1, 0),
-                    (1, 1),
-                    (None, 0),
-                    (0, None),
-                    (1, None),
-                ]
-            )
+            "GT": random_generator.choice([
+                (None,),
+                (0, 0),
+                (0, 1),
+                (1, 0),
+                (1, 1),
+                (None, 0),
+                (0, None),
+                (1, None),
+            ])
         }
         for sample_id in sample_ids
     }

@@ -1,5 +1,5 @@
 """
-Methods for working with Illumina-specific UMIs in SAM files
+Methods for working with Illumina-specific UMIs in SAM files.
 ------------------------------------
 
 The functions in this module make it easy to:

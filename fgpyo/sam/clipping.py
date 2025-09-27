@@ -1,5 +1,5 @@
 """
-# Utility Functions for Soft-Clipping records in SAM/BAM Files
+# Utility Functions for Soft-Clipping records in SAM/BAM Files.
 
 This module contains utility functions for soft-clipping reads.  There are four variants
 that support clipping the beginnings and ends of reads, and specifying the amount to be

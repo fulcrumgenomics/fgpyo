@@ -1,5 +1,5 @@
 """
-# Classes for generating fasta files and records for testing
+# Classes for generating fasta files and records for testing.
 
 This module contains utility classes for creating fasta files, indexed fasta files (.fai), and
 sequence dictionaries (.dict).
@@ -61,7 +61,7 @@ else:
 
 def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
     """
-    Calls pysam.dict and writes the sequence dictionary to the provided output path
+    Calls pysam.dict and writes the sequence dictionary to the provided output path.
 
     Args:
         assembly: Assembly
@@ -74,7 +74,7 @@ def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -
 
 def pysam_faidx(input_path: str) -> None:
     """
-    Calls pysam.faidx and writes fasta index in the same file location as the fasta file
+    Calls pysam.faidx and writes fasta index in the same file location as the fasta file.
 
     Args:
         input_path: Path to fasta file
@@ -166,7 +166,7 @@ class FastaBuilder:
         self.__contig_builders: Dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
-        """Access instance of ContigBuilder by name"""
+        """Access instance of ContigBuilder by name."""
         return self.__contig_builders[key]
 
     def add(

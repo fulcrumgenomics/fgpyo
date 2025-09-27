@@ -1,4 +1,4 @@
-"""Tests for :py:mod:`~fgpyo.clipping`"""
+"""Tests for :py:mod:`~fgpyo.clipping`."""
 
 from typing import Optional
 

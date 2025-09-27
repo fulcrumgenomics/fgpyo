@@ -1,5 +1,5 @@
 """
-## Classes for representing Read Structures
+## Classes for representing Read Structures.
 
 A Read Structure refers to a String that describes how the bases in a sequencing run should be
 allocated into logical reads.  It serves a similar purpose to the --use-bases-mask in Illumina's
@@ -64,7 +64,7 @@ ANY_LENGTH_CHAR: str = "+"
 
 @enum.unique
 class SegmentType(enum.Enum):
-    """The type of segments that can show up in a read structure"""
+    """The type of segments that can show up in a read structure."""
 
     Template = "T"
     """The segment type for template bases."""
@@ -100,7 +100,7 @@ class SubReadWithoutQuals:
 
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class SubReadWithQuals:
-    """Contains the bases and qualities that correspond to the given read segment"""
+    """Contains the bases and qualities that correspond to the given read segment."""
 
     bases: str
     """The sub-read bases that correspond to the given read segment."""
@@ -213,7 +213,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @property
     def _min_length(self) -> int:
-        """The minimum length read that this read structure can process"""
+        """The minimum length read that this read structure can process."""
         # NB: the type-ignore is necessary because `length` is typed as `int | None`, but the
         # requirement for each segment to have a fixed length ensures that this attribute will be
         # `int` for all elements of this comprehension.
@@ -221,7 +221,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @property
     def has_fixed_length(self) -> bool:
-        """True if the ReadStructure has a fixed (i.e. non-variable) length"""
+        """True if the ReadStructure has a fixed (i.e. non-variable) length."""
         return self.segments[-1].has_fixed_length
 
     @property
@@ -236,13 +236,13 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @property
     def length(self) -> int:
-        """Length is defined as the number of segments (not bases!) in the read structure"""
+        """Length is defined as the number of segments (not bases!) in the read structure."""
         return len(self.segments)
 
     def with_variable_last_segment(self) -> "ReadStructure":
         """
         Generates a new ReadStructure that is the same as this one except that the last segment
-        has undefined length
+        has undefined length.
         """
         last_segment = self.segments[-1]
         if not last_segment.has_fixed_length:
@@ -291,7 +291,7 @@ class ReadStructure(Iterable[ReadSegment]):
     def from_segments(
         cls, segments: Tuple[ReadSegment, ...], reset_offsets: bool = False
     ) -> "ReadStructure":
-        """Creates a new ReadStructure, optionally resetting the offsets on each of the segments"""
+        """Creates a new ReadStructure, optionally resetting the offsets on each of the segments."""
         # Check that none but the last segment has an indefinite length
         assert all(s.has_fixed_length for s in segments[:-1]), (
             f"Variable length ({ANY_LENGTH_CHAR}) can only be used in the last segment: "

@@ -1,5 +1,5 @@
 """
-# Metrics
+# Metrics.
 
 Module for storing, reading, and writing metric-like tab-delimited information.
 
@@ -167,7 +167,7 @@ class MetricFileHeader:
 
 class Metric(ABC, Generic[MetricType]):
     """
-    Abstract base class for all metric-like tab-delimited files
+    Abstract base class for all metric-like tab-delimited files.
 
     Metric files are tab-delimited, contain a header, and zero or more rows for metric values.  This
     makes it easy for them to be read in languages like `R`.
@@ -189,9 +189,7 @@ class Metric(ABC, Generic[MetricType]):
             yield getattr(self, field.name)
 
     def items(self) -> Iterator[Tuple[str, Any]]:
-        """
-        An iterator over field names and their corresponding values in the same order as the header.
-        """
+        """An iterator over field names and their corresponding values in the same order as the header."""
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield (field.name, getattr(self, field.name))
 
@@ -468,7 +466,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         lineterminator: str = "\n",
         threads: Optional[int] = None,
     ) -> None:
-        """
+        r"""
         Args:
             filename: Path to the file to write.
             metric_class: Metric class.
@@ -483,7 +481,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
                 May not be used together with `include_fields`.
             lineterminator: The string used to terminate lines produced by the MetricWriter.
                 Default = "\n".
-            threads: the number of threads to use when compressing gzip files
+            threads: the number of threads to use when compressing gzip files.
 
         Raises:
             TypeError: If the provided metric class is not a dataclass- or attr-decorated

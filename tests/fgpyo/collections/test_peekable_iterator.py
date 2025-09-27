@@ -1,4 +1,4 @@
-"""Tests for :py:mod:`~fgpyo.collections.PeekableIterator`"""
+"""Tests for :py:mod:`~fgpyo.collections.PeekableIterator`."""
 
 import pytest
 

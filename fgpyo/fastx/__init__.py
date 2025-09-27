@@ -1,5 +1,5 @@
 """
-# Zipping FASTX Files
+# Zipping FASTX Files.
 
 Zipping a set of FASTA/FASTQ files into a single stream of data is a common task in bioinformatics
 and can be achieved with the [`FastxZipped()`][fgpyo.fastx.FastxZipped] context manager.

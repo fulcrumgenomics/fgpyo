@@ -24,9 +24,7 @@ cigar = Cigar.from_cigarstring("1M4D45N37X23I11=")
     ],
 )
 def test_query_alignment_offsets(cigar_string: str, expected_range: Tuple[int, int]) -> None:
-    """
-    cig.query_alignment_offsets() should return the expected results.
-    """
+    """cig.query_alignment_offsets() should return the expected results."""
     cig = Cigar.from_cigarstring(cigar_string)
     ret = cig.query_alignment_offsets()
     assert ret == expected_range
@@ -72,9 +70,7 @@ def test_query_alignment_offsets_failures(cigar_string: str) -> None:
 def test_query_alignment_offsets_reversed(
     cigar_string: str, expected_range: Tuple[int, int]
 ) -> None:
-    """
-    cig.revered().query_alignment_offsets() should return the expected results.
-    """
+    """cig.revered().query_alignment_offsets() should return the expected results."""
     cig = Cigar.from_cigarstring(cigar_string)
 
     ret = cig.reversed().query_alignment_offsets()

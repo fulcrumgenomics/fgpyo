@@ -54,7 +54,7 @@ __LOCK = RLock()
 
 def setup_logging(level: str = "INFO", name: str = "fgpyo") -> None:
     """
-    Globally configure logging for all modules
+    Globally configure logging for all modules.
 
     Configures logging to run at a specific level and output messages to stderr with
     useful information preceding the actual log message.

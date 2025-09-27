@@ -1,5 +1,5 @@
 """
-# Custom Collections and Collection Functions
+# Custom Collections and Collection Functions.
 
 This module contains classes and functions for working with collections and iterators.
 

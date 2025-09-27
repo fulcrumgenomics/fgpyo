@@ -46,7 +46,7 @@ class InspectException(Exception):
 def parse_bool(string: str) -> bool:
     """
     Parses strings into bools accounting for the many different text representations of bools
-    that can be used
+    that can be used.
     """
     if string.lower() in ["t", "true", "1"]:
         return True
@@ -59,7 +59,7 @@ def parse_bool(string: str) -> bool:
 def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
     """
     Worker function behind enum parsing. Takes enum type and creates an instance of the enum
-    from a string if possible
+    from a string if possible.
     """
     try:
         return enum(value)
@@ -72,12 +72,12 @@ def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
 
 
 def make_enum_parser(enum: Type[EnumType]) -> partial:
-    """Makes a parser function for enum classes"""
+    """Makes a parser function for enum classes."""
     return partial(_make_enum_parser_worker, enum)
 
 
 def is_constructible_from_str(type_: type) -> bool:
-    """Returns true if the provided type can be constructed from a string"""
+    """Returns true if the provided type can be constructed from a string."""
     try:
         sig = inspect.signature(type_)
         ((argname, _),) = sig.bind(object()).arguments.items()
@@ -161,7 +161,7 @@ def _make_union_parser_worker(
     """
     Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise, raises an error if none
-    work
+    work.
     """
     # Need to do this in the case of type Optional[str], because otherwise it'll return the string
     # 'None' instead of the object None
@@ -186,7 +186,7 @@ def make_union_parser(
 ) -> partial:
     """
     Generates a parser function for a union type object and set of parsers for the possible
-    parsers to that union type object
+    parsers to that union type object.
     """
     return partial(_make_union_parser_worker, union, parsers)
 
@@ -197,7 +197,7 @@ def _make_literal_parser_worker(
     """
     Worker function behind literal parsing. Iterates through possible literals and
     returns the value produced by the first literal that matches expectation.
-    Otherwise raises an error if none work
+    Otherwise raises an error if none work.
     """
     for arg, p in zip(typing.get_args(literal), parsers):
         try:
@@ -219,18 +219,18 @@ def make_literal_parser(
 ) -> partial:
     """
     Generates a parser function for a literal type object and a set of parsers for the possible
-    parsers to that literal type object
+    parsers to that literal type object.
     """
     return partial(_make_literal_parser_worker, literal, parsers)
 
 
 def is_list_like(type_: type) -> bool:
-    """Returns true if the value is a list or list like object"""
+    """Returns true if the value is a list or list like object."""
     return typing.get_origin(type_) in [list, collections.abc.Iterable, collections.abc.Sequence]
 
 
 def none_parser(value: str) -> Literal[None]:
-    """Returns None if the value is 'None', else raises an error"""
+    """Returns None if the value is 'None', else raises an error."""
     if value == "":
         return None
     raise ValueError(f"NoneType not a valid type for {value}")

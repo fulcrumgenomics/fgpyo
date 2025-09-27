@@ -1,5 +1,5 @@
 """
-# Utility Classes and Methods for SAM/BAM
+# Utility Classes and Methods for SAM/BAM.
 
 This module contains utility classes for working with SAM/BAM files and the data contained
 within them.  This includes i) utilities for opening SAM/BAM files for reading and writing,
@@ -382,7 +382,7 @@ def writer(
 
 
 class _CigarOpUtil:
-    """Some useful constants to speed up methods on CigarOp"""
+    """Some useful constants to speed up methods on CigarOp."""
 
     """A dictionary from the cigar op code to the cigar op char.
 
@@ -463,7 +463,7 @@ class CigarOp(enum.Enum):
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class CigarElement:
     """
-    Represents an element in a Cigar
+    Represents an element in a Cigar.
 
     Attributes:
         - length (int): the length of the element
@@ -531,7 +531,7 @@ class Cigar:
 
     @classmethod
     def _pretty_cigarstring_exception(cls, cigarstring: str, index: int) -> CigarParsingException:
-        """Raises an exception highlighting the malformed character"""
+        """Raises an exception highlighting the malformed character."""
         prefix = cigarstring[:index]
         character = cigarstring[index] if index < len(cigarstring) else ""
         suffix = cigarstring[index + 1 :]
@@ -841,7 +841,7 @@ class SupplementaryAlignment:
     def parse(string: str) -> "SupplementaryAlignment":
         """
         Returns a supplementary alignment parsed from the given string.  The various fields
-        should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`)
+        should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`).
         """
         fields = string.split(",")
         return SupplementaryAlignment(
@@ -1370,9 +1370,7 @@ class TemplateIterator(Iterator[Template]):
 
 
 class SamOrder(enum.Enum):
-    """
-    Enumerations of possible sort orders for a SAM file.
-    """
+    """Enumerations of possible sort orders for a SAM file."""
 
     Unsorted = "unsorted"  #: the SAM / BAM / CRAM is unsorted
     Coordinate = "coordinate"  #: coordinate sorted

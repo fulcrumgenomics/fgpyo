@@ -48,7 +48,7 @@ T = TypeVar("T", bound=Type)
 
 
 def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
-    """Decorator to make a attr- or dataclasses-style dataclass"""
+    """Decorator to make a attr- or dataclasses-style dataclass."""
     sys.stderr.write(f"use_attr = {use_attr}\n")
     if use_attr:
 
@@ -234,7 +234,7 @@ num_metrics = len(attr_data_and_classes.DUMMY_METRICS)
 def test_is_correct_dataclass_type(use_attr: bool) -> None:
     """
     Test that the DataBuilder class works as expected, as do the is_attr_class and
-    is_dataclasses_class methods
+    is_dataclasses_class methods.
     """
     data_and_classes = DataBuilder(use_attr=use_attr)
     assert use_attr == data_and_classes.use_attr
@@ -592,9 +592,7 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
 
 
 def test_read_header_can_read_picard(tmp_path: Path) -> None:
-    """
-    Test that we can read the header of a picard-formatted file.
-    """
+    """Test that we can read the header of a picard-formatted file."""
     metrics_path = tmp_path / "fake_picard_metrics"
 
     with metrics_path.open("w") as metrics_file:
@@ -613,9 +611,7 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
 
 
 def test_read_header_can_read_empty(tmp_path: Path) -> None:
-    """
-    If the input file is empty, we should get an empty header.
-    """
+    """If the input file is empty, we should get an empty header."""
     metrics_path = tmp_path / "empty"
     metrics_path.touch()
 
@@ -837,9 +833,7 @@ def test_writer_raises_if_fifo(capsys: CaptureFixture) -> None:
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
-    """
-    Test that we can validate if a class is a Metric.
-    """
+    """Test that we can validate if a class is a Metric."""
     _assert_is_metric_class(data_and_classes.DummyMetric)
 
 
@@ -915,18 +909,14 @@ def test_assert_fieldnames_are_metric_attributes_raises(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """
-    Should raise an error if any of the provided fieldnames are not an attribute on the metric.
-    """
+    """Should raise an error if any of the provided fieldnames are not an attribute on the metric."""
     with pytest.raises(ValueError, match="One or more of the specified fields are not "):
         _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: DataBuilder) -> None:
-    """
-    Should not raise an error if the provided file header matches the provided metric.
-    """
+    """Should not raise an error if the provided file header matches the provided metric."""
     metric_path = tmp_path / "metrics.tsv"
     with metric_path.open("w") as metrics_file:
         metrics_file.write("name\tage\n")
@@ -946,9 +936,7 @@ def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: Dat
 def test_assert_file_header_matches_metric_raises(
     tmp_path: Path, data_and_classes: DataBuilder, header: List[str]
 ) -> None:
-    """
-    Should raise an error if the provided file header does not match the provided metric.
-    """
+    """Should raise an error if the provided file header does not match the provided metric."""
     metric_path = tmp_path / "metrics.tsv"
     with metric_path.open("w") as metrics_file:
         metrics_file.write("\t".join(header) + "\n")

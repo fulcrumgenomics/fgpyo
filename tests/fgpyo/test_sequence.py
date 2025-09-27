@@ -1,4 +1,4 @@
-"""Tests for `~fgpyo.sequence`"""
+"""Tests for `~fgpyo.sequence`."""
 
 from typing import List
 from typing import Tuple

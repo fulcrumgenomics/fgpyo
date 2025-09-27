@@ -1,6 +1,4 @@
-"""
-# Classes for generating VCF and records for testing
-"""
+"""# Classes for generating VCF and records for testing."""
 
 from enum import Enum
 from pathlib import Path
@@ -23,7 +21,7 @@ from fgpyo.vcf import writer as PysamWriter
 
 
 class VcfFieldType(Enum):
-    """Codes for VCF field types"""
+    """Codes for VCF field types."""
 
     INTEGER = "Integer"
     FLOAT = "Float"
@@ -33,7 +31,7 @@ class VcfFieldType(Enum):
 
 
 class VcfFieldNumber(Enum):
-    """Special codes for VCF field numbers"""
+    """Special codes for VCF field numbers."""
 
     NUM_ALT_ALLELES = "A"
     NUM_ALLELES = "R"
@@ -352,7 +350,7 @@ class VariantBuilder:
         return self.seq_idx_lookup[variant.contig], variant.start, variant.stop
 
     def add_header_line(self, line: str) -> None:
-        """Adds a header line to the header"""
+        """Adds a header line to the header."""
         self.header.add_line(line)
 
     def add_info_header(

@@ -150,7 +150,7 @@ import pysam
 
 @unique
 class Topology(StrEnum):
-    """Enumeration for the topology of reference sequences (SAM @SQ.TP)"""
+    """Enumeration for the topology of reference sequences (SAM @SQ.TP)."""
 
     LINEAR = "LINEAR"
     CIRCULAR = "CIRCULAR"
@@ -182,14 +182,14 @@ class Keys(StrEnum):
 
 @dataclass(frozen=True, init=True)
 class AlternateLocus:
-    """Stores an alternate locus for an associated sequence (1-based inclusive)"""
+    """Stores an alternate locus for an associated sequence (1-based inclusive)."""
 
     name: str
     start: int
     end: int
 
     def __post_init__(self) -> None:
-        """Any post initialization validation should go here"""
+        """Any post initialization validation should go here."""
         if self.start > self.end:
             raise ValueError(f"start > end: {self.start} > {self.end}")
         if self.start < 1:
@@ -203,7 +203,7 @@ class AlternateLocus:
 
     @staticmethod
     def parse(value: str) -> "AlternateLocus":
-        """Parse the genomic interval of format: `<contig>:<start>-<end>`"""
+        """Parse the genomic interval of format: `<contig>:<start>-<end>`."""
         name, rest = value.split(":", maxsplit=1)
         start, end = rest.split("-", maxsplit=1)
         return AlternateLocus(name=name, start=int(start), end=int(end))
@@ -248,7 +248,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
     attributes: Dict[Union[Keys, str], str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Any post initialization validation should go here"""
+        """Any post initialization validation should go here."""
         if self.length < 0:
             raise ValueError(f"Length must be >= 0 for '{self.name}'")
         if re.search(SEQUENCE_NAME_PATTERN, self.name) is None:
@@ -260,7 +260,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
     @property
     def aliases(self) -> List[str]:
-        """The aliases (not including the primary) name"""
+        """The aliases (not including the primary) name."""
         aliases = self.attributes.get(Keys.ALIASES)
         return [] if aliases is None else aliases.split(",")
 
@@ -271,7 +271,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
     @property
     def alternate(self) -> Optional[AlternateLocus]:
-        """Gets the alternate locus for this sequence"""
+        """Gets the alternate locus for this sequence."""
         if Keys.ALTERNATE_LOCUS not in self.attributes:
             return None
         value = self.attributes[Keys.ALTERNATE_LOCUS]
@@ -284,7 +284,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
     @property
     def is_alternate(self) -> bool:
-        """True if there is an alternate locus defined, False otherwise"""
+        """True if there is an alternate locus defined, False otherwise."""
         return self.alternate is not None
 
     @property
@@ -430,7 +430,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
     def same_as(self, other: "SequenceDictionary") -> bool:
         """
         Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s
+        the same length, and the same MD5 if both have MD5s.
         """
         if len(self) != len(other):
             return False
@@ -517,7 +517,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
     def get_by_name(self, name: str) -> Optional[SequenceMetadata]:
         """
         Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
-        the name does not exist in this dictionary
+        the name does not exist in this dictionary.
         """
         return self._dict.get(name)
 

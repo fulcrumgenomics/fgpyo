@@ -85,7 +85,7 @@ else:
 
 
 def is_attr_class(cls: type) -> bool:
-    """Return True if the class is an attr class, and False otherwise"""
+    """Return True if the class is an attr class, and False otherwise."""
     return hasattr(cls, "__attrs_attrs__")
 
 
@@ -121,7 +121,7 @@ def split_at_given_level(
     decrease_depth_chars: Iterable[str] = ("}", ")", "]"),
 ) -> List[str]:
     """
-    Splits a nested field by its outer-most level
+    Splits a nested field by its outer-most level.
 
     Note that this method may produce incorrect results fields containing strings containing
     unpaired characters that increase or decrease the depth
@@ -240,7 +240,7 @@ def tuple_parser(
         """
         Parses a dictionary value (can do so recursively)
         Note that this tool will fail on tuples containing strings containing
-        unpaired '{', or '}' characters
+        unpaired '{', or '}' characters.
         """
         assert tuple_string[0] == "(", "Tuple val improperly formatted"
         assert tuple_string[-1] == ")", "Tuple val improperly formatted"
@@ -283,9 +283,7 @@ def dict_parser(
     )
 
     def dict_parse(dict_string: str) -> Dict[Any, Any]:
-        """
-        Parses a dictionary value (can do so recursively)
-        """
+        """Parses a dictionary value (can do so recursively)."""
         assert dict_string[0] == "{", "Dict val improperly formatted"
         assert dict_string[-1] == "}", "Dict val improprly formatted"
         dict_string = dict_string[1:-1]
@@ -392,7 +390,7 @@ def _get_parser(  # noqa: C901
 def get_fields_dict(
     cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
 ) -> Mapping[str, FieldType]:
-    """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
+    """Get the fields dict from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
         return _get_dataclasses_fields_dict(cls)
     elif is_attr_class(cls):  # type: ignore[arg-type]
@@ -404,7 +402,7 @@ def get_fields_dict(
 def get_fields(
     cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
 ) -> Tuple[FieldType, ...]:
-    """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
+    """Get the fields tuple from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
         return get_dataclasses_fields(cls)
     elif is_attr_class(cls):  # type: ignore[arg-type]
@@ -423,7 +421,7 @@ def attr_from(
     parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> _AttrFromType:
     """
-    Builds an attr or dataclasses class from key-word arguments
+    Builds an attr or dataclasses class from key-word arguments.
 
     Args:
         cls: the attr or dataclasses class to be built
@@ -482,12 +480,12 @@ def attr_from(
 
 
 def _attribute_is_optional(attribute: FieldType) -> bool:
-    """Returns True if the attribute is optional, False otherwise"""
+    """Returns True if the attribute is optional, False otherwise."""
     return typing.get_origin(attribute.type) is Union and isinstance(
         None, typing.get_args(attribute.type)
     )
 
 
 def _attribute_has_default(attribute: FieldType) -> bool:
-    """Returns True if the attribute has a default value, False otherwise"""
+    """Returns True if the attribute has a default value, False otherwise."""
     return attribute.default not in _MISSING_OR_NONE or _attribute_is_optional(attribute)

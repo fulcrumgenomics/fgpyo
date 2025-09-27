@@ -106,6 +106,7 @@ def copy_umi_from_read_name(
         ValueError: If the read name does not end with a valid UMI.
         ValueError: If the record already has a populated `RX` SAM tag.
     """
+    assert rec.query_name is not None, "Alignment record must have a query name"
 
     umi = extract_umis_from_read_name(
         read_name=rec.query_name,

@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import List
-from typing import Optional
 
 import pytest
 
@@ -43,6 +42,7 @@ def test_add_pair_all_fields() -> None:
             assert rec.reference_start == 10000
             assert not rec.is_reverse
             assert rec.query_sequence == "ACGTG"
+            assert rec.query_qualities is not None
             assert list(rec.query_qualities) == [20, 21, 22, 23, 24]
             assert rec.cigarstring == "5M"
             assert rec.mapping_quality == 51
@@ -50,6 +50,7 @@ def test_add_pair_all_fields() -> None:
             assert rec.reference_start == 10200
             assert rec.is_reverse
             assert rec.query_sequence == "GCGC"
+            assert rec.query_qualities is not None
             assert list(rec.query_qualities) == [30, 31, 32, 33]
             assert rec.cigarstring == "4M"
             assert rec.mapping_quality == 52
@@ -64,6 +65,8 @@ def test_add_pair_minimal() -> None:
     assert r2.reference_start == 1200
     assert not r1.is_reverse
     assert r2.is_reverse
+    assert r1.query_sequence is not None and r2.query_sequence is not None
+    assert r1.query_qualities is not None and r2.query_qualities is not None
     assert len(r1.query_sequence) == len(r1.query_qualities) == 10
     assert len(r2.query_sequence) == len(r2.query_qualities) == 5
     assert r1.cigarstring == "10M"
@@ -77,12 +80,16 @@ def test_add_pair_minimal() -> None:
 def test_add_pair_mix_and_match() -> None:
     builder = SamBuilder(r1_len=100, r2_len=100, base_quality=30)
     r1, r2 = builder.add_pair(chrom="chr1", start1=500, start2=700, cigar1="75M", cigar2="9M1I30M")
+    assert r1.query_sequence is not None and r2.query_sequence is not None
+    assert r1.query_qualities is not None and r2.query_qualities is not None
     assert len(r1.query_sequence) == len(r1.query_qualities) == 75
     assert len(r2.query_sequence) == len(r2.query_qualities) == 40
 
     r1, r2 = builder.add_pair(
         chrom="chr1", start1=500, start2=700, bases1="ACGTGCATGC", bases2="ACGAC"
     )
+    assert r1.query_sequence is not None and r2.query_sequence is not None
+    assert r1.query_qualities is not None and r2.query_qualities is not None
     assert len(r1.query_sequence) == len(r1.query_qualities) == 10
     assert len(r2.query_sequence) == len(r2.query_qualities) == 5
     assert r1.cigarstring == "10M"
@@ -91,6 +98,8 @@ def test_add_pair_mix_and_match() -> None:
     r1, r2 = builder.add_pair(
         chrom="chr1", start1=500, start2=700, quals1=[30] * 20, quals2=[20] * 10
     )
+    assert r1.query_sequence is not None and r2.query_sequence is not None
+    assert r1.query_qualities is not None and r2.query_qualities is not None
     assert len(r1.query_sequence) == len(r1.query_qualities) == 20
     assert len(r2.query_sequence) == len(r2.query_qualities) == 10
     assert r1.cigarstring == "20M"
@@ -235,6 +244,7 @@ def test_add_single() -> None:
     r = builder.add_single()
     assert not r.is_paired
     assert r.is_unmapped
+    assert r.query_sequence is not None
     assert len(r.query_sequence) == 25
 
     # Supplementary R1
@@ -244,6 +254,7 @@ def test_add_single() -> None:
     assert not r.is_read2
     assert not r.is_unmapped
     assert r.is_supplementary
+    assert r.query_sequence is not None
     assert len(r.query_sequence) == 25
 
     # A read two
@@ -252,6 +263,7 @@ def test_add_single() -> None:
     assert not r.is_read1
     assert r.is_read2
     assert not r.is_unmapped
+    assert r.query_sequence is not None
     assert len(r.query_sequence) == 50
 
     with pytest.raises(ValueError, match="read_num"):
@@ -297,9 +309,7 @@ def make_sort_order_builder(tmp_path: Path, sort_order: SamOrder) -> Path:
     ],
     ids=["Coordinate sorting", "Query name sorting", "Unsorted output", "Unknown sorting"],
 )
-def test_sort_types(
-    tmp_path: Path, sort_order: Optional[SamOrder], expected_name_order: List[str]
-) -> None:
+def test_sort_types(tmp_path: Path, sort_order: SamOrder, expected_name_order: List[str]) -> None:
     bam_path = make_sort_order_builder(tmp_path=tmp_path, sort_order=sort_order)
     with sam.reader(bam_path) as in_bam:
         for name in expected_name_order:

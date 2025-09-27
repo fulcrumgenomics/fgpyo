@@ -3,21 +3,28 @@ import inspect
 import sys
 import types
 import typing
+from collections.abc import Collection
+from collections.abc import Sequence
 from enum import Enum
 from functools import partial
 from typing import Callable
 from typing import Iterable
 from typing import Literal
+from typing import Optional
 from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
+from typing import overload
 
 from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 10):
     from types import UnionType
+    from typing import TypeGuard
 else:
+    from typing_extensions import TypeGuard
+
     # NB: `types.UnionType`, available since Python 3.10, is **not** a `type`, but is a class.
     # We declare an empty class here to use in the instance checks below.
     class UnionType:
@@ -28,6 +35,8 @@ EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
 # see: https://peps.python.org/pep-0586/#illegal-parameters-for-literal-at-type-check-time
 LiteralType = TypeVar("LiteralType")
+
+T = TypeVar("T")
 
 
 class InspectException(Exception):
@@ -145,7 +154,7 @@ def _make_union_parser_worker(
     union: Type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
-) -> UnionType:
+) -> Optional[UnionType]:
     """Worker function behind union parsing. Iterates through possible parsers for the union and
     returns the value produced by the first parser that works. Otherwise, raises an error if none
     work"""
@@ -216,3 +225,37 @@ def none_parser(value: str) -> Literal[None]:
     if value == "":
         return None
     raise ValueError(f"NoneType not a valid type for {value}")
+
+
+@overload
+def all_not_none(values: tuple[Optional[T], ...]) -> TypeGuard[tuple[T, ...]]: ...
+
+
+@overload
+def all_not_none(values: list[Optional[T]]) -> TypeGuard[list[T]]: ...
+
+
+@overload
+def all_not_none(values: set[Optional[T]]) -> TypeGuard[set[T]]: ...
+
+
+@overload
+def all_not_none(values: Sequence[Optional[T]]) -> TypeGuard[Sequence[T]]: ...
+
+
+@overload
+def all_not_none(values: Collection[Optional[T]]) -> TypeGuard[Collection[T]]: ...
+
+
+def all_not_none(values: Iterable[Optional[T]]) -> bool:
+    """
+    Type guard that checks all Optional collection elements are non-null.
+
+    Args:
+        values: Collection of Optional elements.
+
+    Returns:
+        True if no elements are None, False otherwise. When True, narrows the collection type from
+        `Container[T | None]` to `Container[T]`.
+    """
+    return all(v is not None for v in values)

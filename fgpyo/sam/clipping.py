@@ -105,6 +105,9 @@ def softclip_start_of_alignment_by_query(
     if rec.is_unmapped or bases_to_clip < 1:
         return ClippingInfo(0, 0)
 
+    # type narrowing; rec.query_qualities is not None if the record is mapped
+    assert rec.query_qualities is not None
+
     num_clippable_bases = rec.query_alignment_length
 
     if bases_to_clip >= num_clippable_bases:
@@ -149,6 +152,9 @@ def softclip_end_of_alignment_by_query(
     """
     if rec.is_unmapped or bases_to_clip < 1:
         return ClippingInfo(0, 0)
+
+    # type narrowing; rec.query_qualities is not None if the record is mapped
+    assert rec.query_qualities is not None
 
     num_clippable_bases = rec.query_alignment_length
 
@@ -195,12 +201,16 @@ def softclip_start_of_alignment_by_ref(
         ClippingInfo: a named tuple containing the number of query/read bases and the number
             of target/reference bases clipped.
     """
+    assert rec.reference_length is not None  # type narrowing
     if rec.reference_length <= bases_to_clip:
         return _clip_whole_read(rec, tags_to_invalidate)
 
     new_start = rec.reference_start + bases_to_clip
     new_query_start = _read_pos_at_ref_pos(rec, new_start, previous=False)
+
+    assert new_query_start is not None  # type narrowing
     query_bases_to_clip = new_query_start - rec.query_alignment_start
+
     return softclip_start_of_alignment_by_query(
         rec, query_bases_to_clip, clipped_base_quality, tags_to_invalidate
     )
@@ -231,12 +241,17 @@ def softclip_end_of_alignment_by_ref(
         ClippingInfo: a named tuple containing the number of query/read bases and the number
             of target/reference bases clipped.
     """
+    assert rec.reference_length is not None  # type narrowing
     if rec.reference_length <= bases_to_clip:
         return _clip_whole_read(rec, tags_to_invalidate)
 
+    assert rec.reference_end is not None  # type narrowing
     new_end = rec.reference_end - bases_to_clip
     new_query_end = _read_pos_at_ref_pos(rec, new_end, previous=False)
+
+    assert new_query_end is not None  # type narrowing
     query_bases_to_clip = rec.query_alignment_end - new_query_end
+
     return softclip_end_of_alignment_by_query(
         rec, query_bases_to_clip, clipped_base_quality, tags_to_invalidate
     )
@@ -244,6 +259,7 @@ def softclip_end_of_alignment_by_ref(
 
 def _clip_whole_read(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> ClippingInfo:
     """Private method that unmaps a read and returns an appropriate ClippingInfo."""
+    assert rec.reference_length is not None  # type narrowing
     retval = ClippingInfo(rec.query_alignment_length, rec.reference_length)
     _cleanup(rec, tags_to_invalidate)
     _make_read_unmapped(rec)
@@ -252,6 +268,9 @@ def _clip_whole_read(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> 
 
 def _make_read_unmapped(rec: AlignedSegment) -> None:
     """Removes mapping information from a read."""
+    assert rec.query_sequence is not None  # type narrowing
+    assert rec.query_qualities is not None  # type narrowing
+
     if rec.is_reverse:
         quals = rec.query_qualities
         quals.reverse()
@@ -298,6 +317,7 @@ def _read_pos_at_ref_pos(
     Returns:
         The read position at the reference position, or None.
     """
+    assert rec.reference_end is not None  # type narrowing
     if ref_pos < rec.reference_start or ref_pos >= rec.reference_end:
         raise ValueError(f"{ref_pos} is not within the reference span for read {rec.query_name}")
 

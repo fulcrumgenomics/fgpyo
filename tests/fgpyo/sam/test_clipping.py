@@ -10,7 +10,7 @@ from fgpyo.sam import clipping
 from fgpyo.sam.builder import SamBuilder
 
 
-def r(start: Optional[int], cigar: Optional[str], strand: Optional[str] = "+") -> AlignedSegment:
+def r(start: Optional[int], cigar: Optional[str], strand: str = "+") -> AlignedSegment:
     """Constructs a read for testing."""
     builder = SamBuilder()
     if start:
@@ -96,6 +96,7 @@ def test_softclip_start_of_alignment_by_query_masking_qualities() -> None:
         rec = r(10, "50M", "+")
         clipping.softclip_start_of_alignment_by_query(rec, 10, clipped_base_quality=new_qual)
         quals = rec.query_qualities
+        assert quals is not None  # type narrowing
 
         for i in range(0, 10):
             assert quals[i] == (30 if new_qual is None else new_qual)
@@ -227,6 +228,7 @@ def test_softclip_end_of_alignment_by_query_masks_qualities_when_softclipping() 
         rec = r(10, "50M", "+")
         clipping.softclip_end_of_alignment_by_query(rec, 10, clipped_base_quality=new_qual)
         quals = rec.query_qualities
+        assert quals is not None  # type narrowing
 
         for i in range(40, 50):
             assert quals[i] == (30 if new_qual is None else new_qual)

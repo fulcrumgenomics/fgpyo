@@ -173,8 +173,10 @@ class Keys(StrEnum):
 
     @staticmethod
     def attributes() -> List[str]:
-        """The list of keys that are allowed to be attributes in `SequenceMetadata`.  Notably
-        `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed."""
+        """
+        The list of keys that are allowed to be attributes in `SequenceMetadata`.  Notably
+        `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed.
+        """
         return [key for key in Keys if key != Keys.SEQUENCE_NAME and key != Keys.SEQUENCE_LENGTH]
 
 
@@ -215,7 +217,8 @@ SEQUENCE_NAME_PATTERN: Pattern = re.compile(
 
 @dataclass(frozen=True, init=True)
 class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
-    """Stores information about a single Sequence (ex. chromosome, contig).
+    """
+    Stores information about a single Sequence (ex. chromosome, contig).
 
     Implements the mutable mapping interface, which provides access to the attributes of this
     sequence, including name, length, but not index.  When using the mapping interface, for example
@@ -310,8 +313,10 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
         return None if value is None else Topology[value]
 
     def same_as(self, other: "SequenceMetadata") -> bool:
-        """Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s."""
+        """
+        Returns true if the sequences share a common reference name (including aliases), have
+        the same length, and the same MD5 if both have MD5s.
+        """
         if self.length != other.length:
             return False
         elif self.name != other.name and other.name not in self.all_names:
@@ -324,8 +329,10 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
             return self_m5 == other_m5
 
     def to_sam(self) -> Dict[str, Any]:
-        """Converts the sequence metadata to a dictionary equivalent to one item in the
-        list of sequences from `pysam.AlignmentHeader#to_dict()["SQ"]`."""
+        """
+        Converts the sequence metadata to a dictionary equivalent to one item in the
+        list of sequences from `pysam.AlignmentHeader#to_dict()["SQ"]`.
+        """
         meta_dict: Dict[str, Any] = {
             f"{Keys.SEQUENCE_NAME}": self.name,
             f"{Keys.SEQUENCE_LENGTH}": self.length,
@@ -337,7 +344,8 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
     @staticmethod
     def from_sam(meta: Dict[Union[Keys, str], Any], index: int) -> "SequenceMetadata":
-        """Builds a `SequenceMetadata` from a dictionary.  The keys must include the sequence
+        """
+        Builds a `SequenceMetadata` from a dictionary.  The keys must include the sequence
         name (`Keys.SEQUENCE_NAME`) and length (`Keys.SEQUENCE_LENGTH`).  All other keys from
         `Keys` will be stored in the resulting attributes.
 
@@ -387,7 +395,8 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
 @dataclass(frozen=True, init=True)
 class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
-    """Contains an ordered collection of sequences.
+    """
+    Contains an ordered collection of sequences.
 
     A specific `SequenceMetadata` may be retrieved by name (`str`) or index (`int`), either by
     using the generic `get` method or by the correspondingly named `by_name` and `by_index` methods.
@@ -419,8 +428,10 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         object.__setattr__(self, "_dict", self_dict)
 
     def same_as(self, other: "SequenceDictionary") -> bool:
-        """Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s"""
+        """
+        Returns true if the sequences share a common reference name (including aliases), have
+        the same length, and the same MD5 if both have MD5s
+        """
         if len(self) != len(other):
             return False
         return all(this.same_as(that) for this, that in zip(self.infos, other.infos))
@@ -433,7 +444,8 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         self,
         extra_header: Optional[Dict[str, Any]] = None,
     ) -> pysam.AlignmentHeader:
-        """Converts the sequence dictionary to a `pysam.AlignmentHeader`.
+        """
+        Converts the sequence dictionary to a `pysam.AlignmentHeader`.
 
         Args:
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
@@ -467,7 +479,8 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
     def from_sam(
         data: Union[Path, pysam.AlignmentFile, pysam.AlignmentHeader, List[Dict[str, Any]]],
     ) -> "SequenceDictionary":
-        """Creates a `SequenceDictionary` from a SAM file or its header.
+        """
+        Creates a `SequenceDictionary` from a SAM file or its header.
 
         Args:
             data: The input may be any of:
@@ -502,8 +515,10 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 
     def get_by_name(self, name: str) -> Optional[SequenceMetadata]:
-        """Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
-        the name does not exist in this dictionary"""
+        """
+        Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
+        the name does not exist in this dictionary
+        """
         return self._dict.get(name)
 
     def by_name(self, name: str) -> SequenceMetadata:
@@ -511,8 +526,10 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         return self._dict[name]
 
     def by_index(self, index: int) -> SequenceMetadata:
-        """Gets a `SequenceMetadata` explicitly by `name`.  Raises an `IndexError`
-        if the index is out of bounds."""
+        """
+        Gets a `SequenceMetadata` explicitly by `name`.  Raises an `IndexError`
+        if the index is out of bounds.
+        """
         return self.infos[index]
 
     def __iter__(self) -> Iterator[str]:

@@ -595,7 +595,6 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
     """
     Test that we can read the header of a picard-formatted file.
     """
-
     metrics_path = tmp_path / "fake_picard_metrics"
 
     with metrics_path.open("w") as metrics_file:
@@ -617,7 +616,6 @@ def test_read_header_can_read_empty(tmp_path: Path) -> None:
     """
     If the input file is empty, we should get an empty header.
     """
-
     metrics_path = tmp_path / "empty"
     metrics_path.touch()
 
@@ -803,7 +801,6 @@ def test_writer_include_fields_reorders(tmp_path: Path) -> None:
 
 def test_writer_exclude_fields(tmp_path: Path) -> None:
     """Test that we can exclude fields from being written."""
-
     fpath = tmp_path / "test.txt"
 
     data = [

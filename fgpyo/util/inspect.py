@@ -128,7 +128,6 @@ def split_at_given_level(
 
     Not currently smart enough to deal with fields enclosed in quotes ('' or "") - TODO
     """
-
     outer_depth_of_split = 0
     current_outer_splits = []
     out_vals: List[str] = []
@@ -313,7 +312,8 @@ def dict_parser(
 def _get_parser(  # noqa: C901
     cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
 ) -> partial:
-    """Attempts to find a parser for a provided type.
+    """
+    Attempts to find a parser for a provided type.
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
@@ -422,7 +422,8 @@ def attr_from(
     kwargs: Dict[str, str],
     parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
 ) -> _AttrFromType:
-    """Builds an attr or dataclasses class from key-word arguments
+    """
+    Builds an attr or dataclasses class from key-word arguments
 
     Args:
         cls: the attr or dataclasses class to be built

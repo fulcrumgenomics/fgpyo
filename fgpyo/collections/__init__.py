@@ -109,7 +109,8 @@ LessThanOrEqualType = TypeVar("LessThanOrEqualType", bound=SupportsLessThanOrEqu
 
 
 class PeekableIterator(Generic[IterType], Iterator[IterType]):
-    """A peekable iterator wrapping an iterator or iterable.
+    """
+    A peekable iterator wrapping an iterator or iterable.
 
     This allows returning the next item without consuming it.
 
@@ -145,7 +146,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
             raise StopIteration
 
     def takewhile(self, pred: Callable[[IterType], bool]) -> List[IterType]:
-        """Consumes from the iterator while pred is true, and returns the result as a List.
+        """
+        Consumes from the iterator while pred is true, and returns the result as a List.
 
         The iterator is left pointing at the first non-matching item, or if all items match
         then the iterator will be exhausted.
@@ -164,7 +166,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         return xs
 
     def dropwhile(self, pred: Callable[[IterType], bool]) -> "PeekableIterator[IterType]":
-        """Drops elements from the iterator while the predicate is true.
+        """
+        Drops elements from the iterator while the predicate is true.
 
         Updates the iterator to point at the first non-matching element, or exhausts the
         iterator if all elements match the predicate.
@@ -182,7 +185,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
 
 
 def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
-    """Tests lazily if an iterable of comparable objects is sorted or not.
+    """
+    Tests lazily if an iterable of comparable objects is sorted or not.
 
     Args:
         iterable: An iterable of comparable objects.

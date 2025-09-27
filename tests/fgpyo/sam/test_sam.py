@@ -74,7 +74,8 @@ def unmapped_sam() -> Path:
 
 @pytest.fixture(scope="function")
 def in_path(request: Any, valid_sam: Path, valid_bam: Path) -> Path:
-    """A fixture for test_sam_file_open_reading to modify in_path prior to executing.
+    """
+    A fixture for test_sam_file_open_reading to modify in_path prior to executing.
 
     Returns:
          the path corresponding to the given file type (i.e. SAM or BAM).

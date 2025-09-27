@@ -182,7 +182,8 @@ def softclip_start_of_alignment_by_ref(
     clipped_base_quality: Optional[int] = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
-    """Soft-clips the start of an alignment by bases_to_clip bases on the reference.
+    """
+    Soft-clips the start of an alignment by bases_to_clip bases on the reference.
 
     Clipping is applied after any existing hard or soft clipping.  E.g. a read with cigar 5S100M
     that is clipped with bases_to_clip=10 will yield a cigar of 15S90M.
@@ -222,7 +223,8 @@ def softclip_end_of_alignment_by_ref(
     clipped_base_quality: Optional[int] = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
-    """Soft-clips the end of an alignment by bases_to_clip bases on the reference.
+    """
+    Soft-clips the end of an alignment by bases_to_clip bases on the reference.
 
     Clipping is applied beforeany existing hard or soft clipping.  E.g. a read with cigar 100M5S
     that is clipped with bases_to_clip=10 will yield a cigar of 90M15S.
@@ -347,7 +349,8 @@ def _read_pos_at_ref_pos(
 def _clip(
     cigar: Cigar, quals: array, bases_to_clip: int, clipped_base_quality: Optional[int]
 ) -> Tuple[Cigar, ClippingInfo]:
-    """Workhorse private clipping method that clips the start of cigars.
+    """
+    Workhorse private clipping method that clips the start of cigars.
 
     Always works on the start of the cigars/quals; end-clipping is accomplished by
     reversing value before calling this function.  Since the function is private it
@@ -357,7 +360,6 @@ def _clip(
     2. The cigar and quals agree on the query length
     2. clipped_base_quality is either None or a valid integer base quality
     """
-
     if any(cig.operator == CigarOp.P for cig in cigar.elements):
         raise ValueError(f"Cannot handle cigars that contain padding: {cigar}")
 

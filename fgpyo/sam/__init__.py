@@ -226,7 +226,8 @@ _STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
 
 @enum.unique
 class SamFileType(enum.Enum):
-    """Enumeration of valid SAM/BAM/CRAM file types.
+    """
+    Enumeration of valid SAM/BAM/CRAM file types.
 
     Attributes:
         mode (str): The additional mode character to add when opening this file type.
@@ -243,7 +244,8 @@ class SamFileType(enum.Enum):
 
     @classmethod
     def from_path(cls, path: Union[Path, str]) -> "SamFileType":
-        """Infers the file type based on the file extension.
+        """
+        Infers the file type based on the file extension.
 
         Args:
             path: the path to the SAM/BAM/CRAM to read or write.
@@ -262,7 +264,8 @@ def _pysam_open(  # noqa: C901
     unmapped: bool = False,
     **kwargs: Any,
 ) -> SamFile:
-    """Opens a SAM/BAM/CRAM for reading or writing.
+    """
+    Opens a SAM/BAM/CRAM for reading or writing.
 
     This function permits reading from standard input and writing to standard output. The specified
     path may be the UNIX conventional `"-"`, the more explicit `"stdin"` or `"stdout"`, or an
@@ -278,7 +281,6 @@ def _pysam_open(  # noqa: C901
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
         kwargs: any keyword arguments to be passed to `pysam.AlignmentFile`; may not include "mode".
     """
-
     if isinstance(path, (str, Path)):
         if str(path) in _STDIN_PATHS and open_for_reading:
             path = sys.stdin
@@ -333,7 +335,8 @@ def _pysam_open(  # noqa: C901
 def reader(
     path: SamPath, file_type: Optional[SamFileType] = None, unmapped: bool = False
 ) -> SamFile:
-    """Opens a SAM/BAM/CRAM for reading.
+    """
+    Opens a SAM/BAM/CRAM for reading.
 
     To read from standard input, provide any of `"-"`, `"stdin"`, or `"/dev/stdin"` as the input
     `path`.
@@ -352,7 +355,8 @@ def writer(
     header: Union[str, Dict[str, Any], SamHeader],
     file_type: Optional[SamFileType] = None,
 ) -> SamFile:
-    """Opens a SAM/BAM/CRAM for writing.
+    """
+    Opens a SAM/BAM/CRAM for writing.
 
     To write to standard output, provide any of `"-"`, `"stdout"`, or `"/dev/stdout"` as the output
     `path`. **Note**: When writing to `stdout`, the `file_type` _must_ be given.
@@ -400,7 +404,8 @@ class _CigarOpUtil:
 
 @enum.unique
 class CigarOp(enum.Enum):
-    """Enumeration of operators that can appear in a Cigar string.
+    """
+    Enumeration of operators that can appear in a Cigar string.
 
     Attributes:
         code (int): The `~pysam` cigar operator code.
@@ -437,7 +442,8 @@ class CigarOp(enum.Enum):
 
     @staticmethod
     def from_code(code: int) -> "CigarOp":
-        """Returns the operator from the given operator code.
+        """
+        Returns the operator from the given operator code.
 
         Note: this is mainly used to get the operator from :py:mod:`~pysam`.
         """
@@ -456,7 +462,8 @@ class CigarOp(enum.Enum):
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class CigarElement:
-    """Represents an element in a Cigar
+    """
+    Represents an element in a Cigar
 
     Attributes:
         - length (int): the length of the element
@@ -493,7 +500,8 @@ class CigarParsingException(Exception):
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class Cigar:
-    """Class representing a cigar string.
+    """
+    Class representing a cigar string.
 
     Attributes:
         - elements (Tuple[CigarElement, ...]): zero or more cigar elements
@@ -503,7 +511,8 @@ class Cigar:
 
     @classmethod
     def from_cigartuples(cls, cigartuples: Optional[List[Tuple[int, int]]]) -> "Cigar":
-        """Returns a Cigar from a list of tuples returned by pysam.
+        """
+        Returns a Cigar from a list of tuples returned by pysam.
 
         Each tuple denotes the operation and length.  See
         [`CigarOp()`][fgpyo.sam.CigarOp] for more information on the
@@ -532,7 +541,8 @@ class Cigar:
 
     @classmethod
     def from_cigarstring(cls, cigarstring: str) -> "Cigar":
-        """Constructs a Cigar from a string returned by pysam.
+        """
+        Constructs a Cigar from a string returned by pysam.
 
         If "*" is given, returns an empty Cigar.
         """
@@ -642,7 +652,8 @@ class PairOrientation(enum.Enum):
     def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
         cls, rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None
     ) -> Optional["PairOrientation"]:
-        """Returns the pair orientation if both reads are mapped to the same reference sequence.
+        """
+        Returns the pair orientation if both reads are mapped to the same reference sequence.
 
         Args:
             rec1: The first record in the pair.
@@ -651,7 +662,6 @@ class PairOrientation(enum.Enum):
         See:
             [`htsjdk.samtools.SamPairUtil.getPairOrientation()`](https://github.com/samtools/htsjdk/blob/c31bc92c24bc4e9552b2a913e52286edf8f8ab96/src/main/java/htsjdk/samtools/SamPairUtil.java#L71-L102)
         """
-
         if rec2 is None:
             rec2_is_unmapped = rec1.mate_is_unmapped
             rec2_reference_id = rec1.next_reference_id
@@ -696,13 +706,13 @@ class PairOrientation(enum.Enum):
 
 
 def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
-    """Computes the insert size ("template length" or "TLEN") for a pair of records.
+    """
+    Computes the insert size ("template length" or "TLEN") for a pair of records.
 
     Args:
         rec1: The first record in the pair.
         rec2: The second record in the pair. If None, then mate info on `rec1` will be used.
     """
-
     if rec2 is None:
         rec2_is_unmapped = rec1.mate_is_unmapped
         rec2_reference_id = rec1.next_reference_id
@@ -753,7 +763,8 @@ def is_proper_pair(
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
     isize: Callable[[AlignedSegment, Optional[AlignedSegment]], int] = isize,
 ) -> bool:
-    """Determines if a pair of records are properly paired or not.
+    """
+    Determines if a pair of records are properly paired or not.
 
     Criteria for records in a proper pair are:
         - Both records are aligned
@@ -789,7 +800,8 @@ def is_proper_pair(
 
 @attr.s(frozen=True, auto_attribs=True)
 class SupplementaryAlignment:
-    """Stores a supplementary alignment record produced by BWA and stored in the SA SAM tag.
+    """
+    Stores a supplementary alignment record produced by BWA and stored in the SA SAM tag.
 
     Attributes:
         reference_name: the name of the reference (i.e. contig, chromosome) aligned to
@@ -827,7 +839,8 @@ class SupplementaryAlignment:
 
     @staticmethod
     def parse(string: str) -> "SupplementaryAlignment":
-        """Returns a supplementary alignment parsed from the given string.  The various fields
+        """
+        Returns a supplementary alignment parsed from the given string.  The various fields
         should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`)
         """
         fields = string.split(",")
@@ -842,7 +855,8 @@ class SupplementaryAlignment:
 
     @staticmethod
     def parse_sa_tag(tag: str) -> List["SupplementaryAlignment"]:
-        """Parses an SA tag of supplementary alignments from a BAM file. If the tag is empty
+        """
+        Parses an SA tag of supplementary alignments from a BAM file. If the tag is empty
         or contains just a single semi-colon then an empty list will be returned.  Otherwise
         a list containing a SupplementaryAlignment per ;-separated value in the tag will
         be returned.
@@ -869,7 +883,8 @@ class SupplementaryAlignment:
 
 
 def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
-    """Calculate the sum of base qualities score for an alignment record.
+    """
+    Calculate the sum of base qualities score for an alignment record.
 
     This function is useful for calculating the "mate score" as implemented in `samtools fixmate`.
     Consistently with `samtools fixmate`, this function returns 0 if the record has no base
@@ -894,7 +909,8 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
 
 
 def _set_common_mate_fields(dest: AlignedSegment, mate_primary: AlignedSegment) -> None:
-    """Set common mate info on a destination alignment from its mate's primary alignment.
+    """
+    Set common mate info on a destination alignment from its mate's primary alignment.
 
     Args:
         dest: The alignment to set the mate info upon.
@@ -928,7 +944,8 @@ def set_mate_info(
     is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
     isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
 ) -> None:
-    """Resets mate pair information between two primary alignments that share a query name.
+    """
+    Resets mate pair information between two primary alignments that share a query name.
 
     Args:
         rec1: The first record in the pair.
@@ -954,7 +971,8 @@ def set_mate_info(
 
 
 def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedSegment) -> None:
-    """Set mate info on a secondary alignment from its mate's primary alignment.
+    """
+    Set mate info on a secondary alignment from its mate's primary alignment.
 
     Args:
         secondary: The secondary alignment to set mate information upon.
@@ -973,7 +991,8 @@ def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedS
 
 
 def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
-    """Set mate info on a supplementary alignment from its mate's primary alignment.
+    """
+    Set mate info on a supplementary alignment from its mate's primary alignment.
 
     Args:
         supp: The supplementary alignment to set mate information upon.
@@ -998,7 +1017,8 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
 
 @deprecated("Use `set_mate_info()` instead. Deprecated after fgpyo 0.8.0.")
 def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
-    """Resets mate pair information between reads in a pair.
+    """
+    Resets mate pair information between reads in a pair.
 
     Can be handed reads that already have pairing flags setup or independent R1 and R2 records that
     are currently flagged as SE reads.
@@ -1114,7 +1134,8 @@ def calculate_edit_info(
 
 @attr.s(frozen=True, auto_attribs=True)
 class Template:
-    """A container for alignment records corresponding to a single sequenced template
+    """
+    A container for alignment records corresponding to a single sequenced template
     or insert.
 
     It is strongly preferred that new Template instances be created with `Template.build()`
@@ -1145,8 +1166,10 @@ class Template:
 
     @staticmethod
     def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
-        """Returns an iterator over templates. Assumes the input iterable is queryname grouped,
-        and gathers consecutive runs of records sharing a common query name into templates."""
+        """
+        Returns an iterator over templates. Assumes the input iterable is queryname grouped,
+        and gathers consecutive runs of records sharing a common query name into templates.
+        """
         return TemplateIterator(alns)
 
     @staticmethod
@@ -1267,7 +1290,8 @@ class Template:
         is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
         isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
     ) -> Self:
-        """Reset all mate information on every alignment in the template.
+        """
+        Reset all mate information on every alignment in the template.
 
         Args:
             is_proper_pair: A function that takes two alignments and determines proper pair status.
@@ -1292,13 +1316,13 @@ class Template:
         writer: SamFile,
         primary_only: bool = False,
     ) -> None:
-        """Write the records associated with the template to file.
+        """
+        Write the records associated with the template to file.
 
         Args:
             writer: An open, writable AlignmentFile.
             primary_only: If True, only write primary alignments.
         """
-
         if primary_only:
             rec_iter = self.primary_recs()
         else:
@@ -1312,7 +1336,8 @@ class Template:
         tag: str,
         value: Union[str, int, float, None],
     ) -> None:
-        """Add a tag to all records associated with the template.
+        """
+        Add a tag to all records associated with the template.
 
         Setting a tag to `None` will remove the tag.
 
@@ -1320,7 +1345,6 @@ class Template:
             tag: The name of the tag.
             value: The value of the tag.
         """
-
         assert len(tag) == 2, f"Tags must be 2 characters: {tag}."
 
         for rec in self.all_recs():

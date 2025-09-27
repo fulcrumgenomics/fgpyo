@@ -60,9 +60,10 @@ else:
 
 
 def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
-    """Calls pysam.dict and writes the sequence dictionary to the provided output path
+    """
+    Calls pysam.dict and writes the sequence dictionary to the provided output path
 
-    Args
+    Args:
         assembly: Assembly
         species: Species
         output_path: File path to write dictionary to
@@ -72,16 +73,18 @@ def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -
 
 
 def pysam_faidx(input_path: str) -> None:
-    """Calls pysam.faidx and writes fasta index in the same file location as the fasta file
+    """
+    Calls pysam.faidx and writes fasta index in the same file location as the fasta file
 
-    Args
+    Args:
         input_path: Path to fasta file
     """
     samtools_faidx(input_path)
 
 
 class ContigBuilder:
-    """Builder for constructing new contigs, and adding bases to existing contigs.
+    """
+    Builder for constructing new contigs, and adding bases to existing contigs.
     Existing contigs cannot be overwritten, each contig name in FastaBuilder must
     be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
     where species and assembly are optional parameters and will defualt to
@@ -114,7 +117,7 @@ class ContigBuilder:
             bases: The bases to be added to the contig
             times: The number of times the bases should be repeated
 
-        Example
+        Example:
         add("AAA", 2) results in the following bases -> "AAAAAA"
         """
         # Remove any spaces in string and enforce upper case format
@@ -124,7 +127,8 @@ class ContigBuilder:
 
 
 class FastaBuilder:
-    """Builder for constructing sets of one or more contigs.
+    """
+    Builder for constructing sets of one or more contigs.
 
     Provides the ability to manufacture sets of contigs from minimal input, and automatically
     generates the information necessary for writing the FASTA file, index, and dictionary.
@@ -213,7 +217,6 @@ class FastaBuilder:
         Example:
         FastaBuilder.to_file(path = pathlib.Path("my_fasta.fa"))
         """
-
         with path.open("w") as writer:
             for contig in self.__contig_builders.values():
                 try:

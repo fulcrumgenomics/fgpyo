@@ -36,7 +36,8 @@ def extract_umis_from_read_name(
     umi_delimiter: str = _ILLUMINA_UMI_DELIMITER,
     strict: bool = False,
 ) -> Optional[str]:
-    """Extract UMI(s) from an Illumina-style read name.
+    """
+    Extract UMI(s) from an Illumina-style read name.
 
     The UMI is expected to be the final component of the read name, delimited by the
     `read_name_delimiter`. Multiple UMIs may be present, delimited by the `umi_delimiter`. This
@@ -128,13 +129,14 @@ def copy_umi_from_read_name(
 
 
 def _is_valid_umi(umi: str) -> bool:
-    """Check whether a UMI is valid.
+    """
+    Check whether a UMI is valid.
     Illumina UMIs may only contain A/C/G/T/N.
     https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
     Args:
         umi: The UMI to check.
+
     Returns:
         `True` if the UMI is valid, `False` otherwise.
     """
-
     return len(umi) > 0 and set(umi).issubset(_VALID_UMI_CHARACTERS)

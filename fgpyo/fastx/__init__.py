@@ -42,7 +42,8 @@ from fgpyo.util.types import all_not_none
 
 
 class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
-    """A context manager that will lazily zip over any number of FASTA/FASTQ files.
+    """
+    A context manager that will lazily zip over any number of FASTA/FASTQ files.
 
     Args:
         paths: Paths to the FASTX files to zip over.

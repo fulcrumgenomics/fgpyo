@@ -65,7 +65,8 @@ def complement(base: str) -> str:
 
 
 def reverse_complement(bases: str) -> str:
-    """Reverse complements a base sequence.
+    """
+    Reverse complements a base sequence.
 
     Arguments:
         bases: the bases to be reverse complemented.
@@ -149,7 +150,8 @@ def levenshtein(string1: str, string2: str) -> int:
 
 
 def longest_hp_length(bases: str) -> int:
-    """Calculates the length of the longest homopolymer in the input sequence.
+    """
+    Calculates the length of the longest homopolymer in the input sequence.
 
     Args:
         bases: the bases over which to compute
@@ -161,7 +163,8 @@ def longest_hp_length(bases: str) -> int:
 
 
 def longest_homopolymer_length(bases: str) -> int:
-    """Calculates the length of the longest homopolymer in the input sequence.
+    """
+    Calculates the length of the longest homopolymer in the input sequence.
 
     Args:
         bases: the bases over which to compute
@@ -186,7 +189,8 @@ def longest_homopolymer_length(bases: str) -> int:
 
 
 def longest_dinucleotide_run_length(bases: str) -> int:
-    """Number of bases in the longest dinucleotide run in a primer.
+    """
+    Number of bases in the longest dinucleotide run in a primer.
 
     A dinucleotide run is when two nucleotides are repeated in tandem. For example,
     TTGG (length = 4) or AACCAACCAA (length = 10). If there are no such runs, returns 0.
@@ -201,7 +205,8 @@ def longest_dinucleotide_run_length(bases: str) -> int:
 
 
 def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> int:
-    """Number of bases in the longest multi-nucleotide run.
+    """
+    Number of bases in the longest multi-nucleotide run.
 
     A multi-nucleotide run is when N nucleotides are repeated in tandem. For example,
     TTGG (length = 4, N=2) or TAGTAGTAG (length = 9, N = 3). If there are no such runs,

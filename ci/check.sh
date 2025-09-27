@@ -8,4 +8,4 @@ if [ ! -x "$(command -v uv)" ]; then
 fi
 
 uv run poe fix-and-check-all
-
+uv run poe build-docs

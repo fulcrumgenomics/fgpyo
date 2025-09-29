@@ -32,7 +32,6 @@ classifiers = [
 ]
 dependencies = [
     "attrs>=19.3.0",
-    "pysam>=0.22.1",
     "typing_extensions>=4.12.2 ; python_version < '3.13'",
     "strenum>=0.4.15,<0.5",
     "zlib-ng>=0.5.1",
@@ -41,6 +40,11 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/fulcrumgenomics/fgpyo"
 Repository = "https://github.com/fulcrumgenomics/fgpyo"
+
+[project.optional-dependencies]
+pysam = [
+    "pysam>=0.23.0",
+]
 
 [dependency-groups]
 dev = [
@@ -65,12 +69,19 @@ docs = [
     "numpy>=1.25.2,<2 ; python_version >= '3.9' and python_version < '3.12'",
     "numpy>=1.24.4,<2 ; python_version < '3.9'",
 ]
+pysam = [
+    "fgpyo[pysam]",
+]
 
 [tool.uv]
 default-groups = [
     "dev",
     "docs",
+    "pysam",
 ]
+
+[tool.uv.sources]
+fgpyo = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -6,7 +6,6 @@ from typing import Any
 from typing import Generator
 from typing import List
 from typing import Tuple
-from typing import Union
 
 import pysam
 import pytest
@@ -33,7 +32,7 @@ from fgpyo.sam.builder import SamBuilder
 @pytest.mark.parametrize("file_type", list(SamFileType))
 @pytest.mark.parametrize("as_str", [True, False])
 def test_sam_file_type_from_path(file_type: SamFileType, as_str: bool) -> None:
-    path: Union[Path, str]
+    path: Path | str
     if as_str:
         path = "/path/to/some/file" + file_type.extension
     else:

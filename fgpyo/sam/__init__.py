@@ -171,7 +171,6 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 from typing import cast
 
 import attr
@@ -181,12 +180,12 @@ from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 from pysam import qualitystring_to_array
 
-if sys.version_info[:2] > (3, 10):
+if sys.version_info[:2] >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-if sys.version_info[:2] > (3, 12):
+if sys.version_info[:2] >= (3, 13):
     from warnings import deprecated
 else:
     from typing_extensions import deprecated
@@ -194,7 +193,7 @@ else:
 import fgpyo.io
 from fgpyo.collections import PeekableIterator
 
-SamPath = Union[IO[Any], Path, str]
+SamPath = IO[Any] | Path | str
 """The valid base classes for opening a SAM/BAM/CRAM file."""
 
 NO_REF_INDEX: int = -1
@@ -245,7 +244,7 @@ class SamFileType(enum.Enum):
         return self is SamFileType.BAM or self is SamFileType.CRAM
 
     @classmethod
-    def from_path(cls, path: Union[Path, str]) -> "SamFileType":
+    def from_path(cls, path: Path | str) -> "SamFileType":
         """Infers the file type based on the file extension.
 
         Args:
@@ -352,7 +351,7 @@ def reader(
 
 def writer(
     path: SamPath,
-    header: Union[str, Dict[str, Any], SamHeader],
+    header: str | Dict[str, Any] | SamHeader,
     file_type: Optional[SamFileType] = None,
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for writing.
@@ -1305,7 +1304,7 @@ class Template:
     def set_tag(
         self,
         tag: str,
-        value: Union[str, int, float, None],
+        value: str | int | float | None,
     ) -> None:
         """Add a tag to all records associated with the template.
 

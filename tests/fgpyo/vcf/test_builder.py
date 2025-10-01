@@ -290,7 +290,9 @@ def test_zero_sample_vcf_round_trip(
 
     with vcf_reader(vcf) as reader:
         for vcf_record, builder_record in zip(
-            reader, variant_builder.to_sorted_list(), strict=True,
+            reader,
+            variant_builder.to_sorted_list(),
+            strict=True,
         ):
             _assert_equal(expected_value=builder_record, actual_value=vcf_record)
 

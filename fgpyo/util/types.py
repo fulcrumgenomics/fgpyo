@@ -1,10 +1,10 @@
 import collections
 import inspect
-import sys
 import types
 import typing
 from enum import Enum
 from functools import partial
+from types import UnionType
 from typing import Callable
 from typing import Iterable
 from typing import Literal
@@ -14,15 +14,6 @@ from typing import Union
 from typing import cast
 
 from typing_extensions import TypeAlias
-
-if sys.version_info >= (3, 10):
-    from types import UnionType
-else:
-    # NB: `types.UnionType`, available since Python 3.10, is **not** a `type`, but is a class.
-    # We declare an empty class here to use in the instance checks below.
-    class UnionType:
-        pass
-
 
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
@@ -86,7 +77,7 @@ def is_constructible_from_str(type_: type) -> bool:
 
 
 # NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
-TypeAnnotation: TypeAlias = Union[type, typing._GenericAlias, UnionType, types.GenericAlias]  # type: ignore[name-defined]
+TypeAnnotation: TypeAlias = type | typing._GenericAlias | UnionType | types.GenericAlias  # type: ignore[name-defined]
 """
 A function parameter's type annotation may be any of the following:
     1) `type`, when declaring any of the built-in Python types
@@ -98,11 +89,6 @@ A function parameter's type annotation may be any of the following:
 `types.GenericAlias` is a subclass of `type`, but `typing._GenericAlias` and `types.UnionType` are
 not and must be considered explicitly.
 """
-
-# TODO When dropping support for Python 3.9, deprecate this in favor of performing instance checks
-# directly on the `TypeAnnotation` union type.
-# NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
-TYPE_ANNOTATION_TYPES = (type, typing._GenericAlias, UnionType, types.GenericAlias)  # type: ignore[attr-defined]
 
 
 def _is_optional(dtype: TypeAnnotation) -> bool:
@@ -125,7 +111,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
     Raises:
         TypeError: If the input is not a valid `TypeAnnotation` type.
     """
-    if not isinstance(dtype, TYPE_ANNOTATION_TYPES):
+    if not isinstance(dtype, TypeAnnotation):
         raise TypeError(f"Expected type annotation, got {type(dtype)}: {dtype}")
 
     origin = typing.get_origin(dtype)

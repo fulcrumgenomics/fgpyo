@@ -70,7 +70,7 @@ StopIteration
 iterable objects as well as iterators.
 """
 
-import sys
+from itertools import pairwise as _pairwise
 from operator import le
 from typing import Any
 from typing import Callable
@@ -79,21 +79,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Protocol
-from typing import Tuple
 from typing import TypeVar
-from typing import Union
-
-if sys.version_info[:2] >= (3, 10):
-    from itertools import pairwise as _pairwise
-else:
-    # TODO: remove this branch when Python <3.10 support is dropped
-    def _pairwise(iterable: Iterable[Any]) -> Iterator[Tuple[Any, Any]]:
-        """Return successive overlapping pairs taken from the input iterable."""
-        iterator = iter(iterable)
-        head = next(iterator, None)
-        for other in iterator:
-            yield head, other
-            head = other
 
 
 class SupportsLessThanOrEqual(Protocol):
@@ -117,7 +103,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         source: an iterator over the objects
     """
 
-    def __init__(self, source: Union[Iterator[IterType], Iterable[IterType]]) -> None:
+    def __init__(self, source: Iterator[IterType] | Iterable[IterType]) -> None:
         self._iter: Iterator[IterType] = iter(source)
         self._sentinel: Any = object()
         self.__update_peek()

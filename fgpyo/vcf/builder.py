@@ -12,7 +12,6 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
 import pysam
 from pysam import VariantHeader
@@ -41,7 +40,7 @@ class VcfFieldNumber(Enum):
     UNKNOWN = "."
 
 
-MissingRep = Union[None, Tuple[None, ...]]
+MissingRep = Tuple[None, ...] | None
 
 
 class VariantBuilder:
@@ -174,9 +173,9 @@ class VariantBuilder:
         end: Optional[int] = None,
         id: str = ".",
         ref: str = "A",
-        alts: Union[None, str, Iterable[str]] = (".",),
+        alts: str | Iterable[str] | None = (".",),
         qual: int = 60,
-        filter: Union[None, str, Iterable[str]] = None,
+        filter: str | Iterable[str] | None = None,
         info: Optional[Dict[str, Any]] = None,
         samples: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> VariantRecord:
@@ -354,7 +353,7 @@ class VariantBuilder:
         self,
         name: str,
         field_type: VcfFieldType,
-        number: Union[int, VcfFieldNumber] = 1,
+        number: int | VcfFieldNumber = 1,
         description: Optional[str] = None,
         source: Optional[str] = None,
         version: Optional[str] = None,
@@ -390,7 +389,7 @@ class VariantBuilder:
         self,
         name: str,
         field_type: VcfFieldType,
-        number: Union[int, VcfFieldNumber] = VcfFieldNumber.NUM_GENOTYPES,
+        number: int | VcfFieldNumber = VcfFieldNumber.NUM_GENOTYPES,
         description: Optional[str] = None,
     ) -> None:
         """

@@ -41,7 +41,6 @@ from typing import Callable
 from typing import Iterable
 from typing import Literal
 from typing import Optional
-from typing import Union
 
 from pysam import AlignedSegment
 
@@ -99,7 +98,7 @@ class ProgressLogger(AbstractContextManager):
 
     def __init__(
         self,
-        printer: Union[Logger, Callable[[str], Any]],
+        printer: Logger | Callable[[str], Any],
         noun: str = "records",
         verb: str = "Read",
         unit: int = 100000,

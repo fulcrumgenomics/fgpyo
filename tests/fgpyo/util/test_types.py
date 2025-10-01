@@ -1,4 +1,3 @@
-import sys
 from typing import Iterable
 from typing import List
 from typing import Optional
@@ -23,9 +22,12 @@ def test_is_listlike() -> None:
     "tpe, expected",
     [
         (Union[str, NoneType], True),
+        (str | NoneType, True),
         (Optional[str], True),
         (Union[str, int], False),
         (Union[str, int, None], False),
+        (str | int, False),
+        (str | int | None, False),
         (str, False),
     ],
 )
@@ -38,18 +40,17 @@ def test_is_optional_wrong_type() -> None:
         types._is_optional(None)
 
 
-if sys.version_info >= (3, 10):
+def test_is_optional_python_310() -> None:
+    assert types._is_optional(str | None)
 
-    def test_is_optional_python_310() -> None:
-        assert types._is_optional(str | None)
 
-    def test_make_union_parser_worker_exception() -> None:
-        class Foo:
-            pass
+def test_make_union_parser_worker_exception() -> None:
+    class Foo:
+        pass
 
-        class Bar:
-            pass
+    class Bar:
+        pass
 
-        with pytest.raises(ValueError, match="foo could not be parsed"):
-            type_ = type((Foo | Bar))
-            types._make_union_parser_worker(union=type_, parsers=[], value="foo")
+    with pytest.raises(ValueError, match="foo could not be parsed"):
+        type_ = type((Foo | Bar))
+        types._make_union_parser_worker(union=type_, parsers=[], value="foo")

@@ -1,26 +1,7 @@
-import sys
-import types as python_types
-import typing
-from typing import Any
-from typing import ClassVar
-from typing import Dict
-from typing import FrozenSet
-from typing import Iterable
-from typing import List
-from typing import Literal
-from typing import Mapping
-from typing import Protocol
-from typing import Tuple
-from typing import Type
-from typing import Union
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
 import dataclasses
 import functools
+import types as python_types
+import typing
 from dataclasses import MISSING as DATACLASSES_MISSING
 from dataclasses import fields as get_dataclasses_fields
 from dataclasses import is_dataclass as is_dataclasses_class
@@ -28,9 +9,22 @@ from enum import Enum
 from functools import partial
 from pathlib import PurePath
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import FrozenSet
+from typing import Iterable
+from typing import List
+from typing import Literal
+from typing import Mapping
 from typing import Optional
+from typing import Protocol
+from typing import Tuple
+from typing import Type
+from typing import TypeAlias
 from typing import TypeVar
+from typing import Union
 
 import fgpyo.util.types as types
 
@@ -91,12 +85,12 @@ def is_attr_class(cls: type) -> bool:
 
 _MISSING_OR_NONE: FrozenSet[Any] = frozenset({*MISSING, None})
 """Set of values that are considered missing or None for dataclasses or attr classes"""
-_DataclassesOrAttrClass: TypeAlias = Union[DataclassInstance, AttrsInstance]
+_DataclassesOrAttrClass: TypeAlias = DataclassInstance | AttrsInstance
 """
 TypeAlias for dataclasses or attr classes. Mostly nonsense because they are not true types, they
 are traits, but there is no python trait-tester.
 """
-FieldType: TypeAlias = Union[dataclasses.Field, Attribute]
+FieldType: TypeAlias = dataclasses.Field | Attribute
 """
 TypeAlias for dataclass Fields or attrs Attributes. It will correspond to the correct type for the
 corresponding _DataclassesOrAttrClass
@@ -104,7 +98,7 @@ corresponding _DataclassesOrAttrClass
 
 
 def _get_dataclasses_fields_dict(
-    class_or_instance: Union[DataclassInstance, Type[DataclassInstance]],
+    class_or_instance: DataclassInstance | Type[DataclassInstance],
 ) -> Dict[str, dataclasses.Field]:
     """Get a dict from field name to Field for a dataclass class or instance."""
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
@@ -393,7 +387,7 @@ def _get_parser(  # noqa: C901
 
 
 def get_fields_dict(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
+    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Mapping[str, FieldType]:
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
@@ -405,7 +399,7 @@ def get_fields_dict(
 
 
 def get_fields(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
+    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Tuple[FieldType, ...]:
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):

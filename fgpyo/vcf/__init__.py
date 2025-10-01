@@ -59,7 +59,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 from typing import TextIO
-from typing import Union
 
 from pysam import VariantFile
 from pysam import VariantFile as VcfReader
@@ -69,7 +68,7 @@ from pysam import VariantHeader
 import fgpyo.io
 
 """The valid base classes for opening a VCF file."""
-VcfPath = Union[Path, str, TextIO]
+VcfPath = Path | str | TextIO
 
 
 @contextmanager

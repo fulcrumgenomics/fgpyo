@@ -114,7 +114,6 @@ Formatting and parsing the values for custom types is supported by overriding th
 """
 
 import dataclasses
-import sys
 from abc import ABC
 from contextlib import AbstractContextManager
 from csv import DictWriter
@@ -134,13 +133,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import TypeGuard
 from typing import TypeVar
-from typing import Union
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 from fgpyo import io
 from fgpyo.util import inspect
@@ -458,7 +452,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
     def __init__(
         self,
-        filename: Union[Path, str],
+        filename: Path | str,
         metric_class: Type[Metric],
         append: bool = False,
         delimiter: str = "\t",

@@ -70,7 +70,7 @@ StopIteration
 iterable objects as well as iterators.
 """
 
-from itertools import pairwise as _pairwise
+from itertools import pairwise
 from operator import le
 from typing import Any
 from typing import Callable
@@ -177,4 +177,4 @@ def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
         TypeError: If there is more than 1 element in ``iterable`` and any of the elements are not
             comparable.
     """
-    return all(map(lambda pair: le(*pair), _pairwise(iterable)))
+    return all(map(lambda pair: le(*pair), pairwise(iterable)))

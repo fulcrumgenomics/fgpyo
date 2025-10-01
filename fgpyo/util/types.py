@@ -111,7 +111,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
     Raises:
         TypeError: If the input is not a valid `TypeAnnotation` type.
     """
-    if not isinstance(dtype, TypeAnnotation):
+    if not isinstance(dtype, (type, typing._GenericAlias, UnionType, types.GenericAlias)):  # type: ignore[attr-defined]
         raise TypeError(f"Expected type annotation, got {type(dtype)}: {dtype}")
 
     origin = typing.get_origin(dtype)

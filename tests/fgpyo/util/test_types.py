@@ -53,5 +53,5 @@ def test_make_union_parser_worker_exception() -> None:
         pass
 
     with pytest.raises(ValueError, match="foo could not be parsed"):
-        type_ = type((Foo | Bar))
-        types._make_union_parser_worker(union=type_, parsers=[], value="foo")
+        type_ = Foo | Bar
+        types._make_union_parser_worker(union=type(type_), parsers=[], value="foo")

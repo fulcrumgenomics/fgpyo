@@ -52,7 +52,6 @@ import enum
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 
 import attr
@@ -131,7 +130,7 @@ class ReadSegment:
     """
 
     offset: int
-    length: Optional[int]
+    length: int | None
     kind: SegmentType
 
     @property
@@ -312,7 +311,7 @@ class ReadStructure(Iterable[ReadSegment]):
             # trouble with
             parse_index = index
 
-            seg_length: Optional[int] = None
+            seg_length: int | None = None
             # Parse out the length segment which many be 1 or more digits or the AnyLengthChar
             if string[index] == ANY_LENGTH_CHAR:
                 index += 1

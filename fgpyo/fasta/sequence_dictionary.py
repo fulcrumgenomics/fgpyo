@@ -133,7 +133,6 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import MutableMapping
-from typing import Optional
 from typing import Pattern
 from typing import overload
 
@@ -266,7 +265,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return [self.name] + self.aliases
 
     @property
-    def alternate(self) -> Optional[AlternateLocus]:
+    def alternate(self) -> AlternateLocus | None:
         """Gets the alternate locus for this sequence"""
         if Keys.ALTERNATE_LOCUS not in self.attributes:
             return None
@@ -284,27 +283,27 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return self.alternate is not None
 
     @property
-    def md5(self) -> Optional[str]:
+    def md5(self) -> str | None:
         return self.get(Keys.MD5)
 
     @property
-    def assembly(self) -> Optional[str]:
+    def assembly(self) -> str | None:
         return self.get(Keys.ASSEMBLY)
 
     @property
-    def uri(self) -> Optional[str]:
+    def uri(self) -> str | None:
         return self.get(Keys.URI)
 
     @property
-    def species(self) -> Optional[str]:
+    def species(self) -> str | None:
         return self.get(Keys.SPECIES)
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.get(Keys.DESCRIPTION)
 
     @property
-    def topology(self) -> Optional[Topology]:
+    def topology(self) -> Topology | None:
         value = self.get(Keys.TOPOLOGY)
         return None if value is None else Topology[value]
 
@@ -430,7 +429,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     def to_sam_header(
         self,
-        extra_header: Optional[Dict[str, Any]] = None,
+        extra_header: Dict[str, Any] | None = None,
     ) -> pysam.AlignmentHeader:
         """Converts the sequence dictionary to a `pysam.AlignmentHeader`.
 
@@ -500,7 +499,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
     def __getitem__(self, key: str | int) -> SequenceMetadata:
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 
-    def get_by_name(self, name: str) -> Optional[SequenceMetadata]:
+    def get_by_name(self, name: str) -> SequenceMetadata | None:
         """Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
         the name does not exist in this dictionary"""
         return self._dict.get(name)

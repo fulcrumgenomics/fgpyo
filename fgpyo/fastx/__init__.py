@@ -30,7 +30,6 @@ from pathlib import Path
 from types import TracebackType
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
 
@@ -82,10 +81,10 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> Optional[bool]:
+        exc_type: Type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool | None:
         """Exit the `FastxZipped` context manager by closing all FASTX files."""
         self.close()
         if exc_type is not None:

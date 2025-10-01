@@ -10,7 +10,6 @@ The functions in this module make it easy to:
 
 """
 
-from typing import Optional
 from typing import Set
 
 from pysam import AlignedSegment
@@ -35,7 +34,7 @@ def extract_umis_from_read_name(
     read_name_delimiter: str = _ILLUMINA_READ_NAME_DELIMITER,
     umi_delimiter: str = _ILLUMINA_UMI_DELIMITER,
     strict: bool = False,
-) -> Optional[str]:
+) -> str | None:
     """Extract UMI(s) from an Illumina-style read name.
 
     The UMI is expected to be the final component of the read name, delimited by the

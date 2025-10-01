@@ -14,7 +14,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import cast
 
@@ -95,13 +94,13 @@ class SamBuilder:
 
     def __init__(
         self,
-        r1_len: Optional[int] = None,
-        r2_len: Optional[int] = None,
+        r1_len: int | None = None,
+        r2_len: int | None = None,
         base_quality: int = 30,
         mapping_quality: int = 60,
-        sd: Optional[List[Dict[str, Any]]] = None,
-        rg: Optional[Dict[str, str]] = None,
-        extra_header: Optional[Dict[str, Any]] = None,
+        sd: List[Dict[str, Any]] | None = None,
+        rg: Dict[str, str] | None = None,
+        extra_header: Dict[str, Any] | None = None,
         seed: int = 42,
         sort_order: SamOrder = SamOrder.Coordinate,
     ) -> None:
@@ -157,8 +156,8 @@ class SamBuilder:
         name: str,
         chrom: str,
         start: int,
-        mapq: Optional[int],
-        attrs: Optional[Dict[str, Any]],
+        mapq: int | None,
+        attrs: Dict[str, Any] | None,
     ) -> AlignedSegment:
         """Generates a new AlignedSegment.  Sets the segment up with the correct
         header and adds the RG attribute if not contained in attrs.
@@ -196,7 +195,7 @@ class SamBuilder:
     def _set_flags(
         self,
         rec: pysam.AlignedSegment,
-        read_num: Optional[int],
+        read_num: int | None,
         strand: str,
         secondary: bool = False,
         supplementary: bool = False,
@@ -222,9 +221,9 @@ class SamBuilder:
         self,
         rec: pysam.AlignedSegment,
         length: int,
-        bases: Optional[str] = None,
-        quals: Optional[List[int]] = None,
-        cigar: Optional[str] = None,
+        bases: str | None = None,
+        quals: List[int] | None = None,
+        cigar: str | None = None,
     ) -> None:
         """Fills in bases, quals and cigar on a record.
 
@@ -281,23 +280,23 @@ class SamBuilder:
     def add_pair(
         self,
         *,
-        name: Optional[str] = None,
-        bases1: Optional[str] = None,
-        bases2: Optional[str] = None,
-        quals1: Optional[List[int]] = None,
-        quals2: Optional[List[int]] = None,
-        chrom: Optional[str] = None,
-        chrom1: Optional[str] = None,
-        chrom2: Optional[str] = None,
+        name: str | None = None,
+        bases1: str | None = None,
+        bases2: str | None = None,
+        quals1: List[int] | None = None,
+        quals2: List[int] | None = None,
+        chrom: str | None = None,
+        chrom1: str | None = None,
+        chrom2: str | None = None,
         start1: int = sam.NO_REF_POS,
         start2: int = sam.NO_REF_POS,
-        cigar1: Optional[str] = None,
-        cigar2: Optional[str] = None,
-        mapq1: Optional[int] = None,
-        mapq2: Optional[int] = None,
+        cigar1: str | None = None,
+        cigar2: str | None = None,
+        mapq1: int | None = None,
+        mapq2: int | None = None,
         strand1: str = "+",
         strand2: str = "-",
-        attrs: Optional[Dict[str, Any]] = None,
+        attrs: Dict[str, Any] | None = None,
     ) -> Tuple[AlignedSegment, AlignedSegment]:
         """Generates a new pair of reads, adds them to the internal collection, and returns them.
 
@@ -420,18 +419,18 @@ class SamBuilder:
     def add_single(
         self,
         *,
-        name: Optional[str] = None,
-        read_num: Optional[int] = None,
-        bases: Optional[str] = None,
-        quals: Optional[List[int]] = None,
+        name: str | None = None,
+        read_num: int | None = None,
+        bases: str | None = None,
+        quals: List[int] | None = None,
         chrom: str = sam.NO_REF_NAME,
         start: int = sam.NO_REF_POS,
-        cigar: Optional[str] = None,
-        mapq: Optional[int] = None,
+        cigar: str | None = None,
+        mapq: int | None = None,
         strand: str = "+",
         secondary: bool = False,
         supplementary: bool = False,
-        attrs: Optional[Dict[str, Any]] = None,
+        attrs: Dict[str, Any] | None = None,
     ) -> AlignedSegment:
         """Generates a new single reads, adds them to the internal collection, and returns it.
 
@@ -500,10 +499,10 @@ class SamBuilder:
 
     def to_path(  # noqa: C901
         self,
-        path: Optional[Path] = None,
+        path: Path | None = None,
         index: bool = True,
         pred: Callable[[AlignedSegment], bool] = lambda r: True,
-        tmp_file_type: Optional[sam.SamFileType] = None,
+        tmp_file_type: sam.SamFileType | None = None,
     ) -> Path:
         """Write the accumulated records to a file, sorts & indexes it, and returns the Path.
         If a path is provided, it will be written to, otherwise a temporary file is created

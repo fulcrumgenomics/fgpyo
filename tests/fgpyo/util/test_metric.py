@@ -87,10 +87,10 @@ class DataBuilder:
             str_value: str
             bool_val: bool
             enum_val: EnumTest
-            optional_str_value: Optional[str]
-            optional_int_value: Optional[int]
-            optional_bool_value: Optional[bool]
-            optional_enum_value: Optional[EnumTest]
+            optional_str_value: str | None
+            optional_int_value: int | None
+            optional_bool_value: bool | None
+            optional_enum_value: EnumTest | None
             dict_value: Dict[int, str]
             tuple_value: Tuple[int, str]
             list_value: List[str]

@@ -43,7 +43,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
-from typing import Optional
 
 """Stubs for pysam imports """
 if TYPE_CHECKING:
@@ -168,8 +167,8 @@ class FastaBuilder:
     def add(
         self,
         name: str,
-        assembly: Optional[str] = None,
-        species: Optional[str] = None,
+        assembly: str | None = None,
+        species: str | None = None,
     ) -> ContigBuilder:
         """
         Creates and returns a new ContigBuilder for a contig with the provided name.

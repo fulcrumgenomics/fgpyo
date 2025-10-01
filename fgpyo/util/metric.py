@@ -130,7 +130,6 @@ from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeGuard
@@ -209,7 +208,7 @@ class Metric(ABC, Generic[MetricType]):
         path: Path,
         ignore_extra_fields: bool = True,
         strip_whitespace: bool = False,
-        threads: Optional[int] = None,
+        threads: int | None = None,
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -296,7 +295,7 @@ class Metric(ABC, Generic[MetricType]):
         )
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType, threads: Optional[int] = None) -> None:
+    def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.
@@ -456,10 +455,10 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         metric_class: Type[Metric],
         append: bool = False,
         delimiter: str = "\t",
-        include_fields: Optional[List[str]] = None,
-        exclude_fields: Optional[List[str]] = None,
+        include_fields: List[str] | None = None,
+        exclude_fields: List[str] | None = None,
         lineterminator: str = "\n",
-        threads: Optional[int] = None,
+        threads: int | None = None,
     ) -> None:
         """
         Args:
@@ -585,8 +584,8 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
 def _validate_and_generate_final_output_fieldnames(
     metric_class: Type[MetricType],
-    include_fields: Optional[List[str]] = None,
-    exclude_fields: Optional[List[str]] = None,
+    include_fields: List[str] | None = None,
+    exclude_fields: List[str] | None = None,
 ) -> List[str]:
     """
     Subset and/or re-order the Metric's fieldnames based on the specified include/exclude lists.
@@ -623,7 +622,7 @@ def _assert_file_header_matches_metric(
     path: Path,
     metric_class: Type[MetricType],
     delimiter: str,
-    ordered_fieldnames: Optional[List[str]] = None,
+    ordered_fieldnames: List[str] | None = None,
 ) -> None:
     """
     Check that the specified file has a header and its fields match those of the provided Metric.

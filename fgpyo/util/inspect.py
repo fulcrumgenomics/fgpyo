@@ -18,7 +18,6 @@ from typing import Iterable
 from typing import List
 from typing import Literal
 from typing import Mapping
-from typing import Optional
 from typing import Protocol
 from typing import Tuple
 from typing import Type
@@ -28,7 +27,7 @@ from typing import Union
 
 import fgpyo.util.types as types
 
-attr: Optional[python_types.ModuleType]
+attr: python_types.ModuleType | None
 MISSING: FrozenSet[Any]
 
 try:
@@ -150,7 +149,7 @@ NoneType: TypeAlias = type(None)  # type: ignore[no-redef]
 
 
 def list_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a "stringified" list into a `List` of the correct type.
@@ -179,7 +178,7 @@ def list_parser(
 
 
 def set_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified set into a `Set` of the correct type.
@@ -210,7 +209,7 @@ def set_parser(
 
 
 def tuple_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified tuple into a `Tuple` of the correct type.
@@ -253,7 +252,7 @@ def tuple_parser(
 
 
 def dict_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified dict into a `Dict` of the correct type.
@@ -308,7 +307,7 @@ def dict_parser(
 
 
 def _get_parser(  # noqa: C901
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -417,7 +416,7 @@ _AttrFromType = TypeVar("_AttrFromType")
 def attr_from(
     cls: Type[_AttrFromType],
     kwargs: Dict[str, str],
-    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    parsers: Dict[type, Callable[[str], Any]] | None = None,
 ) -> _AttrFromType:
     """Builds an attr or dataclasses class from key-word arguments
 

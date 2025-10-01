@@ -24,6 +24,7 @@ def test_is_listlike() -> None:
         (Union[str, NoneType], True),
         (str | NoneType, True),
         (Optional[str], True),
+        (str | None, True),
         (Union[str, int], False),
         (Union[str, int, None], False),
         (str | int, False),

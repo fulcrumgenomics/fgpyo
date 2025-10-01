@@ -40,7 +40,6 @@ from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import Literal
-from typing import Optional
 
 from pysam import AlignedSegment
 
@@ -113,11 +112,11 @@ class ProgressLogger(AbstractContextManager):
         self.unit: int = unit
         self.count: int = 0
         self._count_mod_unit: int = 0
-        self._last_reference_name: Optional[str] = None
-        self._last_position: Optional[int] = None
+        self._last_reference_name: str | None = None
+        self._last_position: int | None = None
 
     def __exit__(
-        self, ex_type: Optional[Any], ex_value: Optional[Any], traceback: Optional[Any]
+        self, ex_type: Any | None, ex_value: Any | None, traceback: Any | None
     ) -> Literal[False]:
         if ex_value is None:
             self.log_last()
@@ -125,8 +124,8 @@ class ProgressLogger(AbstractContextManager):
 
     def record(
         self,
-        reference_name: Optional[str] = None,
-        position: Optional[int] = None,
+        reference_name: str | None = None,
+        position: int | None = None,
     ) -> bool:
         """Record an item at a given genomic coordinate.
         Args:
@@ -182,8 +181,8 @@ class ProgressLogger(AbstractContextManager):
 
     def _log(
         self,
-        refname: Optional[str] = None,
-        position: Optional[int] = None,
+        refname: str | None = None,
+        position: int | None = None,
     ) -> None:
         """Helper method to print the log message.
 

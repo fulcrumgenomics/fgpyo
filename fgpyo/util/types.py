@@ -182,7 +182,7 @@ def _make_literal_parser_worker(
     """Worker function behind literal parsing. Iterates through possible literals and
     returns the value produced by the first literal that matches expectation.
     Otherwise raises an error if none work"""
-    for arg, p in zip(typing.get_args(literal), parsers):
+    for arg, p in zip(typing.get_args(literal), parsers, strict=True):
         try:
             if p(value) == arg:
                 # typing.get_args returns `Any` because there's no guarantee on the input type, but

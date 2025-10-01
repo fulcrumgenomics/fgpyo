@@ -250,7 +250,10 @@ def tuple_parser(
             return ()
         else:
             val_strings = split_at_given_level(tuple_string, split_delim=",")
-            return tuple(parser(val_str) for parser, val_str in zip(subtype_parsers, val_strings))
+            return tuple(
+                parser(val_str)
+                for parser, val_str in zip(subtype_parsers, val_strings, strict=True)
+            )
 
     return functools.partial(tuple_parse)
 

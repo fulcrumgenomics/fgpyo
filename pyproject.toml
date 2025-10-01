@@ -7,7 +7,7 @@ authors = [
     { name = "Tim Fennell" },
     { name = "Nathan Roach" },
 ]
-requires-python = ">=3.9.0,<4.0"
+requires-python = ">=3.10,<4.0"
 readme = "README.md"
 license = "MIT"
 keywords = ["bioinformatics"]
@@ -20,7 +20,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -62,8 +61,7 @@ docs = [
     "mkdocstrings-python>=1.6.2",
     "mkdocstrings>=0.23.0",
     "numpy>=1.26.4,<2 ; python_version >= '3.12'",
-    "numpy>=1.25.2,<2 ; python_version >= '3.9' and python_version < '3.12'",
-    "numpy>=1.24.4,<2 ; python_version < '3.9'",
+    "numpy>=1.25.2,<2 ; python_version >= '3.10' and python_version < '3.12'",
 ]
 
 [tool.uv]
@@ -78,7 +76,7 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length    = 100
-target-version = "py38"
+target-version = "py313"
 output-format  = "full"
 
 [tool.ruff.lint]

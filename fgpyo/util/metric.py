@@ -284,7 +284,7 @@ class Metric(ABC, Generic[MetricType]):
 
                 # build the metric
                 instance: Metric[MetricType] = inspect.attr_from(
-                    cls=cls, kwargs=dict(zip(header, values)), parsers=parsers
+                    cls=cls, kwargs=dict(zip(header, values, strict=True)), parsers=parsers
                 )
                 yield instance
 
@@ -297,7 +297,9 @@ class Metric(ABC, Generic[MetricType]):
         parsers = cls._parsers()
         header = cls.header()
         assert len(fields) == len(header)
-        return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
+        return inspect.attr_from(
+            cls=cls, kwargs=dict(zip(header, fields, strict=True)), parsers=parsers
+        )
 
     @classmethod
     def write(cls, path: Path, *values: MetricType, threads: Optional[int] = None) -> None:

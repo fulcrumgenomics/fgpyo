@@ -423,7 +423,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         the same length, and the same MD5 if both have MD5s"""
         if len(self) != len(other):
             return False
-        return all(this.same_as(that) for this, that in zip(self.infos, other.infos))
+        return all(this.same_as(that) for this, that in zip(self.infos, other.infos, strict=True))
 
     def to_sam(self) -> List[Dict[str, Any]]:
         """Converts the list of dictionaries, one per sequence."""

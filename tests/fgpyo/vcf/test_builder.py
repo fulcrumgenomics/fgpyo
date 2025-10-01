@@ -195,7 +195,11 @@ def test_sort_order(random_generator: random.Random) -> None:
     for record_input in scrambled_inputs:
         variant_builder.add(**record_input)
 
-    for sorted_input, variant_record in zip(sorted_inputs, variant_builder.to_sorted_list()):
+    for sorted_input, variant_record in zip(
+        sorted_inputs,
+        variant_builder.to_sorted_list(),
+        strict=True,
+    ):
         for key, value in sorted_input.items():
             _assert_equal(expected_value=value, actual_value=getattr(variant_record, key))
 
@@ -210,7 +214,9 @@ def test_zero_sample_records_match_inputs(
         variant_builder.add(**record_input)
 
     for record_input, variant_record in zip(
-        zero_sample_record_inputs, variant_builder.to_unsorted_list()
+        zero_sample_record_inputs,
+        variant_builder.to_unsorted_list(),
+        strict=True,
     ):
         for key, value in record_input.items():
             _assert_equal(expected_value=value, actual_value=getattr(variant_record, key))
@@ -283,7 +289,9 @@ def test_zero_sample_vcf_round_trip(
     assert _get_is_compressed(vcf) == compress
 
     with vcf_reader(vcf) as reader:
-        for vcf_record, builder_record in zip(reader, variant_builder.to_sorted_list()):
+        for vcf_record, builder_record in zip(
+            reader, variant_builder.to_sorted_list(), strict=True,
+        ):
             _assert_equal(expected_value=builder_record, actual_value=vcf_record)
 
 
@@ -362,7 +370,9 @@ def test_variant_sample_records_match_inputs(
         variant_builder.add(**record_input)
 
     for record_input, variant_record in zip(
-        variant_sample_records, variant_builder.to_unsorted_list()
+        variant_sample_records,
+        variant_builder.to_unsorted_list(),
+        strict=True,
     ):
         for key, input_value in record_input.items():
             _assert_equal(expected_value=input_value, actual_value=getattr(variant_record, key))
@@ -406,5 +416,9 @@ def test_variant_sample_vcf_round_trip(
     assert _get_is_compressed(vcf) == compress
 
     with vcf_reader(vcf) as reader:
-        for vcf_record, builder_record in zip(reader, variant_builder.to_sorted_list()):
+        for vcf_record, builder_record in zip(
+            reader,
+            variant_builder.to_sorted_list(),
+            strict=True,
+        ):
             _assert_equal(expected_value=builder_record, actual_value=vcf_record)

@@ -1,7 +1,5 @@
 """Tests for :py:mod:`~fgpyo.clipping`"""
 
-from typing import Optional
-
 import pytest
 from pysam import AlignedSegment
 
@@ -10,7 +8,7 @@ from fgpyo.sam import clipping
 from fgpyo.sam.builder import SamBuilder
 
 
-def r(start: Optional[int], cigar: Optional[str], strand: Optional[str] = "+") -> AlignedSegment:
+def r(start: int | None, cigar: str | None, strand: str | None = "+") -> AlignedSegment:
     """Constructs a read for testing."""
     builder = SamBuilder()
     if start:

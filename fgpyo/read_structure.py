@@ -75,6 +75,9 @@ class SegmentType(enum.Enum):
     MolecularBarcode = "M"
     """The segment type for molecular barcode bases."""
 
+    CellBarcode = "C"
+    """The segment type for cell barcode bases."""
+
     Skip = "S"
     """The segment type for bases that need to be skipped."""
 
@@ -255,6 +258,9 @@ class ReadStructure(Iterable[ReadSegment]):
 
     def molecular_barcode_segments(self) -> Tuple[ReadSegment, ...]:
         return self.segments_by_kind(kind=SegmentType.MolecularBarcode)
+
+    def cell_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+        return self.segments_by_kind(kind=SegmentType.CellBarcode)
 
     def skip_segments(self) -> Tuple[ReadSegment, ...]:
         return self.segments_by_kind(kind=SegmentType.Skip)

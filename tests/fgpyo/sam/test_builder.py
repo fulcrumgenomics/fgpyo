@@ -305,13 +305,13 @@ def test_sort_types(
     with sam.reader(bam_path) as in_bam:
         for name in expected_name_order:
             read1 = next(in_bam)
-            assert (
-                name == read1.query_name
-            ), "Position based read sort order did not match expectation"
+            assert name == read1.query_name, (
+                "Position based read sort order did not match expectation"
+            )
             read2 = next(in_bam)
-            assert (
-                name == read2.query_name
-            ), "Position based read sort order did not match expectation"
+            assert name == read2.query_name, (
+                "Position based read sort order did not match expectation"
+            )
 
 
 def test_custom_sd() -> None:

@@ -9,6 +9,7 @@ If you are performing many distance calculations, using a C based method is pref
 ex. https://pypi.org/project/Distance/
 """
 
+from types import MappingProxyType
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -57,10 +58,17 @@ _COMPLEMENTS: Dict[str, str] = {
 }
 
 
-_COMPLEMENTS_TABLE: tuple[Optional[int], ...] = tuple(
-    ord(_COMPLEMENTS.get(chr(key_idx))) if chr(key_idx) in _COMPLEMENTS else None
-    for key_idx in range(256)
+# Get str of all invalid nucleotide characters (strings missing from _COMPLEMENTS).
+_INVALID_BASES: str = "".join(c for c in (chr(o) for o in range(256)) if c not in _COMPLEMENTS)
+# Use str.maketrans to create a table matching ascii codes of bases to ascii codes of complements.
+_COMPLEMENTS_TABLE: MappingProxyType[int, Optional[int]] = MappingProxyType(
+    str.maketrans("".join(_COMPLEMENTS.keys()), "".join(_COMPLEMENTS.values()), _INVALID_BASES)
 )
+"""
+This table allows faster reverse-complement than directly using _COMPLEMENTS iterating over bases.
+Characters from _INVALID_BASES will be mapped to None and omitted from translation, which can be
+detected as an error by noting decreased string length.
+"""
 
 
 def complement(base: str) -> str:
@@ -82,6 +90,7 @@ def reverse_complement(bases: str) -> str:
     """
     rev_comp = bases.translate(_COMPLEMENTS_TABLE)[::-1]
     if len(rev_comp) != len(bases):
+        # There were invalid characters that weren't translated. Find one and raise KeyError.
         raise KeyError(next(base for base in bases if base not in _COMPLEMENTS))
     return rev_comp
 

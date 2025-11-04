@@ -90,8 +90,10 @@ def reverse_complement(bases: str) -> str:
     """
     rev_comp = bases.translate(_COMPLEMENTS_TABLE)[::-1]
     if len(rev_comp) != len(bases):
-        # There were invalid characters that weren't translated. Find one and raise KeyError.
-        raise KeyError(next(base for base in bases if base not in _COMPLEMENTS))
+        # There were invalid characters that weren't translated.
+        # Raise KeyError with all the invalid bases.
+        bad_bases = "".join({base for base in bases if base not in _COMPLEMENTS})
+        raise KeyError(f"Invalid bases found: {bad_bases}")
     return rev_comp
 
 

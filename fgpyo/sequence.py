@@ -9,10 +9,10 @@ If you are performing many distance calculations, using a C based method is pref
 ex. https://pypi.org/project/Distance/
 """
 
-from types import MappingProxyType
+from collections.abc import Iterator
+from collections.abc import Mapping
 from typing import Dict
 from typing import List
-from typing import Optional
 
 _COMPLEMENTS: Dict[str, str] = {
     # Discrete bases
@@ -58,17 +58,39 @@ _COMPLEMENTS: Dict[str, str] = {
 }
 
 
-# Get str of all invalid nucleotide characters (strings missing from _COMPLEMENTS).
-_INVALID_BASES: str = "".join(c for c in (chr(o) for o in range(256)) if c not in _COMPLEMENTS)
-# Use str.maketrans to create a table matching ascii codes of bases to ascii codes of complements.
-_COMPLEMENTS_TABLE: MappingProxyType[int, Optional[int]] = MappingProxyType(
-    str.maketrans("".join(_COMPLEMENTS.keys()), "".join(_COMPLEMENTS.values()), _INVALID_BASES)
-)
-"""
-This table allows faster reverse-complement than directly using _COMPLEMENTS iterating over bases.
-Characters from _INVALID_BASES will be mapped to None and omitted from translation, which can be
-detected as an error by noting decreased string length.
-"""
+class ComplementsTable(Mapping[int, int]):
+    """Implements Mapping from int to int, but raises ValueError if a bad key is checked.
+
+    This table can be used with str.translate to form base complements faster than directly using
+    the input Mapping in an iterator. Raising ValueError on a bad .get allows for catching errors
+    from bad inputs to str.translate, rather than leaving inputs untranslated, or have a table of
+    every possible unicode input pointing to None.
+    """
+
+    def __init__(self, mapping: Mapping[str, str]) -> None:
+        """Set internal mapping to the translation table produced by str.maketrans."""
+        self._mapping: dict[int, int] = str.maketrans(
+            "".join(mapping.keys()), "".join(mapping.values())
+        )
+
+    def __getitem__(self, item: int) -> int:
+        """Get the requested item if it's present, otherwise throw ValueError."""
+        try:
+            return self._mapping[item]
+        except KeyError as key_error:
+            raise ValueError(f"Invalid base: {chr(item)}") from key_error
+
+    def __len__(self) -> int:
+        """Get length, required for Mapping derived class."""
+        return len(self._mapping)
+
+    def __iter__(self) -> Iterator[int]:
+        """Get iterator, required for Mapping derived class."""
+        return iter(self._mapping)
+
+
+_COMPLEMENTS_TABLE: ComplementsTable = ComplementsTable(_COMPLEMENTS)
+"""Encode _Complements for faster complement lookup via str.translate."""
 
 
 def complement(base: str) -> str:
@@ -88,13 +110,13 @@ def reverse_complement(bases: str) -> str:
     Returns:
         the reverse complement of the provided base string
     """
-    rev_comp = bases.translate(_COMPLEMENTS_TABLE)[::-1]
-    if len(rev_comp) != len(bases):
+    try:
+        return bases.translate(_COMPLEMENTS_TABLE)[::-1]
+    except ValueError as value_error:
         # There were invalid characters that weren't translated.
         # Raise KeyError with all the invalid bases.
         bad_bases = "".join({base for base in bases if base not in _COMPLEMENTS})
-        raise KeyError(f"Invalid bases found: {bad_bases}")
-    return rev_comp
+        raise KeyError(f"Invalid bases found: {bad_bases}") from value_error
 
 
 def gc_content(bases: str) -> float:

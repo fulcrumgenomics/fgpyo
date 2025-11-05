@@ -6,7 +6,6 @@ from typing import Any
 from typing import Generator
 from typing import List
 from typing import Tuple
-from typing import Union
 
 import pysam
 import pytest
@@ -33,7 +32,7 @@ from fgpyo.sam.builder import SamBuilder
 @pytest.mark.parametrize("file_type", list(SamFileType))
 @pytest.mark.parametrize("as_str", [True, False])
 def test_sam_file_type_from_path(file_type: SamFileType, as_str: bool) -> None:
-    path: Union[Path, str]
+    path: Path | str
     if as_str:
         path = "/path/to/some/file" + file_type.extension
     else:
@@ -145,7 +144,7 @@ def assert_actual_vs_expected(
     """Helper method to ensure the expected records are in the SAM/BAM at the actual path."""
     with sam.reader(actual_path) as sam_reader:
         actual_records = [r for r in sam_reader]
-    for actual, expected in zip(actual_records, expected_records):
+    for actual, expected in zip(actual_records, expected_records, strict=True):
         assert actual == expected
     assert len(actual_records) == len(expected_records)
 
@@ -271,7 +270,7 @@ def test_from_cigarstring() -> None:
 def test_from_cigarstring_op_should_start_with_digit() -> None:
     cigars = ["", "M", "10MI", "10M5SU"]
     errors = ["", "[M]", "10M[I]", "10M5S[U]"]
-    for cigar, error in zip(cigars, errors):
+    for cigar, error in zip(cigars, errors, strict=True):
         match = "Malformed cigar: " + error if cigar else "Cigar string was empty"
         with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
@@ -281,7 +280,7 @@ def test_from_cigarstring_op_should_start_with_digit() -> None:
 def test_from_cigarstring_no_length() -> None:
     cigars = ["M", "10MS"]
     errors = ["", "10M[S]"]
-    for cigar, error in zip(cigars, errors):
+    for cigar, error in zip(cigars, errors, strict=True):
         with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)
@@ -290,7 +289,7 @@ def test_from_cigarstring_no_length() -> None:
 def test_from_cigarstring_invalid_operator() -> None:
     cigars = ["10U", "10M5U"]
     errors = ["10[U]", "10M5[U]"]
-    for cigar, error in zip(cigars, errors):
+    for cigar, error in zip(cigars, errors, strict=True):
         with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)
@@ -299,7 +298,7 @@ def test_from_cigarstring_invalid_operator() -> None:
 def test_from_cigarstring_missing_operator() -> None:
     cigars = ["10", "10M5"]
     errors = ["10[]", "10M5[]"]
-    for cigar, error in zip(cigars, errors):
+    for cigar, error in zip(cigars, errors, strict=True):
         with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)

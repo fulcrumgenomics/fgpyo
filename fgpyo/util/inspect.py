@@ -1,7 +1,16 @@
-import sys
+import dataclasses
+import functools
 import types as python_types
 import typing
+from dataclasses import MISSING as DATACLASSES_MISSING
+from dataclasses import fields as get_dataclasses_fields
+from dataclasses import is_dataclass as is_dataclasses_class
+from enum import Enum
+from functools import partial
+from pathlib import PurePath
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Callable
 from typing import ClassVar
 from typing import Dict
 from typing import FrozenSet
@@ -12,29 +21,13 @@ from typing import Mapping
 from typing import Protocol
 from typing import Tuple
 from typing import Type
-from typing import Union
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
-import dataclasses
-import functools
-from dataclasses import MISSING as DATACLASSES_MISSING
-from dataclasses import fields as get_dataclasses_fields
-from dataclasses import is_dataclass as is_dataclasses_class
-from enum import Enum
-from functools import partial
-from pathlib import PurePath
-from typing import TYPE_CHECKING
-from typing import Callable
-from typing import Optional
+from typing import TypeAlias
 from typing import TypeVar
+from typing import Union
 
 import fgpyo.util.types as types
 
-attr: Optional[python_types.ModuleType]
+attr: python_types.ModuleType | None
 MISSING: FrozenSet[Any]
 
 try:
@@ -91,12 +84,12 @@ def is_attr_class(cls: type) -> bool:
 
 _MISSING_OR_NONE: FrozenSet[Any] = frozenset({*MISSING, None})
 """Set of values that are considered missing or None for dataclasses or attr classes"""
-_DataclassesOrAttrClass: TypeAlias = Union[DataclassInstance, AttrsInstance]
+_DataclassesOrAttrClass: TypeAlias = DataclassInstance | AttrsInstance
 """
 TypeAlias for dataclasses or attr classes. Mostly nonsense because they are not true types, they
 are traits, but there is no python trait-tester.
 """
-FieldType: TypeAlias = Union[dataclasses.Field, Attribute]
+FieldType: TypeAlias = dataclasses.Field | Attribute
 """
 TypeAlias for dataclass Fields or attrs Attributes. It will correspond to the correct type for the
 corresponding _DataclassesOrAttrClass
@@ -104,7 +97,7 @@ corresponding _DataclassesOrAttrClass
 
 
 def _get_dataclasses_fields_dict(
-    class_or_instance: Union[DataclassInstance, Type[DataclassInstance]],
+    class_or_instance: DataclassInstance | Type[DataclassInstance],
 ) -> Dict[str, dataclasses.Field]:
     """Get a dict from field name to Field for a dataclass class or instance."""
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
@@ -156,7 +149,7 @@ NoneType: TypeAlias = type(None)  # type: ignore[no-redef]
 
 
 def list_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a "stringified" list into a `List` of the correct type.
@@ -185,7 +178,7 @@ def list_parser(
 
 
 def set_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified set into a `Set` of the correct type.
@@ -216,7 +209,7 @@ def set_parser(
 
 
 def tuple_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified tuple into a `Tuple` of the correct type.
@@ -250,13 +243,16 @@ def tuple_parser(
             return ()
         else:
             val_strings = split_at_given_level(tuple_string, split_delim=",")
-            return tuple(parser(val_str) for parser, val_str in zip(subtype_parsers, val_strings))
+            return tuple(
+                parser(val_str)
+                for parser, val_str in zip(subtype_parsers, val_strings, strict=True)
+            )
 
     return functools.partial(tuple_parse)
 
 
 def dict_parser(
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified dict into a `Dict` of the correct type.
@@ -311,7 +307,7 @@ def dict_parser(
 
 
 def _get_parser(  # noqa: C901
-    cls: Type, type_: TypeAlias, parsers: Optional[Dict[type, Callable[[str], Any]]] = None
+    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """Attempts to find a parser for a provided type.
 
@@ -390,7 +386,7 @@ def _get_parser(  # noqa: C901
 
 
 def get_fields_dict(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
+    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Mapping[str, FieldType]:
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
@@ -402,7 +398,7 @@ def get_fields_dict(
 
 
 def get_fields(
-    cls: Union[_DataclassesOrAttrClass, Type[_DataclassesOrAttrClass]],
+    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Tuple[FieldType, ...]:
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
@@ -420,7 +416,7 @@ _AttrFromType = TypeVar("_AttrFromType")
 def attr_from(
     cls: Type[_AttrFromType],
     kwargs: Dict[str, str],
-    parsers: Optional[Dict[type, Callable[[str], Any]]] = None,
+    parsers: Dict[type, Callable[[str], Any]] | None = None,
 ) -> _AttrFromType:
     """Builds an attr or dataclasses class from key-word arguments
 

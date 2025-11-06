@@ -9,7 +9,6 @@ If you are performing many distance calculations, using a C based method is pref
 ex. https://pypi.org/project/Distance/
 """
 
-from collections.abc import Iterator
 from collections.abc import Mapping
 from typing import Dict
 from typing import List
@@ -58,8 +57,8 @@ _COMPLEMENTS: Dict[str, str] = {
 }
 
 
-class ComplementsTable(Mapping[int, int]):
-    """Implements Mapping from int to int, but raises ValueError if a bad key is checked.
+class ComplementsTable:
+    """Contains a Mapping from int to int, but raises ValueError if a bad key is checked.
 
     This table can be used with str.translate to form base complements faster than directly using
     the input Mapping in an iterator. Raising ValueError on a bad .get allows for catching errors
@@ -79,14 +78,6 @@ class ComplementsTable(Mapping[int, int]):
             return self._mapping[item]
         except KeyError as key_error:
             raise ValueError(f"Invalid base: {chr(item)}") from key_error
-
-    def __len__(self) -> int:
-        """Get length, required for Mapping derived class."""
-        return len(self._mapping)
-
-    def __iter__(self) -> Iterator[int]:
-        """Get iterator, required for Mapping derived class."""
-        return iter(self._mapping)
 
 
 _COMPLEMENTS_TABLE: ComplementsTable = ComplementsTable(_COMPLEMENTS)

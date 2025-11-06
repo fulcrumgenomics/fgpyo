@@ -32,6 +32,10 @@ def test_reverse_complement(bases: str, expected_rev_comp: str) -> None:
     with pytest.raises(KeyError):
         reverse_complement("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
+    # check unicode character is caught, not just ascii. The unicode symbol Omega is included:
+    with pytest.raises(KeyError):
+        reverse_complement(b"ATCG\xce\xa9ATCG".decode())
+
 
 @pytest.mark.parametrize(
     "bases, expected_hp_len",

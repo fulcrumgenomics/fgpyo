@@ -77,7 +77,7 @@ def assert_path_is_readable(path: Path) -> None:
         return
 
     assert path.exists(), f"Cannot read non-existent path: {path}"
-    assert path.is_file(), f"Cannot read path becasue it is not a file: {path}"
+    assert path.is_file(), f"Cannot read path because it is not a file: {path}"
     assert os.access(path, os.R_OK), f"Path exists but is not readable: {path}"
 
 
@@ -135,7 +135,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
 
     # If path exists, it must be a writable file
     if path.exists():
-        assert path.is_file(), f"Cannot read path becasue it is not a file: {path}"
+        assert path.is_file(), f"Cannot read path because it is not a file: {path}"
         assert os.access(path, os.W_OK), f"File exists but is not writable: {path}"
 
     # Else if file doesn't exist and parent_must_exist is True then check

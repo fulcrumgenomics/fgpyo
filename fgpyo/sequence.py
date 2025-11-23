@@ -236,7 +236,7 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
         the number of bases in the longest multinucleotide repeat (NOT the number of repeat units)
     """
     if repeat_unit_length <= 0:
-        raise ValueError(f"repeat_unit_length must be >= 0, found: {repeat_unit_length}")
+        raise ValueError(f"repeat_unit_length must be > 0, found: {repeat_unit_length}")
     elif len(bases) < repeat_unit_length:
         return 0
     elif len(bases) == repeat_unit_length:

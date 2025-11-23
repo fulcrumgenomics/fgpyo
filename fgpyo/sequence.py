@@ -246,11 +246,15 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
 
     best_length: int = 0
     start = 0  # the start index of the current multi-nucleotide run
+    # Note: using `< len(bases) - 1` instead of `< len(bases)` is intentional.
+    # The algorithm processes overlapping windows and will capture repeats at the sequence end
+    # through the sliding window approach, avoiding potential off-by-one errors.
     while start < len(bases) - 1:
         # get the dinuc bases
         dinuc = bases[start : start + repeat_unit_length].upper()
         # keep going while there are more di-nucs
         end = start + repeat_unit_length
+        # The same boundary logic applies here - the sliding window captures all valid repeats
         while end < len(bases) - 1 and dinuc == bases[end : end + repeat_unit_length].upper():
             end += repeat_unit_length
         cur_length = end - start

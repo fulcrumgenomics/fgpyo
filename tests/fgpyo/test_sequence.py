@@ -180,5 +180,5 @@ def test_longest_multinucleotide_run_length(
 
 
 def test_longest_multinucleotide_run_length_raises() -> None:
-    with pytest.raises(ValueError, match="repeat_unit_length must be >= 0"):
+    with pytest.raises(ValueError, match="repeat_unit_length must be > 0"):
         longest_multinucleotide_run_length(bases="GATTACA", repeat_unit_length=0)

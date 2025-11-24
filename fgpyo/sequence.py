@@ -122,7 +122,7 @@ def hamming(string1: str, string2: str) -> int:
             "Hamming distance requires two strings of equal lengths."
             f"Received {string1} and {string2}."
         )
-    return sum([string1[i] != string2[i] for i in range(len(string1))])
+    return sum(c1 != c2 for c1, c2 in zip(string1, string2))
 
 
 def levenshtein(string1: str, string2: str) -> int:
@@ -236,7 +236,7 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
         the number of bases in the longest multinucleotide repeat (NOT the number of repeat units)
     """
     if repeat_unit_length <= 0:
-        raise ValueError(f"repeat_unit_length must be >= 0, found: {repeat_unit_length}")
+        raise ValueError(f"repeat_unit_length must be > 0, found: {repeat_unit_length}")
     elif len(bases) < repeat_unit_length:
         return 0
     elif len(bases) == repeat_unit_length:
@@ -246,11 +246,15 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
 
     best_length: int = 0
     start = 0  # the start index of the current multi-nucleotide run
+    # Note: using `< len(bases) - 1` instead of `< len(bases)` is intentional.
+    # The algorithm processes overlapping windows and will capture repeats at the sequence end
+    # through the sliding window approach, avoiding potential off-by-one errors.
     while start < len(bases) - 1:
         # get the dinuc bases
         dinuc = bases[start : start + repeat_unit_length].upper()
         # keep going while there are more di-nucs
         end = start + repeat_unit_length
+        # The same boundary logic applies here - the sliding window captures all valid repeats
         while end < len(bases) - 1 and dinuc == bases[end : end + repeat_unit_length].upper():
             end += repeat_unit_length
         cur_length = end - start

@@ -53,7 +53,7 @@ Quality of life improvements for Bioinformatics in Python.
 
 `pip install fgpyo`
 
-**Requires python 3.9+**
+**Requires python 3.10+**
 
 See documentation on [fgpyo.readthedocs.org](http://fgpyo.readthedocs.org/en/stable).
 

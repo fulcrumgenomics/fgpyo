@@ -7,5 +7,7 @@ if [ ! -x "$(command -v uv)" ]; then
     exit 1
 fi
 
+set +euo pipefail
+
 uv run poe fix-and-check-all
 uv run poe build-docs

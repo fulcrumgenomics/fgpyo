@@ -28,51 +28,55 @@ Opening a SAM/BAM file for reading, auto-recognizing the file-type by the file e
 [`SamFileType()`][fgpyo.sam.SamFileType] for the supported file types.
 
 ```python
-    >>> from fgpyo.sam import reader
-    >>> with reader("/path/to/sample.sam") as fh:
-    ...     for record in fh:
-    ...         print(record.name)  # do something
-    >>> with reader("/path/to/sample.bam") as fh:
-    ...     for record in fh:
-    ...         print(record.name)  # do something
+>>> from fgpyo.sam import reader
+>>> with reader("/path/to/sample.sam") as fh:  # doctest: +SKIP
+...     for record in fh:
+...         print(record.query_name)  # do something
+>>> with reader("/path/to/sample.bam") as fh:  # doctest: +SKIP
+...     for record in fh:
+...         print(record.query_name)  # do something
+
 ```
 
 Opening a SAM/BAM file for reading, explicitly passing the file type.
 
 ```python
-    >>> from fgpyo.sam import SamFileType
-    >>> with reader(path="/path/to/sample.ext1", file_type=SamFileType.SAM) as fh:
-    ...     for record in fh:
-    ...         print(record.name)  # do something
-    >>> with reader(path="/path/to/sample.ext2", file_type=SamFileType.BAM) as fh:
-    ...     for record in fh:
-    ...         print(record.name)  # do something
+>>> from fgpyo.sam import SamFileType
+>>> with reader(path="/path/to/sample.ext1", file_type=SamFileType.SAM) as fh:  # doctest: +SKIP
+...     for record in fh:
+...         print(record.query_name)  # do something
+>>> with reader(path="/path/to/sample.ext2", file_type=SamFileType.BAM) as fh:  # doctest: +SKIP
+...     for record in fh:
+...         print(record.query_name)  # do something
+
 ```
 
 Opening a SAM/BAM file for reading, using an existing file-like object
 
 ```python
-    >>> with open("/path/to/sample.sam", "rb") as file_object:
-    ...     with reader(path=file_object, file_type=SamFileType.BAM) as fh:
-    ...         for record in fh:
-    ...             print(record.name)  # do something
+>>> with open("/path/to/sample.sam", "rb") as file_object:  # doctest: +SKIP
+...     with reader(path=file_object, file_type=SamFileType.BAM) as fh:
+...         for record in fh:
+...             print(record.query_name)  # do something
+
 ```
 
 Opening a SAM/BAM file for writing follows similar to the [`reader()`][fgpyo.sam.reader]
 method, but the SAM file header object is required.
 
 ```python
-    >>> from fgpyo.sam import writer
-    >>> header: Dict[str, Any] = {
-    ...     "HD": {"VN": "1.5", "SO": "coordinate"},
-    ...     "RG": [{"ID": "1", "SM": "1_AAAAAA", "LB": "lib", "PL": "ILLUMINA", "PU": "xxx.1"}],
-    ...     "SQ":  [
-    ...         {"SN": "chr1", "LN": 249250621},
-    ...         {"SN": "chr2", "LN": 243199373}
-    ...     ]
-    ... }
-    >>> with writer(path="/path/to/sample.bam", header=header) as fh:
-    ...     pass  # do something
+>>> from fgpyo.sam import writer
+>>> header: Dict[str, Any] = {
+...     "HD": {"VN": "1.5", "SO": "coordinate"},
+...     "RG": [{"ID": "1", "SM": "1_AAAAAA", "LB": "lib", "PL": "ILLUMINA", "PU": "xxx.1"}],
+...     "SQ":  [
+...         {"SN": "chr1", "LN": 249250621},
+...         {"SN": "chr2", "LN": 243199373}
+...     ]
+... }  # doctest: +SKIP
+>>> with writer(path="/path/to/sample.bam", header=header) as fh:  # doctest: +SKIP
+...     pass  # do something
+
 ```
 
 ## Examples of Manipulating Cigars
@@ -80,28 +84,33 @@ method, but the SAM file header object is required.
 Creating a [`Cigar` from a `pysam.AlignedSegment`][fgpyo.sam.Cigar].
 
 ```python
-    >>> from fgpyo.sam import Cigar
-    >>> with reader("/path/to/sample.sam") as fh:
-    ...     record = next(fh)
-    ...     cigar = Cigar.from_cigartuples(record.cigartuples)
-    ...     print(str(cigar))
-    50M2D5M10S
+>>> from fgpyo.sam import Cigar
+>>> with reader("/path/to/sample.sam") as fh:  # doctest: +SKIP
+...     record = next(fh)
+...     cigar = Cigar.from_cigartuples(record.cigartuples)
+...     print(str(cigar))
+50M2D5M10S
+
 ```
 
 Creating a [`Cigar` from a `str()`][fgpyo.sam.Cigar].
 
 ```python
-    >>> cigar = Cigar.from_cigarstring("50M2D5M10S")
-    >>> print(str(cigar))
-    50M2D5M10S
+>>> cigar = Cigar.from_cigarstring("50M2D5M10S")
+>>> print(str(cigar))
+50M2D5M10S
+
 ```
 
 If the cigar string is invalid, the exception message will show you the problem character(s) in
 square brackets.
 
 ```python
-    >>> cigar = Cigar.from_cigarstring("10M5U")
-    ... CigarException("Malformed cigar: 10M5[U]")
+>>> cigar = Cigar.from_cigarstring("10M5U")
+Traceback (most recent call last):
+    ...
+fgpyo.sam.CigarParsingException: Malformed cigar: 10M5[U]
+
 ```
 
 The cigar contains a tuple of [`CigarElement()`][fgpyo.sam.CigarElement]s.  Each element
@@ -112,46 +121,51 @@ The number of bases aligned on the query (i.e. the number of bases consumed by t
 the query):
 
 ```python
-    >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
-    >>> [e.length_on_query for e in cigar.elements]
-    [50, 0, 5, 2, 10]
-    >>> [e.length_on_target for e in cigar.elements]
-    [50, 2, 5, 0, 0]
-    >>> [e.operator.is_indel for e in cigar.elements]
-    [False, True, False, True, False]
+>>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
+>>> [e.length_on_query for e in cigar.elements]
+[50, 0, 5, 2, 10]
+>>> [e.length_on_target for e in cigar.elements]
+[50, 2, 5, 0, 0]
+>>> [e.operator.is_indel for e in cigar.elements]
+[False, True, False, True, False]
+
 ```
 
-Any particular tuple can be accessed directly with its index (and works with negative indexes
-and slices):
+Any particular element can be accessed directly via `.elements` with its index (and works with
+negative indexes and slices):
 
-    >>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
-    >>> cigar[0].length
-    50
-    >>> cigar[1].operator
-    <CigarOp.D: (2, 'D', False, True)>
-    >>> cigar[-1].operator
-    <CigarOp.S: (4, 'S', True, False)>
-    >>> tuple(x.operator.character for x in cigar[1:3])
-    ('D','M')
-    >>> tuple(x.operator.character for x in cigar[-2:])
-    ('I', 'S')
+```python
+>>> cigar = Cigar.from_cigarstring("50M2D5M2I10S")
+>>> cigar.elements[0].length
+50
+>>> cigar.elements[1].operator
+<CigarOp.D: (2, 'D', False, True)>
+>>> cigar.elements[-1].operator
+<CigarOp.S: (4, 'S', True, False)>
+>>> tuple(x.operator.character for x in cigar.elements[1:3])
+('D', 'M')
+>>> tuple(x.operator.character for x in cigar.elements[-2:])
+('I', 'S')
+
+```
 
 ## Examples of parsing the SA tag and individual supplementary alignments
 
 ```python
-   >>> from fgpyo.sam import SupplementaryAlignment
-   >>> sup = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
-   >>> sup.reference_name
-   'chr1
-   >>> sup.nm
-   0
-   >>> from typing import List
-   >>> sa_tag = "chr1,123,+,50S100M,60,0;chr2,456,-,75S75M,60,1"
-   >>> sups: List[SupplementaryAlignment] = SupplementaryAlignment.parse_sa_tag(tag=sa_tag)
-   >>> len(sups)
-   2
-   >>> [str(sup.cigar) for sup in sups]
-   ['50S100M', '75S75M']
+>>> from fgpyo.sam import SupplementaryAlignment
+>>> sup = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
+>>> sup.reference_name
+'chr1'
+>>> sup.nm
+0
+>>> from typing import List
+>>> sa_tag = "chr1,123,+,50S100M,60,0;chr2,456,-,75S75M,60,1"
+>>> sups: List[SupplementaryAlignment] = SupplementaryAlignment.parse_sa_tag(tag=sa_tag)
+>>> len(sups)
+2
+>>> [str(sup.cigar) for sup in sups]
+['50S100M', '75S75M']
+
 ```
 """
 

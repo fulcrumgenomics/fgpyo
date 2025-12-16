@@ -9,31 +9,39 @@ sequence dictionaries (.dict).
 Writing a FASTA with two contigs each with 100 bases:
 
 ```python
-    >>> from fgpyo.fasta.builder import FastaBuilder
-    >>> builder = FastaBuilder()
-    >>> builder.add("chr10").add("AAAAAAAAAA", 10)
-    >>> builder.add("chr11").add("GGGGGGGGGG", 10)
-    >>> builder.to_file(path = pathlib.Path("test.fasta"))
+>>> from pathlib import Path
+>>> from fgpyo.fasta.builder import FastaBuilder
+>>> builder = FastaBuilder()
+>>> builder.add("chr10").add("AAAAAAAAAA", 10)  # doctest: +ELLIPSIS
+<fgpyo.fasta.builder.ContigBuilder object at ...>
+>>> builder = builder.add("chr11").add("GGGGGGGGGG", 10)
+>>> fasta_path = Path(getfixture("tmp_path")) / "test.fasta"
+>>> builder.to_file(path=fasta_path)  # doctest: +SKIP
+
 ```
 
 Writing a FASTA with one contig with 100 A's and 50 T's:
 
 ```python
-    >>> from fgpyo.fasta.builder import FastaBuilder
-    >>> builder = FastaBuilder()
-    >>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)
-    >>> builder.to_file(path = pathlib.Path("test.fasta"))
+>>> from fgpyo.fasta.builder import FastaBuilder
+>>> builder = FastaBuilder()
+>>> builder.add("chr10").add("AAAAAAAAAA", 10).add("TTTTTTTTTT", 5)  # doctest: +ELLIPSIS
+<fgpyo.fasta.builder.ContigBuilder object at ...>
+>>> builder.to_file(path=fasta_path)  # doctest: +SKIP
+
 ```
 
 Add bases to existing contig:
 
 ```python
-    >>> from fgpyo.fasta.builder import FastaBuilder
-    >>> builder = FastaBuilder()
-    >>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
-    >>> contig_one.add("NNN", 1)
-    >>> contig_one.bases
-    'AAAAAAAAAANNN'
+>>> from fgpyo.fasta.builder import FastaBuilder
+>>> builder = FastaBuilder()
+>>> contig_one = builder.add("chr10").add("AAAAAAAAAA", 1)
+>>> contig_one.add("NNN", 1)  # doctest: +ELLIPSIS
+<fgpyo.fasta.builder.ContigBuilder object at ...>
+>>> contig_one.bases
+'AAAAAAAAAANNN'
+
 ```
 
 """

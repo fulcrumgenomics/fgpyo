@@ -14,30 +14,48 @@ The functions in this module make it easy to:
 ## fgpyo.io Examples:
 
 ```python
+>>> import fgpyo.io as fio
+>>> from fgpyo.io import write_lines, read_lines
+>>> from pathlib import Path
 
-    >>> import fgpyo.io as fio
-    >>> from pathlib import Path
-    Assert that a path exists and is readable
-    >>> path_flat: Path = Path("example.txt")
-    >>> path_compressed: Path = Path("example.txt.gz")
-    >>> fio.path_is_readable(path_flat)
-    AssertionError: Cannot read non-existent path: example.txt
-    >>> fio.path_is_readable(compressed_file)
-    AssertionError: Cannot read non-existent path: example.txt.gz
-    Write to and read from path
-    >>> write_lines(path = path_flat, lines_to_write=["flat file", 10])
-    >>> write_lines(path = path_compressed, lines_to_write=["gzip file", 10])
-    Read lines from a path into a generator
-    >>> lines = read_lines(path = path_flat)
-    >>> next(lines)
-    "flat file"
-    >>> next(lines)
-    "10"
-    >>> lines = read_lines(path = path_compressed)
-    >>> next(lines)
-    "gzip file"
-    >>> next(lines)
-    "10"
+```
+
+Assert that a path exists and is readable:
+
+```python
+>>> tmp_dir = Path(getfixture("tmp_path"))
+>>> path_flat: Path = tmp_dir / "example.txt"
+>>> fio.assert_path_is_readable(path_flat)  # doctest: +ELLIPSIS
+Traceback (most recent call last):
+    ...
+AssertionError: Cannot read non-existent path: ...
+
+```
+
+Write to and read from path:
+
+```python
+>>> path_flat = tmp_dir / "example.txt"
+>>> path_compressed = tmp_dir / "example.txt.gz"
+>>> write_lines(path=path_flat, lines_to_write=["flat file", 10])
+>>> write_lines(path=path_compressed, lines_to_write=["gzip file", 10])
+
+```
+
+Read lines from a path into a generator:
+
+```python
+>>> lines = read_lines(path=path_flat)
+>>> next(lines)
+'flat file'
+>>> next(lines)
+'10'
+>>> lines = read_lines(path=path_compressed)
+>>> next(lines)
+'gzip file'
+>>> next(lines)
+'10'
+
 ```
 
 """
@@ -165,9 +183,10 @@ def to_reader(path: Path, threads: Optional[int] = None) -> TextIOWrapper:
         threads: the number of threads to use when decompressing gzip files
 
     Example:
-        >>> reader = fio.to_reader(path = Path("reader.txt"))
-        >>> reader.readlines()
-        >>> reader.close()
+        >>> import fgpyo.io as fio
+        >>> reader = fio.to_reader(path=Path("reader.txt"))  # doctest: +SKIP
+        >>> reader.readlines()  # doctest: +SKIP
+        >>> reader.close()  # doctest: +SKIP
 
     """
     if path.suffix in COMPRESSED_FILE_EXTENSIONS:
@@ -189,9 +208,10 @@ def to_writer(path: Path, append: bool = False, threads: Optional[int] = None) -
         threads: the number of threads to use when compressing gzip files
 
     Example:
-        >>> writer = fio.to_writer(path = Path("writer.txt"))
-        >>> writer.write(f'{something}\\n')
-        >>> writer.close()
+        >>> import fgpyo.io as fio
+        >>> writer = fio.to_writer(path=Path("writer.txt"))  # doctest: +SKIP
+        >>> writer.write("something\\n")  # doctest: +SKIP
+        >>> writer.close()  # doctest: +SKIP
 
     """
     mode_prefix: str = "a" if append else "w"
@@ -226,7 +246,9 @@ def read_lines(path: Path, strip: bool = False, threads: Optional[int] = None) -
         threads: the number of threads to use when decompressing gzip files
 
     Example:
-        read_back = fio.read_lines(path)
+        >>> import fgpyo.io as fio
+        >>> read_back = fio.read_lines(path)  # doctest: +SKIP
+
     """
     with to_reader(path=path, threads=threads) as reader:
         if strip:

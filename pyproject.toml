@@ -48,6 +48,7 @@ dev = [
     "mypy==1.18.2",
     "pytest>=7.4.0",
     "pytest-cov>=2.8.1",
+    "pytest-doctestplus>=1.0.0",
     "ruff==0.13.2",
     "setuptools>=68.0.0",
     "poethepoet ~=0.37",
@@ -123,8 +124,11 @@ addopts    = [
     "-r=sx",
     "--color=yes",
     "--import-mode=importlib",
-    "--cov"
+    "--cov",
+    "--doctest-plus",
 ]
+doctest_plus = "enabled"
+doctest_optionflags = "NORMALIZE_WHITESPACE ELLIPSIS"
 
 [tool.poe.tasks]
 fix-format = "ruff format"
@@ -136,11 +140,12 @@ fix-all.sequence    = [
     "fix-lint"
 ]
 
-check-lock   = "uv lock --check"
-check-format = "ruff format --check --diff"
-check-lint   = "ruff check"
-check-tests  = "pytest"
-check-typing = "mypy"
+check-lock     = "uv lock --check"
+check-format   = "ruff format --check --diff"
+check-lint     = "ruff check"
+check-tests    = "pytest"
+check-doctests = "pytest --doctest-plus --doctest-only fgpyo"
+check-typing   = "mypy"
 
 check-all.ignore_fail = "return_non_zero"
 check-all.sequence    = [
@@ -148,7 +153,8 @@ check-all.sequence    = [
     "check-format",
     "check-lint",
     "check-typing",
-    "check-tests"
+    "check-tests",
+    "check-doctests"
 ]
 
 fix-and-check-all.ignore_fail = "return_non_zero"
@@ -157,7 +163,8 @@ fix-and-check-all.sequence    = [
     "fix-format",
     "fix-lint",
     "check-typing",
-    "check-tests"
+    "check-tests",
+    "check-doctests"
 ]
 
 build-docs = "mkdocs build --strict"

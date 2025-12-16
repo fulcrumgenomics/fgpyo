@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.9.0, <4.0"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -253,6 +253,7 @@ dev = [
     { name = "poethepoet" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-doctestplus" },
     { name = "ruff" },
     { name = "setuptools" },
 ]
@@ -285,6 +286,7 @@ dev = [
     { name = "poethepoet", specifier = "~=0.37" },
     { name = "pytest", specifier = ">=7.4.0" },
     { name = "pytest-cov", specifier = ">=2.8.1" },
+    { name = "pytest-doctestplus", specifier = ">=1.0.0" },
     { name = "ruff", specifier = "==0.13.2" },
     { name = "setuptools", specifier = ">=68.0.0" },
 ]
@@ -946,6 +948,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/be/45/9b538de8cef30e17c7b45ef42f538a94889ed6a16f2387a6c89e73220651/pytest-cov-6.0.0.tar.gz", hash = "sha256:fde0b595ca248bb8e2d76f020b465f3b107c9632e6a1d1705f17834c89dcadc0", size = 66945, upload-time = "2024-10-29T20:13:35.363Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/36/3b/48e79f2cd6a61dbbd4807b4ed46cb564b4fd50a76166b1c4ea5c1d9e2371/pytest_cov-6.0.0-py3-none-any.whl", hash = "sha256:eee6f1b9e61008bd34975a4d5bab25801eb31898b032dd55addc93e96fcaaa35", size = 22949, upload-time = "2024-10-29T20:13:33.215Z" },
+]
+
+[[package]]
+name = "pytest-doctestplus"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/ad/896366e91c0b039d1f2d840a821d70aff18e97423188d1d244a9fb1254ae/pytest_doctestplus-1.6.0.tar.gz", hash = "sha256:f893d68370d19b418d58da0047d36a4feedac7ed28bc236858f484e994f1ac66", size = 50186, upload-time = "2025-11-20T10:17:17.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/1c/ff1548922bad1f0fc6003567ab7872a70a6e3523b7a3ea331b6fb0ca40ff/pytest_doctestplus-1.6.0-py3-none-any.whl", hash = "sha256:7ea003abfd62a787fee4cae674b0efc77c2fb73518ae60da662dc3b3ec2a47ed", size = 25687, upload-time = "2025-11-20T10:17:15.908Z" },
 ]
 
 [[package]]

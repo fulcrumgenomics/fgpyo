@@ -21,95 +21,106 @@ initialize the values of the attr superclass.
 Defining a new metric class:
 
 ```python
-   >>> from fgpyo.util.metric import Metric
-   >>> import dataclasses
-   >>> @dataclasses.dataclass(frozen=True)
-   ... class Person(Metric["Person"]):
-   ...     name: str
-   ...     age: int
+>>> from fgpyo.util.metric import Metric
+>>> import dataclasses
+>>> @dataclasses.dataclass(frozen=True)
+... class Person(Metric["Person"]):
+...     name: str
+...     age: int
+
 ```
 
 or using attr:
 
 ```python
-   >>> from fgpyo.util.metric import Metric
-   >>> import attr
-   >>> @attr.s(auto_attribs=True, frozen=True)
-   ... class Person(Metric["Person"]):
-   ...     name: str
-   ...     age: int
+>>> from fgpyo.util.metric import Metric
+>>> import attr
+>>> from typing import Optional
+>>> @attr.s(auto_attribs=True, frozen=True)
+... class PersonAttr(Metric["PersonAttr"]):
+...     name: str
+...     age: int
+...     address: Optional[str] = None
+
 ```
 
 Getting the attributes for a metric class.  These will be used for the header when reading and
 writing metric files.
 
 ```python
-   >>> Person.header()
-   ['name', 'age']
+>>> Person.header()
+['name', 'age']
+
 ```
 
 Getting the values from a metric class instance.  The values are in the same order as the header.
 
 ```python
-   >>> list(Person(name="Alice", age=47).values())
-   ["Alice", 47]
+>>> list(Person(name="Alice", age=47).values())
+['Alice', 47]
+
 ```
 
 Writing a list of metrics to a file:
 
 ```python
-   >>> metrics = [
-   ...     Person(name="Alice", age=47),
-   ...     Person(name="Bob", age=24)
-   ... ]
-   >>> from pathlib import Path
-   >>> Person.write(Path("/path/to/metrics.txt"), *metrics)
+>>> metrics = [
+...     Person(name="Alice", age=47),
+...     Person(name="Bob", age=24)
+... ]
+>>> from pathlib import Path
+>>> Person.write(Path("/path/to/metrics.txt"), *metrics)  # doctest: +SKIP
+
 ```
 
 Then the contents of the written metrics file:
 
-```python
-   $ column -t /path/to/metrics.txt
-   name   age
-   Alice  47
-   Bob    24
+```console
+$ column -t /path/to/metrics.txt
+name   age
+Alice  47
+Bob    24
 ```
 
 Reading the metrics file back in:
 
 ```python
-   >>> list(Person.read(Path("/path/to/metrics.txt")))
-   [Person(name='Alice', age=47, address=None), Person(name='Bob', age=24, address='North Pole')]
+>>> list(Person.read(Path("/path/to/metrics.txt")))  # doctest: +SKIP
+[Person(name='Alice', age=47), Person(name='Bob', age=24)]
+
 ```
 
 Formatting and parsing the values for custom types is supported by overriding the `_parsers()` and
 [`format_value()`][fgpyo.util.metric.Metric.format_value] methods.
 
 ```python
-   >>> @dataclasses.dataclass(frozen=True)
-   ... class Name:
-   ...     first: str
-   ...     last: str
-   ...     @classmethod
-   ...     def parse(cls, value: str) -> "Name":
-   ...          fields = value.split(" ")
-   ...          return Name(first=fields[0], last=fields[1])
-   >>> @dataclasses.dataclass(frozen=True)
-   ... class Person(Metric["Person"]):
-   ...     name: Name
-   ...     age: int
-   ...     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
-   ...         return {Name: lambda value: Name.parse(value=value)}
-   ...     @classmethod
-   ...     def format_value(cls, value: Any) -> str:
-   ...         if isinstance(value, (Name)):
-   ...             return f"{value.first} {value.last}"
-   ...         else:
-   ...             return super().format_value(value=value)
-   >>> Person.parse(fields=["john doe", "42"])
-   Person(name=Name(first='john', last='doe'), age=42)
-   >>> Person(name=Name(first='john', last='doe'), age=42, address=None).formatted_values()
-   ["first last", "42"]
+>>> @dataclasses.dataclass(frozen=True)
+... class Name:
+...     first: str
+...     last: str
+...     @classmethod
+...     def parse(cls, value: str) -> "Name":
+...          fields = value.split(" ")
+...          return Name(first=fields[0], last=fields[1])
+>>> from typing import Dict, Callable, Any
+>>> @dataclasses.dataclass(frozen=True)
+... class PersonWithName(Metric["PersonWithName"]):
+...     name: Name
+...     age: int
+...     @classmethod
+...     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
+...         return {Name: lambda value: Name.parse(value=value)}
+...     @classmethod
+...     def format_value(cls, value: Any) -> str:
+...         if isinstance(value, Name):
+...             return f"{value.first} {value.last}"
+...         else:
+...             return super().format_value(value=value)
+>>> PersonWithName.parse(fields=["john doe", "42"])
+PersonWithName(name=Name(first='john', last='doe'), age=42)
+>>> PersonWithName(name=Name(first='john', last='doe'), age=42).formatted_values()
+['john doe', '42']
+
 ```
 """
 

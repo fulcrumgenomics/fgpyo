@@ -29,6 +29,7 @@ import attr
 import pytest
 from pytest import CaptureFixture
 
+from fgpyo.util.inspect import FieldType
 from fgpyo.util.inspect import is_attr_class
 from fgpyo.util.inspect import is_dataclasses_class
 from fgpyo.util.metric import Metric
@@ -164,6 +165,49 @@ class DataBuilder:
             name: List[Optional[str]]
             age: List[Optional[int]]
 
+        @make_dataclass(use_attr=use_attr)
+        class ReorderedMetric(Metric["ReorderedMetric"]):
+            first: str
+            second: str
+
+            @classmethod
+            def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+                return ["second", "first"]  # Reverse order
+
+        @make_dataclass(use_attr=use_attr)
+        class SubsetMetric(Metric["SubsetMetric"]):
+            visible: str
+            hidden: Optional[str]
+
+            @classmethod
+            def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+                return ["visible"]  # Only write visible field
+
+        @make_dataclass(use_attr=use_attr)
+        class ThreeFieldMetric(Metric["ThreeFieldMetric"]):
+            field_a: str
+            field_b: str
+            field_c: str
+
+        @make_dataclass(use_attr=use_attr)
+        class CustomOrderMetric(Metric["CustomOrderMetric"]):
+            first: str
+            second: str
+            third: str
+
+            @classmethod
+            def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+                return ["third", "second", "first"]  # Reverse order
+
+        @make_dataclass(use_attr=use_attr)
+        class PartialWriteMetric(Metric["PartialWriteMetric"]):
+            required: str
+            optional: Optional[str]
+
+            @classmethod
+            def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+                return ["required"]  # Only write required field
+
         self.DummyMetric = DummyMetric
         self.Person = Person
         self.Name = Name
@@ -172,6 +216,11 @@ class DataBuilder:
         self.PersonMaybeAge = PersonMaybeAge
         self.PersonDefault = PersonDefault
         self.ListPerson = ListPerson
+        self.ReorderedMetric = ReorderedMetric
+        self.SubsetMetric = SubsetMetric
+        self.ThreeFieldMetric = ThreeFieldMetric
+        self.CustomOrderMetric = CustomOrderMetric
+        self.PartialWriteMetric = PartialWriteMetric
 
         self.DUMMY_METRICS: List[DummyMetric] = [
             DummyMetric(
@@ -976,3 +1025,181 @@ def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
     assert len(out_metrics) == 2
     assert out_metrics[0] == in_metrics[0]
     assert out_metrics[1] == in_metrics[1]
+
+
+# =============================================================================
+# Tests for _fields_to_write() and include_fields/exclude_fields on write()
+# =============================================================================
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_fields_to_write_reordering(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """Test that _fields_to_write() can reorder fields when writing."""
+    ReorderedMetric: TypeAlias = data_and_classes.ReorderedMetric
+    metric = ReorderedMetric(first="a", second="b")
+    path = tmp_path / "metrics.txt"
+
+    # Check header respects _fields_to_write
+    assert ReorderedMetric.header() == ["second", "first"]
+
+    # Write and verify file contents
+    ReorderedMetric.write(path, metric)
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    assert header_line == "second\tfirst"
+    assert data_line == "b\ta"
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_fields_to_write_subsetting(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """Test that _fields_to_write() can subset fields when writing."""
+    SubsetMetric: TypeAlias = data_and_classes.SubsetMetric
+    metric = SubsetMetric(visible="shown", hidden="not_shown")
+    path = tmp_path / "metrics.txt"
+
+    # Check header respects _fields_to_write
+    assert SubsetMetric.header() == ["visible"]
+
+    # Write and verify file contents
+    SubsetMetric.write(path, metric)
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    assert header_line == "visible"
+    assert data_line == "shown"
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_write_include_fields(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """Test that include_fields parameter on write() works."""
+    ThreeFieldMetric: TypeAlias = data_and_classes.ThreeFieldMetric
+    metric = ThreeFieldMetric(field_a="a", field_b="b", field_c="c")
+    path = tmp_path / "metrics.txt"
+
+    # Write with include_fields to subset and reorder
+    ThreeFieldMetric.write(path, metric, include_fields=["field_c", "field_a"])
+
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    assert header_line == "field_c\tfield_a"
+    assert data_line == "c\ta"
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_write_exclude_fields(tmp_path: Path, data_and_classes: DataBuilder) -> None:
+    """Test that exclude_fields parameter on write() works."""
+    ThreeFieldMetric: TypeAlias = data_and_classes.ThreeFieldMetric
+    metric = ThreeFieldMetric(field_a="a", field_b="b", field_c="c")
+    path = tmp_path / "metrics.txt"
+
+    # Write with exclude_fields to remove field_b
+    ThreeFieldMetric.write(path, metric, exclude_fields=["field_b"])
+
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    assert header_line == "field_a\tfield_c"
+    assert data_line == "a\tc"
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_include_fields_overrides_fields_to_write(
+    tmp_path: Path, data_and_classes: DataBuilder
+) -> None:
+    """Test that include_fields overrides _fields_to_write() at call time."""
+    CustomOrderMetric: TypeAlias = data_and_classes.CustomOrderMetric
+    metric = CustomOrderMetric(first="1", second="2", third="3")
+    path = tmp_path / "metrics.txt"
+
+    # Verify class-level ordering
+    assert CustomOrderMetric.header() == ["third", "second", "first"]
+
+    # Override with include_fields at call time
+    CustomOrderMetric.write(path, metric, include_fields=["first", "second"])
+
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    # Should use include_fields ordering, not _fields_to_write
+    assert header_line == "first\tsecond"
+    assert data_line == "1\t2"
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_fields_to_write_roundtrip_with_optional(
+    tmp_path: Path, data_and_classes: DataBuilder
+) -> None:
+    """Test that write with subset fields can be read back with optional fields."""
+    PartialWriteMetric: TypeAlias = data_and_classes.PartialWriteMetric
+    original = PartialWriteMetric(required="value", optional="hidden")
+    path = tmp_path / "metrics.txt"
+
+    # Write only the required field
+    PartialWriteMetric.write(path, original)
+
+    # Read back - optional field should be None
+    read_metrics = list(PartialWriteMetric.read(path=path))
+    assert len(read_metrics) == 1
+    assert read_metrics[0].required == "value"
+    assert read_metrics[0].optional is None
+
+
+@pytest.mark.parametrize("use_attr", [False, True])
+def test_fields_to_write_extra_field_raises(use_attr: bool) -> None:
+    """Test that _fields_to_write() returning extra fields raises ValueError."""
+
+    @make_dataclass(use_attr=use_attr)
+    class BadMetric(Metric["BadMetric"]):
+        real_field: str
+
+        @classmethod
+        def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+            return ["real_field", "fake_field"]  # fake_field doesn't exist
+
+    with pytest.raises(ValueError, match="_fields_to_write\\(\\) returned fields not in class"):
+        BadMetric.header()
+
+
+@pytest.mark.parametrize("use_attr", [False, True])
+def test_fields_to_write_duplicate_field_raises(use_attr: bool) -> None:
+    """Test that _fields_to_write() returning duplicate fields raises ValueError."""
+
+    @make_dataclass(use_attr=use_attr)
+    class DuplicateMetric(Metric["DuplicateMetric"]):
+        field_a: str
+        field_b: str
+
+        @classmethod
+        def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+            return ["field_a", "field_a"]  # Duplicate
+
+    with pytest.raises(ValueError, match="_fields_to_write\\(\\) returned duplicate fields"):
+        DuplicateMetric.header()
+
+
+@pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
+def test_exclude_fields_respects_fields_to_write_order(
+    tmp_path: Path, data_and_classes: DataBuilder
+) -> None:
+    """Test that exclude_fields respects the order from _fields_to_write()."""
+    CustomOrderMetric: TypeAlias = data_and_classes.CustomOrderMetric
+    metric = CustomOrderMetric(first="1", second="2", third="3")
+    path = tmp_path / "metrics.txt"
+
+    # Exclude 'second', should maintain order from _fields_to_write
+    CustomOrderMetric.write(path, metric, exclude_fields=["second"])
+
+    with path.open("r") as f:
+        header_line = f.readline().strip()
+        data_line = f.readline().strip()
+
+    # Should be third, first (reverse order, minus second)
+    assert header_line == "third\tfirst"
+    assert data_line == "3\t1"

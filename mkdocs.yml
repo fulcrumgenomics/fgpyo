@@ -12,6 +12,8 @@ theme:
   include_sidebar: true
   collapse_navigation: false
 repo_url: https://github.com/fulcrumgenomics/fgpyo
+hooks:
+  - docs/scripts/strip_doctest_flags.py
 plugins:
   - autorefs:
       resolve_closest: true

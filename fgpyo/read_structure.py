@@ -15,36 +15,36 @@ See more at: https://github.com/fulcrumgenomics/fgbio/wiki/Read-Structures
 ## Examples
 
 ```python
-   >>> from fgpyo.read_structure import ReadStructure
-   >>> rs = ReadStructure.from_string("75T8B75T")
-   >>> [str(segment) for segment in rs]
-   '75T', '8B', '75T'
-   >>> rs[0]
-   ReadSegment(offset=0, length=75, kind=<SegmentType.Template: 'T'>)
-   >>> rs = rs.with_variable_last_segment()
-   >>> [str(segment) for segment in rs]
-   ['75T', '8B', '+T']
-   >>> rs[-1]
-   ReadSegment(offset=83, length=None, kind=<SegmentType.Template: 'T'>)
-   >>> rs = ReadStructure.from_string("1B2M+T")
-   >>> [s.bases for s in rs.extract("A"*6)]
-   ['A', 'AA', 'AAA']
-   >>> [s.bases for s in rs.extract("A"*5)]
-   ['A', 'AA', 'AA']
-   >>> [s.bases for s in rs.extract("A"*4)]
-   ['A', 'AA', 'A']
-   >>> [s.bases for s in rs.extract("A"*3)]
-   ['A', 'AA', '']
-   >>> rs.template_segments()
-   (ReadSegment(offset=3, length=None, kind=<SegmentType.Template: 'T'>),)
-   >>> [str(segment) for segment in rs.template_segments()]
-   ['+T']
-   >>> try:
-   ...   ReadStructure.from_string("23T2TT23T")
-   ... except ValueError as ex:
-   ...   print(str(ex))
-   ...
-   Read structure missing length information: 23T2T[T]23T
+>>> from fgpyo.read_structure import ReadStructure
+>>> rs = ReadStructure.from_string("75T8B75T")
+>>> [str(segment) for segment in rs]
+['75T', '8B', '75T']
+>>> rs[0]
+ReadSegment(offset=0, length=75, kind=<SegmentType.Template: 'T'>)
+>>> rs = rs.with_variable_last_segment()
+>>> [str(segment) for segment in rs]
+['75T', '8B', '+T']
+>>> rs[-1]
+ReadSegment(offset=83, length=None, kind=<SegmentType.Template: 'T'>)
+>>> rs = ReadStructure.from_string("1B2M+T")
+>>> [s.bases for s in rs.extract("A"*6)]
+['A', 'AA', 'AAA']
+>>> [s.bases for s in rs.extract("A"*5)]
+['A', 'AA', 'AA']
+>>> [s.bases for s in rs.extract("A"*4)]
+['A', 'AA', 'A']
+>>> [s.bases for s in rs.extract("A"*3)]
+['A', 'AA', '']
+>>> rs.template_segments()
+(ReadSegment(offset=3, length=None, kind=<SegmentType.Template: 'T'>),)
+>>> [str(segment) for segment in rs.template_segments()]
+['+T']
+>>> try:
+...   ReadStructure.from_string("23T2TT23T")
+... except ValueError as ex:
+...   print(str(ex))
+Read structure missing length information: 23T2T[T]23T
+
 ```
 """
 

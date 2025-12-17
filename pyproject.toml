@@ -34,16 +34,15 @@ dependencies = [
     "attrs>=19.3.0",
     "typing_extensions>=4.12.2 ; python_version < '3.13'",
     "strenum>=0.4.15,<0.5",
+    "zlib-ng>=0.5.1",
 ]
 
 [project.optional-dependencies]
 pysam = [
     "pysam>=0.22.1",
-    "zlib-ng>=0.5.1",
 ]
 all = [
     "pysam>=0.22.1",
-    "zlib-ng>=0.5.1",
 ]
 
 [project.urls]

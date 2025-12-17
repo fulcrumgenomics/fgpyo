@@ -243,16 +243,15 @@ dependencies = [
     { name = "attrs" },
     { name = "strenum" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "zlib-ng" },
 ]
 
 [package.optional-dependencies]
 all = [
     { name = "pysam" },
-    { name = "zlib-ng" },
 ]
 pysam = [
     { name = "pysam" },
-    { name = "zlib-ng" },
 ]
 
 [package.dev-dependencies]
@@ -285,8 +284,7 @@ requires-dist = [
     { name = "pysam", marker = "extra == 'pysam'", specifier = ">=0.22.1" },
     { name = "strenum", specifier = ">=0.4.15,<0.5" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'", specifier = ">=4.12.2" },
-    { name = "zlib-ng", marker = "extra == 'all'", specifier = ">=0.5.1" },
-    { name = "zlib-ng", marker = "extra == 'pysam'", specifier = ">=0.5.1" },
+    { name = "zlib-ng", specifier = ">=0.5.1" },
 ]
 provides-extras = ["pysam", "all"]
 

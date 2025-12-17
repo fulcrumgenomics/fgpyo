@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.9.0, <4.0"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -241,9 +241,17 @@ version = "1.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
-    { name = "pysam" },
     { name = "strenum" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "pysam" },
+    { name = "zlib-ng" },
+]
+pysam = [
+    { name = "pysam" },
     { name = "zlib-ng" },
 ]
 
@@ -273,11 +281,14 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=19.3.0" },
-    { name = "pysam", specifier = ">=0.22.1" },
+    { name = "pysam", marker = "extra == 'all'", specifier = ">=0.22.1" },
+    { name = "pysam", marker = "extra == 'pysam'", specifier = ">=0.22.1" },
     { name = "strenum", specifier = ">=0.4.15,<0.5" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'", specifier = ">=4.12.2" },
-    { name = "zlib-ng", specifier = ">=0.5.1" },
+    { name = "zlib-ng", marker = "extra == 'all'", specifier = ">=0.5.1" },
+    { name = "zlib-ng", marker = "extra == 'pysam'", specifier = ">=0.5.1" },
 ]
+provides-extras = ["pysam", "all"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -46,6 +46,10 @@ To rectify these problems it is necessary to do the equivalent of:
 ```
 """  # noqa: E501
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from array import array
 from typing import Iterable
 from typing import List

@@ -25,6 +25,10 @@ the state of all previously iterated records, set the parameter ``persist`` to `
 
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType

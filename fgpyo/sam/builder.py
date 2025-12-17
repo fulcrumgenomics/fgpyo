@@ -5,6 +5,10 @@ This module contains utility classes for the generation of SAM and BAM files and
 alignment records, for use in testing.
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from array import array
 from pathlib import Path
 from random import Random

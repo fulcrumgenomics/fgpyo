@@ -2,6 +2,10 @@
 # Classes for generating VCF and records for testing
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile

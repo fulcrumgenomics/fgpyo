@@ -55,6 +55,10 @@ in coordinate sorted order via the
 
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator

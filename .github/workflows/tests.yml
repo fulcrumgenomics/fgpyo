@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --locked
+          uv sync --locked --extra pysam
 
       - name: Test the library
         run: |
@@ -50,3 +50,29 @@ jobs:
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  Tests-without-pysam:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba  # v6.3.1
+        with:
+          version: "${{ env.UV_VERSION }}"
+          python-version: "3.11"
+          enable-cache: 'true'
+          cache-suffix: "3.11-no-pysam"
+
+      - name: Install dependencies (without pysam)
+        run: |
+          uv sync --locked
+
+      - name: Verify pysam is not installed
+        run: |
+          ! uv run python -c "import pysam" 2>/dev/null
+
+      - name: Test core modules (without pysam)
+        run: |
+          uv run pytest tests/fgpyo/test_sequence.py tests/fgpyo/test_read_structure.py tests/fgpyo/collections/ tests/fgpyo/io/ tests/fgpyo/util/test_inspect.py tests/fgpyo/util/test_metric.py tests/fgpyo/util/test_string.py tests/fgpyo/util/test_types.py -v

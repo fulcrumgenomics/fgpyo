@@ -32,9 +32,17 @@ classifiers = [
 requires-python = ">=3.9.0,<4.0"
 dependencies = [
     "attrs>=19.3.0",
-    "pysam>=0.22.1",
     "typing_extensions>=4.12.2 ; python_version < '3.13'",
     "strenum>=0.4.15,<0.5",
+]
+
+[project.optional-dependencies]
+pysam = [
+    "pysam>=0.22.1",
+    "zlib-ng>=0.5.1",
+]
+all = [
+    "pysam>=0.22.1",
     "zlib-ng>=0.5.1",
 ]
 
@@ -87,6 +95,16 @@ output-format  = "full"
 select    = ["C901", "B", "E", "F", "I", "W", "Q"]
 ignore    = ["E203", "E701"]
 unfixable = ["B"]
+
+[tool.ruff.lint.per-file-ignores]
+# E402: Module level import not at top of file - required for optional pysam dependency check
+"fgpyo/sam/__init__.py" = ["E402"]
+"fgpyo/sam/builder.py" = ["E402"]
+"fgpyo/sam/clipping.py" = ["E402"]
+"fgpyo/vcf/__init__.py" = ["E402"]
+"fgpyo/vcf/builder.py" = ["E402"]
+"fgpyo/fastx/__init__.py" = ["E402"]
+"fgpyo/fasta/sequence_dictionary.py" = ["E402"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

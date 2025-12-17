@@ -31,11 +31,14 @@ method.
 ```
 """
 
+from __future__ import annotations
+
 import logging
 import socket
 from contextlib import AbstractContextManager
 from logging import Logger
 from threading import RLock
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Iterable
@@ -43,7 +46,8 @@ from typing import Literal
 from typing import Optional
 from typing import Union
 
-from pysam import AlignedSegment
+if TYPE_CHECKING:
+    from pysam import AlignedSegment
 
 # Global that is set to True once logging initialization is run to prevent running > once.
 __FGPYO_LOGGING_SETUP: bool = False

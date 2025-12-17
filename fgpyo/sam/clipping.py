@@ -57,6 +57,10 @@ cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools
 ```
 """  # noqa: E501
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 from array import array
 from typing import Iterable
 from typing import List

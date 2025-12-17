@@ -241,10 +241,17 @@ version = "1.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
-    { name = "pysam" },
     { name = "strenum" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
     { name = "zlib-ng" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "pysam" },
+]
+pysam = [
+    { name = "pysam" },
 ]
 
 [package.dev-dependencies]
@@ -274,11 +281,13 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=19.3.0" },
-    { name = "pysam", specifier = ">=0.22.1" },
+    { name = "pysam", marker = "extra == 'all'", specifier = ">=0.22.1" },
+    { name = "pysam", marker = "extra == 'pysam'", specifier = ">=0.22.1" },
     { name = "strenum", specifier = ">=0.4.15,<0.5" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'", specifier = ">=4.12.2" },
     { name = "zlib-ng", specifier = ">=0.5.1" },
 ]
+provides-extras = ["pysam", "all"]
 
 [package.metadata.requires-dev]
 dev = [

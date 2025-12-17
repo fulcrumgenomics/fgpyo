@@ -169,6 +169,10 @@ negative indexes and slices):
 ```
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 import enum
 import io
 import sys

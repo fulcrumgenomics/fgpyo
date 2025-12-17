@@ -125,6 +125,10 @@ Create a `pysam.AlignmentHeader` from a sequence dictionary with extra header it
 ```
 """
 
+from fgpyo._optional import _check_pysam_installed
+
+_check_pysam_installed()
+
 import copy
 import itertools
 import re

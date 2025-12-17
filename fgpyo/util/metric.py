@@ -122,11 +122,47 @@ PersonWithName(name=Name(first='john', last='doe'), age=42)
 ['john doe', '42']
 
 ```
+
+## Customizing Field Order and Selection
+
+There are two ways to control which fields are written and in what order:
+
+### 1. Class-Level: Override `_fields_to_write()`
+
+Use this when a class should **always** write fields in a specific order. This is useful for
+subclasses where child fields should appear before parent fields:
+
+```python
+   >>> from typing import List
+   >>> from fgpyo.util.inspect import FieldType
+   >>> @dataclasses.dataclass(frozen=True)
+   ... class ChildMetric(ParentMetric):
+   ...     priority_field: str
+   ...
+   ...     @classmethod
+   ...     def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+   ...         return ["priority_field", "inherited_field"]  # Child first
+```
+
+### 2. Call-Level: Use `include_fields` or `exclude_fields`
+
+Use this for **one-off** or **varying** field selection:
+
+```python
+   >>> # Write only specific fields in a specific order
+   >>> MyMetric.write(path, metric, include_fields=["field_a", "field_b"])
+   >>> # Write all fields except some
+   >>> MyMetric.write(path, metric, exclude_fields=["internal_field"])
+```
+
+**A good guideline**: If you find yourself passing the same `include_fields`
+to every write() call, consider overriding `_fields_to_write()` instead.
 """
 
 import dataclasses
 import sys
 from abc import ABC
+from collections import Counter
 from contextlib import AbstractContextManager
 from csv import DictWriter
 from dataclasses import dataclass
@@ -155,6 +191,7 @@ else:
 
 from fgpyo import io
 from fgpyo.util import inspect
+from fgpyo.util.inspect import FieldType
 
 MetricType = TypeVar("MetricType", bound="Metric")
 
@@ -311,7 +348,14 @@ class Metric(ABC, Generic[MetricType]):
         return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType, threads: Optional[int] = None) -> None:
+    def write(
+        cls,
+        path: Path,
+        *values: MetricType,
+        include_fields: Optional[List[str]] = None,
+        exclude_fields: Optional[List[str]] = None,
+        threads: Optional[int] = None,
+    ) -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.
@@ -319,16 +363,77 @@ class Metric(ABC, Generic[MetricType]):
         Args:
             path: Path to the output file.
             values: Zero or more metrics.
+            include_fields: If specified, only write these fields, in this order.
+                Overrides any class-level _fields_to_write() customization.
+            exclude_fields: If specified, exclude these fields from output.
+                Cannot be used together with include_fields.
             threads: the number of threads to use when compressing gzip files
 
         """
-        with MetricWriter[MetricType](path, metric_class=cls, threads=threads) as writer:
+        with MetricWriter[MetricType](
+            path,
+            metric_class=cls,
+            include_fields=include_fields,
+            exclude_fields=exclude_fields,
+            threads=threads,
+        ) as writer:
             writer.writeall(values)
+
+    @classmethod
+    def _fields_to_write(cls, field_types: List[FieldType]) -> List[str]:
+        """Returns field names for writing, allowing reordering or subsetting.
+
+        Override this method when your class should ALWAYS write fields in a
+        specific order or exclude certain fields. This is useful for:
+
+        - Subclasses where child fields should appear before parent fields
+        - Classes with internal fields that should never be serialized
+        - Enforcing a consistent output format across all write() calls
+
+        For one-off or varying field orders, use the `include_fields` parameter
+        on write() instead.
+
+        Args:
+            field_types: The list of field types for the class, in definition order.
+
+        Returns:
+            A list of field names to write, in the desired order.
+
+        Example:
+            >>> @dataclass
+            ... class ChildMetric(ParentMetric):
+            ...     child_field: str
+            ...
+            ...     @classmethod
+            ...     def _fields_to_write(cls, field_types):
+            ...         # Put child_field before parent fields
+            ...         return ["child_field", "parent_field"]
+        """
+        return [f.name for f in field_types]
 
     @classmethod
     def header(cls) -> List[str]:
         """The list of header values for the metric."""
-        return [a.name for a in inspect.get_fields(cls)]  # type: ignore[arg-type]
+        field_types = list(inspect.get_fields(cls))  # type: ignore[arg-type]
+        field_names = {field.name for field in field_types}
+        header = cls._fields_to_write(field_types=field_types)
+
+        # Validate no extra fields
+        extra_fields = [h for h in header if h not in field_names]
+        if extra_fields:
+            raise ValueError(
+                f"_fields_to_write() returned fields not in class: {', '.join(extra_fields)}"
+            )
+
+        # Validate no duplicates
+        counts = Counter(header)
+        if len(header) != len(counts):
+            duplicates = [h for h, c in counts.items() if c > 1]
+            raise ValueError(
+                f"_fields_to_write() returned duplicate fields: {', '.join(duplicates)}"
+            )
+
+        return header
 
     @classmethod
     def format_value(cls, value: Any) -> str:  # noqa: C901
@@ -624,12 +729,14 @@ def _validate_and_generate_final_output_fieldnames(
         )
     elif exclude_fields is not None:
         _assert_fieldnames_are_metric_attributes(exclude_fields, metric_class)
-        output_fieldnames = [f for f in metric_class.keys() if f not in exclude_fields]
+        # Use header() to respect _fields_to_write() ordering
+        output_fieldnames = [f for f in metric_class.header() if f not in exclude_fields]
     elif include_fields is not None:
         _assert_fieldnames_are_metric_attributes(include_fields, metric_class)
         output_fieldnames = include_fields
     else:
-        output_fieldnames = list(metric_class.keys())
+        # Use header() to respect _fields_to_write() ordering
+        output_fieldnames = metric_class.header()
 
     return output_fieldnames
 

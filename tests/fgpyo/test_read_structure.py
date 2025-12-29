@@ -19,6 +19,10 @@ def _M(off: int, len: int) -> ReadSegment:
     return ReadSegment(offset=off, length=len, kind=SegmentType.MolecularBarcode)
 
 
+def _C(off: int, len: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=len, kind=SegmentType.CellBarcode)
+
+
 def _S(off: int, len: int) -> ReadSegment:
     return ReadSegment(offset=off, length=len, kind=SegmentType.Skip)
 
@@ -30,6 +34,7 @@ def _S(off: int, len: int) -> ReadSegment:
         ("1B", (_B(0, 1),)),
         ("1M", (_M(0, 1),)),
         ("1S", (_S(0, 1),)),
+        ("5C", (_C(0, 5),)),
         ("101T", (_T(0, 101),)),
         (
             "5B101T",
@@ -141,11 +146,12 @@ def test_read_structure_from_invalid_exception(string: str) -> None:
 
 
 def test_read_structure_collect_segments_of_a_single_kind() -> None:
-    rs: ReadStructure = ReadStructure.from_string("10M9T8B7S10M9T8B7S")
+    rs: ReadStructure = ReadStructure.from_string("10M9T8B7S10M9T8B7S3C")
     assert rs.template_segments() == (_T(10, 9), _T(44, 9))
     assert rs.molecular_barcode_segments() == (_M(0, 10), _M(34, 10))
     assert rs.sample_barcode_segments() == (_B(19, 8), _B(53, 8))
     assert rs.skip_segments() == (_S(27, 7), _S(61, 7))
+    assert rs.cell_barcode_segments() == (_C(68, 3),)
 
 
 @pytest.mark.parametrize(
@@ -157,30 +163,33 @@ def test_read_structure_with_variable_last_segment(string: str, expected: str) -
 
 
 def test_read_structure_extract() -> None:
-    rs = ReadStructure.from_string("2T2B2M2S")
-    extracted = rs.extract("AACCGGTT")
+    rs = ReadStructure.from_string("2T2B2M2S2C")
+    extracted = rs.extract("AACCGGTTNN")
     assert all(r.bases == "AA" for r in extracted if r.kind == SegmentType.Template)
     assert all(r.bases == "CC" for r in extracted if r.kind == SegmentType.SampleBarcode)
     assert all(r.bases == "GG" for r in extracted if r.kind == SegmentType.MolecularBarcode)
     assert all(r.bases == "TT" for r in extracted if r.kind == SegmentType.Skip)
+    assert all(r.bases == "NN" for r in extracted if r.kind == SegmentType.CellBarcode)
 
     # too short
     with pytest.raises(AssertionError, match="Read ends before end of segment"):
         rs.extract("AAAAAAA")
 
     # last segment is truncated
-    extracted = rs.with_variable_last_segment().extract("AACCGGT")
+    extracted = rs.with_variable_last_segment().extract("AACCGGTTN")
     assert all(r.bases == "AA" for r in extracted if r.kind == SegmentType.Template)
     assert all(r.bases == "CC" for r in extracted if r.kind == SegmentType.SampleBarcode)
     assert all(r.bases == "GG" for r in extracted if r.kind == SegmentType.MolecularBarcode)
-    assert all(r.bases == "T" for r in extracted if r.kind == SegmentType.Skip)
+    assert all(r.bases == "TT" for r in extracted if r.kind == SegmentType.Skip)
+    assert all(r.bases == "N" for r in extracted if r.kind == SegmentType.CellBarcode)
 
     # last segment is skipped
-    extracted = rs.with_variable_last_segment().extract("AACCGG")
+    extracted = rs.with_variable_last_segment().extract("AACCGGTT")
     assert all(r.bases == "AA" for r in extracted if r.kind == SegmentType.Template)
     assert all(r.bases == "CC" for r in extracted if r.kind == SegmentType.SampleBarcode)
     assert all(r.bases == "GG" for r in extracted if r.kind == SegmentType.MolecularBarcode)
-    assert all(r.bases == "" for r in extracted if r.kind == SegmentType.Skip)
+    assert all(r.bases == "TT" for r in extracted if r.kind == SegmentType.Skip)
+    assert all(r.bases == "" for r in extracted if r.kind == SegmentType.CellBarcode)
 
 
 def test_read_structure_extract_with_quals() -> None:

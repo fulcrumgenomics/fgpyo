@@ -17,6 +17,7 @@ True
 True
 >>> is_sorted([1, 2, 4, 3])
 False
+
 ```
 
 ## Examples of a "Peekable" Iterator
@@ -34,7 +35,10 @@ An empty peekable iterator throws a
 >>> from fgpyo.collections import PeekableIterator
 >>> piter = PeekableIterator(iter([]))
 >>> piter.peek()
+Traceback (most recent call last):
+    ...
 StopIteration
+
 ```
 
 A peekable iterator will return the next item before consuming it.
@@ -47,6 +51,7 @@ A peekable iterator will return the next item before consuming it.
 1
 >>> [j for j in piter]
 [2, 3]
+
 ```
 
 The [`can_peek()`][fgpyo.collections.PeekableIterator.can_peek] function can be used to determine if
@@ -63,7 +68,10 @@ thrown:
 >>> piter.peek() if piter.can_peek() else -1
 -1
 >>> next(piter)
+Traceback (most recent call last):
+    ...
 StopIteration
+
 ```
 
 [`PeekableIterator`][fgpyo.collections.PeekableIterator]'s constructor supports creation from

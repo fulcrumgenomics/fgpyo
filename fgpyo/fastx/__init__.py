@@ -15,12 +15,13 @@ pointer in memory will refer to the most recent record only, and not any past re
 the state of all previously iterated records, set the parameter ``persist`` to `True`.
 
 ```python
-   >>> from fgpyo.fastx import FastxZipped
-   >>> with FastxZipped("r1.fq", "r2.fq", persist=False) as zipped:
-   ...    for (r1, r2) in zipped:
-   ...         print(f"{r1.name}: {r1.sequence}, {r2.name}: {r2.sequence}")
-   seq1: AAAA, seq1: CCCC
-   seq2: GGGG, seq2: TTTT
+>>> from fgpyo.fastx import FastxZipped
+>>> with FastxZipped("r1.fq", "r2.fq", persist=False) as zipped:  # doctest: +SKIP
+...    for (r1, r2) in zipped:
+...         print(f"{r1.name}: {r1.sequence}, {r2.name}: {r2.sequence}")
+seq1: AAAA, seq1: CCCC
+seq2: GGGG, seq2: TTTT
+
 ```
 
 """

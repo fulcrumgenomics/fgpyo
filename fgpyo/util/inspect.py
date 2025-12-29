@@ -293,9 +293,9 @@ def dict_parser(
             out_dict = {}
             for outer_split in outer_splits:
                 inner_splits = split_at_given_level(outer_split, split_delim=";")
-                assert (
-                    len(inner_splits) % 2 == 0
-                ), "Inner splits of dict didn't have matched key val pairs"
+                assert len(inner_splits) % 2 == 0, (
+                    "Inner splits of dict didn't have matched key val pairs"
+                )
                 for i in range(0, len(inner_splits), 2):
                     key = key_parser(inner_splits[i])
                     if key in out_dict:
@@ -335,23 +335,23 @@ def _get_parser(  # noqa: C901
                 and issubclass(type_, PurePath)
             ):
                 return functools.partial(type_)
-            elif type_ == bool:
+            elif type_ is bool:
                 return functools.partial(types.parse_bool)
-            elif type_ == list:
+            elif type_ is list:
                 raise ValueError("Unable to parse list (try typing.List[type])") from ex
-            elif type_ == tuple:
+            elif type_ is tuple:
                 raise ValueError("Unable to parse tuple (try typing.Tuple[type])") from ex
-            elif type_ == set:
+            elif type_ is set:
                 raise ValueError("Unable to parse set (try typing.Set[type])") from ex
-            elif type_ == dict:
+            elif type_ is dict:
                 raise ValueError("Unable to parse dict (try typing.Mapping[type])") from ex
-            elif typing.get_origin(type_) == list:
+            elif typing.get_origin(type_) is list:
                 return list_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) == set:
+            elif typing.get_origin(type_) is set:
                 return set_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) == tuple:
+            elif typing.get_origin(type_) is tuple:
                 return tuple_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) == dict:
+            elif typing.get_origin(type_) is dict:
                 return dict_parser(cls, type_, parsers)
             elif isinstance(type_, type) and issubclass(type_, Enum):
                 return types.make_enum_parser(type_)
@@ -451,7 +451,7 @@ def attr_from(
             # try setting by casting
             # Note that while bools *can* be cast from string, all non-empty strings evaluate to
             # True, because python, so we need to check for that explicitly
-            if not set_value and attribute.type is not None and not attribute.type == bool:
+            if not set_value and attribute.type is not None and attribute.type is not bool:
                 try:
                     return_value = attribute.type(str_value)  # type: ignore[operator]
                     set_value = True
@@ -459,13 +459,13 @@ def attr_from(
                     pass
 
             # fail otherwise
-            assert (
-                set_value
-            ), f"Do not know how to convert string to {attribute.type} for value: {str_value}"
+            assert set_value, (
+                f"Do not know how to convert string to {attribute.type} for value: {str_value}"
+            )
         else:  # no value, check for a default
-            assert attribute.default is not None or _attribute_is_optional(
-                attribute
-            ), f"No value given and no default for attribute `{attribute.name}`"
+            assert attribute.default is not None or _attribute_is_optional(attribute), (
+                f"No value given and no default for attribute `{attribute.name}`"
+            )
             return_value = attribute.default
             # when the default is attr.NOTHING, just use None
             if return_value in MISSING:

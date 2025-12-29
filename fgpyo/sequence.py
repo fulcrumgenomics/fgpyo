@@ -9,8 +9,10 @@ If you are performing many distance calculations, using a C based method is pref
 ex. https://pypi.org/project/Distance/
 """
 
+from types import MappingProxyType
 from typing import Dict
 from typing import List
+from typing import Optional
 
 _COMPLEMENTS: Dict[str, str] = {
     # Discrete bases
@@ -56,6 +58,19 @@ _COMPLEMENTS: Dict[str, str] = {
 }
 
 
+# Get str of all invalid nucleotide characters (strings missing from _COMPLEMENTS).
+_INVALID_BASES: str = "".join(c for c in (chr(o) for o in range(256)) if c not in _COMPLEMENTS)
+# Use str.maketrans to create a table matching ascii codes of bases to ascii codes of complements.
+_COMPLEMENTS_TABLE: MappingProxyType[int, Optional[int]] = MappingProxyType(
+    str.maketrans("".join(_COMPLEMENTS.keys()), "".join(_COMPLEMENTS.values()), _INVALID_BASES)
+)
+"""
+This table allows faster reverse-complement than directly using _COMPLEMENTS iterating over bases.
+Characters from _INVALID_BASES will be mapped to None and omitted from translation, which can be
+detected as an error by noting decreased string length.
+"""
+
+
 def complement(base: str) -> str:
     """Returns the complement of any base."""
     if len(base) != 1:
@@ -73,7 +88,13 @@ def reverse_complement(bases: str) -> str:
     Returns:
         the reverse complement of the provided base string
     """
-    return "".join([_COMPLEMENTS[b] for b in bases[::-1]])
+    rev_comp = bases.translate(_COMPLEMENTS_TABLE)[::-1]
+    if len(rev_comp) != len(bases):
+        # There were invalid characters that weren't translated.
+        # Raise KeyError with all the invalid bases.
+        bad_bases = "".join({base for base in bases if base not in _COMPLEMENTS})
+        raise KeyError(f"Invalid bases found: {bad_bases}")
+    return rev_comp
 
 
 def gc_content(bases: str) -> float:
@@ -101,7 +122,7 @@ def hamming(string1: str, string2: str) -> int:
             "Hamming distance requires two strings of equal lengths."
             f"Received {string1} and {string2}."
         )
-    return sum([string1[i] != string2[i] for i in range(len(string1))])
+    return sum(c1 != c2 for c1, c2 in zip(string1, string2, strict=True))
 
 
 def levenshtein(string1: str, string2: str) -> int:
@@ -215,7 +236,7 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
         the number of bases in the longest multinucleotide repeat (NOT the number of repeat units)
     """
     if repeat_unit_length <= 0:
-        raise ValueError(f"repeat_unit_length must be >= 0, found: {repeat_unit_length}")
+        raise ValueError(f"repeat_unit_length must be > 0, found: {repeat_unit_length}")
     elif len(bases) < repeat_unit_length:
         return 0
     elif len(bases) == repeat_unit_length:
@@ -225,11 +246,15 @@ def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> i
 
     best_length: int = 0
     start = 0  # the start index of the current multi-nucleotide run
+    # Note: using `< len(bases) - 1` instead of `< len(bases)` is intentional.
+    # The algorithm processes overlapping windows and will capture repeats at the sequence end
+    # through the sliding window approach, avoiding potential off-by-one errors.
     while start < len(bases) - 1:
         # get the dinuc bases
         dinuc = bases[start : start + repeat_unit_length].upper()
         # keep going while there are more di-nucs
         end = start + repeat_unit_length
+        # The same boundary logic applies here - the sliding window captures all valid repeats
         while end < len(bases) - 1 and dinuc == bases[end : end + repeat_unit_length].upper():
             end += repeat_unit_length
         cur_length = end - start

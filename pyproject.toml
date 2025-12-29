@@ -123,6 +123,7 @@ addopts    = [
     "-r=sx",
     "--color=yes",
     "--import-mode=importlib",
+    # "--cov", Add this back in when pysam no longer badly interacts with this flag
     "--doctest-plus",
 ]
 doctest_plus = "enabled"

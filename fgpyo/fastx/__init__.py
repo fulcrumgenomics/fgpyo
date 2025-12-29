@@ -31,10 +31,8 @@ from pathlib import Path
 from types import TracebackType
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
-from typing import Union
 
 from pysam import FastxFile
 from pysam import FastxRecord
@@ -49,12 +47,12 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     """
 
-    def __init__(self, *paths: Union[Path, str], persist: bool = False) -> None:
+    def __init__(self, *paths: Path | str, persist: bool = False) -> None:
         """Instantiate a `FastxZipped` context manager and iterator."""
         if len(paths) <= 0:
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
-        self._paths: Tuple[Union[Path, str], ...] = paths
+        self._paths: Tuple[Path | str, ...] = paths
         self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
 
     @staticmethod
@@ -84,10 +82,10 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> Optional[bool]:
+        exc_type: Type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool | None:
         """Exit the `FastxZipped` context manager by closing all FASTX files."""
         self.close()
         if exc_type is not None:

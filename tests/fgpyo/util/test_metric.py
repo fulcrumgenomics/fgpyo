@@ -1,6 +1,7 @@
 # attr and dataclasses are both nightmares for type-checking, and trying to combine them both in
 # an if-statement is a level of Hell that Dante never conceived of. Turning off mypy for this file:
 # mypy: ignore-errors
+import dataclasses
 import enum
 import gzip
 import os
@@ -15,15 +16,8 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Type
+from typing import TypeAlias
 from typing import TypeVar
-from typing import Union
-
-if sys.version_info[:2] >= (3, 12):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
-import dataclasses
 
 import attr
 import pytest
@@ -93,10 +87,10 @@ class DataBuilder:
             str_value: str
             bool_val: bool
             enum_val: EnumTest
-            optional_str_value: Optional[str]
-            optional_int_value: Optional[int]
-            optional_bool_value: Optional[bool]
-            optional_enum_value: Optional[EnumTest]
+            optional_str_value: str | None
+            optional_int_value: int | None
+            optional_bool_value: bool | None
+            optional_enum_value: EnumTest | None
             dict_value: Dict[int, str]
             tuple_value: Tuple[int, str]
             list_value: List[str]
@@ -226,7 +220,7 @@ attr_data_and_classes = DataBuilder(use_attr=True)
 dataclasses_data_and_classes = DataBuilder(use_attr=False)
 
 # get helper type and helper num_metrics that will be used frequently in tests
-AnyDummyMetric = Union[attr_data_and_classes.DummyMetric, dataclasses_data_and_classes.DummyMetric]
+AnyDummyMetric = attr_data_and_classes.DummyMetric | dataclasses_data_and_classes.DummyMetric
 num_metrics = len(attr_data_and_classes.DUMMY_METRICS)
 
 
@@ -955,7 +949,6 @@ def test_assert_file_header_matches_metric_raises(
     with pytest.raises(ValueError, match="The provided file does not have the same field names"):
         _assert_file_header_matches_metric(metric_path, data_and_classes.Person, delimiter="\t")
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
 @pytest.mark.parametrize("use_attr", [False, True])
 def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
     @make_dataclass(use_attr=use_attr)

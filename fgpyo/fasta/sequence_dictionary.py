@@ -140,9 +140,7 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import MutableMapping
-from typing import Optional
 from typing import Pattern
-from typing import Union
 from typing import overload
 
 from fgpyo import sam
@@ -221,7 +219,7 @@ SEQUENCE_NAME_PATTERN: Pattern = re.compile(
 
 
 @dataclass(frozen=True, init=True)
-class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
+class SequenceMetadata(MutableMapping[Keys | str, str]):
     """Stores information about a single Sequence (ex. chromosome, contig).
 
     Implements the mutable mapping interface, which provides access to the attributes of this
@@ -249,7 +247,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
     name: str
     length: int
     index: int
-    attributes: Dict[Union[Keys, str], str] = field(default_factory=dict)
+    attributes: Dict[Keys | str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Any post initialization validation should go here"""
@@ -274,7 +272,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
         return [self.name] + self.aliases
 
     @property
-    def alternate(self) -> Optional[AlternateLocus]:
+    def alternate(self) -> AlternateLocus | None:
         """Gets the alternate locus for this sequence"""
         if Keys.ALTERNATE_LOCUS not in self.attributes:
             return None
@@ -292,27 +290,27 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
         return self.alternate is not None
 
     @property
-    def md5(self) -> Optional[str]:
+    def md5(self) -> str | None:
         return self.get(Keys.MD5)
 
     @property
-    def assembly(self) -> Optional[str]:
+    def assembly(self) -> str | None:
         return self.get(Keys.ASSEMBLY)
 
     @property
-    def uri(self) -> Optional[str]:
+    def uri(self) -> str | None:
         return self.get(Keys.URI)
 
     @property
-    def species(self) -> Optional[str]:
+    def species(self) -> str | None:
         return self.get(Keys.SPECIES)
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.get(Keys.DESCRIPTION)
 
     @property
-    def topology(self) -> Optional[Topology]:
+    def topology(self) -> Topology | None:
         value = self.get(Keys.TOPOLOGY)
         return None if value is None else Topology[value]
 
@@ -343,7 +341,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
         return meta_dict
 
     @staticmethod
-    def from_sam(meta: Dict[Union[Keys, str], Any], index: int) -> "SequenceMetadata":
+    def from_sam(meta: Dict[Keys | str, Any], index: int) -> "SequenceMetadata":
         """Builds a `SequenceMetadata` from a dictionary.  The keys must include the sequence
         name (`Keys.SEQUENCE_NAME`) and length (`Keys.SEQUENCE_LENGTH`).  All other keys from
         `Keys` will be stored in the resulting attributes.
@@ -361,24 +359,24 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
         del attributes[Keys.SEQUENCE_LENGTH]
         return SequenceMetadata(name=name, length=length, index=index, attributes=attributes)
 
-    def __getitem__(self, key: Union[Keys, str]) -> Any:
+    def __getitem__(self, key: Keys | str) -> Any:
         if key == Keys.SEQUENCE_NAME.value:
             return self.name
         elif key == Keys.SEQUENCE_LENGTH.value:
             return f"{self.length}"
         return self.attributes[key]
 
-    def __setitem__(self, key: Union[Keys, str], value: str) -> None:
+    def __setitem__(self, key: Keys | str, value: str) -> None:
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot set '{key}' on SequenceMetadata with name '{self.name}'")
         self.attributes[key] = value
 
-    def __delitem__(self, key: Union[Keys, str]) -> None:
+    def __delitem__(self, key: Keys | str) -> None:
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot delete '{key}' on SequenceMetadata with name '{self.name}'")
         del self.attributes[key]
 
-    def __iter__(self) -> Iterator[Union[Keys, str]]:
+    def __iter__(self) -> Iterator[Keys | str]:
         pre_iter = iter((Keys.SEQUENCE_NAME, Keys.SEQUENCE_LENGTH))
         return itertools.chain(pre_iter, iter(self.attributes))
 
@@ -393,7 +391,7 @@ class SequenceMetadata(MutableMapping[Union[Keys, str], str]):
 
 
 @dataclass(frozen=True, init=True)
-class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
+class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
     """Contains an ordered collection of sequences.
 
     A specific `SequenceMetadata` may be retrieved by name (`str`) or index (`int`), either by
@@ -430,7 +428,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
         the same length, and the same MD5 if both have MD5s"""
         if len(self) != len(other):
             return False
-        return all(this.same_as(that) for this, that in zip(self.infos, other.infos))
+        return all(this.same_as(that) for this, that in zip(self.infos, other.infos, strict=True))
 
     def to_sam(self) -> List[Dict[str, Any]]:
         """Converts the list of dictionaries, one per sequence."""
@@ -438,7 +436,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
     def to_sam_header(
         self,
-        extra_header: Optional[Dict[str, Any]] = None,
+        extra_header: Dict[str, Any] | None = None,
     ) -> pysam.AlignmentHeader:
         """Converts the sequence dictionary to a `pysam.AlignmentHeader`.
 
@@ -472,7 +470,7 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
     @staticmethod
     def from_sam(
-        data: Union[Path, pysam.AlignmentFile, pysam.AlignmentHeader, List[Dict[str, Any]]],
+        data: Path | pysam.AlignmentFile | pysam.AlignmentHeader | List[Dict[str, Any]],
     ) -> "SequenceDictionary":
         """Creates a `SequenceDictionary` from a SAM file or its header.
 
@@ -505,10 +503,10 @@ class SequenceDictionary(Mapping[Union[str, int], SequenceMetadata]):
 
         return seq_dict
 
-    def __getitem__(self, key: Union[str, int]) -> SequenceMetadata:
+    def __getitem__(self, key: str | int) -> SequenceMetadata:
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 
-    def get_by_name(self, name: str) -> Optional[SequenceMetadata]:
+    def get_by_name(self, name: str) -> SequenceMetadata | None:
         """Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
         the name does not exist in this dictionary"""
         return self._dict.get(name)

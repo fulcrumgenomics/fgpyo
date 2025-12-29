@@ -122,7 +122,7 @@ def hamming(string1: str, string2: str) -> int:
             "Hamming distance requires two strings of equal lengths."
             f"Received {string1} and {string2}."
         )
-    return sum(c1 != c2 for c1, c2 in zip(string1, string2))
+    return sum(c1 != c2 for c1, c2 in zip(string1, string2, strict=True))
 
 
 def levenshtein(string1: str, string2: str) -> int:

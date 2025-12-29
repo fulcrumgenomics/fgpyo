@@ -10,9 +10,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
-from typing import Union
 
 import pysam
 from pysam import VariantHeader
@@ -41,7 +39,7 @@ class VcfFieldNumber(Enum):
     UNKNOWN = "."
 
 
-MissingRep = Union[None, Tuple[None, ...]]
+MissingRep = Tuple[None, ...] | None
 
 
 class VariantBuilder:
@@ -84,8 +82,8 @@ class VariantBuilder:
 
     def __init__(
         self,
-        sample_ids: Optional[Iterable[str]] = None,
-        sd: Optional[Dict[str, Dict[str, Any]]] = None,
+        sample_ids: Iterable[str] | None = None,
+        sd: Dict[str, Dict[str, Any]] | None = None,
     ) -> None:
         """Initializes a new VariantBuilder for generating variants and VCF files.
 
@@ -119,7 +117,7 @@ class VariantBuilder:
         return sd
 
     @classmethod
-    def _build_header_string(cls, sd: Optional[Dict[str, Dict[str, Any]]] = None) -> Iterator[str]:
+    def _build_header_string(cls, sd: Dict[str, Dict[str, Any]] | None = None) -> Iterator[str]:
         """Builds the VCF header with the given sample name(s) and sequence dictionary.
 
         Args:
@@ -169,16 +167,16 @@ class VariantBuilder:
 
     def add(
         self,
-        contig: Optional[str] = None,
+        contig: str | None = None,
         pos: int = 1000,
-        end: Optional[int] = None,
+        end: int | None = None,
         id: str = ".",
         ref: str = "A",
-        alts: Union[None, str, Iterable[str]] = (".",),
+        alts: str | Iterable[str] | None = (".",),
         qual: int = 60,
-        filter: Union[None, str, Iterable[str]] = None,
-        info: Optional[Dict[str, Any]] = None,
-        samples: Optional[Dict[str, Dict[str, Any]]] = None,
+        filter: str | Iterable[str] | None = None,
+        info: Dict[str, Any] | None = None,
+        samples: Dict[str, Dict[str, Any]] | None = None,
     ) -> VariantRecord:
         """Generates a new variant and adds it to the internal collection.
 
@@ -268,7 +266,7 @@ class VariantBuilder:
         return variant
 
     def _compute_and_check_end(
-        self, pos: int, ref: str, end: Optional[int], info: Optional[dict[str, Any]]
+        self, pos: int, ref: str, end: int | None, info: dict[str, Any] | None
     ) -> int:
         """
         Derives the END/stop position for a new record based on the optionally provided `end`
@@ -297,7 +295,7 @@ class VariantBuilder:
 
         return end
 
-    def to_path(self, path: Optional[Path] = None) -> Path:
+    def to_path(self, path: Path | None = None) -> Path:
         """
         Returns a path to a VCF for variants added to this builder.
 
@@ -321,7 +319,7 @@ class VariantBuilder:
         return path
 
     @staticmethod
-    def _to_vcf_path(path: Optional[Path]) -> Path:
+    def _to_vcf_path(path: Path | None) -> Path:
         """Gets the path to a VCF file.  If path is a directory, a temporary VCF will be created in
         that directory. If path is `None`, then a temporary VCF will be created.  Otherwise, the
         given path is simply returned.
@@ -354,10 +352,10 @@ class VariantBuilder:
         self,
         name: str,
         field_type: VcfFieldType,
-        number: Union[int, VcfFieldNumber] = 1,
-        description: Optional[str] = None,
-        source: Optional[str] = None,
-        version: Optional[str] = None,
+        number: int | VcfFieldNumber = 1,
+        description: str | None = None,
+        source: str | None = None,
+        version: str | None = None,
     ) -> None:
         """Add an INFO header field to the VCF header.
 
@@ -390,8 +388,8 @@ class VariantBuilder:
         self,
         name: str,
         field_type: VcfFieldType,
-        number: Union[int, VcfFieldNumber] = VcfFieldNumber.NUM_GENOTYPES,
-        description: Optional[str] = None,
+        number: int | VcfFieldNumber = VcfFieldNumber.NUM_GENOTYPES,
+        description: str | None = None,
     ) -> None:
         """
         Add a FORMAT header field to the VCF header.
@@ -416,7 +414,7 @@ class VariantBuilder:
     def add_filter_header(
         self,
         name: str,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> None:
         """
         Add a FILTER header field to the VCF header.

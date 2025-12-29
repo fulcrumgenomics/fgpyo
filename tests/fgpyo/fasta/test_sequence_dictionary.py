@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
-from typing import Union
 
 import pysam
 import pytest
@@ -199,7 +198,7 @@ def test_sequence_metadata_to_and_from_sam() -> None:
     attributes[Keys.ALTERNATE_LOCUS] = "chr2:3-4"
     meta = SequenceMetadata(name="1", length=1, index=0, attributes=attributes)
 
-    sam_dict: Dict[Union[Keys, str], Any] = {
+    sam_dict: Dict[Keys | str, Any] = {
         Keys.SEQUENCE_NAME: meta.name,
         Keys.SEQUENCE_LENGTH: meta.length,
         Keys.ALIASES: ",".join(meta.aliases),

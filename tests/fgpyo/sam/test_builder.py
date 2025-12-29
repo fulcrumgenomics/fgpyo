@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import List
-from typing import Optional
 
 import pytest
 
@@ -299,7 +298,7 @@ def make_sort_order_builder(tmp_path: Path, sort_order: SamOrder) -> Path:
     ids=["Coordinate sorting", "Query name sorting", "Unsorted output", "Unknown sorting"],
 )
 def test_sort_types(
-    tmp_path: Path, sort_order: Optional[SamOrder], expected_name_order: List[str]
+    tmp_path: Path, sort_order: SamOrder | None, expected_name_order: List[str]
 ) -> None:
     bam_path = make_sort_order_builder(tmp_path=tmp_path, sort_order=sort_order)
     with sam.reader(bam_path) as in_bam:

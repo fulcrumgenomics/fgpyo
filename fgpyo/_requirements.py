@@ -1,14 +1,13 @@
 """Enforce requirements."""
 
 from typing import Callable
-from typing import Union
 
 
 class RequirementError(Exception):
     """Exception raised when a requirement is not satisfied."""
 
 
-def require(condition: bool, message: Union[str, Callable[[], str], None] = None) -> None:
+def require(condition: bool, message: str | Callable[[], str] | None = None) -> None:
     """Require a condition be satisfied.
 
     Args:

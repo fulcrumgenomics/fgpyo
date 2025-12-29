@@ -185,7 +185,6 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 from typing import cast
 
 import attr
@@ -195,12 +194,12 @@ from pysam import AlignmentFile as SamFile
 from pysam import AlignmentHeader as SamHeader
 from pysam import qualitystring_to_array
 
-if sys.version_info[:2] > (3, 10):
+if sys.version_info[:2] >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-if sys.version_info[:2] > (3, 12):
+if sys.version_info[:2] >= (3, 13):
     from warnings import deprecated
 else:
     from typing_extensions import deprecated
@@ -208,7 +207,7 @@ else:
 import fgpyo.io
 from fgpyo.collections import PeekableIterator
 
-SamPath = Union[IO[Any], Path, str]
+SamPath = IO[Any] | Path | str
 """The valid base classes for opening a SAM/BAM/CRAM file."""
 
 NO_REF_INDEX: int = -1
@@ -259,7 +258,7 @@ class SamFileType(enum.Enum):
         return self is SamFileType.BAM or self is SamFileType.CRAM
 
     @classmethod
-    def from_path(cls, path: Union[Path, str]) -> "SamFileType":
+    def from_path(cls, path: Path | str) -> "SamFileType":
         """Infers the file type based on the file extension.
 
         Args:
@@ -275,7 +274,7 @@ class SamFileType(enum.Enum):
 def _pysam_open(  # noqa: C901
     path: SamPath,
     open_for_reading: bool,
-    file_type: Optional[SamFileType] = None,
+    file_type: SamFileType | None = None,
     unmapped: bool = False,
     **kwargs: Any,
 ) -> SamFile:
@@ -347,9 +346,7 @@ def _pysam_open(  # noqa: C901
     return alignment_file
 
 
-def reader(
-    path: SamPath, file_type: Optional[SamFileType] = None, unmapped: bool = False
-) -> SamFile:
+def reader(path: SamPath, file_type: SamFileType | None = None, unmapped: bool = False) -> SamFile:
     """Opens a SAM/BAM/CRAM for reading.
 
     To read from standard input, provide any of `"-"`, `"stdin"`, or `"/dev/stdin"` as the input
@@ -366,8 +363,8 @@ def reader(
 
 def writer(
     path: SamPath,
-    header: Union[str, Dict[str, Any], SamHeader],
-    file_type: Optional[SamFileType] = None,
+    header: str | Dict[str, Any] | SamHeader,
+    file_type: SamFileType | None = None,
 ) -> SamFile:
     """Opens a SAM/BAM/CRAM for writing.
 
@@ -519,7 +516,7 @@ class Cigar:
     elements: Tuple[CigarElement, ...] = ()
 
     @classmethod
-    def from_cigartuples(cls, cigartuples: Optional[List[Tuple[int, int]]]) -> "Cigar":
+    def from_cigartuples(cls, cigartuples: List[Tuple[int, int]] | None) -> "Cigar":
         """Returns a Cigar from a list of tuples returned by pysam.
 
         Each tuple denotes the operation and length.  See
@@ -657,7 +654,7 @@ class PairOrientation(enum.Enum):
 
     @classmethod
     def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
-        cls, rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None
+        cls, rec1: AlignedSegment, rec2: AlignedSegment | None = None
     ) -> Optional["PairOrientation"]:
         """Returns the pair orientation if both reads are mapped to the same reference sequence.
 
@@ -709,7 +706,7 @@ class PairOrientation(enum.Enum):
             return PairOrientation.RF
 
 
-def isize(rec1: AlignedSegment, rec2: Optional[AlignedSegment] = None) -> int:
+def isize(rec1: AlignedSegment, rec2: AlignedSegment | None = None) -> int:
     """Computes the insert size ("template length" or "TLEN") for a pair of records.
 
     Args:
@@ -758,7 +755,7 @@ DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}
 
 def is_proper_pair(
     rec1: AlignedSegment,
-    rec2: Optional[AlignedSegment] = None,
+    rec2: AlignedSegment | None = None,
     max_insert_size: int = 1000,
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
     isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
@@ -1063,7 +1060,7 @@ class ReadEditInfo:
 
 
 def calculate_edit_info(
-    rec: AlignedSegment, reference_sequence: str, reference_offset: Optional[int] = None
+    rec: AlignedSegment, reference_sequence: str, reference_offset: int | None = None
 ) -> ReadEditInfo:
     """
     Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
@@ -1145,8 +1142,8 @@ class Template:
     """
 
     name: str
-    r1: Optional[AlignedSegment]
-    r2: Optional[AlignedSegment]
+    r1: AlignedSegment | None
+    r2: AlignedSegment | None
     r1_supplementals: List[AlignedSegment]
     r2_supplementals: List[AlignedSegment]
     r1_secondaries: List[AlignedSegment]
@@ -1319,7 +1316,7 @@ class Template:
     def set_tag(
         self,
         tag: str,
-        value: Union[str, int, float, None],
+        value: str | int | float | None,
     ) -> None:
         """Add a tag to all records associated with the template.
 

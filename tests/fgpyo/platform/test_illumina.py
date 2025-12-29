@@ -1,7 +1,5 @@
 """Basic tests for Illumina-specific UMI Methods"""
 
-from typing import Optional
-
 import pytest
 
 from fgpyo.platform.illumina import _is_valid_umi
@@ -89,9 +87,7 @@ def test_extract_invalid_umi_raises(read_name: str) -> None:
         ("abc:def:ghi:rACGT+CAGA", "ACGT-CAGA"),
     ],
 )
-def test_extract_umi_from_read_name_strict_false(
-    read_name: str, expected_umi: Optional[str]
-) -> None:
+def test_extract_umi_from_read_name_strict_false(read_name: str, expected_umi: str | None) -> None:
     """Test that we return None when an invalid UMI is encountered
     and strict is False. Otherwise, return a valid UMI."""
     assert extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi

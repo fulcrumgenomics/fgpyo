@@ -125,7 +125,6 @@ PersonWithName(name=Name(first='john', last='doe'), age=42)
 """
 
 import dataclasses
-import sys
 from abc import ABC
 from contextlib import AbstractContextManager
 from csv import DictWriter
@@ -142,16 +141,10 @@ from typing import Generic
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import TypeGuard
 from typing import TypeVar
-from typing import Union
-
-if sys.version_info[:2] >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 from fgpyo import io
 from fgpyo.util import inspect
@@ -226,7 +219,7 @@ class Metric(ABC, Generic[MetricType]):
         path: Path,
         ignore_extra_fields: bool = True,
         strip_whitespace: bool = False,
-        threads: Optional[int] = None,
+        threads: int | None = None,
     ) -> Iterator[Any]:
         """Reads in zero or more metrics from the given path.
 
@@ -295,7 +288,7 @@ class Metric(ABC, Generic[MetricType]):
 
                 # build the metric
                 instance: Metric[MetricType] = inspect.attr_from(
-                    cls=cls, kwargs=dict(zip(header, values)), parsers=parsers
+                    cls=cls, kwargs=dict(zip(header, values, strict=True)), parsers=parsers
                 )
                 yield instance
 
@@ -308,10 +301,12 @@ class Metric(ABC, Generic[MetricType]):
         parsers = cls._parsers()
         header = cls.header()
         assert len(fields) == len(header)
-        return inspect.attr_from(cls=cls, kwargs=dict(zip(header, fields)), parsers=parsers)
+        return inspect.attr_from(
+            cls=cls, kwargs=dict(zip(header, fields, strict=True)), parsers=parsers
+        )
 
     @classmethod
-    def write(cls, path: Path, *values: MetricType, threads: Optional[int] = None) -> None:
+    def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
         """Writes zero or more metrics to the given path.
 
         The header will always be written.
@@ -467,14 +462,14 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
     def __init__(
         self,
-        filename: Union[Path, str],
+        filename: Path | str,
         metric_class: Type[Metric],
         append: bool = False,
         delimiter: str = "\t",
-        include_fields: Optional[List[str]] = None,
-        exclude_fields: Optional[List[str]] = None,
+        include_fields: List[str] | None = None,
+        exclude_fields: List[str] | None = None,
         lineterminator: str = "\n",
-        threads: Optional[int] = None,
+        threads: int | None = None,
     ) -> None:
         """
         Args:
@@ -600,8 +595,8 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
 def _validate_and_generate_final_output_fieldnames(
     metric_class: Type[MetricType],
-    include_fields: Optional[List[str]] = None,
-    exclude_fields: Optional[List[str]] = None,
+    include_fields: List[str] | None = None,
+    exclude_fields: List[str] | None = None,
 ) -> List[str]:
     """
     Subset and/or re-order the Metric's fieldnames based on the specified include/exclude lists.
@@ -638,7 +633,7 @@ def _assert_file_header_matches_metric(
     path: Path,
     metric_class: Type[MetricType],
     delimiter: str,
-    ordered_fieldnames: Optional[List[str]] = None,
+    ordered_fieldnames: List[str] | None = None,
 ) -> None:
     """
     Check that the specified file has a header and its fields match those of the provided Metric.

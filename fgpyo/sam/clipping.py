@@ -61,7 +61,6 @@ from array import array
 from typing import Iterable
 from typing import List
 from typing import NamedTuple
-from typing import Optional
 from typing import Tuple
 
 from pysam import AlignedSegment
@@ -90,7 +89,7 @@ class ClippingInfo(NamedTuple):
 def softclip_start_of_alignment_by_query(
     rec: AlignedSegment,
     bases_to_clip: int,
-    clipped_base_quality: Optional[int] = None,
+    clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
     """
@@ -135,7 +134,7 @@ def softclip_start_of_alignment_by_query(
 def softclip_end_of_alignment_by_query(
     rec: AlignedSegment,
     bases_to_clip: int,
-    clipped_base_quality: Optional[int] = None,
+    clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
     """
@@ -184,7 +183,7 @@ def softclip_end_of_alignment_by_query(
 def softclip_start_of_alignment_by_ref(
     rec: AlignedSegment,
     bases_to_clip: int,
-    clipped_base_quality: Optional[int] = None,
+    clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
     """Soft-clips the start of an alignment by bases_to_clip bases on the reference.
@@ -220,7 +219,7 @@ def softclip_start_of_alignment_by_ref(
 def softclip_end_of_alignment_by_ref(
     rec: AlignedSegment,
     bases_to_clip: int,
-    clipped_base_quality: Optional[int] = None,
+    clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
 ) -> ClippingInfo:
     """Soft-clips the end of an alignment by bases_to_clip bases on the reference.
@@ -289,8 +288,8 @@ def _cleanup(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> None:
 
 
 def _read_pos_at_ref_pos(
-    rec: AlignedSegment, ref_pos: int, previous: Optional[bool] = None
-) -> Optional[int]:
+    rec: AlignedSegment, ref_pos: int, previous: bool | None = None
+) -> int | None:
     """
     Returns the read or query position at the reference position.
 
@@ -336,7 +335,7 @@ def _read_pos_at_ref_pos(
 
 
 def _clip(
-    cigar: Cigar, quals: array, bases_to_clip: int, clipped_base_quality: Optional[int]
+    cigar: Cigar, quals: array, bases_to_clip: int, clipped_base_quality: int | None
 ) -> Tuple[Cigar, ClippingInfo]:
     """Workhorse private clipping method that clips the start of cigars.
 

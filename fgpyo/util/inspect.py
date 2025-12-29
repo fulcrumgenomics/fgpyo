@@ -34,6 +34,7 @@ MISSING: FrozenSet[Any]
 # Always define get_attr_fields and get_attr_fields_dict at the module level for documentation tools
 try:
     import attr
+
     _use_attr = True
     get_attr_fields = attr.fields
     get_attr_fields_dict = attr.fields_dict
@@ -50,11 +51,11 @@ except ImportError:  # pragma: no cover
     # called because the import failed; but they're here to ensure that the function is defined in
     # sections of code that don't know if the import was successful or not.
 
-    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:  # type: ignore[misc]
+    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
 
-    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:  # type: ignore[misc]
+    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
 
@@ -391,8 +392,11 @@ def get_fields_dict(
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
         return _get_dataclasses_fields_dict(cls)
-    elif is_attr_class(cls):  # type: ignore[arg-type]
-        return get_attr_fields_dict(cls)  # type: ignore[arg-type]
+    # Always pass a type to is_attr_class
+    cls_type = cls if isinstance(cls, type) else type(cls)
+    if is_attr_class(cls_type):
+        # attr.fields_dict returns Any, so cast to Mapping[str, FieldType] for type checking
+        return typing.cast(Mapping[str, FieldType], get_attr_fields_dict(cls))
     else:
         raise TypeError("cls must a dataclasses or attr class")
 
@@ -403,8 +407,10 @@ def get_fields(
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
     if is_dataclasses_class(cls):
         return get_dataclasses_fields(cls)
-    elif is_attr_class(cls):  # type: ignore[arg-type]
-        return get_attr_fields(cls)  # type: ignore[arg-type, no-any-return]
+    # Always pass a type to is_attr_class
+    cls_type = cls if isinstance(cls, type) else type(cls)
+    if is_attr_class(cls_type):
+        return get_attr_fields(cls)  # type: ignore[no-any-return]
     else:
         raise TypeError("cls must a dataclasses or attr class")
 

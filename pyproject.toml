@@ -123,7 +123,6 @@ addopts    = [
     "-r=sx",
     "--color=yes",
     "--import-mode=importlib",
-    "--cov",
     "--doctest-plus",
 ]
 doctest_plus = "enabled"

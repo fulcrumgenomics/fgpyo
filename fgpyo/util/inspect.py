@@ -45,12 +45,19 @@ except ImportError:  # pragma: no cover
     _use_attr = False
     attr = None
     Attribute: TypeAlias = TypeVar("Attribute", bound=object)  # type: ignore[misc, no-redef]  # noqa: E501
+
+    # define empty placeholders for getting attr fields as a tuple or dict. They will never be
+    # called because the import failed; but they're here to ensure that the function is defined in
+    # sections of code that don't know if the import was successful or not.
+
     def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:  # type: ignore[misc]
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
+
     def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:  # type: ignore[misc]
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
+
     # for consistency with successful import of attr, create a set for missing values
     MISSING = frozenset({DATACLASSES_MISSING})
 

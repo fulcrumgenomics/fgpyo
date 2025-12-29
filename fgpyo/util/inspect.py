@@ -30,13 +30,13 @@ import fgpyo.util.types as types
 attr: python_types.ModuleType | None
 MISSING: FrozenSet[Any]
 
+
+# Always define get_attr_fields and get_attr_fields_dict at the module level for documentation tools
 try:
     import attr
-
     _use_attr = True
-    from attr import fields as get_attr_fields
-    from attr import fields_dict as get_attr_fields_dict
-
+    get_attr_fields = attr.fields
+    get_attr_fields_dict = attr.fields_dict
     Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined]
     # dataclasses and attr have internal tokens for missing values, join into a set so that we can
     # check if a value is missing without knowing the type of backing class
@@ -45,19 +45,12 @@ except ImportError:  # pragma: no cover
     _use_attr = False
     attr = None
     Attribute: TypeAlias = TypeVar("Attribute", bound=object)  # type: ignore[misc, no-redef]  # noqa: E501
-
-    # define empty placeholders for getting attr fields as a tuple or dict. They will never be
-    # called because the import failed; but they're here to ensure that the function is defined in
-    # sections of code that don't know if the import was successful or not.
-
     def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:  # type: ignore[misc]
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
-
     def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:  # type: ignore[misc]
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
-
     # for consistency with successful import of attr, create a set for missing values
     MISSING = frozenset({DATACLASSES_MISSING})
 

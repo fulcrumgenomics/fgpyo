@@ -1137,11 +1137,10 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
         elif op == CigarOp.D:  # consumes ref
             md_edits.append(str(current_match_count))  # append match count and reset
             md_edits.append("^")
-            for in_block_offset in range(0, elem.length):
-                if (target_offset + in_block_offset) >= len(reference_sequence):
-                    break  # out of bounds
             md_edits.append(reference_sequence[target_offset : target_offset + elem.length].upper())
             current_match_count = 0
+            # Early break when a deletion starts before its own length into the reference
+            # (e.g., "6D4M" at position 0). This matches htsjdk/samtools behavior.
             if target_offset < elem.length:
                 if not match_htsjdk:
                     deletions += 1

@@ -888,13 +888,16 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     # Offset Ref: AGTCCGTTA
     #             xxxxxx|||.
     #      Query: ------TTAG
+    # The 6D at position 0 triggers early break (target_offset < elem.length),
+    # so 4M is never processed
+    assert info.matches == 0
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
     assert info.deletions == 1
     assert info.deleted_bases == 6
     assert info.nm == 6
-    assert info.md == "0^AGTCCG0"  # report AGTCCG deletion, 3 matches are out of bounds
+    assert info.md == "0^AGTCCG0"
 
 
 def test_calc_edit_info_match_block_break_out_of_bounds() -> None:
@@ -906,7 +909,7 @@ def test_calc_edit_info_match_block_break_out_of_bounds() -> None:
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
     # Ref:   ACGT    (4 bases)
     # Query: ACGTAA  (6 bases with 6M cigar)
-    # Only first 4 bases can be compared before reference runs out
+    # (only first 4 bases can be compared before reference runs out)
     assert info.matches == 4
     assert info.mismatches == 0
     assert info.nm == 0
@@ -923,10 +926,8 @@ def test_calc_edit_info_deletion_block_break_out_of_bounds() -> None:
     # Ref:   ACGTACGT (8 bases)
     # Query: ACGTAC   (6 bases)
     # Cigar: 6M4D
-    # After 6M, target_offset=6, then 4D tries to access positions 6,7,8,9
-    # Position 8 is out of bounds (ref length is 8, indices 0-7)
-    # Since target_offset(6) >= elem.length(4) is False, no outer break
-    # But the inner loop breaks when checking position 8
+    # After 6M, target_offset=6. For 4D, target_offset(6) >= elem.length(4),
+    # so no early break.
     assert info.matches == 6
     assert info.mismatches == 0
     assert info.deletions == 1

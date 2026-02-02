@@ -891,10 +891,48 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
-    assert info.deletions == 0
-    assert info.deleted_bases == 0
-    assert info.nm == 0
+    assert info.deletions == 1
+    assert info.deleted_bases == 6
+    assert info.nm == 6
     assert info.md == "0^AGTCCG0"  # report AGTCCG deletion, 3 matches are out of bounds
+
+
+def test_calc_edit_info_match_block_break_out_of_bounds() -> None:
+    """Test that the M/X/EQ block break is triggered when reference runs out mid-match."""
+    chrom = "ACGT"  # 4 bases
+    builder = SamBuilder(r1_len=6)
+    rec = builder.add_single(bases="ACGTAA", chrom="chr1", start=0, cigar="6M")
+
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    # Ref:   ACGT    (4 bases)
+    # Query: ACGTAA  (6 bases with 6M cigar)
+    # Only first 4 bases can be compared before reference runs out
+    assert info.matches == 4
+    assert info.mismatches == 0
+    assert info.nm == 0
+    assert info.md == "4"
+
+
+def test_calc_edit_info_deletion_block_break_out_of_bounds() -> None:
+    """Test that the D block break is triggered when reference runs out mid-deletion."""
+    chrom = "ACGTACGT"  # 8 bases
+    builder = SamBuilder(r1_len=6)
+    rec = builder.add_single(bases="ACGTAC", chrom="chr1", start=0, cigar="6M4D")
+
+    info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    # Ref:   ACGTACGT (8 bases)
+    # Query: ACGTAC   (6 bases)
+    # Cigar: 6M4D
+    # After 6M, target_offset=6, then 4D tries to access positions 6,7,8,9
+    # Position 8 is out of bounds (ref length is 8, indices 0-7)
+    # Since target_offset(6) >= elem.length(4) is False, no outer break
+    # But the inner loop breaks when checking position 8
+    assert info.matches == 6
+    assert info.mismatches == 0
+    assert info.deletions == 1
+    assert info.deleted_bases == 4
+    assert info.nm == 4
+    assert info.md == "6^GT0"  # only GT is within bounds of reference
 
 
 @pytest.mark.parametrize("query_sequence", [None, "*"])

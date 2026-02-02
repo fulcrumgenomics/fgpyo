@@ -207,7 +207,7 @@ NO_QUERY_BASES: str = "*"
 NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
 """The quality array corresponding to an unavailable query quality string ("*")."""
 
-OK_BASES: set[str] = {"A", "C", "G", "T", "="}
+_OK_BASES: set[str] = {"A", "C", "G", "T", "="}
 """The non-ambiguous bases we expect to encounter in a SAM record."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
@@ -1053,7 +1053,7 @@ def _is_match_base(query_base: str, ref_base: str, match_htsjdk: bool) -> bool:
         is_match: bool = query_base == ref_base or query_base == "="
     else:
         # SAM spec: N->N is not a match
-        is_match = query_base == "=" or (query_base == ref_base and query_base in OK_BASES)
+        is_match = query_base == "=" or (query_base == ref_base and query_base in _OK_BASES)
 
     return is_match
 
@@ -1092,7 +1092,9 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
         match_htsjdk: if True, mirror htsjdk `calculateMdAndNmTags` -- only match is the bases are
             equal, including ambiguity codes (e.g., R->R is counted as a match, but R->A is not a
             match). If False, follow SAM spec (everything else should be considered a mismatch,
-            including ambiguity codes like R and N).
+            including ambiguity codes like R and N). When a deletion extends beyond
+            the available reference sequence, htsjdk will not count the deletion in NM, while
+            samtools will count it; set to False for samtools-style behavior.
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
             first base aligned to in reference_sequence, otherwise use r.reference_start
 
@@ -1106,7 +1108,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     target_offset: int = reference_offset if reference_offset is not None else rec.reference_start
     cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
 
-    matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
+    matches, mismatches, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
     md_edits: list[str] = []
     current_match_count: int = 0
     for elem in cigar.elements:
@@ -1129,7 +1131,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
                     md_edits.append(str(current_match_count))  # append match count and reset
                     current_match_count = 0
                     md_edits.append(ref_base)  # grab mismatched base from the reference
-                    mms += 1
+                    mismatches += 1
             query_offset += elem.length_on_query
             target_offset += elem.length_on_target
         elif op == CigarOp.D:  # consumes ref
@@ -1138,9 +1140,12 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
             for in_block_offset in range(0, elem.length):
                 if (target_offset + in_block_offset) >= len(reference_sequence):
                     break  # out of bounds
-            md_edits.append(f"{reference_sequence[target_offset:target_offset + elem.length]}")
+            md_edits.append(reference_sequence[target_offset : target_offset + elem.length].upper())
             current_match_count = 0
             if target_offset < elem.length:
+                if not match_htsjdk:
+                    deletions += 1
+                    del_bases += elem.length
                 break
             target_offset += elem.length
             deletions += 1
@@ -1152,19 +1157,19 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
                 ins_bases += elem.length
         elif op == CigarOp.N:  # skipped region from ref, consumes ref
             target_offset += elem.length
-        elif op not in (CigarOp.H, CigarOp.P):  # pragma: no cover
+        elif op not in (CigarOp.H, CigarOp.P):  # pragma: not covered
             raise ValueError(f"Invalid CIGAR operation: {op}")
 
-    md_edits.append(str(current_match_count))
+    md_edits.append(f"{current_match_count}")
 
     return ReadEditInfo(
         matches=matches,
-        mismatches=mms,
+        mismatches=mismatches,
         insertions=insertions,
         inserted_bases=ins_bases,
         deletions=deletions,
         deleted_bases=del_bases,
-        nm=mms + ins_bases + del_bases,
+        nm=mismatches + ins_bases + del_bases,
         md="".join(md_edits),
     )
 

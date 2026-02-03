@@ -223,8 +223,14 @@ NO_REF_NAME: str = STRING_PLACEHOLDER
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
 
+NO_QUERY_BASES: str = "*"
+"""The string to use for a SAM record with missing query bases."""
+
 NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
 """The quality array corresponding to an unavailable query quality string ("*")."""
+
+_OK_BASES: set[str] = {"A", "C", "G", "T", "="}
+"""The non-ambiguous bases we expect to encounter in a SAM record."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -1051,6 +1057,7 @@ class ReadEditInfo:
             the reference but not in the read).
         nm: the computed value of the SAM NM tag, calculated as mismatches + inserted_bases +
             deleted_bases
+        md: the computed value of the SAM MD tag
     """
 
     matches: int
@@ -1060,64 +1067,133 @@ class ReadEditInfo:
     deletions: int
     deleted_bases: int
     nm: int
+    md: str
 
 
-def calculate_edit_info(
-    rec: AlignedSegment, reference_sequence: str, reference_offset: Optional[int] = None
-) -> ReadEditInfo:
+def _is_match_base(query_base: str, ref_base: str, match_htsjdk: bool) -> bool:
+    """Returns whether a query base matches the reference base based on match_htsjdk flag."""
+    if match_htsjdk:
+        # `htsjdk` implementation: treats N->N as a match
+        is_match: bool = query_base == ref_base or query_base == "="
+    else:
+        # SAM spec: N->N is not a match
+        is_match = query_base == "=" or (query_base == ref_base and query_base in _OK_BASES)
+
+    return is_match
+
+
+def calculate_edit_info(  # noqa: C901 (11 > 10)
+    rec: AlignedSegment,
+    reference_sequence: str,
+    match_htsjdk: bool = False,
+    reference_offset: Optional[int] = None,
+) -> Optional[ReadEditInfo]:
     """
     Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
-    reference.  Computes the number of mismatches, indels, indel bases and the SAM NM tag.
-    The read must be aligned.
+    reference.  Computes the number of mismatches, indels, indel bases as well as the
+    SAM NM and MD tags.
+
+    Calculation of NM and MD tags is based off of htsjdk:
+    https://github.com/samtools/htsjdk/blob/7034b33636b4cb9fec300a2136588e7c12c7ccd5/src/main/java/htsjdk/samtools/util/SequenceUtil.java#L964:L1029
+
+    Per the SAM specification (https://samtools.github.io/hts-specs/SAMtags.pdf), the NM tag
+    encapsulates the number of differences between the query read and reference sequence, counting
+    only A, C, G and T bases (case-insensitive). Everything else should be considered a mismatch
+    (e.g., ambiguity codes like R and N). We set the default of `n_as_match` to False to be
+    concordant with the SAM specification. Conversely, `htsjdk` treats an N->N as a match.
+
+    If the read is unmapped or the query sequence contains missing bases (`*`), returns None, as it
+    is not possible to recalculate the MD and NM tags without access to the query sequence and
+    reference sequence.
+
+    The order of the CIGAR operator checks is for performance and modeled after htsjdk's
+    `calculateMdAndNmTags`.
 
     Args:
         rec: the read/record for which to calculate values
-        reference_sequence: the reference sequence (or fragment thereof) that the read is
-            aligned to
+        reference_sequence: the reference sequence (or fragment thereof) to which the read is
+            aligned
+        match_htsjdk: if True, mirror htsjdk `calculateMdAndNmTags` -- only match is the bases are
+            equal, including ambiguity codes (e.g., R->R is counted as a match, but R->A is not a
+            match). If False, follow SAM spec (everything else should be considered a mismatch,
+            including ambiguity codes like R and N). When a deletion extends beyond
+            the available reference sequence, htsjdk will not count the deletion in NM, while
+            samtools will count it; set to False for samtools-style behavior.
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
             first base aligned to in reference_sequence, otherwise use r.reference_start
 
     Returns:
         a ReadEditInfo with information about how the read differs from the reference
     """
-    assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
+    if rec.is_unmapped or rec.query_sequence is None or rec.query_sequence == NO_QUERY_BASES:
+        return None
 
-    query_offset = 0
-    target_offset = reference_offset if reference_offset is not None else rec.reference_start
-    cigar = Cigar.from_cigartuples(rec.cigartuples)
+    query_offset: int = 0
+    target_offset: int = reference_offset if reference_offset is not None else rec.reference_start
+    cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
 
-    matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
-    ok_bases = {"A", "C", "G", "T"}
-
+    matches, mismatches, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
+    md_edits: list[str] = []
+    current_match_count: int = 0
     for elem in cigar.elements:
         op = elem.operator
+        # TODO: use match-case statements after we drop Python 3.9 support
+        if op in (CigarOp.M, CigarOp.X, CigarOp.EQ):
+            for in_block_offset in range(0, elem.length):
+                if (target_offset + in_block_offset) >= len(reference_sequence):
+                    break  # out of bounds
+                query_base: str = rec.query_sequence[query_offset + in_block_offset].upper()
+                ref_base: str = reference_sequence[target_offset + in_block_offset].upper()
+                is_match = _is_match_base(
+                    query_base=query_base, ref_base=ref_base, match_htsjdk=match_htsjdk
+                )
 
-        if op == CigarOp.I:
-            insertions += 1
-            ins_bases += elem.length
-        elif op == CigarOp.D:
+                if is_match:
+                    matches += 1
+                    current_match_count += 1
+                else:  # mismatch
+                    md_edits.append(str(current_match_count))  # append match count and reset
+                    current_match_count = 0
+                    md_edits.append(ref_base)  # grab mismatched base from the reference
+                    mismatches += 1
+            query_offset += elem.length_on_query
+            target_offset += elem.length_on_target
+        elif op == CigarOp.D:  # consumes ref
+            md_edits.append(str(current_match_count))  # append match count and reset
+            md_edits.append("^")
+            md_edits.append(reference_sequence[target_offset : target_offset + elem.length].upper())
+            current_match_count = 0
+            # Early break when a deletion starts before its own length into the reference
+            # (e.g., "6D4M" at position 0). This matches htsjdk/samtools behavior.
+            if target_offset < elem.length:
+                if not match_htsjdk:
+                    deletions += 1
+                    del_bases += elem.length
+                break
+            target_offset += elem.length
             deletions += 1
             del_bases += elem.length
-        elif op == CigarOp.M or op == CigarOp.X or op == CigarOp.EQ:
-            for i in range(0, elem.length):
-                q = rec.query_sequence[query_offset + i].upper()
-                t = reference_sequence[target_offset + i].upper()
-                if q != t or q not in ok_bases:
-                    mms += 1
-                else:
-                    matches += 1
+        elif op in (CigarOp.I, CigarOp.S):  # consumes query
+            query_offset += elem.length
+            if op == CigarOp.I:
+                insertions += 1
+                ins_bases += elem.length
+        elif op == CigarOp.N:  # skipped region from ref, consumes ref
+            target_offset += elem.length
+        elif op not in (CigarOp.H, CigarOp.P):  # pragma: not covered
+            raise ValueError(f"Invalid CIGAR operation: {op}")
 
-        query_offset += elem.length_on_query
-        target_offset += elem.length_on_target
+    md_edits.append(f"{current_match_count}")
 
     return ReadEditInfo(
         matches=matches,
-        mismatches=mms,
+        mismatches=mismatches,
         insertions=insertions,
         inserted_bases=ins_bases,
         deletions=deletions,
         deleted_bases=del_bases,
-        nm=mms + ins_bases + del_bases,
+        nm=mismatches + ins_bases + del_bases,
+        md="".join(md_edits),
     )
 
 

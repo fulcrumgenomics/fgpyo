@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
 
 import pytest
+from pysam import FastaFile
 from pytest import raises
 
 from fgpyo.fasta.builder import FastaBuilder
@@ -83,3 +84,18 @@ def test_bases_string_from_ContigBuilder_add(
             for line in read_fp.readlines():
                 if ">" not in line:
                     assert line.strip() == expected
+
+
+def test_to_fasta_file_handle_returns_fasta_file(tmp_path: Path) -> None:
+    """Asserts that `to_fasta_file_handle()` returns an open pysam.FastaFile."""
+    builder = FastaBuilder()
+    builder.add("chr1").add("ACGT", 10)
+    builder.add("chr2").add("GGCC", 5)
+
+    fasta_file = builder.to_fasta_file_handle(tmp_path / "test.fa")
+    try:
+        assert isinstance(fasta_file, FastaFile)
+        assert fasta_file.fetch("chr1") == "ACGT" * 10
+        assert fasta_file.fetch("chr2") == "GGCC" * 5
+    finally:
+        fasta_file.close()

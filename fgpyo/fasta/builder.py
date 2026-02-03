@@ -53,6 +53,10 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
+from pysam import FastaFile
+
+from fgpyo.io import assert_path_is_writable
+
 """Stubs for pysam imports """
 if TYPE_CHECKING:
 
@@ -221,6 +225,7 @@ class FastaBuilder:
         Example:
         FastaBuilder.to_file(path = pathlib.Path("my_fasta.fa"))
         """
+        assert_path_is_writable(path)
 
         with path.open("w") as writer:
             for contig in self.__contig_builders.values():
@@ -243,3 +248,19 @@ class FastaBuilder:
             output_path=str(f"{path}.dict"),
             input_path=str(path),
         )
+
+    def to_fasta_file_handle(self, path: Path) -> FastaFile:
+        """
+        Writes out the set of accumulated contigs to a FASTA file and returns an open FastaFile.
+
+        This is a convenience method that combines `to_file()` with opening the resulting
+        file as a `pysam.FastaFile`.
+
+        Args:
+            path: Path to which to write the FASTA file.
+
+        Returns:
+            An open `pysam.FastaFile` for the written FASTA.
+        """
+        self.to_file(path)
+        return FastaFile(f"{path}")

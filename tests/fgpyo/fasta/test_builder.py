@@ -87,14 +87,15 @@ def test_bases_string_from_ContigBuilder_add(
 
 
 def test_to_fasta_file_returns_fasta_file(tmp_path: Path) -> None:
-    """Asserts that `to_fasta_file()` returns an open pysam.FastaFile."""
+    """Asserts that `to_fasta_file_handle()` returns an open pysam.FastaFile."""
     builder = FastaBuilder()
     builder.add("chr1").add("ACGT", 10)
     builder.add("chr2").add("GGCC", 5)
 
     fasta_file = builder.to_fasta_file_handle(tmp_path / "test.fa")
-
-    assert isinstance(fasta_file, FastaFile)
-    assert fasta_file.fetch("chr1") == "ACGT" * 10
-    assert fasta_file.fetch("chr2") == "GGCC" * 5
-    fasta_file.close()
+    try:
+        assert isinstance(fasta_file, FastaFile)
+        assert fasta_file.fetch("chr1") == "ACGT" * 10
+        assert fasta_file.fetch("chr2") == "GGCC" * 5
+    finally:
+        fasta_file.close()

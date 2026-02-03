@@ -86,7 +86,7 @@ def test_bases_string_from_ContigBuilder_add(
                     assert line.strip() == expected
 
 
-def test_to_fasta_file_returns_fasta_file(tmp_path: Path) -> None:
+def test_to_fasta_file_handle_returns_fasta_file(tmp_path: Path) -> None:
     """Asserts that `to_fasta_file_handle()` returns an open pysam.FastaFile."""
     builder = FastaBuilder()
     builder.add("chr1").add("ACGT", 10)

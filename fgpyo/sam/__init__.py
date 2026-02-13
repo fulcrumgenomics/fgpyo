@@ -647,6 +647,93 @@ class Cigar:
             raise ValueError(f"Cigar {self} has no aligned bases")
         return start_offset, end_offset
 
+    def _truncate(self, length: int, should_count: Callable[[CigarElement], bool]) -> "Cigar":
+        """Truncates the CIGAR to a specified length based on a predicate.
+
+        This private helper method iterates through CIGAR elements and builds a new CIGAR
+        that contains at most `length` bases from elements matching the predicate. Position
+        tracking starts at 0 (0-based, Pythonic convention). Elements not matching should_count
+        are included without counting. If an element would exceed the limit, it's clipped to
+        fit exactly.
+
+        Args:
+            length: The maximum number of bases to keep (for elements matching should_count)
+            should_count: A function that takes a CigarElement and returns True if its
+                         bases should be counted toward the length limit
+
+        Returns:
+            A new Cigar truncated to the specified length
+        """
+        pos = 0
+        builder: List[CigarElement] = []
+
+        for elem in self.elements:
+            if should_count(elem):
+                remaining_length = length - pos
+                if remaining_length <= 0:
+                    # Already at limit, stop here
+                    break
+                if elem.length <= remaining_length:
+                    # Element fits entirely within the limit
+                    builder.append(elem)
+                    pos += elem.length
+                    if pos >= length:
+                        # Reached exact limit, stop processing
+                        break
+                else:
+                    # Element needs to be clipped to fit exactly
+                    builder.append(CigarElement(length=remaining_length, operator=elem.operator))
+                    break
+            else:
+                # Element doesn't consume counted bases, include as-is
+                builder.append(elem)
+
+        return Cigar(tuple(builder))
+
+    def truncate_to_query_length(self, length: int) -> "Cigar":
+        """Truncates the CIGAR to the specified query sequence length.
+
+        Produces a new CIGAR that includes at most the specified number of bases
+        from the query sequence. Only CIGAR operators that consume query bases
+        (M, I, S, =, X) are counted toward the length limit.
+
+        Args:
+            length: The maximum number of query bases to include
+
+        Returns:
+            A new Cigar truncated to the specified query length
+
+        Examples:
+            >>> cigar = Cigar.from_cigarstring("10M5I10M")
+            >>> str(cigar.truncate_to_query_length(15))
+            '10M5I'
+            >>> str(cigar.truncate_to_query_length(12))
+            '10M2I'
+        """
+        return self._truncate(length, lambda e: e.operator.consumes_query)
+
+    def truncate_to_target_length(self, length: int) -> "Cigar":
+        """Truncates the CIGAR to the specified reference/target sequence length.
+
+        Produces a new CIGAR that includes at most the specified number of bases
+        from the reference/target sequence. Only CIGAR operators that consume
+        reference bases (M, D, N, =, X) are counted toward the length limit.
+
+        Args:
+            length: The maximum number of reference/target bases to include
+
+        Returns:
+            A new Cigar truncated to the specified target length
+
+        Examples:
+            >>> cigar = Cigar.from_cigarstring("10M5D10M")
+            >>> str(cigar.truncate_to_target_length(15))
+            '10M5D'
+            >>> str(cigar.truncate_to_target_length(12))
+            '10M2D'
+        """
+        return self._truncate(length, lambda e: e.operator.consumes_reference)
+
 
 @enum.unique
 class PairOrientation(enum.Enum):

@@ -80,3 +80,64 @@ def test_query_alignment_offsets_reversed(
 
     ret = cig.reversed().query_alignment_offsets()
     assert ret == expected_range
+
+
+###############################################################################
+# Tests for Cigar truncation methods (ported from fgbio)
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "length", "expected"),
+    [
+        # No truncation needed
+        ("75M", 100, "75M"),
+        # Actual truncation to length 50
+        ("60M", 50, "50M"),
+        ("10H50M", 50, "10H50M"),  # Hard clips preserved
+        ("25M10I25M", 50, "25M10I15M"),  # Insertions consume query
+        ("25M10D25M", 50, "25M10D25M"),  # Deletions don't consume query
+        ("50M10S", 50, "50M"),  # Trailing soft clips removed
+        # Additional edge cases
+        ("10M", 0, "*"),  # Truncate to zero
+        ("*", 5, "*"),  # Empty CIGAR
+    ],
+)
+def test_truncate_to_query_length(cigar_string: str, length: int, expected: str) -> None:
+    """truncate_to_query_length should return the expected truncated CIGAR."""
+    cigar = Cigar.from_cigarstring(cigar_string)
+    result = cigar.truncate_to_query_length(length)
+    assert str(result) == expected
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "length", "expected"),
+    [
+        # No truncation needed
+        ("75M", 100, "75M"),
+        # Actual truncation to length 50
+        ("60M", 50, "50M"),
+        ("10H50M", 50, "10H50M"),  # Hard clips preserved
+        ("25M10I25M", 50, "25M10I25M"),  # Insertions don't consume target
+        ("25M10D25M", 50, "25M10D15M"),  # Deletions consume target
+        ("50M10S", 50, "50M"),  # Trailing soft clips removed
+        # Additional edge cases
+        ("10M", 0, "*"),  # Truncate to zero
+        ("*", 5, "*"),  # Empty CIGAR
+    ],
+)
+def test_truncate_to_target_length(cigar_string: str, length: int, expected: str) -> None:
+    """truncate_to_target_length should return the expected truncated CIGAR."""
+    cigar = Cigar.from_cigarstring(cigar_string)
+    result = cigar.truncate_to_target_length(length)
+    assert str(result) == expected
+
+
+def test_truncate_methods_return_new_cigar() -> None:
+    """Truncate methods should return new Cigar objects, not modify original."""
+    original = Cigar.from_cigarstring("10M5I10M")
+    truncated = original.truncate_to_query_length(12)
+
+    assert str(original) == "10M5I10M"  # Original unchanged
+    assert str(truncated) == "10M2I"  # New cigar truncated
+    assert original is not truncated  # Different objects

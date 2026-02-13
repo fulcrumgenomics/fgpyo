@@ -223,9 +223,7 @@ def test_truncate_methods_return_new_cigar() -> None:
         ("10M10D10I10N10M", 30, "10M10D10I10N10M"),
     ],
 )
-def test_truncate_to_query_length_from_right(
-    cigar_string: str, length: int, expected: str
-) -> None:
+def test_truncate_to_query_length_from_right(cigar_string: str, length: int, expected: str) -> None:
     """Truncate from right using reverse composition should return expected CIGAR."""
     cigar = Cigar.from_cigarstring(cigar_string)
     result = cigar.reversed().truncate_to_query_length(length).reversed()

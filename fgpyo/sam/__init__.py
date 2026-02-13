@@ -665,31 +665,21 @@ class Cigar:
             A new Cigar truncated to the specified length
         """
         pos = 0
+        if length < 0:
+            raise ValueError(f"length must be >= 0, got {length}")
+        remaining = length
         builder: List[CigarElement] = []
-
         for elem in self.elements:
+            if remaining <= 0:
+                break
             if should_count(elem):
-                remaining_length = length - pos
-                if remaining_length <= 0:
-                    # Already at limit, stop here
-                    break
-                if elem.length <= remaining_length:
-                    # Element fits entirely within the limit
-                    builder.append(elem)
-                    pos += elem.length
-                    if pos >= length:
-                        # Reached exact limit, stop processing
-                        break
-                else:
-                    # Element needs to be clipped to fit exactly
-                    builder.append(CigarElement(length=remaining_length, operator=elem.operator))
-                    break
+                take = min(elem.length, remaining)
+                builder.append(CigarElement(length=take, operator=elem.operator))
+                remaining -= take
             else:
-                # Element doesn't consume counted bases, include as-is
                 builder.append(elem)
 
         return Cigar(tuple(builder))
-
     def truncate_to_query_length(self, length: int) -> "Cigar":
         """Truncates the CIGAR to the specified query sequence length.
 

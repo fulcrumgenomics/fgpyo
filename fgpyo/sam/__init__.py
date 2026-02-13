@@ -664,7 +664,6 @@ class Cigar:
         Returns:
             A new Cigar truncated to the specified length
         """
-        pos = 0
         if length < 0:
             raise ValueError(f"length must be >= 0, got {length}")
         remaining = length
@@ -680,6 +679,7 @@ class Cigar:
                 builder.append(elem)
 
         return Cigar(tuple(builder))
+
     def truncate_to_query_length(self, length: int) -> "Cigar":
         """Truncates the CIGAR to the specified query sequence length.
 

@@ -102,11 +102,12 @@ def test_query_alignment_offsets_reversed(
         ("60P", 50, "60P"),  # no effect on query
         ("60=", 50, "50="),
         ("60X", 50, "50X"),
-        ("10H50M", 50, "10H50M"),  # Hard clips preserved
+        ("10H50M", 50, "10H50M"),  # Leading hard clips preserved
+        ("50M10H", 50, "50M"),  # Trailing hard clips removed
+        ("10S50M", 50, "10S40M"),  # Leading soft clips preserved
+        ("50M10S", 50, "50M"),  # Trailing soft clips removed
         ("25M10I25M", 50, "25M10I15M"),  # Insertions consume query
         ("25M10D25M", 50, "25M10D25M"),  # Deletions don't consume query
-        ("50M10S", 50, "50M"),  # Trailing soft clips removed
-        # Additional edge cases
         ("10M", 0, "*"),  # Truncate to zero
         ("*", 5, "*"),  # Empty CIGAR
         ("5H10M", 0, "*"),  # Length 0 and leading non-consuming elements
@@ -145,11 +146,12 @@ def test_truncate_to_query_length(cigar_string: str, length: int, expected: str)
         ("60P", 50, "60P"),  # no effect on target
         ("60=", 50, "50="),
         ("60X", 50, "50X"),
-        ("10H50M", 50, "10H50M"),  # Hard clips preserved
+        ("10H50M", 50, "10H50M"),  # Leading hard clips preserved
+        ("50M10H", 50, "50M"),  # Trailing hard clips removed
+        ("10S50M", 50, "10S50M"),  # Leading soft clips don't consume target
+        ("50M10S", 50, "50M"),  # Trailing soft clips removed
         ("25M10I25M", 50, "25M10I25M"),  # Insertions don't consume target
         ("25M10D25M", 50, "25M10D15M"),  # Deletions consume target
-        ("50M10S", 50, "50M"),  # Trailing soft clips removed
-        # Additional edge cases
         ("10M", 0, "*"),  # Truncate to zero
         ("*", 5, "*"),  # Empty CIGAR
         ("5H10M", 0, "*"),  # Length 0 and leading non-consuming elements
@@ -183,3 +185,97 @@ def test_truncate_methods_return_new_cigar() -> None:
     assert str(original) == "10M5I10M"  # Original unchanged
     assert str(truncated) == "10M2I"  # New cigar truncated
     assert original is not truncated  # Different objects
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "length", "expected"),
+    [
+        # No truncation needed
+        ("75M", 100, "75M"),
+        # Actual truncation to length 50 from the right with various element types
+        ("60M", 50, "50M"),
+        ("60I", 50, "50I"),
+        ("60D", 50, "60D"),  # no effect on query
+        ("60N", 50, "60N"),  # no effect on query
+        ("60S", 50, "50S"),
+        ("60H", 50, "60H"),  # no effect on query
+        ("60P", 50, "60P"),  # no effect on query
+        ("60=", 50, "50="),
+        ("60X", 50, "50X"),
+        ("10H50M", 50, "50M"),  # Leading hard clips removed
+        ("50M10H", 50, "50M10H"),  # Trailing hard clips preserved
+        ("50M10S", 50, "40M10S"),  # Trailing soft clips preserved
+        ("10S50M", 50, "50M"),  # Leading soft clips removed
+        ("25M10I25M", 50, "15M10I25M"),  # Keep last 50 query bases (drop first 10)
+        ("25M10D25M", 50, "25M10D25M"),  # Deletions don't consume query, no truncation
+        ("10M", 0, "*"),  # Truncate to zero
+        ("*", 5, "*"),  # Empty CIGAR
+        ("5H10M", 0, "*"),  # Length 0 and leading non-consuming elements
+        ("10S10M", 0, "*"),
+        ("100M", 1, "1M"),  # Element splitting
+        ("100M", 50, "50M"),
+        ("100M", 99, "99M"),
+        ("10M10D10I10N10M", 5, "5M"),  # Interspersed non-consuming elements
+        ("10M10D10I10N10M", 10, "10M"),
+        ("10M10D10I10N10M", 15, "5I10N10M"),
+        ("10M10D10I10N10M", 20, "10I10N10M"),
+        ("10M10D10I10N10M", 25, "5M10D10I10N10M"),
+        ("10M10D10I10N10M", 30, "10M10D10I10N10M"),
+    ],
+)
+def test_truncate_to_query_length_from_right(
+    cigar_string: str, length: int, expected: str
+) -> None:
+    """Truncate from right using reverse composition should return expected CIGAR."""
+    cigar = Cigar.from_cigarstring(cigar_string)
+    result = cigar.reversed().truncate_to_query_length(length).reversed()
+    assert str(result) == expected
+    assert result.length_on_query() == min(length, cigar.length_on_query())
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "length", "expected"),
+    [
+        # No truncation needed
+        ("75M", 100, "75M"),
+        # Actual truncation to length 50 from the right with various element types
+        ("60M", 50, "50M"),
+        ("60I", 50, "60I"),  # no effect on target
+        ("60D", 50, "50D"),
+        ("60N", 50, "50N"),
+        ("60S", 50, "60S"),  # no effect on target
+        ("60H", 50, "60H"),  # no effect on target
+        ("60P", 50, "60P"),  # no effect on target
+        ("60=", 50, "50="),
+        ("60X", 50, "50X"),
+        ("10H50M", 50, "50M"),  # Leading hard clips removed
+        ("50M10H", 50, "50M10H"),  # Trailing hard clips preserved
+        ("50M10S", 50, "50M10S"),  # Trailing soft clips preserved
+        ("10S50M", 50, "50M"),  # Leading soft clips removed
+        ("25M10I25M", 50, "25M10I25M"),  # Insertions don't consume target, no truncation
+        ("25M10D25M", 50, "15M10D25M"),  # Keep last 50 target bases (drop first 10)
+        ("10M", 0, "*"),  # Truncate to zero
+        ("*", 5, "*"),  # Empty CIGAR
+        ("5H10M", 0, "*"),  # Length 0 and leading non-consuming elements
+        ("10S10M", 0, "*"),
+        ("100M", 1, "1M"),  # Element splitting
+        ("100M", 50, "50M"),
+        ("100M", 99, "99M"),
+        ("10M10D10I10N10M", 5, "5M"),  # Interspersed non-consuming elements
+        ("10M10D10I10N10M", 10, "10M"),
+        ("10M10D10I10N10M", 15, "5N10M"),
+        ("10M10D10I10N10M", 20, "10N10M"),
+        ("10M10D10I10N10M", 25, "5D10I10N10M"),
+        ("10M10D10I10N10M", 30, "10D10I10N10M"),
+        ("10M10D10I10N10M", 35, "5M10D10I10N10M"),
+        ("10M10D10I10N10M", 40, "10M10D10I10N10M"),
+    ],
+)
+def test_truncate_to_target_length_from_right(
+    cigar_string: str, length: int, expected: str
+) -> None:
+    """Truncate from right using reverse composition should return expected CIGAR."""
+    cigar = Cigar.from_cigarstring(cigar_string)
+    result = cigar.reversed().truncate_to_target_length(length).reversed()
+    assert str(result) == expected
+    assert result.length_on_target() == min(length, cigar.length_on_target())

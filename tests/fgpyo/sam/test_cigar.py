@@ -277,3 +277,15 @@ def test_truncate_to_target_length_from_right(
     result = cigar.reversed().truncate_to_target_length(length).reversed()
     assert str(result) == expected
     assert result.length_on_target() == min(length, cigar.length_on_target())
+
+
+def test_truncate_to_query_length_negative_raises() -> None:
+    """truncate_to_query_length() should raise ValueError for negative length."""
+    with pytest.raises(ValueError, match="length must be >= 0"):
+        Cigar.from_cigarstring("10M").truncate_to_query_length(-1)
+
+
+def test_truncate_to_target_length_negative_raises() -> None:
+    """truncate_to_target_length() should raise ValueError for negative length."""
+    with pytest.raises(ValueError, match="length must be >= 0"):
+        Cigar.from_cigarstring("10M").truncate_to_target_length(-1)

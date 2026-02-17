@@ -608,6 +608,38 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
+    def coalesce(self) -> "Cigar":
+        """Returns a new Cigar with adjacent elements of the same operator merged.
+
+        For example, ``Cigar.from_cigarstring("10M10M")`` would be coalesced to
+        ``Cigar.from_cigarstring("20M")``.
+
+        Returns:
+            A new Cigar with adjacent same-operator elements merged, or this Cigar if
+            no coalescing is needed.
+
+        Examples:
+            >>> str(Cigar.from_cigarstring("10M10M").coalesce())
+            '20M'
+            >>> str(Cigar.from_cigarstring("10M5I5I10M").coalesce())
+            '10M10I10M'
+        """
+        if len(self.elements) <= 1:
+            return self
+        result: List[CigarElement] = []
+        for elem in self.elements:
+            if result and result[-1].operator == elem.operator:
+                result[-1] = CigarElement(
+                    length=result[-1].length + elem.length,
+                    operator=elem.operator,
+                )
+            else:
+                result.append(elem)
+        coalesced = tuple(result)
+        if coalesced == self.elements:
+            return self
+        return Cigar(coalesced)
+
     def query_alignment_offsets(self) -> Tuple[int, int]:
         """
         Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.

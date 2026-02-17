@@ -289,3 +289,64 @@ def test_truncate_to_target_length_negative_raises() -> None:
     """truncate_to_target_length() should raise ValueError for negative length."""
     with pytest.raises(ValueError, match="length must be >= 0"):
         Cigar.from_cigarstring("10M").truncate_to_target_length(-1)
+
+
+###############################################################################
+# Tests for Cigar.coalesce (ported from fgbio)
+###############################################################################
+
+
+def test_coalesce_returns_self_when_already_coalesced() -> None:
+    """coalesce() should return the same object if no coalescing is needed."""
+    cig = Cigar.from_cigarstring("75M")
+    assert cig.coalesce() is cig
+
+
+@pytest.mark.parametrize(
+    ("cigar_string", "expected"),
+    [
+        # Ported from fgbio AlignmentTest
+        ("10M10M", "20M"),
+        ("10M10I10M", "10M10I10M"),
+        ("10S10S10S10S10M", "40S10M"),
+        # Additional cases for all operator types
+        ("5M5M5M", "15M"),
+        ("1M1M1M1M1M", "5M"),
+        ("5I5I", "10I"),
+        ("5D5D", "10D"),
+        ("10H10H", "20H"),
+        ("5=5=", "10="),
+        ("5X5X", "10X"),
+        # Non-adjacent same operators are not merged
+        ("10M5I5I10M", "10M10I10M"),
+        ("5M5D5D5M", "5M10D5M"),
+    ],
+)
+def test_coalesce(cigar_string: str, expected: str) -> None:
+    """coalesce() should merge adjacent elements with the same operator."""
+    cig = Cigar.from_cigarstring(cigar_string)
+    assert str(cig.coalesce()) == expected
+
+
+def test_coalesce_empty_cigar() -> None:
+    """coalesce() on an empty cigar should return the same empty cigar."""
+    cig = Cigar()
+    assert cig.coalesce() is cig
+
+
+def test_coalesce_single_element() -> None:
+    """coalesce() on a single-element cigar should return the same cigar."""
+    cig = Cigar.from_cigarstring("10M")
+    assert cig.coalesce() is cig
+
+
+def test_coalesce_preserves_length_on_query() -> None:
+    """coalesce() should not change the total query length."""
+    cig = Cigar.from_cigarstring("5M5M5I5I10M")
+    assert cig.coalesce().length_on_query() == cig.length_on_query()
+
+
+def test_coalesce_preserves_length_on_target() -> None:
+    """coalesce() should not change the total target length."""
+    cig = Cigar.from_cigarstring("5M5D5D5M")
+    assert cig.coalesce().length_on_target() == cig.length_on_target()

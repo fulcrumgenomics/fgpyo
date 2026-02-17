@@ -314,6 +314,8 @@ def test_coalesce_returns_self_when_already_coalesced() -> None:
         ("1M1M1M1M1M", "5M"),
         ("5I5I", "10I"),
         ("5D5D", "10D"),
+        ("5N5N", "10N"),
+        ("5S5S", "10S"),
         ("10H10H", "20H"),
         ("5=5=", "10="),
         ("5X5X", "10X"),

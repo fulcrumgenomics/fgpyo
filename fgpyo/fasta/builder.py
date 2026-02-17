@@ -47,10 +47,12 @@ Add bases to existing contig:
 """
 
 import textwrap
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
+from typing import Iterator
 from typing import Optional
 
 from pysam import FastaFile
@@ -249,7 +251,8 @@ class FastaBuilder:
             input_path=str(path),
         )
 
-    def to_fasta_file_handle(self, path: Path) -> FastaFile:
+    @contextmanager
+    def to_fasta_file_handle(self, path: Path) -> Iterator[FastaFile]:
         """
         Writes out the set of accumulated contigs to a FASTA file and returns an open FastaFile.
 
@@ -259,8 +262,9 @@ class FastaBuilder:
         Args:
             path: Path to which to write the FASTA file.
 
-        Returns:
+        Yields:
             An open `pysam.FastaFile` for the written FASTA.
         """
         self.to_file(path)
-        return FastaFile(f"{path}")
+        with FastaFile(f"{path}") as fasta:
+            yield fasta

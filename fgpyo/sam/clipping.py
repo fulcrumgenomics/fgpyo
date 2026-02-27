@@ -321,7 +321,7 @@ def _read_pos_at_ref_pos(
         else:
             index += 1
 
-    if not read_pos and previous is not None:
+    if read_pos is None and previous is not None:
         if previous:
             while read_pos is None and index > 0:
                 index -= 1

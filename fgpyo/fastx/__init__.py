@@ -88,8 +88,6 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
     ) -> bool | None:
         """Exit the `FastxZipped` context manager by closing all FASTX files."""
         self.close()
-        if exc_type is not None:
-            raise exc_type(exc_val).with_traceback(exc_tb)
         return None
 
     def close(self) -> None:

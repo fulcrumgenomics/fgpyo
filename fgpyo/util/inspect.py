@@ -396,7 +396,7 @@ def get_fields_dict(
     cls_type = cls if isinstance(cls, type) else type(cls)
     if is_attr_class(cls_type):
         # attr.fields_dict returns Any, so cast to Mapping[str, FieldType] for type checking
-        return typing.cast(Mapping[str, FieldType], get_attr_fields_dict(cls))
+        return typing.cast(Mapping[str, FieldType], get_attr_fields_dict(cls_type))
     else:
         raise TypeError("cls must a dataclasses or attr class")
 
@@ -410,7 +410,7 @@ def get_fields(
     # Always pass a type to is_attr_class
     cls_type = cls if isinstance(cls, type) else type(cls)
     if is_attr_class(cls_type):
-        return get_attr_fields(cls)  # type: ignore[no-any-return]
+        return get_attr_fields(cls_type)  # type: ignore[no-any-return]
     else:
         raise TypeError("cls must a dataclasses or attr class")
 

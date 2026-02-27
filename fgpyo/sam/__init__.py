@@ -222,8 +222,14 @@ NO_REF_NAME: str = STRING_PLACEHOLDER
 NO_REF_POS: int = -1
 """The reference position to use to indicate no position in SAM/BAM."""
 
+NO_QUERY_BASES: str = "*"
+"""The string to use for a SAM record with missing query bases."""
+
 NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
 """The quality array corresponding to an unavailable query quality string ("*")."""
+
+_OK_BASES: set[str] = {"A", "C", "G", "T", "="}
+"""The non-ambiguous bases we expect to encounter in a SAM record."""
 
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
@@ -599,6 +605,38 @@ class Cigar:
         """Returns the length of the alignment on the target sequence."""
         return sum([elem.length_on_target for elem in self.elements])
 
+    def coalesce(self) -> "Cigar":
+        """Returns a new Cigar with adjacent elements of the same operator merged.
+
+        For example, ``Cigar.from_cigarstring("10M10M")`` would be coalesced to
+        ``Cigar.from_cigarstring("20M")``.
+
+        Returns:
+            A new Cigar with adjacent same-operator elements merged, or this Cigar if
+            no coalescing is needed.
+
+        Examples:
+            >>> str(Cigar.from_cigarstring("10M10M").coalesce())
+            '20M'
+            >>> str(Cigar.from_cigarstring("10M5I5I10M").coalesce())
+            '10M10I10M'
+        """
+        if len(self.elements) <= 1:
+            return self
+        result: List[CigarElement] = []
+        for elem in self.elements:
+            if result and result[-1].operator == elem.operator:
+                result[-1] = CigarElement(
+                    length=result[-1].length + elem.length,
+                    operator=elem.operator,
+                )
+            else:
+                result.append(elem)
+        coalesced = tuple(result)
+        if coalesced == self.elements:
+            return self
+        return Cigar(coalesced)
+
     def query_alignment_offsets(self) -> Tuple[int, int]:
         """
         Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
@@ -637,6 +675,83 @@ class Cigar:
         if start_offset == end_offset:
             raise ValueError(f"Cigar {self} has no aligned bases")
         return start_offset, end_offset
+
+    def _truncate(self, length: int, should_count: Callable[[CigarElement], bool]) -> "Cigar":
+        """Truncates the CIGAR to a specified length based on a predicate.
+
+        This private helper method iterates through CIGAR elements and builds a new CIGAR
+        that contains at most `length` bases from elements matching the predicate. Position
+        tracking starts at 0 (0-based, Pythonic convention). Elements not matching should_count
+        are included without counting. If an element would exceed the limit, it's clipped to
+        fit exactly.
+
+        Args:
+            length: The maximum number of bases to keep (for elements matching should_count)
+            should_count: A function that takes a CigarElement and returns True if its
+                         bases should be counted toward the length limit
+
+        Returns:
+            A new Cigar truncated to the specified length
+        """
+        if length < 0:
+            raise ValueError(f"length must be >= 0, got {length}")
+        remaining = length
+        builder: List[CigarElement] = []
+        for elem in self.elements:
+            if remaining <= 0:
+                break
+            if should_count(elem):
+                take = min(elem.length, remaining)
+                builder.append(CigarElement(length=take, operator=elem.operator))
+                remaining -= take
+            else:
+                builder.append(elem)
+
+        return Cigar(tuple(builder))
+
+    def truncate_to_query_length(self, length: int) -> "Cigar":
+        """Truncates the CIGAR to the specified query sequence length.
+
+        Produces a new CIGAR that includes at most the specified number of bases
+        from the query sequence. Only CIGAR operators that consume query bases
+        (M, I, S, =, X) are counted toward the length limit.
+
+        Args:
+            length: The maximum number of query bases to include
+
+        Returns:
+            A new Cigar truncated to the specified query length
+
+        Examples:
+            >>> cigar = Cigar.from_cigarstring("10M5I10M")
+            >>> str(cigar.truncate_to_query_length(15))
+            '10M5I'
+            >>> str(cigar.truncate_to_query_length(12))
+            '10M2I'
+        """
+        return self._truncate(length, lambda e: e.operator.consumes_query)
+
+    def truncate_to_target_length(self, length: int) -> "Cigar":
+        """Truncates the CIGAR to the specified reference/target sequence length.
+
+        Produces a new CIGAR that includes at most the specified number of bases
+        from the reference/target sequence. Only CIGAR operators that consume
+        reference bases (M, D, N, =, X) are counted toward the length limit.
+
+        Args:
+            length: The maximum number of reference/target bases to include
+
+        Returns:
+            A new Cigar truncated to the specified target length
+
+        Examples:
+            >>> cigar = Cigar.from_cigarstring("10M5D10M")
+            >>> str(cigar.truncate_to_target_length(15))
+            '10M5D'
+            >>> str(cigar.truncate_to_target_length(12))
+            '10M2D'
+        """
+        return self._truncate(length, lambda e: e.operator.consumes_reference)
 
 
 @enum.unique
@@ -1048,6 +1163,7 @@ class ReadEditInfo:
             the reference but not in the read).
         nm: the computed value of the SAM NM tag, calculated as mismatches + inserted_bases +
             deleted_bases
+        md: the computed value of the SAM MD tag
     """
 
     matches: int
@@ -1057,64 +1173,133 @@ class ReadEditInfo:
     deletions: int
     deleted_bases: int
     nm: int
+    md: str
 
 
-def calculate_edit_info(
-    rec: AlignedSegment, reference_sequence: str, reference_offset: int | None = None
-) -> ReadEditInfo:
+def _is_match_base(query_base: str, ref_base: str, match_htsjdk: bool) -> bool:
+    """Returns whether a query base matches the reference base based on match_htsjdk flag."""
+    if match_htsjdk:
+        # `htsjdk` implementation: treats N->N as a match
+        is_match: bool = query_base == ref_base or query_base == "="
+    else:
+        # SAM spec: N->N is not a match
+        is_match = query_base == "=" or (query_base == ref_base and query_base in _OK_BASES)
+
+    return is_match
+
+
+def calculate_edit_info(  # noqa: C901 (11 > 10)
+    rec: AlignedSegment,
+    reference_sequence: str,
+    match_htsjdk: bool = False,
+    reference_offset: int | None = None,
+) -> ReadEditInfo | None:
     """
     Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
-    reference.  Computes the number of mismatches, indels, indel bases and the SAM NM tag.
-    The read must be aligned.
+    reference.  Computes the number of mismatches, indels, indel bases as well as the
+    SAM NM and MD tags.
+
+    Calculation of NM and MD tags is based off of htsjdk:
+    https://github.com/samtools/htsjdk/blob/7034b33636b4cb9fec300a2136588e7c12c7ccd5/src/main/java/htsjdk/samtools/util/SequenceUtil.java#L964:L1029
+
+    Per the SAM specification (https://samtools.github.io/hts-specs/SAMtags.pdf), the NM tag
+    encapsulates the number of differences between the query read and reference sequence, counting
+    only A, C, G and T bases (case-insensitive). Everything else should be considered a mismatch
+    (e.g., ambiguity codes like R and N). We set the default of `n_as_match` to False to be
+    concordant with the SAM specification. Conversely, `htsjdk` treats an N->N as a match.
+
+    If the read is unmapped or the query sequence contains missing bases (`*`), returns None, as it
+    is not possible to recalculate the MD and NM tags without access to the query sequence and
+    reference sequence.
+
+    The order of the CIGAR operator checks is for performance and modeled after htsjdk's
+    `calculateMdAndNmTags`.
 
     Args:
         rec: the read/record for which to calculate values
-        reference_sequence: the reference sequence (or fragment thereof) that the read is
-            aligned to
+        reference_sequence: the reference sequence (or fragment thereof) to which the read is
+            aligned
+        match_htsjdk: if True, mirror htsjdk `calculateMdAndNmTags` -- only match is the bases are
+            equal, including ambiguity codes (e.g., R->R is counted as a match, but R->A is not a
+            match). If False, follow SAM spec (everything else should be considered a mismatch,
+            including ambiguity codes like R and N). When a deletion extends beyond
+            the available reference sequence, htsjdk will not count the deletion in NM, while
+            samtools will count it; set to False for samtools-style behavior.
         reference_offset: if provided, assume that reference_sequence[reference_offset] is the
             first base aligned to in reference_sequence, otherwise use r.reference_start
 
     Returns:
         a ReadEditInfo with information about how the read differs from the reference
     """
-    assert not rec.is_unmapped, f"Cannot calculate edit info for unmapped read: {rec}"
+    if rec.is_unmapped or rec.query_sequence is None or rec.query_sequence == NO_QUERY_BASES:
+        return None
 
-    query_offset = 0
-    target_offset = reference_offset if reference_offset is not None else rec.reference_start
-    cigar = Cigar.from_cigartuples(rec.cigartuples)
+    query_offset: int = 0
+    target_offset: int = reference_offset if reference_offset is not None else rec.reference_start
+    cigar: Cigar = Cigar.from_cigartuples(rec.cigartuples)
 
-    matches, mms, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
-    ok_bases = {"A", "C", "G", "T"}
-
+    matches, mismatches, insertions, ins_bases, deletions, del_bases = 0, 0, 0, 0, 0, 0
+    md_edits: list[str] = []
+    current_match_count: int = 0
     for elem in cigar.elements:
         op = elem.operator
+        # TODO: use match-case statements after we drop Python 3.9 support
+        if op in (CigarOp.M, CigarOp.X, CigarOp.EQ):
+            for in_block_offset in range(0, elem.length):
+                if (target_offset + in_block_offset) >= len(reference_sequence):
+                    break  # out of bounds
+                query_base: str = rec.query_sequence[query_offset + in_block_offset].upper()
+                ref_base: str = reference_sequence[target_offset + in_block_offset].upper()
+                is_match = _is_match_base(
+                    query_base=query_base, ref_base=ref_base, match_htsjdk=match_htsjdk
+                )
 
-        if op == CigarOp.I:
-            insertions += 1
-            ins_bases += elem.length
-        elif op == CigarOp.D:
+                if is_match:
+                    matches += 1
+                    current_match_count += 1
+                else:  # mismatch
+                    md_edits.append(str(current_match_count))  # append match count and reset
+                    current_match_count = 0
+                    md_edits.append(ref_base)  # grab mismatched base from the reference
+                    mismatches += 1
+            query_offset += elem.length_on_query
+            target_offset += elem.length_on_target
+        elif op == CigarOp.D:  # consumes ref
+            md_edits.append(str(current_match_count))  # append match count and reset
+            md_edits.append("^")
+            md_edits.append(reference_sequence[target_offset : target_offset + elem.length].upper())
+            current_match_count = 0
+            # Early break when a deletion starts before its own length into the reference
+            # (e.g., "6D4M" at position 0). This matches htsjdk/samtools behavior.
+            if target_offset < elem.length:
+                if not match_htsjdk:
+                    deletions += 1
+                    del_bases += elem.length
+                break
+            target_offset += elem.length
             deletions += 1
             del_bases += elem.length
-        elif op == CigarOp.M or op == CigarOp.X or op == CigarOp.EQ:
-            for i in range(0, elem.length):
-                q = rec.query_sequence[query_offset + i].upper()
-                t = reference_sequence[target_offset + i].upper()
-                if q != t or q not in ok_bases:
-                    mms += 1
-                else:
-                    matches += 1
+        elif op in (CigarOp.I, CigarOp.S):  # consumes query
+            query_offset += elem.length
+            if op == CigarOp.I:
+                insertions += 1
+                ins_bases += elem.length
+        elif op == CigarOp.N:  # skipped region from ref, consumes ref
+            target_offset += elem.length
+        elif op not in (CigarOp.H, CigarOp.P):  # pragma: not covered
+            raise ValueError(f"Invalid CIGAR operation: {op}")
 
-        query_offset += elem.length_on_query
-        target_offset += elem.length_on_target
+    md_edits.append(f"{current_match_count}")
 
     return ReadEditInfo(
         matches=matches,
-        mismatches=mms,
+        mismatches=mismatches,
         insertions=insertions,
         inserted_bases=ins_bases,
         deletions=deletions,
         deleted_bases=del_bases,
-        nm=mms + ins_bases + del_bases,
+        nm=mismatches + ins_bases + del_bases,
+        md="".join(md_edits),
     )
 
 

@@ -71,7 +71,6 @@ from typing import Any
 from typing import Generator
 from typing import Iterable
 from typing import Iterator
-from typing import Optional
 from typing import Set
 from typing import cast
 
@@ -175,7 +174,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
             raise AssertionError(f"No parent directories exist for: {path}")
 
 
-def to_reader(path: Path, threads: Optional[int] = None) -> TextIOWrapper:
+def to_reader(path: Path, threads: int | None = None) -> TextIOWrapper:
     """Opens a Path for reading and based on extension uses open() or gzip_ng.open()
 
     Args:
@@ -199,7 +198,7 @@ def to_reader(path: Path, threads: Optional[int] = None) -> TextIOWrapper:
         return path.open(mode="r")
 
 
-def to_writer(path: Path, append: bool = False, threads: Optional[int] = None) -> TextIOWrapper:
+def to_writer(path: Path, append: bool = False, threads: int | None = None) -> TextIOWrapper:
     """Opens a Path for writing (or appending) and based on extension uses open() or gzip_ng.open()
 
     Args:
@@ -234,7 +233,7 @@ def to_writer(path: Path, append: bool = False, threads: Optional[int] = None) -
         return cast(TextIOWrapper, path.open(mode=mode_prefix))
 
 
-def read_lines(path: Path, strip: bool = False, threads: Optional[int] = None) -> Iterator[str]:
+def read_lines(path: Path, strip: bool = False, threads: int | None = None) -> Iterator[str]:
     """Takes a path and reads each line into a generator, removing line terminators
     along the way. By default, only line terminators (CR/LF) are stripped.  The `strip`
     parameter may be used to strip both leading and trailing whitespace from each line.
@@ -260,7 +259,7 @@ def read_lines(path: Path, strip: bool = False, threads: Optional[int] = None) -
 
 
 def write_lines(
-    path: Path, lines_to_write: Iterable[Any], append: bool = False, threads: Optional[int] = None
+    path: Path, lines_to_write: Iterable[Any], append: bool = False, threads: int | None = None
 ) -> None:
     """Writes (or appends) a file with one line per item in provided iterable
 

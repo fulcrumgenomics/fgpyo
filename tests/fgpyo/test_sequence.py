@@ -5,6 +5,7 @@ from typing import Tuple
 
 import pytest
 
+from fgpyo.sequence import complement
 from fgpyo.sequence import gc_content
 from fgpyo.sequence import hamming
 from fgpyo.sequence import levenshtein
@@ -16,11 +17,56 @@ from fgpyo.sequence import reverse_complement
 
 
 @pytest.mark.parametrize(
+    "base, expected_complement",
+    [
+        # Discrete bases
+        ("A", "T"),
+        ("C", "G"),
+        ("G", "C"),
+        ("T", "A"),
+        ("U", "A"),
+        # Two-base IUPAC codes
+        ("M", "K"),  # M=[A,C] -> [T,G]=K
+        ("K", "M"),  # K=[G,T] -> [C,A]=M
+        ("R", "Y"),  # R=[A,G] -> [T,C]=Y
+        ("Y", "R"),  # Y=[C,T] -> [G,A]=R
+        ("W", "W"),  # W=[A,T] -> [T,A]=W
+        ("S", "S"),  # S=[G,C] -> [C,G]=S
+        # Three-base IUPAC codes
+        ("B", "V"),  # B=[C,G,T] -> [G,C,A]=V
+        ("V", "B"),  # V=[A,C,G] -> [T,G,C]=B
+        ("H", "D"),  # H=[A,C,T] -> [T,G,A]=D
+        ("D", "H"),  # D=[A,G,T] -> [T,C,A]=H
+        # Universal
+        ("N", "N"),
+        # Lowercase
+        ("a", "t"),
+        ("w", "w"),
+        ("s", "s"),
+        ("n", "n"),
+    ],
+)
+def test_complement(base: str, expected_complement: str) -> None:
+    assert complement(base) == expected_complement
+
+
+def test_complement_raises_on_multi_char_string() -> None:
+    with pytest.raises(ValueError, match="1-character"):
+        complement("AC")
+
+
+def test_complement_raises_on_invalid_base() -> None:
+    with pytest.raises(KeyError):
+        complement(".")
+
+
+@pytest.mark.parametrize(
     "bases, expected_rev_comp",
     [
         ("", ""),
         ("AATTCCGGaattccgg", "ccggaattCCGGAATT"),
         ("ACGTN", "NACGT"),
+        ("MKRYWSBVHD", "HDBVSWRYMK"),
     ],
 )
 def test_reverse_complement(bases: str, expected_rev_comp: str) -> None:

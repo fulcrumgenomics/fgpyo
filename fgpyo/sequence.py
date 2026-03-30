@@ -26,8 +26,8 @@ _COMPLEMENTS: Dict[str, str] = {
     "K": "M",
     "R": "Y",
     "Y": "R",
-    "W": "S",
-    "S": "W",
+    "W": "W",
+    "S": "S",
     # IUPAC codes that represent three bases
     "B": "V",
     "V": "B",
@@ -46,8 +46,8 @@ _COMPLEMENTS: Dict[str, str] = {
     "k": "m",
     "r": "y",
     "y": "r",
-    "w": "s",
-    "s": "w",
+    "w": "w",
+    "s": "s",
     # IUPAC codes that represent three bases
     "b": "v",
     "v": "b",

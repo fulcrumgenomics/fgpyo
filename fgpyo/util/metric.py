@@ -388,6 +388,7 @@ class Metric(ABC, Generic[MetricType]):
 
     @staticmethod
     def fast_concat(*inputs: Path, output: Path) -> None:
+        """Concatenates multiple metric files into one, validating headers match."""
         if len(inputs) == 0:
             raise ValueError("No inputs provided")
 

@@ -164,6 +164,7 @@ class VariantBuilder:
 
     @property
     def num_samples(self) -> int:
+        """Returns the number of samples in the VCF."""
         return len(self.sample_ids)
 
     def add(

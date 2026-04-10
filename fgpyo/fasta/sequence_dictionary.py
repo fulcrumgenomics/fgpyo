@@ -296,26 +296,32 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     @property
     def md5(self) -> str | None:
+        """Returns the MD5 checksum of the sequence, or None."""
         return self.get(Keys.MD5)
 
     @property
     def assembly(self) -> str | None:
+        """Returns the assembly name, or None."""
         return self.get(Keys.ASSEMBLY)
 
     @property
     def uri(self) -> str | None:
+        """Returns the URI of the sequence, or None."""
         return self.get(Keys.URI)
 
     @property
     def species(self) -> str | None:
+        """Returns the species name, or None."""
         return self.get(Keys.SPECIES)
 
     @property
     def description(self) -> str | None:
+        """Returns the description, or None."""
         return self.get(Keys.DESCRIPTION)
 
     @property
     def topology(self) -> Topology | None:
+        """Returns the topology (linear or circular), or None."""
         value = self.get(Keys.TOPOLOGY)
         return None if value is None else Topology[value]
 

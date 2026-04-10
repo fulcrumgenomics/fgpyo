@@ -265,18 +265,23 @@ class ReadStructure(Iterable[ReadSegment]):
         return tuple([segment for segment in self if segment.kind == kind])
 
     def template_segments(self) -> Tuple[ReadSegment, ...]:
+        """Returns segments of kind Template."""
         return self.segments_by_kind(kind=SegmentType.Template)
 
     def sample_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+        """Returns segments of kind SampleBarcode."""
         return self.segments_by_kind(kind=SegmentType.SampleBarcode)
 
     def molecular_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+        """Returns segments of kind MolecularBarcode."""
         return self.segments_by_kind(kind=SegmentType.MolecularBarcode)
 
     def cell_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+        """Returns segments of kind CellBarcode."""
         return self.segments_by_kind(kind=SegmentType.CellBarcode)
 
     def skip_segments(self) -> Tuple[ReadSegment, ...]:
+        """Returns segments of kind Skip."""
         return self.segments_by_kind(kind=SegmentType.Skip)
 
     def __iter__(self) -> Iterator[ReadSegment]:
@@ -324,6 +329,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @classmethod
     def from_string(cls, segments: str) -> "ReadStructure":
+        """Parses a read structure from its string representation."""
         # Check that none but the last segment has an indefinite length
         tidied = "".join(ch for ch in segments.upper() if not ch.isspace())
         return cls.from_segments(segments=cls._from_string(string=tidied), reset_offsets=True)

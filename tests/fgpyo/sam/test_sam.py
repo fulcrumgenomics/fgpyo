@@ -685,6 +685,7 @@ def test_calc_edit_info_no_edits() -> None:
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(bases=chrom[10:40], chrom="chr1", start=10, cigar="30M")
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    assert info is not None
     assert info.mismatches == 0
     assert info.nm == 0
     assert info.md == "30"
@@ -697,6 +698,7 @@ def test_calc_edit_info_no_edits_with_zero_offset() -> None:
     info = sam.calculate_edit_info(
         rec=rec, reference_sequence=chrom[10:40], reference_offset=0, match_htsjdk=False
     )
+    assert info is not None
     assert info.mismatches == 0
     assert info.nm == 0
     assert info.md == "30"
@@ -717,6 +719,7 @@ def test_calc_edit_info_edits_with_nonzero_offset() -> None:
     # Offset Ref: AGTCTATCTA
     #             |xx|xx||||
     #      Query: ACGCAGTCTA
+    assert info is not None
     assert info.matches == 6
     assert info.mismatches == 4
     assert info.nm == 4
@@ -731,6 +734,7 @@ def test_calc_edit_info_with_mms_and_insertions() -> None:
     )
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    assert info is not None
     assert info.mismatches == 1
     assert info.insertions == 1
     assert info.inserted_bases == 3
@@ -748,6 +752,7 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
     )
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    assert info is not None
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
@@ -768,6 +773,7 @@ def test_calc_edit_info_with_aligned_Ns(match_htsjdk: bool) -> None:
     )
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
+    assert info is not None
     assert info.insertions == 0
     assert info.inserted_bases == 0
     assert info.deletions == 0
@@ -800,6 +806,7 @@ def test_calc_edit_info_with_consecutive_mismatches(match_htsjdk: bool) -> None:
     )
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
+    assert info is not None
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
@@ -815,6 +822,7 @@ def test_calc_edit_info_with_soft_clip_at_end(match_htsjdk: bool) -> None:
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=match_htsjdk)
 
+    assert info is not None
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
@@ -830,6 +838,7 @@ def test_calc_edit_info_with_ignored_operations(cigar: str) -> None:
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
+    assert info is not None
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
@@ -844,6 +853,7 @@ def test_calc_edit_info_with_equals_in_query() -> None:
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
+    assert info is not None
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
@@ -860,6 +870,7 @@ def test_calc_edit_info_all_matches() -> None:
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
 
+    assert info is not None
     assert info.md == str(rec.get_tag("MD")).upper()
     assert info.nm == int(rec.get_tag("NM"))
 
@@ -871,6 +882,7 @@ def test_calc_edit_info_with_deletion_out_of_bounds() -> None:
     rec = builder.add_single(bases="AGTCCG", chrom="chr1", start=0, cigar="6M4D")
 
     info = sam.calculate_edit_info(rec=rec, reference_sequence=chrom, match_htsjdk=False)
+    assert info is not None
     assert info.mismatches == 0
     assert info.insertions == 0
     assert info.inserted_bases == 0
@@ -892,6 +904,7 @@ def test_calc_edit_info_with_matches_out_of_bounds() -> None:
     #      Query: ------TTAG
     # The 6D at position 0 triggers early break (target_offset < elem.length),
     # so 4M is never processed
+    assert info is not None
     assert info.matches == 0
     assert info.mismatches == 0
     assert info.insertions == 0
@@ -912,6 +925,7 @@ def test_calc_edit_info_match_block_break_out_of_bounds() -> None:
     # Ref:   ACGT    (4 bases)
     # Query: ACGTAA  (6 bases with 6M cigar)
     # (only first 4 bases can be compared before reference runs out)
+    assert info is not None
     assert info.matches == 4
     assert info.mismatches == 0
     assert info.nm == 0
@@ -930,6 +944,7 @@ def test_calc_edit_info_deletion_block_break_out_of_bounds() -> None:
     # Cigar: 6M4D
     # After 6M, target_offset=6. For 4D, target_offset(6) >= elem.length(4),
     # so no early break.
+    assert info is not None
     assert info.matches == 6
     assert info.mismatches == 0
     assert info.deletions == 1

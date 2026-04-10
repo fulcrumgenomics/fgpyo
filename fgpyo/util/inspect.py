@@ -22,6 +22,7 @@ from typing import Protocol
 from typing import Tuple
 from typing import Type
 from typing import TypeAlias
+from typing import TypeGuard
 from typing import TypeVar
 from typing import Union
 
@@ -36,12 +37,14 @@ try:
     import attr
 
     _use_attr = True
+    assert attr is not None  # type narrowing
     get_attr_fields = attr.fields
     get_attr_fields_dict = attr.fields_dict
-    Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined,union-attr]
+
+    Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined]
     # dataclasses and attr have internal tokens for missing values, join into a set so that we can
     # check if a value is missing without knowing the type of backing class
-    MISSING = frozenset({DATACLASSES_MISSING, attr.NOTHING})  # type: ignore[union-attr]
+    MISSING = frozenset({DATACLASSES_MISSING, attr.NOTHING})
 except ImportError:  # pragma: no cover
     _use_attr = False
     attr = None
@@ -78,7 +81,7 @@ else:
         __attrs_attrs__: ClassVar[Any]
 
 
-def is_attr_class(cls: type) -> bool:
+def is_attr_class(cls: type) -> TypeGuard[type[AttrsInstance]]:
     """Return True if the class is an attr class, and False otherwise"""
     return hasattr(cls, "__attrs_attrs__")
 

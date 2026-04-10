@@ -70,7 +70,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
             raise StopIteration
 
         elif not all_not_none(records):
-            non_null_names: List[Optional[str]] = [
+            non_null_names: List[str | None] = [
                 record.name for record in records if record is not None
             ]
             assert all_not_none(non_null_names)  # type narrowing
@@ -87,7 +87,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
                 )
             )
 
-        names_with_ordinals: List[Optional[str]] = [record.name for record in records]
+        names_with_ordinals: List[str | None] = [record.name for record in records]
 
         assert all_not_none(names_with_ordinals)  # type narrowing
         record_names: List[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]

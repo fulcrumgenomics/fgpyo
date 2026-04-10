@@ -35,12 +35,11 @@ or using attr:
 ```python
 >>> from fgpyo.util.metric import Metric
 >>> import attr
->>> from typing import Optional
 >>> @attr.s(auto_attribs=True, frozen=True)
 ... class PersonAttr(Metric["PersonAttr"]):
 ...     name: str
 ...     age: int
-...     address: Optional[str] = None
+...     address: str | None = None
 
 ```
 
@@ -539,9 +538,9 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: Type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         self.close()
         super().__exit__(exc_type, exc_value, traceback)

@@ -12,24 +12,13 @@ from typing import Iterable
 from typing import Literal
 from typing import Optional
 from typing import Type
+from typing import TypeGuard
 from typing import TypeVar
 from typing import Union
 from typing import cast
 from typing import overload
 
 from typing_extensions import TypeAlias
-
-if sys.version_info >= (3, 10):
-    from types import UnionType
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
-
-    # NB: `types.UnionType`, available since Python 3.10, is **not** a `type`, but is a class.
-    # We declare an empty class here to use in the instance checks below.
-    class UnionType:
-        pass
-
 
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec

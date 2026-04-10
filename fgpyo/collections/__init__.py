@@ -113,6 +113,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
     """
 
     def __init__(self, source: Iterator[IterType] | Iterable[IterType]) -> None:
+        """Initializes the PeekableIterator with the given source."""
         self._iter: Iterator[IterType] = iter(source)
         self._sentinel: Any = object()
         self.__update_peek()

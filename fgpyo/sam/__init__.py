@@ -254,6 +254,7 @@ class SamFileType(enum.Enum):
     """
 
     def __init__(self, mode: str, ext: str) -> None:
+        """Initializes the file type with the given mode and extension."""
         self.mode = mode
         self.extension = ext
 
@@ -449,6 +450,7 @@ class CigarOp(enum.Enum):
     def __init__(
         self, code: int, character: str, consumes_query: bool, consumes_reference: bool
     ) -> None:
+        """Initializes the CIGAR operator with the given code, character, and consumption flags."""
         self.code = code
         self.character = character
         self.consumes_query = consumes_query
@@ -1562,6 +1564,7 @@ class TemplateIterator(Iterator[Template]):
     """
 
     def __init__(self, iterator: Iterator[AlignedSegment]) -> None:
+        """Initializes the iterator from a query-grouped alignment iterator."""
         self._iter = PeekableIterator(iterator)
 
     def __iter__(self) -> Iterator[Template]:

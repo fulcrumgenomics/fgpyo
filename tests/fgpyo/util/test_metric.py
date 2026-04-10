@@ -79,6 +79,7 @@ class DataBuilder:
     """
 
     def __init__(self, use_attr: bool) -> None:
+        """Initializes test data using attr or dataclasses based on use_attr."""
         self.use_attr = use_attr
 
         @make_dataclass(use_attr=use_attr)

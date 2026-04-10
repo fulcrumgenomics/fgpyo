@@ -105,6 +105,7 @@ class ProgressLogger(AbstractContextManager):
         verb: str = "Read",
         unit: int = 100000,
     ) -> None:
+        """Initializes the progress logger with the given printer and settings."""
         self.printer: Callable[[str], Any]
         if isinstance(printer, Logger):
             self.printer = lambda s: printer.info(s)

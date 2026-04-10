@@ -117,6 +117,7 @@ class ContigBuilder:
         assembly: str,
         species: str,
     ):
+        """Initializes a ContigBuilder with the given name, assembly, and species."""
         self.name = name
         self.assembly = assembly
         self.species = species
@@ -173,6 +174,7 @@ class FastaBuilder:
         species: str = "testspecies",
         line_length: int = 80,
     ):
+        """Initializes a FastaBuilder with the given assembly, species, and line length."""
         self.assembly: str = assembly
         self.species: str = species
         self.line_length: int = line_length

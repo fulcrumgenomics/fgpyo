@@ -163,8 +163,10 @@ class SamBuilder:
         attrs: Dict[str, Any] | None,
     ) -> AlignedSegment:
         """
-        Generates a new AlignedSegment.  Sets the segment up with the correct
-        header and adds the RG attribute if not contained in attrs.
+        Generates a new AlignedSegment.
+
+        Sets the segment up with the correct header and adds the RG attribute if not
+        contained in attrs.
 
         Args:
             name: the name of the read/template
@@ -512,7 +514,8 @@ class SamBuilder:
         tmp_file_type: sam.SamFileType | None = None,
     ) -> Path:
         """
-        Write the accumulated records to a file, sorts & indexes it, and returns the Path.
+        Writes the accumulated records to a file, sorts & indexes it, and returns the Path.
+
         If a path is provided, it will be written to, otherwise a temporary file is created
         and returned.
 

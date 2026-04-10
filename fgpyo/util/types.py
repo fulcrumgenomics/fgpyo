@@ -34,8 +34,9 @@ class InspectError(Exception):
 
 def parse_bool(string: str) -> bool:
     """
-    Parses strings into bools accounting for the many different text representations of bools
-    that can be used.
+    Parses strings into bools.
+
+    Accounts for the many different text representations of bools that can be used.
     """
     if string.lower() in ["t", "true", "1"]:
         return True
@@ -47,8 +48,9 @@ def parse_bool(string: str) -> bool:
 
 def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
     """
-    Worker function behind enum parsing. Takes enum type and creates an instance of the enum
-    from a string if possible.
+    Worker function behind enum parsing.
+
+    Takes an enum type and creates an instance of the enum from a string if possible.
     """
     try:
         return enum(value)
@@ -143,9 +145,10 @@ def _make_union_parser_worker(
     value: str,
 ) -> Optional[UnionType]:
     """
-    Worker function behind union parsing. Iterates through possible parsers for the union and
-    returns the value produced by the first parser that works. Otherwise, raises an error if none
-    work.
+    Worker function behind union parsing.
+
+    Iterates through possible parsers for the union and returns the value produced by the first
+    parser that works. Otherwise, raises an error if none work.
     """
     # Need to do this in the case of type Optional[str], because otherwise it'll return the string
     # 'None' instead of the object None
@@ -168,10 +171,7 @@ def _make_union_parser_worker(
 def make_union_parser(
     union: Type[UnionType], parsers: Iterable[Callable[[str], UnionType]]
 ) -> partial:
-    """
-    Generates a parser function for a union type object and set of parsers for the possible
-    parsers to that union type object.
-    """
+    """Generates a parser function for a union type object."""
     return partial(_make_union_parser_worker, union, parsers)
 
 
@@ -179,9 +179,10 @@ def _make_literal_parser_worker(
     literal: Type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]], value: str
 ) -> LiteralType:
     """
-    Worker function behind literal parsing. Iterates through possible literals and
-    returns the value produced by the first literal that matches expectation.
-    Otherwise raises an error if none work.
+    Worker function behind literal parsing.
+
+    Iterates through possible literals and returns the value produced by the first literal
+    that matches expectation. Otherwise raises an error if none work.
     """
     for arg, p in zip(typing.get_args(literal), parsers, strict=True):
         try:
@@ -201,10 +202,7 @@ def _make_literal_parser_worker(
 def make_literal_parser(
     literal: Type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]]
 ) -> partial:
-    """
-    Generates a parser function for a literal type object and a set of parsers for the possible
-    parsers to that literal type object.
-    """
+    """Generates a parser function for a literal type object."""
     return partial(_make_literal_parser_worker, literal, parsers)
 
 

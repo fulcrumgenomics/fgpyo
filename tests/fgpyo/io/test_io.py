@@ -86,10 +86,7 @@ def test_assert_path_is_writable_pass() -> None:
 
 
 def test_assert_path_is_writeable_raises_deprecation_warning(tmp_path: Path) -> None:
-    """
-    Test that we get a DeprecationWarning when the `assert_path_is_writeable` alias is called,
-    but otherwise works as expected.
-    """
+    """Test that `assert_path_is_writeable` raises a DeprecationWarning but works as expected."""
     with pytest.warns(DeprecationWarning):
         assert_path_is_writeable(path=tmp_path / "test.txt")
 

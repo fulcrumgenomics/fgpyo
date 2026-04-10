@@ -239,7 +239,8 @@ def tuple_parser(
 
     def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
         """
-        Parses a dictionary value (can do so recursively)
+        Parses a dictionary value (can do so recursively).
+
         Note that this tool will fail on tuples containing strings containing
         unpaired '{', or '}' characters.
         """

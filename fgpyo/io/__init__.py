@@ -237,8 +237,9 @@ def to_writer(path: Path, append: bool = False, threads: int | None = None) -> T
 
 def read_lines(path: Path, strip: bool = False, threads: int | None = None) -> Iterator[str]:
     """
-    Takes a path and reads each line into a generator, removing line terminators
-    along the way. By default, only line terminators (CR/LF) are stripped.  The `strip`
+    Reads each line from a path into a generator, removing line terminators.
+
+    By default, only line terminators (CR/LF) are stripped.  The `strip`
     parameter may be used to strip both leading and trailing whitespace from each line.
 
     Args:

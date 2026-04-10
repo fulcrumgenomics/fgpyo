@@ -102,7 +102,8 @@ def zero_sample_record_inputs(
     random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
 ) -> Tuple[Mapping[str, Any], ...]:
     """
-    Fixture with inputs to create test Variant records for zero-sample VCFs (no genotypes).
+    Fixture with inputs to create test Variant records for zero-sample VCFs.
+
     Make them MappingProxyType so that they are immutable.
     """
     return tuple(_get_random_variant_inputs(random_generator, sequence_dict) for _ in range(100))
@@ -267,10 +268,7 @@ def test_zero_sample_vcf_round_trip(
     zero_sample_record_inputs: Tuple[Mapping[str, Any], ...],
     compress: bool,
 ) -> None:
-    """
-    Test if zero-sample VCF (no genotypes) output records match the records read in from the
-    resulting VCF.
-    """
+    """Test if zero-sample VCF output records match the records read from the resulting VCF."""
     vcf = temp_path / ("test.vcf.gz" if compress else "test.vcf")
     variant_builder = VariantBuilder()
     _add_headers(variant_builder)
@@ -344,8 +342,9 @@ def test_variant_sample_records_match_inputs(
 ) -> None:
     """
     Test if records with samples / genotypes match the requested inputs.
-    If add_genotypes is True, then add random genotypes to the record input, otherwise test that
-    the VariantBuilder will work even if genotypes are not supplied.
+
+    If add_genotypes is True, then add random genotypes to the record input, otherwise test
+    that the VariantBuilder will work even if genotypes are not supplied.
     """
     sample_ids = [f"sample{i}" for i in range(num_samples)]
     variant_builder = VariantBuilder(sample_ids=sample_ids)
@@ -384,9 +383,10 @@ def test_variant_sample_vcf_round_trip(
     add_genotypes_to_records: bool,
 ) -> None:
     """
-    Test if 1 or multi-sample VCF output records match the records read in from the resulting VCF.
-    If add_genotypes is True, then add random genotypes to the record input, otherwise test that
-    the VariantBuilder will work even if genotypes are not supplied.
+    Test if multi-sample VCF output records match the records read from the resulting VCF.
+
+    If add_genotypes is True, then add random genotypes to the record input, otherwise test
+    that the VariantBuilder will work even if genotypes are not supplied.
     """
     sample_ids = [f"sample{i}" for i in range(num_samples)]
     vcf = temp_path / ("test.vcf.gz" if compress else "test.vcf")

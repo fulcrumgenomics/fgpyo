@@ -207,9 +207,10 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
         """
-        Mapping of type to a specific parser for that type.  The parser must accept a string
-        as a single parameter and return a single value of the given type.  Sub-classes may
-        override this method to support custom types.
+        Mapping of type to a specific parser for that type.
+
+        The parser must accept a string as a single parameter and return a single value of
+        the given type.  Sub-classes may override this method to support custom types.
         """
         return {}
 
@@ -296,9 +297,9 @@ class Metric(ABC, Generic[MetricType]):
     @classmethod
     def parse(cls, fields: List[str]) -> Any:
         """
-        Parses the string-representation of this metric.  One string per attribute should be
-        given.
+        Parses the string-representation of this metric.
 
+        One string per attribute should be given.
         """
         parsers = cls._parsers()
         header = cls.header()
@@ -475,6 +476,8 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         threads: int | None = None,
     ) -> None:
         r"""
+        Initializes the MetricWriter.
+
         Args:
             filename: Path to the file to write.
             metric_class: Metric class.

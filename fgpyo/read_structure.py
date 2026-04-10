@@ -123,9 +123,10 @@ class SubReadWithQuals:
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class ReadSegment:
     """
-    Encapsulates all the information about a segment within a read structure. A segment can
-    either have a definite length, in which case length must be Some(Int), or an indefinite length
-    (can be any length, 0 or more) in which case length must be None.
+    Encapsulates all the information about a segment within a read structure.
+
+    A segment can either have a definite length, in which case length must be Some(Int), or an
+    indefinite length (can be any length, 0 or more) in which case length must be None.
 
     Attributes:
         offset: The offset of the read segment in the read.
@@ -146,8 +147,10 @@ class ReadSegment:
     @property
     def fixed_length(self) -> int:
         """
-        The fixed length if there is one. Throws an exception on segments without fixed
-        lengths!
+        The fixed length of this segment.
+
+        Raises:
+            AttributeError: If the segment does not have a fixed length.
         """
         if not self.has_fixed_length:
             raise AttributeError(f"fixed_length called on a variable length segment: {self}")
@@ -173,8 +176,9 @@ class ReadSegment:
 
     def _calculate_end(self, bases: str) -> int:
         """
-        Checks some requirements and then calculates the end position for the segment for the
-        given read.
+        Calculates the end position for the segment for the given read.
+
+        Checks that the read is long enough to contain this segment.
         """
         bases_len = len(bases)
         assert bases_len >= self.offset, f"Read ends before the segment starts: {self}"
@@ -204,9 +208,11 @@ class ReadSegment:
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
 class ReadStructure(Iterable[ReadSegment]):
     """
-    Describes the structure of a give read.  A read contains one or more read segments. A read
-    segment describes a contiguous stretch of bases of the same type (ex. template bases) of some
-    length and some offset from the start of the read.
+    Describes the structure of a given read.
+
+    A read contains one or more read segments. A read segment describes a contiguous stretch of
+    bases of the same type (ex. template bases) of some length and some offset from the start
+    of the read.
 
     Attributes:
          segments: The segments composing the read structure
@@ -228,8 +234,10 @@ class ReadStructure(Iterable[ReadSegment]):
     @property
     def fixed_length(self) -> int:
         """
-        The fixed length if there is one. Throws an exception on segments without fixed
-        lengths!
+        The fixed length of this read structure.
+
+        Raises:
+            AttributeError: If the read structure does not have a fixed length.
         """
         if not self.has_fixed_length:
             raise AttributeError(f"fixed_length called on a variable length read structure: {self}")
@@ -241,10 +249,7 @@ class ReadStructure(Iterable[ReadSegment]):
         return len(self.segments)
 
     def with_variable_last_segment(self) -> "ReadStructure":
-        """
-        Generates a new ReadStructure that is the same as this one except that the last segment
-        has undefined length.
-        """
+        """Returns a copy with the last segment changed to undefined length."""
         last_segment = self.segments[-1]
         if not last_segment.has_fixed_length:
             return self
@@ -387,10 +392,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @classmethod
     def _invalid(cls, msg: str, rs: str, start: int, end: int) -> None:
-        """
-        Inserts square brackets around the characters in the read structure that are causing the
-        error.
-        """
+        """Inserts square brackets around the error-causing characters in the read structure."""
         prefix = rs[:start]
         error = rs[start:end]
         suffix = "" if end == len(rs) else rs[end:]

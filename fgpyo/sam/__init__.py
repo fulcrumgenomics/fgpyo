@@ -980,8 +980,9 @@ class SupplementaryAlignment:
     @staticmethod
     def parse(string: str) -> "SupplementaryAlignment":
         """
-        Returns a supplementary alignment parsed from the given string.  The various fields
-        should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`).
+        Returns a supplementary alignment parsed from the given string.
+
+        The various fields should be comma-delimited (ex. `chr1,123,-,100M50S,60,4`).
         """
         fields = string.split(",")
         return SupplementaryAlignment(
@@ -996,10 +997,11 @@ class SupplementaryAlignment:
     @staticmethod
     def parse_sa_tag(tag: str) -> List["SupplementaryAlignment"]:
         """
-        Parses an SA tag of supplementary alignments from a BAM file. If the tag is empty
-        or contains just a single semi-colon then an empty list will be returned.  Otherwise
-        a list containing a SupplementaryAlignment per ;-separated value in the tag will
-        be returned.
+        Parses an SA tag of supplementary alignments from a BAM file.
+
+        If the tag is empty or contains just a single semi-colon then an empty list will be
+        returned.  Otherwise a list containing a SupplementaryAlignment per ;-separated value
+        in the tag will be returned.
         """
         return [SupplementaryAlignment.parse(a) for a in tag.split(";") if len(a) > 0]
 
@@ -1233,9 +1235,9 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
     reference_offset: int | None = None,
 ) -> ReadEditInfo | None:
     """
-    Constructs a `ReadEditInfo` instance giving summary stats about how the read aligns to the
-    reference.  Computes the number of mismatches, indels, indel bases as well as the
-    SAM NM and MD tags.
+    Constructs a `ReadEditInfo` with summary stats about how the read aligns to the reference.
+
+    Computes the number of mismatches, indels, indel bases as well as the SAM NM and MD tags.
 
     Calculation of NM and MD tags is based off of htsjdk:
     https://github.com/samtools/htsjdk/blob/7034b33636b4cb9fec300a2136588e7c12c7ccd5/src/main/java/htsjdk/samtools/util/SequenceUtil.java#L964:L1029
@@ -1344,8 +1346,7 @@ def calculate_edit_info(  # noqa: C901 (11 > 10)
 @attr.s(frozen=True, auto_attribs=True)
 class Template:
     """
-    A container for alignment records corresponding to a single sequenced template
-    or insert.
+    A container for alignment records corresponding to a single sequenced template or insert.
 
     It is strongly preferred that new Template instances be created with `Template.build()`
     which will ensure that reads are stored in the correct Template property, and run basic
@@ -1376,8 +1377,9 @@ class Template:
     @staticmethod
     def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
         """
-        Returns an iterator over templates. Assumes the input iterable is queryname grouped,
-        and gathers consecutive runs of records sharing a common query name into templates.
+        Returns an iterator over templates from queryname-grouped alignments.
+
+        Gathers consecutive runs of records sharing a common query name into templates.
         """
         return TemplateIterator(alns)
 
@@ -1561,10 +1563,7 @@ class Template:
 
 
 class TemplateIterator(Iterator[Template]):
-    """
-    An iterator that converts an iterator over query-grouped reads into an iterator
-    over templates.
-    """
+    """An iterator that converts query-grouped reads into templates."""
 
     def __init__(self, iterator: Iterator[AlignedSegment]) -> None:
         """Initializes the iterator from a query-grouped alignment iterator."""

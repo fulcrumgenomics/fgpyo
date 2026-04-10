@@ -109,6 +109,7 @@ def gc_content(bases: str) -> float:
 def hamming(string1: str, string2: str) -> int:
     """
     Calculates hamming distance between two strings, case sensitive.
+
     Strings must be of equal lengths.
 
     Args:

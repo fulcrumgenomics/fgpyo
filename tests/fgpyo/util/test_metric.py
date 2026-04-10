@@ -62,10 +62,11 @@ def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
 
 class DataBuilder:
     """
-    Holds classes and data for testing, either using attr- or dataclasses-style dataclass
-    We need to run each test both with attr and dataclasses classes, so use this class to construct
-    the test metrics appropriately, governed by the use_attr flag. After construction, the
-    DataBuilder object will have all the required Metrics:
+    Holds classes and data for testing, either using attr- or dataclasses-style dataclass.
+
+    We need to run each test both with attr and dataclasses classes, so use this class to
+    construct the test metrics appropriately, governed by the use_attr flag. After construction,
+    the DataBuilder object will have all the required Metrics:
 
     Attributes:
         use_attr: If True use attr classes for Metrics, if False use dataclasses
@@ -229,10 +230,7 @@ num_metrics = len(attr_data_and_classes.DUMMY_METRICS)
 
 @pytest.mark.parametrize("use_attr", [False, True])
 def test_is_correct_dataclass_type(use_attr: bool) -> None:
-    """
-    Test that the DataBuilder class works as expected, as do the is_attr_class and
-    is_dataclasses_class methods.
-    """
+    """Test that DataBuilder, is_attr_class, and is_dataclasses_class work as expected."""
     data_and_classes = DataBuilder(use_attr=use_attr)
     assert use_attr == data_and_classes.use_attr
     assert is_attr_class(data_and_classes.DummyMetric) is use_attr
@@ -732,10 +730,7 @@ def test_writer_append_raises_if_no_header(tmp_path: Path) -> None:
 
 
 def test_writer_append_raises_if_header_does_not_match(tmp_path: Path) -> None:
-    """
-    Test that we raise an error if we try to append to a file whose header doesn't match our
-    dataclass.
-    """
+    """Test that appending to a file whose header doesn't match our dataclass raises an error."""
     fpath = tmp_path / "test.txt"
 
     with fpath.open("w") as fout:
@@ -837,10 +832,7 @@ def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
 
 
 def test_assert_is_metric_class_raises_if_not_decorated() -> None:
-    """
-    Test that we raise an error if the provided type is a Metric subclass but not decorated as a
-    dataclass or attr.
-    """
+    """Test that a Metric subclass not decorated as a dataclass or attr raises an error."""
 
     class BadMetric(Metric["BadMetric"]):
         foo: str
@@ -851,10 +843,7 @@ def test_assert_is_metric_class_raises_if_not_decorated() -> None:
 
 
 def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
-    """
-    Test that we raise an error if the provided type is decorated as a
-    dataclass or attr but does not subclass Metric.
-    """
+    """Test that a dataclass or attr class not subclassing Metric raises an error."""
 
     @dataclass
     class BadMetric:
@@ -888,10 +877,7 @@ def test_assert_fieldnames_are_metric_attributes(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """
-    Should not raise an error if the provided fieldnames are all attributes of
-    the provided metric.
-    """
+    """Should not raise an error if the provided fieldnames are all metric attributes."""
     _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

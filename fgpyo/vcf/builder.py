@@ -42,8 +42,9 @@ MissingRep = Tuple[None, ...] | None
 
 class VariantBuilder:
     """
-    Builder for constructing one or more variant records (pysam.VariantRecord) for a VCF. The VCF
-    can be sites-only, single-sample, or multi-sample.
+    Builder for constructing one or more variant records (pysam.VariantRecord) for a VCF.
+
+    The VCF can be sites-only, single-sample, or multi-sample.
 
     Provides the ability to manufacture variants from minimal arguments, while generating
     any remaining attributes to ensure a valid variant.
@@ -103,7 +104,8 @@ class VariantBuilder:
     @classmethod
     def default_sd(cls) -> Dict[str, Dict[str, Any]]:
         """
-        Generates the sequence dictionary that is used by default by VariantBuilder.
+        Generates the default sequence dictionary for VariantBuilder.
+
         Re-uses the dictionary from SamBuilder for consistency.
 
         Returns:
@@ -272,9 +274,10 @@ class VariantBuilder:
         self, pos: int, ref: str, end: int | None, info: dict[str, Any] | None
     ) -> int:
         """
-        Derives the END/stop position for a new record based on the optionally provided `end`
-        parameter, the presence/absence of END in the info dictionary and/or the length of the
-        reference allele.
+        Derives the END/stop position for a new record.
+
+        Uses the optionally provided `end` parameter, the presence/absence of END in the info
+        dictionary and/or the length of the reference allele.
 
         Also checks that any given or calculated end position is at least greater than or equal
         to the record's position.
@@ -324,9 +327,11 @@ class VariantBuilder:
     @staticmethod
     def _to_vcf_path(path: Path | None) -> Path:
         """
-        Gets the path to a VCF file.  If path is a directory, a temporary VCF will be created in
-        that directory. If path is `None`, then a temporary VCF will be created.  Otherwise, the
-        given path is simply returned.
+        Gets the path to a VCF file.
+
+        If path is a directory, a temporary VCF will be created in that directory. If path is
+        `None`, then a temporary VCF will be created.  Otherwise, the given path is simply
+        returned.
 
         Args:
             path: optionally the path to the VCF, or a directory to create a temporary VCF.

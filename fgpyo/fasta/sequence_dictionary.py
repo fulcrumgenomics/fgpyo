@@ -561,7 +561,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     def by_index(self, index: int) -> SequenceMetadata:
         """
-        Gets a `SequenceMetadata` explicitly by `name`.  
+        Gets a `SequenceMetadata` explicitly by `name`.
 
         Raises:
             IndexError: if the index is out of bounds.

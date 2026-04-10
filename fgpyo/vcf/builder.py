@@ -174,11 +174,11 @@ class VariantBuilder:
         contig: str | None = None,
         pos: int = 1000,
         end: int | None = None,
-        id: str = ".",
+        id: str = ".",  # noqa: A002  # pysam is already shadowing the built-in
         ref: str = "A",
         alts: str | Iterable[str] | None = (".",),
         qual: int = 60,
-        filter: str | Iterable[str] | None = None,
+        filter: str | Iterable[str] | None = None,  # noqa: A002
         info: Dict[str, Any] | None = None,
         samples: Dict[str, Dict[str, Any]] | None = None,
     ) -> VariantRecord:
@@ -232,7 +232,7 @@ class VariantBuilder:
             alts = (alts,)
         alleles = (ref,) if alts is None else (ref, *alts)
         if isinstance(filter, str):
-            filter = (filter,)
+            filter = (filter,)  # noqa: A001  # pysam already shadows the built-in
 
         # pysam expects a list of format dicts provided in the same order as the samples in the
         # header (self.sample_ids). (This is despite the fact that it will internally represent the

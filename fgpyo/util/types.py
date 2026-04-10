@@ -28,7 +28,7 @@ LiteralType = TypeVar("LiteralType")
 T = TypeVar("T")
 
 
-class InspectError(Exception):
+class InspectException(Exception):  # noqa: N818
     """Raised when type inspection or parsing fails."""
 
 
@@ -55,7 +55,7 @@ def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
     try:
         return enum(value)
     except KeyError as ex:
-        raise InspectError(
+        raise InspectException(
             "invalid choice: {!r} (choose from {})".format(
                 value, ", ".join(map(repr, enum.__members__))
             )
@@ -157,13 +157,13 @@ def _make_union_parser_worker(
             # mypy doesn't like functions that return None always, so return separately
             none_parser(value)
             return None
-        except (ValueError, InspectError):
+        except (ValueError, InspectException):
             pass
 
     for p in parsers:
         try:
             return p(value)
-        except (ValueError, InspectError):
+        except (ValueError, InspectException):
             pass
     raise ValueError(f"{value} could not be parsed as any of {union}")
 
@@ -192,7 +192,7 @@ def _make_literal_parser_worker(
                 return cast(LiteralType, arg)
         except ValueError:
             pass
-    raise InspectError(
+    raise InspectException(
         "invalid choice: {!r} (choose from {})".format(
             value, ", ".join(map(repr, map(str, typing.get_args(literal))))
         )

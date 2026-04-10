@@ -109,7 +109,7 @@ square brackets.
 >>> cigar = Cigar.from_cigarstring("10M5U")
 Traceback (most recent call last):
     ...
-fgpyo.sam.CigarParsingError: Malformed cigar: 10M5[U]
+fgpyo.sam.CigarParsingException: Malformed cigar: 10M5[U]
 
 ```
 
@@ -517,7 +517,7 @@ class CigarElement:
         return f"{self.length}{self.operator.character}"
 
 
-class CigarParsingError(Exception):
+class CigarParsingException(Exception):  # noqa: N818
     """The exception raised specific to parsing a cigar."""
 
     pass
@@ -552,17 +552,17 @@ class Cigar:
                 elements.append(CigarElement(length, operator))
             return Cigar(tuple(elements))
         except Exception as ex:
-            raise CigarParsingError(f"Malformed cigar tuples: {cigartuples}") from ex
+            raise CigarParsingException(f"Malformed cigar tuples: {cigartuples}") from ex
 
     @classmethod
-    def _pretty_cigarstring_exception(cls, cigarstring: str, index: int) -> CigarParsingError:
+    def _pretty_cigarstring_exception(cls, cigarstring: str, index: int) -> CigarParsingException:
         """Raises an exception highlighting the malformed character."""
         prefix = cigarstring[:index]
         character = cigarstring[index] if index < len(cigarstring) else ""
         suffix = cigarstring[index + 1 :]
         pretty_cigarstring = f"{prefix}[{character}]{suffix}"
         message = f"Malformed cigar: {pretty_cigarstring}"
-        return CigarParsingError(message)
+        return CigarParsingException(message)
 
     @classmethod
     def from_cigarstring(cls, cigarstring: str) -> "Cigar":
@@ -576,7 +576,7 @@ class Cigar:
 
         cigarstring_length = len(cigarstring)
         if cigarstring_length == 0:
-            raise CigarParsingError("Cigar string was empty")
+            raise CigarParsingException("Cigar string was empty")
 
         elements = []
         i = 0

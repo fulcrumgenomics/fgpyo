@@ -111,7 +111,7 @@ def _get_dataclasses_fields_dict(
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
 
 
-class ParserNotFoundError(Exception):
+class ParserNotFoundException(Exception):  # noqa: N818
     """Raised when no parser can be found for a given type."""
 
 
@@ -377,7 +377,7 @@ def _get_parser(  # noqa: C901
                     [_get_parser(cls, type(arg), parsers) for arg in typing.get_args(type_)],
                 )
             else:
-                raise ParserNotFoundError(
+                raise ParserNotFoundException(
                     "no parser found for type {}".format(
                         # typing types have no __name__.
                         getattr(type_, "__name__", repr(type_))
@@ -458,7 +458,7 @@ def attr_from(
                     parser = _get_parser(cls=cls, type_=attribute.type, parsers=parsers)
                     return_value = parser(str_value)
                     set_value = True
-                except ParserNotFoundError:
+                except ParserNotFoundException:
                     pass
 
             # try setting by casting

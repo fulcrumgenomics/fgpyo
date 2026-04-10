@@ -18,7 +18,7 @@ import fgpyo.sam as sam
 from fgpyo.sam import Cigar
 from fgpyo.sam import CigarElement
 from fgpyo.sam import CigarOp
-from fgpyo.sam import CigarParsingError
+from fgpyo.sam import CigarParsingException
 from fgpyo.sam import PairOrientation
 from fgpyo.sam import SamFileType
 from fgpyo.sam import is_proper_pair
@@ -235,7 +235,7 @@ def test_cigar_from_cigartuples(cigartuples: List[Tuple[int, int]], cigarstring:
 
 
 def test_cigar_from_cigartuples_malformed() -> None:
-    with pytest.raises(CigarParsingError, match=r".*Malformed cigar tuples.*"):
+    with pytest.raises(CigarParsingException, match=r".*Malformed cigar tuples.*"):
         cigartuples = [(0, 10), (1, 5), (22, 1)]
         Cigar.from_cigartuples(cigartuples)
 
@@ -244,13 +244,13 @@ def test_pretty_cigarstring_exception() -> None:
     cigar = "10M5U4M"
     index = 4
     expected = "10M5[U]4M"
-    with pytest.raises(CigarParsingError, match=r".*Malformed cigar") as ex:
+    with pytest.raises(CigarParsingException, match=r".*Malformed cigar") as ex:
         raise Cigar._pretty_cigarstring_exception(cigar, index)
 
     assert expected in str(ex)
 
     expected = cigar + "[]"
-    with pytest.raises(CigarParsingError, match=r".*Malformed cigar") as ex:
+    with pytest.raises(CigarParsingException, match=r".*Malformed cigar") as ex:
         raise Cigar._pretty_cigarstring_exception(cigar, len(cigar))
     assert expected in str(ex)
 
@@ -271,7 +271,7 @@ def test_from_cigarstring_op_should_start_with_digit() -> None:
     errors = ["", "[M]", "10M[I]", "10M5S[U]"]
     for cigar, error in zip(cigars, errors, strict=True):
         match = "Malformed cigar: " + error if cigar else "Cigar string was empty"
-        with pytest.raises(CigarParsingError) as ex:
+        with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert match in str(ex)
 
@@ -280,7 +280,7 @@ def test_from_cigarstring_no_length() -> None:
     cigars = ["M", "10MS"]
     errors = ["", "10M[S]"]
     for cigar, error in zip(cigars, errors, strict=True):
-        with pytest.raises(CigarParsingError) as ex:
+        with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)
 
@@ -289,7 +289,7 @@ def test_from_cigarstring_invalid_operator() -> None:
     cigars = ["10U", "10M5U"]
     errors = ["10[U]", "10M5[U]"]
     for cigar, error in zip(cigars, errors, strict=True):
-        with pytest.raises(CigarParsingError) as ex:
+        with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)
 
@@ -298,7 +298,7 @@ def test_from_cigarstring_missing_operator() -> None:
     cigars = ["10", "10M5"]
     errors = ["10[]", "10M5[]"]
     for cigar, error in zip(cigars, errors, strict=True):
-        with pytest.raises(CigarParsingError) as ex:
+        with pytest.raises(CigarParsingException) as ex:
             Cigar.from_cigarstring(cigar)
         assert "Malformed cigar: " + error in str(ex)
 

@@ -60,7 +60,7 @@ def _get_random_variant_inputs(
         [1, 5, 100] if variant_reference_len == 0 else [0, 1, 5, 100]
     )
     num_filters = random_generator.randint(0, 3)
-    filter = tuple(random_generator.sample(list(_ALL_FILTERS), k=num_filters))
+    filters = tuple(random_generator.sample(list(_ALL_FILTERS), k=num_filters))
     start = random_generator.randint(1, contig_len - variant_reference_len)
     # stop is not directly passed by current API, but this is what its value would be:
     # stop = start + variant_reference_len
@@ -92,7 +92,7 @@ def _get_random_variant_inputs(
         "pos": start,
         "ref": ref,
         "alts": (alt,),
-        "filter": filter,
+        "filter": filters,
         "info": info,
     })
 
@@ -110,8 +110,8 @@ def zero_sample_record_inputs(
 
 def _add_headers(variant_builder: VariantBuilder) -> None:
     """Add needed headers to the VariantBuilder."""
-    for filter in _ALL_FILTERS:
-        variant_builder.add_filter_header(filter)
+    for filter_name in _ALL_FILTERS:
+        variant_builder.add_filter_header(filter_name)
     for field_name, field_type in _INFO_FIELD_TYPES.items():
         variant_builder.add_info_header(field_name, field_type=field_type)
 

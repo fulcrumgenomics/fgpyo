@@ -7,24 +7,24 @@ from fgpyo.read_structure import ReadStructure
 from fgpyo.read_structure import SegmentType
 
 
-def _T(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.Template)
+def _T(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.Template)
 
 
-def _B(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.SampleBarcode)
+def _B(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.SampleBarcode)
 
 
-def _M(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.MolecularBarcode)
+def _M(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.MolecularBarcode)
 
 
-def _C(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.CellBarcode)
+def _C(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.CellBarcode)
 
 
-def _S(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.Skip)
+def _S(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.Skip)
 
 
 @pytest.mark.parametrize(

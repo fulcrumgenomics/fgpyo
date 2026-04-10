@@ -66,13 +66,13 @@ def setup_logging(level: str = "INFO", name: str = "fgpyo") -> None:
 
     with __LOCK:
         if not __FGPYO_LOGGING_SETUP:
-            format = (
+            log_format = (
                 f"%(asctime)s {socket.gethostname()} %(name)s:%(funcName)s:%(lineno)s "
                 + "[%(levelname)s]: %(message)s"
             )
             handler = logging.StreamHandler()
             handler.setLevel(level)
-            handler.setFormatter(logging.Formatter(format))
+            handler.setFormatter(logging.Formatter(log_format))
 
             logger = logging.getLogger(name)
             logger.setLevel(level)

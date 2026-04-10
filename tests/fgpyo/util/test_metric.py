@@ -33,6 +33,8 @@ from fgpyo.util.metric import _assert_is_metric_class
 
 
 class EnumTest(enum.Enum):
+    """Test enum for metric parsing tests."""
+
     EnumVal1 = "val1"
     EnumVal2 = "val2"
     EnumVal3 = "val3"
@@ -619,6 +621,8 @@ def test_read_header_can_read_empty(tmp_path: Path) -> None:
 
 @dataclass
 class FakeMetric(Metric["FakeMetric"]):
+    """Test metric class for MetricWriter tests."""
+
     foo: str
     bar: int
 

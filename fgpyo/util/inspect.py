@@ -70,6 +70,8 @@ if TYPE_CHECKING:  # pragma: no cover
 else:
 
     class DataclassInstance(Protocol):
+        """Protocol for dataclass instances when _typeshed is unavailable."""
+
         __dataclasses_fields__: ClassVar[Dict[str, dataclasses.Field[Any]]]
 
 
@@ -78,6 +80,8 @@ if TYPE_CHECKING and _use_attr:  # pragma: no cover
 else:
     # https://github.com/python-attrs/attrs/blob/f7f317ae4c3790f23ae027db626593d50e8a4e88/src/attr/_typing_compat.pyi#L9
     class AttrsInstance(Protocol):  # type: ignore[no-redef]
+        """Protocol for attrs instances when attrs is unavailable."""
+
         __attrs_attrs__: ClassVar[Any]
 
 
@@ -108,7 +112,7 @@ def _get_dataclasses_fields_dict(
 
 
 class ParserNotFoundException(Exception):
-    pass
+    """Raised when no parser can be found for a given type."""
 
 
 def split_at_given_level(

@@ -29,7 +29,7 @@ T = TypeVar("T")
 
 
 class InspectException(Exception):
-    pass
+    """Raised when type inspection or parsing fails."""
 
 
 def parse_bool(string: str) -> bool:

@@ -456,6 +456,8 @@ def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
 
 
 class MetricWriter(Generic[MetricType], AbstractContextManager):
+    """Writes Metric instances to a delimited file."""
+
     _metric_class: Type[Metric]
     _fieldnames: List[str]
     _fout: TextIOWrapper

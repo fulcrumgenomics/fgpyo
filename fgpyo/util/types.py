@@ -233,7 +233,7 @@ def all_not_none(values: Collection[Optional[T]]) -> TypeGuard[Collection[T]]: .
 
 def all_not_none(values: Iterable[Optional[T]]) -> bool:
     """
-    Type guard that checks all Optional collection elements are non-null.
+    Type guard that checks all Optional collection elements are not None.
 
     Args:
         values: Collection of Optional elements.

@@ -70,14 +70,14 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
             raise StopIteration
 
         elif not all_not_none(records):
-            non_null_names: List[str | None] = [
+            non_none_names: List[str | None] = [
                 record.name for record in records if record is not None
             ]
-            assert all_not_none(non_null_names)  # type narrowing
-            # We know there is at least one non-null record because the previous conditional covers
-            # the case where all records are null, so it is safe to index into the first element of
-            # non_null_names.
-            sequence_name: str = non_null_names[0]
+            assert all_not_none(non_none_names)  # type narrowing
+            # We know there is at least one non-None record because the previous conditional
+            # covers the case where all records are None, so it is safe to index into the first
+            # element of non_none_names.
+            sequence_name: str = non_none_names[0]
 
             raise ValueError(
                 "One or more of the FASTX files is truncated for sequence "

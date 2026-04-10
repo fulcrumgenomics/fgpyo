@@ -81,6 +81,7 @@ class SegmentType(enum.Enum):
     """The segment type for bases that need to be skipped."""
 
     def __str__(self) -> str:
+        """Returns the single-character value of this segment type."""
         return self.value
 
 
@@ -193,6 +194,7 @@ class ReadSegment:
             return attr.evolve(self, length=new_length)
 
     def __str__(self) -> str:
+        """Returns the string representation of this segment (e.g. '10T' or '+T')."""
         if self.has_fixed_length:
             return f"{self.length}{self.kind.value}"
         else:
@@ -278,15 +280,19 @@ class ReadStructure(Iterable[ReadSegment]):
         return self.segments_by_kind(kind=SegmentType.Skip)
 
     def __iter__(self) -> Iterator[ReadSegment]:
+        """Iterates over the read segments."""
         return iter(self.segments)
 
     def __str__(self) -> str:
+        """Returns the string representation of the full read structure."""
         return "".join(str(s) for s in self.segments)
 
     def __len__(self) -> int:
+        """Returns the total length of the read structure."""
         return self.length
 
     def __getitem__(self, index: int) -> ReadSegment:
+        """Returns the segment at the given index."""
         return self.segments[index]
 
     @classmethod

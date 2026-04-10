@@ -93,7 +93,9 @@ from typing import TypeVar
 class SupportsLessThanOrEqual(Protocol):
     """A structural type for objects that support less-than-or-equal comparison."""
 
-    def __le__(self, other: Any) -> bool: ...
+    def __le__(self, other: Any) -> bool:
+        """Return True if self is less than or equal to other."""
+        ...
 
 
 IterType = TypeVar("IterType")
@@ -119,9 +121,11 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         self.__update_peek()
 
     def __iter__(self) -> Iterator[IterType]:
+        """Returns self as the iterator."""
         return self
 
     def __next__(self) -> IterType:
+        """Returns the next item and advances the iterator."""
         to_return = self.peek()
         self.__update_peek()
         return to_return

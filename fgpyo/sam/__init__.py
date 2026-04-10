@@ -513,6 +513,7 @@ class CigarElement:
         return self.length if self.operator.consumes_reference else 0
 
     def __str__(self) -> str:
+        """Returns the string representation (e.g. '10M')."""
         return f"{self.length}{self.operator.character}"
 
 
@@ -602,6 +603,7 @@ class Cigar:
         return Cigar(tuple(elements))
 
     def __str__(self) -> str:
+        """Returns the CIGAR string, or '*' if empty."""
         if self.elements:
             return "".join([str(e) for e in self.elements])
         else:
@@ -957,6 +959,7 @@ class SupplementaryAlignment:
     nm: int
 
     def __str__(self) -> str:
+        """Returns the comma-delimited SA tag representation."""
         return ",".join(
             str(item)
             for item in (
@@ -1568,9 +1571,11 @@ class TemplateIterator(Iterator[Template]):
         self._iter = PeekableIterator(iterator)
 
     def __iter__(self) -> Iterator[Template]:
+        """Returns self as the iterator."""
         return self
 
     def __next__(self) -> Template:
+        """Returns the next Template from the query-grouped iterator."""
         name = self._iter.peek().query_name
         recs = self._iter.takewhile(lambda r: r.query_name == name)
         return Template.build(recs, validate=False)

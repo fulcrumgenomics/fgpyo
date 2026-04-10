@@ -201,9 +201,11 @@ class AlternateLocus:
             raise ValueError(f"start < 1: {self.start}")
 
     def __str__(self) -> str:
+        """Returns the string representation as name:start-end."""
         return f"{self.name}:{self.start}-{self.end}"
 
     def __len__(self) -> int:
+        """Returns the length of the genomic span."""
         return self.end - self.start + 1
 
     @staticmethod
@@ -368,6 +370,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return SequenceMetadata(name=name, length=length, index=index, attributes=attributes)
 
     def __getitem__(self, key: Keys | str) -> Any:
+        """Returns the value for the given key."""
         if key == Keys.SEQUENCE_NAME.value:
             return self.name
         elif key == Keys.SEQUENCE_LENGTH.value:
@@ -375,26 +378,32 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return self.attributes[key]
 
     def __setitem__(self, key: Keys | str, value: str) -> None:
+        """Sets the value for the given attribute key."""
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot set '{key}' on SequenceMetadata with name '{self.name}'")
         self.attributes[key] = value
 
     def __delitem__(self, key: Keys | str) -> None:
+        """Deletes the given attribute key."""
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot delete '{key}' on SequenceMetadata with name '{self.name}'")
         del self.attributes[key]
 
     def __iter__(self) -> Iterator[Keys | str]:
+        """Iterates over all keys, starting with name and length."""
         pre_iter = iter((Keys.SEQUENCE_NAME, Keys.SEQUENCE_LENGTH))
         return itertools.chain(pre_iter, iter(self.attributes))
 
     def __len__(self) -> int:
+        """Returns the sequence length."""
         return self.length
 
     def __str__(self) -> str:
+        """Returns the SAM-formatted @SQ line."""
         return "@SQ\t" + "\t".join(f"{key}:{value}" for key, value in self.to_sam().items())
 
     def __index__(self) -> int:
+        """Returns the index of this sequence in the dictionary."""
         return self.index
 
 
@@ -418,6 +427,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
     _dict: Dict[str, SequenceMetadata] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        """Builds the internal name-to-metadata lookup dictionary."""
         # Initialize a mapping from sequence name to the sequence metadata for all names
         self_dict: Dict[str, SequenceMetadata] = {}
         for index, info in enumerate(self.infos):
@@ -517,6 +527,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         return seq_dict
 
     def __getitem__(self, key: str | int) -> SequenceMetadata:
+        """Returns the SequenceMetadata by name or index."""
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 
     def get_by_name(self, name: str) -> SequenceMetadata | None:
@@ -538,10 +549,13 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         return self.infos[index]
 
     def __iter__(self) -> Iterator[str]:
+        """Iterates over the sequence names."""
         return iter(self._dict)
 
     def __len__(self) -> int:
+        """Returns the number of sequences in the dictionary."""
         return len(self.infos)
 
     def __str__(self) -> str:
+        """Returns the SAM-formatted string of all sequences."""
         return "\n".join(f"{info}" for info in self.infos)

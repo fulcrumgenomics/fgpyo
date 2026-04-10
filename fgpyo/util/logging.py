@@ -122,6 +122,7 @@ class ProgressLogger(AbstractContextManager):
     def __exit__(
         self, ex_type: Any | None, ex_value: Any | None, traceback: Any | None
     ) -> Literal[False]:
+        """Logs the final count on exit if no exception occurred."""
         if ex_value is None:
             self.log_last()
         return False

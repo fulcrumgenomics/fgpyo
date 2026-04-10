@@ -536,6 +536,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             self._writer.writeheader()
 
     def __enter__(self) -> "MetricWriter":
+        """Returns self for use as a context manager."""
         return self
 
     def __exit__(
@@ -544,6 +545,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
+        """Closes the underlying writer on exit."""
         self.close()
         super().__exit__(exc_type, exc_value, traceback)
 

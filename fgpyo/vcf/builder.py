@@ -15,7 +15,7 @@ from pysam import VariantHeader
 from pysam import VariantRecord
 
 from fgpyo.sam.builder import SamBuilder
-from fgpyo.vcf import writer as PysamWriter
+from fgpyo.vcf import writer as pysam_writer
 
 
 class VcfFieldType(Enum):
@@ -312,7 +312,7 @@ class VariantBuilder:
         path = self._to_vcf_path(path)
 
         # Create a writer and write to it
-        with PysamWriter(path, header=self.header) as writer:
+        with pysam_writer(path, header=self.header) as writer:
             for variant in self.to_sorted_list():
                 writer.write(variant)
 

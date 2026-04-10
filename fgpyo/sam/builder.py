@@ -26,7 +26,8 @@ from fgpyo.sam import SamOrder
 
 
 class SamBuilder:
-    """Builder for constructing one or more sam records (AlignmentSegments in pysam terms).
+    """
+    Builder for constructing one or more sam records (AlignmentSegments in pysam terms).
 
     Provides the ability to manufacture records from minimal arguments, while generating
     any remaining attributes to ensure a valid record.
@@ -52,7 +53,8 @@ class SamBuilder:
 
     @staticmethod
     def default_sd() -> List[Dict[str, Any]]:
-        """Generates the sequence dictionary that is used by default by SamBuilder.
+        """
+        Generates the sequence dictionary that is used by default by SamBuilder.
 
         Matches the names and lengths of the HG19 reference in use in production.
 
@@ -104,7 +106,8 @@ class SamBuilder:
         seed: int = 42,
         sort_order: SamOrder = SamOrder.Coordinate,
     ) -> None:
-        """Initializes a new SamBuilder for generating alignment records and SAM/BAM files.
+        """
+        Initializes a new SamBuilder for generating alignment records and SAM/BAM files.
 
         Args:
             r1_len: The length of R1s to create unless otherwise specified
@@ -117,7 +120,6 @@ class SamBuilder:
             seed: a seed value for random number/string generation
             sort_order: Order to sort records when writing to file, or output of to_sorted_list()
         """
-
         self.r1_len: int = r1_len if r1_len is not None else self.DEFAULT_R1_LENGTH
         self.r2_len: int = r2_len if r2_len is not None else self.DEFAULT_R2_LENGTH
         self.base_quality: int = base_quality
@@ -159,7 +161,8 @@ class SamBuilder:
         mapq: int | None,
         attrs: Dict[str, Any] | None,
     ) -> AlignedSegment:
-        """Generates a new AlignedSegment.  Sets the segment up with the correct
+        """
+        Generates a new AlignedSegment.  Sets the segment up with the correct
         header and adds the RG attribute if not contained in attrs.
 
         Args:
@@ -200,7 +203,8 @@ class SamBuilder:
         secondary: bool = False,
         supplementary: bool = False,
     ) -> None:
-        """Appropriately sets most flag fields on the given read.
+        """
+        Appropriately sets most flag fields on the given read.
 
         Args:
             rec: the read to set the flags on
@@ -225,7 +229,8 @@ class SamBuilder:
         quals: List[int] | None = None,
         cigar: str | None = None,
     ) -> None:
-        """Fills in bases, quals and cigar on a record.
+        """
+        Fills in bases, quals and cigar on a record.
 
         If any of bases, quals or cigar are defined, they must all have the same length/query
         length.  If none are defined then the length parameter is used.  Undefined values are
@@ -238,7 +243,6 @@ class SamBuilder:
             quals: an optional list of qualities for the read
             cigar: an optional cigar string for the read
         """
-
         # Do some validation to make sure all defined things have the same lengths
         lengths = set()
         if bases is not None:
@@ -298,7 +302,8 @@ class SamBuilder:
         strand2: str = "-",
         attrs: Dict[str, Any] | None = None,
     ) -> Tuple[AlignedSegment, AlignedSegment]:
-        """Generates a new pair of reads, adds them to the internal collection, and returns them.
+        """
+        Generates a new pair of reads, adds them to the internal collection, and returns them.
 
         Most fields are optional.
 
@@ -359,7 +364,6 @@ class SamBuilder:
         Returns:
             Tuple[AlignedSegment, AlignedSegment]: The pair of records created, R1 then R2.
         """
-
         if strand1 not in ["+", "-"]:
             raise ValueError(f"Invalid value for strand1: {strand1}")
         if strand2 not in ["+", "-"]:
@@ -432,7 +436,8 @@ class SamBuilder:
         supplementary: bool = False,
         attrs: Dict[str, Any] | None = None,
     ) -> AlignedSegment:
-        """Generates a new single reads, adds them to the internal collection, and returns it.
+        """
+        Generates a new single reads, adds them to the internal collection, and returns it.
 
         Most fields are optional.
 
@@ -476,7 +481,6 @@ class SamBuilder:
         Returns:
             AlignedSegment: The record created
         """
-
         if strand not in ["+", "-"]:
             raise ValueError(f"Invalid value for strand1: {strand}")
         if read_num not in [None, 1, 2]:
@@ -504,7 +508,8 @@ class SamBuilder:
         pred: Callable[[AlignedSegment], bool] = lambda r: True,
         tmp_file_type: sam.SamFileType | None = None,
     ) -> Path:
-        """Write the accumulated records to a file, sorts & indexes it, and returns the Path.
+        """
+        Write the accumulated records to a file, sorts & indexes it, and returns the Path.
         If a path is provided, it will be written to, otherwise a temporary file is created
         and returned.
 

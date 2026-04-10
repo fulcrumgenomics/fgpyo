@@ -8,7 +8,8 @@ class RequirementError(Exception):
 
 
 def require(condition: bool, message: str | Callable[[], str] | None = None) -> None:
-    """Require a condition be satisfied.
+    """
+    Require a condition be satisfied.
 
     Args:
         condition: The condition to satisfy.

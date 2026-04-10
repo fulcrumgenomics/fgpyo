@@ -75,7 +75,6 @@ def test_query_alignment_offsets_reversed(
     """
     cig.revered().query_alignment_offsets() should return the expected results.
     """
-
     cig = Cigar.from_cigarstring(cigar_string)
 
     ret = cig.reversed().query_alignment_offsets()

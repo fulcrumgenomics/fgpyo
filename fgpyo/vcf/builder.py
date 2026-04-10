@@ -85,7 +85,8 @@ class VariantBuilder:
         sample_ids: Iterable[str] | None = None,
         sd: Dict[str, Dict[str, Any]] | None = None,
     ) -> None:
-        """Initializes a new VariantBuilder for generating variants and VCF files.
+        """
+        Initializes a new VariantBuilder for generating variants and VCF files.
 
         Args:
             sample_ids: the name of the sample(s)
@@ -103,7 +104,8 @@ class VariantBuilder:
 
     @classmethod
     def default_sd(cls) -> Dict[str, Dict[str, Any]]:
-        """Generates the sequence dictionary that is used by default by VariantBuilder.
+        """
+        Generates the sequence dictionary that is used by default by VariantBuilder.
         Re-uses the dictionary from SamBuilder for consistency.
 
         Returns:
@@ -118,7 +120,8 @@ class VariantBuilder:
 
     @classmethod
     def _build_header_string(cls, sd: Dict[str, Dict[str, Any]] | None = None) -> Iterator[str]:
-        """Builds the VCF header with the given sample name(s) and sequence dictionary.
+        """
+        Builds the VCF header with the given sample name(s) and sequence dictionary.
 
         Args:
             sd: the sequence dictionary mapping the contig name to the key-value pairs for the
@@ -178,7 +181,8 @@ class VariantBuilder:
         info: Dict[str, Any] | None = None,
         samples: Dict[str, Dict[str, Any]] | None = None,
     ) -> VariantRecord:
-        """Generates a new variant and adds it to the internal collection.
+        """
+        Generates a new variant and adds it to the internal collection.
 
         Notes:
         * Very little validation is done with respect to INFO and FORMAT keys being defined in the
@@ -320,7 +324,8 @@ class VariantBuilder:
 
     @staticmethod
     def _to_vcf_path(path: Path | None) -> Path:
-        """Gets the path to a VCF file.  If path is a directory, a temporary VCF will be created in
+        """
+        Gets the path to a VCF file.  If path is a directory, a temporary VCF will be created in
         that directory. If path is `None`, then a temporary VCF will be created.  Otherwise, the
         given path is simply returned.
 
@@ -357,7 +362,8 @@ class VariantBuilder:
         source: str | None = None,
         version: str | None = None,
     ) -> None:
-        """Add an INFO header field to the VCF header.
+        """
+        Add an INFO header field to the VCF header.
 
         Args:
             name: the name of the field

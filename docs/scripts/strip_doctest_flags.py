@@ -1,4 +1,5 @@
-"""MkDocs hook to strip doctest flags from rendered documentation.
+"""
+MkDocs hook to strip doctest flags from rendered documentation.
 
 Doctest flags like `# doctest: +SKIP` are useful for controlling doctest execution,
 but they clutter the documentation. This hook removes them from the rendered HTML.
@@ -13,7 +14,8 @@ DOCTEST_FLAG_PATTERN = re.compile(r"\s*#\s*doctest:\s*[+\w,\s]+")
 
 
 def on_page_content(html: str, **kwargs: Any) -> str:
-    """Remove doctest flags from page content.
+    """
+    Remove doctest flags from page content.
 
     Args:
         html: The rendered HTML content of the page.

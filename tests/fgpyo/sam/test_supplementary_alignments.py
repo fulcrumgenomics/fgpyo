@@ -53,7 +53,6 @@ def test_format_supplementary_alignment() -> None:
 
 def test_from_read() -> None:
     """Test that we can construct a SupplementaryAlignment from an AlignedSegment."""
-
     builder = SamBuilder()
 
     read = builder.add_single()
@@ -73,7 +72,6 @@ def test_from_read() -> None:
 
 def test_end() -> None:
     """Test that we can get the end of a SupplementaryAlignment."""
-
     s1 = SupplementaryAlignment.parse("chr1,123,+,50S100M,60,0")
 
     # NB: the SA tag is one-based, but SupplementaryAlignment is zero-based

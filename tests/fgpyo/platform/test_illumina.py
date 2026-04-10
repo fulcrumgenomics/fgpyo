@@ -20,7 +20,6 @@ from fgpyo.sam.builder import SamBuilder
 )
 def test_is_valid_umi(umi: str, validity: bool) -> None:
     """Test that we can detect valid UMIs."""
-
     assert _is_valid_umi(umi) is validity
 
 
@@ -52,8 +51,10 @@ def test_extract_umi_from_read_name(read_name: str, expected_umi: str) -> None:
     ],
 )
 def test_extract_umi_malformed_raises(read_name: str) -> None:
-    """Test that we raise an error when the number of colon-delimited fields is < 7
-    when strict is True."""
+    """
+    Test that we raise an error when the number of colon-delimited fields is < 7
+    when strict is True.
+    """
     with pytest.raises(ValueError, match="Trying to extract UMIs from read with"):
         extract_umis_from_read_name(read_name=read_name, strict=True)
 
@@ -69,8 +70,10 @@ def test_extract_umi_malformed_raises(read_name: str) -> None:
     ],
 )
 def test_extract_invalid_umi_raises(read_name: str) -> None:
-    """Test that we raise an error when the read name includes an invalid UMI
-    and strict is True."""
+    """
+    Test that we raise an error when the read name includes an invalid UMI
+    and strict is True.
+    """
     with pytest.raises(ValueError, match="Invalid UMIs found in read name"):
         extract_umis_from_read_name(read_name=read_name, strict=True)
 
@@ -88,8 +91,10 @@ def test_extract_invalid_umi_raises(read_name: str) -> None:
     ],
 )
 def test_extract_umi_from_read_name_strict_false(read_name: str, expected_umi: str | None) -> None:
-    """Test that we return None when an invalid UMI is encountered
-    and strict is False. Otherwise, return a valid UMI."""
+    """
+    Test that we return None when an invalid UMI is encountered
+    and strict is False. Otherwise, return a valid UMI.
+    """
     assert extract_umis_from_read_name(read_name=read_name, strict=False) == expected_umi
 
 
@@ -115,8 +120,10 @@ def test_strict_extract_umi_from_read_name(read_name: str, extraction: str) -> N
 
 @pytest.mark.parametrize("remove_umi, strict", [[True, False], [True, False]])
 def test_copy_valid_umi_from_read_name(remove_umi: bool, strict: bool) -> None:
-    """Test that we populate the RX field with a valid UMI if remove_umi and strict
-    are both True; otherwise do not remove UMI from read.query_name."""
+    """
+    Test that we populate the RX field with a valid UMI if remove_umi and strict
+    are both True; otherwise do not remove UMI from read.query_name.
+    """
     builder = SamBuilder()
     read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:GATTACA")
     assert copy_umi_from_read_name(read, strict=strict, remove_umi=remove_umi) is True
@@ -141,8 +148,10 @@ def test_populated_rx_tag_raises() -> None:
 
 
 def test_copy_invalid_umi_from_read_name_raises() -> None:
-    """Test that with an invalid UMI, we raise an error and do not set the RX tag
-    when strict is True."""
+    """
+    Test that with an invalid UMI, we raise an error and do not set the RX tag
+    when strict is True.
+    """
     builder = SamBuilder()
     read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:uvw+xyz")
     assert read.query_name is not None  # type narrowing

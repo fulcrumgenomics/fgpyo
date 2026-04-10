@@ -169,7 +169,8 @@ class MetricFileHeader:
 
 
 class Metric(ABC, Generic[MetricType]):
-    """Abstract base class for all metric-like tab-delimited files
+    """
+    Abstract base class for all metric-like tab-delimited files
 
     Metric files are tab-delimited, contain a header, and zero or more rows for metric values.  This
     makes it easy for them to be read in languages like `R`.
@@ -207,9 +208,11 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
-        """Mapping of type to a specific parser for that type.  The parser must accept a string
+        """
+        Mapping of type to a specific parser for that type.  The parser must accept a string
         as a single parameter and return a single value of the given type.  Sub-classes may
-        override this method to support custom types."""
+        override this method to support custom types.
+        """
         return {}
 
     @classmethod
@@ -220,7 +223,8 @@ class Metric(ABC, Generic[MetricType]):
         strip_whitespace: bool = False,
         threads: int | None = None,
     ) -> Iterator[Any]:
-        """Reads in zero or more metrics from the given path.
+        """
+        Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
 
@@ -293,7 +297,8 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def parse(cls, fields: List[str]) -> Any:
-        """Parses the string-representation of this metric.  One string per attribute should be
+        """
+        Parses the string-representation of this metric.  One string per attribute should be
         given.
 
         """
@@ -306,7 +311,8 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
-        """Writes zero or more metrics to the given path.
+        """
+        Writes zero or more metrics to the given path.
 
         The header will always be written.
 
@@ -326,7 +332,8 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def format_value(cls, value: Any) -> str:  # noqa: C901
-        """The default method to format values of a given type.
+        """
+        The default method to format values of a given type.
 
         By default, this method will comma-delimit `list`, `tuple`, and `set` types, and apply
         `str` to all others.
@@ -420,7 +427,6 @@ class Metric(ABC, Generic[MetricType]):
         Raises:
             ValueError: If the file was empty or contained only comments or empty lines.
         """
-
         preamble: List[str] = []
         fieldnames: List[str] = []
 
@@ -438,7 +444,6 @@ class Metric(ABC, Generic[MetricType]):
 
 def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
     """True if the given class is a Metric."""
-
     is_metric_cls: bool = isclass(cls) and issubclass(cls, Metric)
 
     try:
@@ -497,7 +502,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             ValueError: If `append=True` and the header of the provided file does not match the
                 specified metric class and the specified include/exclude fields.
         """
-
         filepath: Path = Path(filename)
         if (filepath.is_fifo() or filepath.is_char_device()) and append:
             raise ValueError("Cannot append to stdout, stderr, or other named pipe or stream")
@@ -565,7 +569,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             TypeError: If the provided `metric` is not an instance of the Metric class used to
                 parametrize the writer.
         """
-
         # Serialize the Metric to a dict for writing by the underlying `DictWriter`
         row = {fieldname: val for fieldname, val in metric.formatted_items()}
 
@@ -609,7 +612,6 @@ def _validate_and_generate_final_output_fieldnames(
     Raises:
         ValueError: If both `include_fields` and `exclude_fields` are specified.
     """
-
     if include_fields is not None and exclude_fields is not None:
         raise ValueError(
             "Only one of `include_fields` and `exclude_fields` may be specified, not both."

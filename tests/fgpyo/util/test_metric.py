@@ -903,7 +903,7 @@ def test_assert_fieldnames_are_metric_attributes_raises(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """Should raise an error if any of the provided fieldnames are not an attribute on the metric."""
+    """Should raise an error if any fieldnames are not an attribute on the metric."""
     with pytest.raises(ValueError, match="One or more of the specified fields are not "):
         _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 

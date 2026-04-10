@@ -73,7 +73,7 @@ def test_bases_string_from_ContigBuilder_add(
     expected: str,
     tmp_path: Path,
 ) -> None:
-    """Reads bases back from fasta and checks that extra spaces are removed and bases are uppercase."""
+    """Reads bases back from fasta, checks spaces are removed and bases are uppercase."""
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
     with NamedTemp(suffix=".fa", dir=tmp_path, mode="w", delete=True) as fp:

@@ -302,7 +302,7 @@ def test_metrics_roundtrip(tmp_path: Path, data_and_classes: DataBuilder) -> Non
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metrics_roundtrip_gzip(tmp_path: Path, data_and_classes: DataBuilder) -> None:
     path: Path = Path(tmp_path) / "metrics.txt.gz"
-    DummyMetric: Type[Metric] = data_and_classes.DummyMetric
+    DummyMetric: TypeAlias = data_and_classes.DummyMetric
 
     DummyMetric.write(path, *data_and_classes.DUMMY_METRICS)
 
@@ -553,22 +553,22 @@ def test_metrics_fast_concat(tmp_path: Path, data_and_classes: DataBuilder) -> N
     ]
     path_output: Path = tmp_path / "metrics_concat.txt"
     DummyMetric: TypeAlias = data_and_classes.DummyMetric
-    DUMMY_METRICS: list[DummyMetric] = data_and_classes.DUMMY_METRICS
+    dummy_metrics: list[DummyMetric] = data_and_classes.DUMMY_METRICS
 
-    DummyMetric.write(path_input[0], DUMMY_METRICS[0])
-    DummyMetric.write(path_input[1], DUMMY_METRICS[1])
-    DummyMetric.write(path_input[2], DUMMY_METRICS[2])
+    DummyMetric.write(path_input[0], dummy_metrics[0])
+    DummyMetric.write(path_input[1], dummy_metrics[1])
+    DummyMetric.write(path_input[2], dummy_metrics[2])
 
     Metric.fast_concat(*path_input, output=path_output)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path_output))
 
-    assert len(metrics) == len(DUMMY_METRICS)
+    assert len(metrics) == len(dummy_metrics)
     assert metrics[0].header() == DummyMetric.header()
     assert metrics[1].header() == DummyMetric.header()
     assert metrics[2].header() == DummyMetric.header()
-    assert metrics[0] == DUMMY_METRICS[0]
-    assert metrics[1] == DUMMY_METRICS[1]
-    assert metrics[2] == DUMMY_METRICS[2]
+    assert metrics[0] == dummy_metrics[0]
+    assert metrics[1] == dummy_metrics[1]
+    assert metrics[2] == dummy_metrics[2]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))

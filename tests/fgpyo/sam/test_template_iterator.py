@@ -196,30 +196,30 @@ def test_set_tag() -> None:
     builder = SamBuilder()
     template = Template.build(builder.add_pair(chrom="chr1", start1=100, start2=200))
 
-    TAG = "XF"
-    VALUE = "value"
+    tag = "XF"
+    value = "value"
 
     for read in template.all_recs():
         with pytest.raises(KeyError):
-            read.get_tag(TAG)
+            read.get_tag(tag)
 
     assert template.r1 is not None and template.r2 is not None  # type narrowing
 
     # test setting
-    template.set_tag(TAG, VALUE)
-    assert template.r1.get_tag(TAG) == VALUE
-    assert template.r2.get_tag(TAG) == VALUE
+    template.set_tag(tag, value)
+    assert template.r1.get_tag(tag) == value
+    assert template.r2.get_tag(tag) == value
 
     # test removal
-    template.set_tag(TAG, None)
+    template.set_tag(tag, None)
     for read in template.all_recs():
         with pytest.raises(KeyError):
-            read.get_tag(TAG)
+            read.get_tag(tag)
 
     # test tags that aren't two characters
     for bad_tag in ["", "A", "ABC", "ABCD"]:
         with pytest.raises(AssertionError, match="Tags must be 2 characters"):
-            template.set_tag(bad_tag, VALUE)
+            template.set_tag(bad_tag, value)
 
 
 def test_template_set_mate_info() -> None:

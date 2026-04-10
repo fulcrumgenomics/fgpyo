@@ -1,5 +1,5 @@
 """
-# Classes for generating SAM and BAM files and records for testing
+# Classes for generating SAM and BAM files and records for testing.
 
 This module contains utility classes for the generation of SAM and BAM files and
 alignment records, for use in testing.

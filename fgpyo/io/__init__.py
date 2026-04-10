@@ -1,5 +1,5 @@
 """
-# Module for reading and writing files
+# Module for reading and writing files.
 
 The functions in this module make it easy to:
 
@@ -82,7 +82,7 @@ COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
 
 def assert_path_is_readable(path: Path) -> None:
     """
-    Checks that file exists and returns True, else raises AssertionError
+    Checks that file exists and returns True, else raises AssertionError.
 
     Args:
         path: a Path to check
@@ -101,7 +101,7 @@ def assert_path_is_readable(path: Path) -> None:
 
 def assert_directory_exists(path: Path) -> None:
     """
-    Asserts that a path exist and is a directory
+    Asserts that a path exist and is a directory.
 
     Args:
         path: Path to check
@@ -114,9 +114,7 @@ def assert_directory_exists(path: Path) -> None:
 
 
 def assert_path_is_writeable(path: Path, parent_must_exist: bool = True) -> None:
-    """
-    A deprecated alias for `assert_path_is_writable()`.
-    """
+    """A deprecated alias for `assert_path_is_writable()`."""
     warnings.warn(
         "assert_path_is_writeable is deprecated, use assert_path_is_writable instead",
         DeprecationWarning,
@@ -178,7 +176,7 @@ def assert_path_is_writable(path: Path, parent_must_exist: bool = True) -> None:
 
 def to_reader(path: Path, threads: int | None = None) -> TextIOWrapper:
     """
-    Opens a Path for reading and based on extension uses open() or gzip_ng.open()
+    Opens a Path for reading and based on extension uses open() or gzip_ng.open().
 
     Args:
         path: Path to read from
@@ -202,8 +200,8 @@ def to_reader(path: Path, threads: int | None = None) -> TextIOWrapper:
 
 
 def to_writer(path: Path, append: bool = False, threads: int | None = None) -> TextIOWrapper:
-    """
-    Opens a Path for writing (or appending) and based on extension uses open() or gzip_ng.open()
+    r"""
+    Opens a Path for writing (or appending) and based on extension uses open() or gzip_ng.open().
 
     Args:
         path: Path to write (or append) to
@@ -267,7 +265,7 @@ def write_lines(
     path: Path, lines_to_write: Iterable[Any], append: bool = False, threads: int | None = None
 ) -> None:
     """
-    Writes (or appends) a file with one line per item in provided iterable
+    Writes (or appends) a file with one line per item in provided iterable.
 
     Args:
         path: Path to write (or append) to
@@ -289,7 +287,7 @@ def write_lines(
 @contextmanager
 def redirect_to_dev_null(file_num: int) -> Generator[None, None, None]:
     """
-    A context manager that redirects output of file handle to /dev/null
+    A context manager that redirects output of file handle to /dev/null.
 
     Args:
         file_num: number of filehandle to redirect.
@@ -313,7 +311,7 @@ def redirect_to_dev_null(file_num: int) -> Generator[None, None, None]:
 
 @contextmanager
 def suppress_stderr() -> Generator[None, None, None]:
-    """A context manager that redirects output of stderr to /dev/null"""
+    """A context manager that redirects output of stderr to /dev/null."""
     with redirect_to_dev_null(file_num=sys.stderr.fileno()):
         yield
 

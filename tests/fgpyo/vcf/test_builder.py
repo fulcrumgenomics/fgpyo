@@ -53,9 +53,7 @@ def _get_random_variant_inputs(
     random_generator: random.Random,
     sequence_dict: Dict[str, Dict[str, Any]],
 ) -> Mapping[str, Any]:
-    """
-    Randomly generate inputs that should produce a valid Variant. Don't include format fields.
-    """
+    """Randomly generate inputs that should produce a valid Variant. Don't include format fields."""
     contig, contig_len = _get_random_contig(random_generator, sequence_dict)
     variant_reference_len = random_generator.choice([0, 1, 5, 100])
     variant_read_len = random_generator.choice(

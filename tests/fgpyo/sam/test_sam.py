@@ -1,4 +1,4 @@
-"""Tests for :py:mod:`~fgpyo.sam`"""
+"""Tests for :py:mod:`~fgpyo.sam`."""
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp

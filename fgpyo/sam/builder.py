@@ -505,7 +505,7 @@ class SamBuilder:
         self,
         path: Path | None = None,
         index: bool = True,
-        pred: Callable[[AlignedSegment], bool] = lambda r: True,
+        pred: Callable[[AlignedSegment], bool] = lambda _r: True,
         tmp_file_type: sam.SamFileType | None = None,
     ) -> Path:
         """

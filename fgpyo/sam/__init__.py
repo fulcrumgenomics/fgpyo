@@ -1174,7 +1174,7 @@ def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = Tr
     r2.is_read2 = True
     r2.is_read1 = False
 
-    set_mate_info(rec1=r1, rec2=r2, is_proper_pair=lambda a, b: proper_pair)
+    set_mate_info(rec1=r1, rec2=r2, is_proper_pair=lambda _a, _b: proper_pair)
 
 
 @attr.s(frozen=True, auto_attribs=True)

@@ -559,7 +559,7 @@ def test_is_not_proper_pair_with_custom_isize_func() -> None:
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100)
     assert is_proper_pair(r1, r2)
-    assert not is_proper_pair(r1, r2, isize=lambda a, b: False)
+    assert not is_proper_pair(r1, r2, isize=lambda _a, _b: False)
 
 
 def test_isize_when_r2_defined() -> None:

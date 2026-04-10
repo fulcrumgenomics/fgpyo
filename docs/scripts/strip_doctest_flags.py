@@ -13,7 +13,7 @@ from typing import Any
 DOCTEST_FLAG_PATTERN = re.compile(r"\s*#\s*doctest:\s*[+\w,\s]+")
 
 
-def on_page_content(html: str, **kwargs: Any) -> str:
+def on_page_content(html: str, **_kwargs: Any) -> str:
     """
     Remove doctest flags from page content.
 

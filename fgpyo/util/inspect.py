@@ -54,11 +54,11 @@ except ImportError:  # pragma: no cover
     # called because the import failed; but they're here to ensure that the function is defined in
     # sections of code that don't know if the import was successful or not.
 
-    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:
+    def get_attr_fields(_cls: type) -> Tuple[dataclasses.Field, ...]:
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
 
-    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:
+    def get_attr_fields_dict(_cls: type) -> Dict[str, dataclasses.Field]:
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
 

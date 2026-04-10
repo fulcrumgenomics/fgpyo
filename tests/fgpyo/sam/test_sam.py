@@ -764,7 +764,7 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
 
 
 @pytest.mark.parametrize("match_htsjdk", [True, False])
-def test_calc_edit_info_with_aligned_Ns(match_htsjdk: bool) -> None:
+def test_calc_edit_info_with_aligned_ns(match_htsjdk: bool) -> None:
     """
     Ns in query match Ns in reference, but should be counted as mismatches for NM when
     n_as_match is set to `False`.

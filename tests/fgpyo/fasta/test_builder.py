@@ -10,7 +10,7 @@ from pytest import raises
 from fgpyo.fasta.builder import FastaBuilder
 
 
-def test_overrides_FastaBuilder() -> None:
+def test_overrides_fasta_builder() -> None:
     """Checks that defaults can be overriden in FastaBuilder."""
     builder = FastaBuilder(assembly="HG38", species="Human", line_length=90)
     assert builder.assembly == "HG38"
@@ -18,7 +18,7 @@ def test_overrides_FastaBuilder() -> None:
     assert builder.line_length == 90
 
 
-def test_bases_length_from_ContigBuilder_add_default() -> None:
+def test_bases_length_from_contig_builder_add_default() -> None:
     """Checks that the default addition of bases is a single addition."""
     builder = FastaBuilder()
     builder.add("chr10").add("AAAA")
@@ -32,7 +32,7 @@ def test_bases_length_from_ContigBuilder_add_default() -> None:
         ("chr2", "TTT", 10, 30),
     ],
 )
-def test_bases_length_from_ContigBuilder_add(
+def test_bases_length_from_contig_builder_add(
     name: str,
     bases: str,
     times: int,
@@ -66,7 +66,7 @@ def test_contig_dict_is_not_accessable() -> None:
         ("chr2", "TT T gT", 10, ("TTTGT" * 10)),
     ],
 )
-def test_bases_string_from_ContigBuilder_add(
+def test_bases_string_from_contig_builder_add(
     name: str,
     bases: str,
     times: int,

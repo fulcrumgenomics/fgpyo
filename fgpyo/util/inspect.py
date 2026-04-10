@@ -264,7 +264,7 @@ def dict_parser(
         cls: the type of the class object this is being parsed for (used to get default val for
             parsers)
         type_: the type of the attribute to be parsed
-            parsers: an optional mapping from type to the function to use for parsing that type
+        parsers: an optional mapping from type to the function to use for parsing that type
             (allows for parsing of more complex types)
     """
     subtypes = typing.get_args(type_)

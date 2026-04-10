@@ -113,6 +113,7 @@ class SamBuilder:
             r1_len: The length of R1s to create unless otherwise specified
             r2_len: The length of R2s to create unless otherwise specified
             base_quality: The base quality of bases to create unless otherwise specified
+            mapping_quality: The mapping quality of records to create unless otherwise specified
             sd: a sequence dictionary as a list of dicts; defaults to calling default_sd() if None
             rg: a single read group as a dict; defaults to calling default_sd() if None
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
@@ -210,6 +211,8 @@ class SamBuilder:
             rec: the read to set the flags on
             read_num: Either None for an unpaired read, or 1 or 2
             strand: Either "+" or "-" to indicate strand of the read
+            secondary: If True, set the secondary alignment flag
+            supplementary: If True, set the supplementary alignment flag
         """
         rec.is_paired = read_num is not None
         rec.is_read1 = read_num == 1

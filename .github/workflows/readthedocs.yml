@@ -15,6 +15,6 @@ jobs:
   documentation-links:
     runs-on: ubuntu-latest
     steps:
-      - uses: readthedocs/actions/preview@v1
+      - uses: readthedocs/actions/preview@31a30360a2d7530806bff6855aa209167f06a89c  # latest commit on main (action deprecated, no releases)
         with:
           project-slug: "fgpyo"

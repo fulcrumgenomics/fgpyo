@@ -62,10 +62,10 @@ from fgpyo.io import assert_path_is_writable
 if TYPE_CHECKING:
 
     def samtools_dict(*args: Any) -> None:
-        pass
+        """Stub for pysam.dict used under TYPE_CHECKING."""
 
     def samtools_faidx(*args: Any) -> None:
-        pass
+        """Stub for pysam.faidx used under TYPE_CHECKING."""
 
 else:
     from pysam import dict as samtools_dict

@@ -98,6 +98,7 @@ def pysam_faidx(input_path: str) -> None:
 class ContigBuilder:
     """
     Builder for constructing new contigs, and adding bases to existing contigs.
+
     Existing contigs cannot be overwritten, each contig name in FastaBuilder must
     be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
     where species and assembly are optional parameters and will defualt to
@@ -192,6 +193,7 @@ class FastaBuilder:
     ) -> ContigBuilder:
         """
         Creates and returns a new ContigBuilder for a contig with the provided name.
+
         Contig names must be unique, attempting to create two seperate contigs with the same
         name will result in an error.
 
@@ -219,6 +221,7 @@ class FastaBuilder:
     ) -> None:
         """
         Writes out the set of accumulated contigs to a FASTA file at the `path` given.
+
         Also generates the accompanying fasta index file (`.fa.fai`) and sequence
         dictionary file (`.dict`).
 

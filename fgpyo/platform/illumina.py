@@ -91,8 +91,9 @@ def copy_umi_from_read_name(
     rec: AlignedSegment, strict: bool = False, remove_umi: bool = False
 ) -> bool:
     """
-    Copy a UMI from an alignment's read name to its `RX` SAM tag. UMI will not be copied to RX
-    tag if invalid.
+    Copy a UMI from an alignment's read name to its `RX` SAM tag.
+
+    The UMI will not be copied to RX tag if it is invalid.
 
     Args:
         rec: The alignment record to update.
@@ -130,6 +131,7 @@ def copy_umi_from_read_name(
 def _is_valid_umi(umi: str) -> bool:
     """
     Check whether a UMI is valid.
+
     Illumina UMIs may only contain A/C/G/T/N.
     https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
     Args:

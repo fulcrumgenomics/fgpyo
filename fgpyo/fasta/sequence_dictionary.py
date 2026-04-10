@@ -179,8 +179,9 @@ class Keys(StrEnum):
     @staticmethod
     def attributes() -> List[str]:
         """
-        The list of keys that are allowed to be attributes in `SequenceMetadata`.  Notably
-        `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed.
+        The list of keys that are allowed to be attributes in `SequenceMetadata`.
+
+        Notably, `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed.
         """
         return [key for key in Keys if key != Keys.SEQUENCE_NAME and key != Keys.SEQUENCE_LENGTH]
 
@@ -327,8 +328,10 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     def same_as(self, other: "SequenceMetadata") -> bool:
         """
-        Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s.
+        Returns True if the two sequences are the same.
+
+        Sequences are considered the same if they share a common reference name (including aliases),
+        have the same length, and have the same MD5 (if both have MD5s).
         """
         if self.length != other.length:
             return False
@@ -343,8 +346,10 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     def to_sam(self) -> Dict[str, Any]:
         """
-        Converts the sequence metadata to a dictionary equivalent to one item in the
-        list of sequences from `pysam.AlignmentHeader#to_dict()["SQ"]`.
+        Converts the sequence metadata to a SAM-formatted dictionary.
+
+        Equivalent to one item in the list of sequences from
+        `pysam.AlignmentHeader#to_dict()["SQ"]`.
         """
         meta_dict: Dict[str, Any] = {
             f"{Keys.SEQUENCE_NAME}": self.name,
@@ -358,9 +363,11 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
     @staticmethod
     def from_sam(meta: Dict[Keys | str, Any], index: int) -> "SequenceMetadata":
         """
-        Builds a `SequenceMetadata` from a dictionary.  The keys must include the sequence
-        name (`Keys.SEQUENCE_NAME`) and length (`Keys.SEQUENCE_LENGTH`).  All other keys from
-        `Keys` will be stored in the resulting attributes.
+        Builds a `SequenceMetadata` from a dictionary.
+
+        The keys must include the sequence name (`Keys.SEQUENCE_NAME`) and length
+        (`Keys.SEQUENCE_LENGTH`). All other keys from `Keys` will be stored in the resulting
+        attributes.
 
         Args:
             meta: the python dictionary with keys from `Keys`.  This is typically the dictionary
@@ -450,8 +457,10 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     def same_as(self, other: "SequenceDictionary") -> bool:
         """
-        Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s.
+        Returns True if all sequences in the two dictionaries are the same.
+
+        Sequences are considered the same if they share a common reference name (including
+        aliases), have the same length, and have the same MD5 (if both have MD5s).
         """
         if len(self) != len(other):
             return False
@@ -538,8 +547,11 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     def get_by_name(self, name: str) -> SequenceMetadata | None:
         """
-        Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
-        the name does not exist in this dictionary.
+        Gets a `SequenceMetadata` explicitly by `name`.
+
+        Returns:
+            The corresponding SequenceMetadata.
+            None if the name does not exist in this dictionary.
         """
         return self._dict.get(name)
 
@@ -549,8 +561,10 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     def by_index(self, index: int) -> SequenceMetadata:
         """
-        Gets a `SequenceMetadata` explicitly by `name`.  Raises an `IndexError`
-        if the index is out of bounds.
+        Gets a `SequenceMetadata` explicitly by `name`.  
+
+        Raises:
+            IndexError: if the index is out of bounds.
         """
         return self.infos[index]
 

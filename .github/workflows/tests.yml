@@ -71,11 +71,11 @@ jobs:
 
       - name: Verify pysam is not installed
         run: |
-          uv run python -c "import pysam" 2>&1 && exit 1 || echo "pysam correctly not installed"
+          uv run --no-sync python -c "import pysam" 2>&1 && exit 1 || echo "pysam correctly not installed"
 
       - name: Run pysam-independent tests
         run: |
-          uv run pytest \
+          uv run --no-sync pytest \
             tests/fgpyo/test_read_structure.py \
             tests/fgpyo/test_sequence.py \
             tests/fgpyo/test_requirements.py \
@@ -90,4 +90,4 @@ jobs:
 
       - name: Verify pysam-dependent modules are importable
         run: |
-          uv run python -c "from fgpyo.sam import Cigar; print('fgpyo.sam importable without pysam')"
+          uv run --no-sync python -c "from fgpyo.sam import Cigar; print('fgpyo.sam importable without pysam')"

@@ -57,15 +57,16 @@ cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools
 ```
 """  # noqa: E501
 
+from __future__ import annotations
+
 from array import array
 from typing import Iterable
 from typing import List
 from typing import NamedTuple
 from typing import Tuple
 
-from pysam import AlignedSegment
-
 from fgpyo import sam
+from fgpyo._optional_dependencies import pysam
 from fgpyo.collections import PeekableIterator
 from fgpyo.sam import Cigar
 from fgpyo.sam import CigarElement
@@ -87,7 +88,7 @@ class ClippingInfo(NamedTuple):
 
 
 def softclip_start_of_alignment_by_query(
-    rec: AlignedSegment,
+    rec: pysam.AlignedSegment,
     bases_to_clip: int,
     clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
@@ -132,7 +133,7 @@ def softclip_start_of_alignment_by_query(
 
 
 def softclip_end_of_alignment_by_query(
-    rec: AlignedSegment,
+    rec: pysam.AlignedSegment,
     bases_to_clip: int,
     clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
@@ -181,7 +182,7 @@ def softclip_end_of_alignment_by_query(
 
 
 def softclip_start_of_alignment_by_ref(
-    rec: AlignedSegment,
+    rec: pysam.AlignedSegment,
     bases_to_clip: int,
     clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
@@ -217,7 +218,7 @@ def softclip_start_of_alignment_by_ref(
 
 
 def softclip_end_of_alignment_by_ref(
-    rec: AlignedSegment,
+    rec: pysam.AlignedSegment,
     bases_to_clip: int,
     clipped_base_quality: int | None = None,
     tags_to_invalidate: Iterable[str] = TAGS_TO_INVALIDATE,
@@ -252,7 +253,7 @@ def softclip_end_of_alignment_by_ref(
     )
 
 
-def _clip_whole_read(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> ClippingInfo:
+def _clip_whole_read(rec: pysam.AlignedSegment, tags_to_invalidate: Iterable[str]) -> ClippingInfo:
     """Private method that unmaps a read and returns an appropriate ClippingInfo."""
     retval = ClippingInfo(rec.query_alignment_length, rec.reference_length)
     _cleanup(rec, tags_to_invalidate)
@@ -260,7 +261,7 @@ def _clip_whole_read(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> 
     return retval
 
 
-def _make_read_unmapped(rec: AlignedSegment) -> None:
+def _make_read_unmapped(rec: pysam.AlignedSegment) -> None:
     """Removes mapping information from a read."""
     if rec.is_reverse:
         quals = rec.query_qualities
@@ -281,14 +282,14 @@ def _make_read_unmapped(rec: AlignedSegment) -> None:
     rec.is_unmapped = True
 
 
-def _cleanup(rec: AlignedSegment, tags_to_invalidate: Iterable[str]) -> None:
+def _cleanup(rec: pysam.AlignedSegment, tags_to_invalidate: Iterable[str]) -> None:
     """Removes extended tags from a record that may have become invalid after clipping."""
     for tag in tags_to_invalidate:
         rec.set_tag(tag, None)
 
 
 def _read_pos_at_ref_pos(
-    rec: AlignedSegment, ref_pos: int, previous: bool | None = None
+    rec: pysam.AlignedSegment, ref_pos: int, previous: bool | None = None
 ) -> int | None:
     """
     Returns the read or query position at the reference position.
@@ -299,7 +300,7 @@ def _read_pos_at_ref_pos(
     "previous" argument.
 
     Args:
-        rec: the AlignedSegment within which to find the read position
+        rec: the pysam.AlignedSegment within which to find the read position
         ref_pos: the reference position to be found
         previous: Controls behavior when the reference position is not aligned to any
             read position.  True indicates to return the previous read position, False

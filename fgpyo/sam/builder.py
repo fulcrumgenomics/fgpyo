@@ -5,6 +5,8 @@ This module contains utility classes for the generation of SAM and BAM files and
 alignment records, for use in testing.
 """
 
+from __future__ import annotations
+
 from array import array
 from pathlib import Path
 from random import Random
@@ -17,11 +19,9 @@ from typing import List
 from typing import Tuple
 from typing import cast
 
-import pysam
-from pysam import AlignedSegment
-from pysam import AlignmentHeader
-
 from fgpyo import sam
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 from fgpyo.sam import SamOrder
 
 
@@ -117,6 +117,7 @@ class SamBuilder:
             seed: a seed value for random number/string generation
             sort_order: Order to sort records when writing to file, or output of to_sorted_list()
         """
+        require_pysam()
 
         self.r1_len: int = r1_len if r1_len is not None else self.DEFAULT_R1_LENGTH
         self.r2_len: int = r2_len if r2_len is not None else self.DEFAULT_R2_LENGTH
@@ -134,11 +135,11 @@ class SamBuilder:
         }
         if extra_header is not None:
             self._header = {**self._header, **extra_header}
-        self._samheader = AlignmentHeader.from_dict(self._header)
+        self._samheader = pysam.AlignmentHeader.from_dict(self._header)
         self._seq_lookup = dict([(s["SN"], s) for s in self._header["SQ"]])
 
         self._random: Random = Random(seed)
-        self._records: List[AlignedSegment] = []
+        self._records: List[pysam.AlignedSegment] = []
         self._counter: int = 0
 
     def _next_name(self) -> str:
@@ -158,8 +159,8 @@ class SamBuilder:
         start: int,
         mapq: int | None,
         attrs: Dict[str, Any] | None,
-    ) -> AlignedSegment:
-        """Generates a new AlignedSegment.  Sets the segment up with the correct
+    ) -> pysam.AlignedSegment:
+        """Generates a new pysam.AlignedSegment.  Sets the segment up with the correct
         header and adds the RG attribute if not contained in attrs.
 
         Args:
@@ -170,13 +171,13 @@ class SamBuilder:
             attrs: an optional dictionary of SAM attributes with two-char keys
 
         Returns:
-            AlignedSegment: an aligned segment with name, chrom, pos, attributes the
+            pysam.AlignedSegment: an aligned segment with name, chrom, pos, attributes the
                 read group, and the unmapped flag all set appropriately.
         """
         if chrom is not sam.NO_REF_NAME and chrom not in self._seq_lookup:
             raise ValueError(f"{chrom} is not a valid chromosome name in this builder.")
 
-        rec = AlignedSegment(header=self._samheader)
+        rec = pysam.AlignedSegment(header=self._samheader)
         rec.query_name = name
         rec.reference_name = chrom
         rec.reference_start = start
@@ -297,7 +298,7 @@ class SamBuilder:
         strand1: str = "+",
         strand2: str = "-",
         attrs: Dict[str, Any] | None = None,
-    ) -> Tuple[AlignedSegment, AlignedSegment]:
+    ) -> Tuple[pysam.AlignedSegment, pysam.AlignedSegment]:
         """Generates a new pair of reads, adds them to the internal collection, and returns them.
 
         Most fields are optional.
@@ -357,7 +358,8 @@ class SamBuilder:
             ValueError: if bases/quals/cigar are set in a way that is not self-consistent
 
         Returns:
-            Tuple[AlignedSegment, AlignedSegment]: The pair of records created, R1 then R2.
+            Tuple[pysam.AlignedSegment, pysam.AlignedSegment]: The pair of records created,
+                R1 then R2.
         """
 
         if strand1 not in ["+", "-"]:
@@ -431,7 +433,7 @@ class SamBuilder:
         secondary: bool = False,
         supplementary: bool = False,
         attrs: Dict[str, Any] | None = None,
-    ) -> AlignedSegment:
+    ) -> pysam.AlignedSegment:
         """Generates a new single reads, adds them to the internal collection, and returns it.
 
         Most fields are optional.
@@ -474,7 +476,7 @@ class SamBuilder:
             ValueError: if bases/quals/cigar are set in a way that is not self-consistent
 
         Returns:
-            AlignedSegment: The record created
+            pysam.AlignedSegment: The record created
         """
 
         if strand not in ["+", "-"]:
@@ -501,7 +503,7 @@ class SamBuilder:
         self,
         path: Path | None = None,
         index: bool = True,
-        pred: Callable[[AlignedSegment], bool] = lambda r: True,
+        pred: Callable[[pysam.AlignedSegment], bool] = lambda r: True,
         tmp_file_type: sam.SamFileType | None = None,
     ) -> Path:
         """Write the accumulated records to a file, sorts & indexes it, and returns the Path.
@@ -582,6 +584,6 @@ class SamBuilder:
             return list(bam)
 
     @property
-    def header(self) -> AlignmentHeader:
+    def header(self) -> pysam.AlignmentHeader:
         """Returns the builder's SAM header."""
         return self._samheader

@@ -125,6 +125,8 @@ Create a `pysam.AlignmentHeader` from a sequence dictionary with extra header it
 ```
 """
 
+from __future__ import annotations
+
 import copy
 import itertools
 import re
@@ -144,13 +146,13 @@ from typing import Pattern
 from typing import overload
 
 from fgpyo import sam
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 
 if sys.version_info[:2] < (3, 11):
     from strenum import StrEnum
 else:
     from enum import StrEnum
-
-import pysam
 
 
 @unique
@@ -444,6 +446,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
                           `:~pysam.AlignmentHeader` for more details.
         """
+        require_pysam()
         header_dict: Dict[str, Any] = {
             "HD": {"VN": "1.5"},
             "SQ": self.to_sam(),
@@ -484,14 +487,18 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
             A `SequenceDictionary` mapping refrence names to their metadata.
         """
         seq_dict: SequenceDictionary
-        if isinstance(data, pysam.AlignmentHeader):
+        # Guard isinstance checks: when pysam is not installed, pysam is None,
+        # and isinstance(data, None) raises TypeError.
+        if pysam is not None and isinstance(data, pysam.AlignmentHeader):
             seq_dict = SequenceDictionary.from_sam(data.to_dict()["SQ"])
-        elif isinstance(data, pysam.AlignmentFile):
+        elif pysam is not None and isinstance(data, pysam.AlignmentFile):
             seq_dict = SequenceDictionary.from_sam(data.header.to_dict()["SQ"])
         elif isinstance(data, Path):
+            require_pysam()
             with sam.reader(data) as fh:
                 seq_dict = SequenceDictionary.from_sam(fh.header)
-        else:  # assuming `data` is a `list[dict[str, Any]]`
+        else:
+            assert isinstance(data, list), f"Expected list[dict[str, Any]], got {type(data)}"
             try:
                 infos: List[SequenceMetadata] = [
                     SequenceMetadata.from_sam(meta=meta, index=index)

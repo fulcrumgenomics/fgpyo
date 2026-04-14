@@ -46,30 +46,17 @@ Add bases to existing contig:
 
 """
 
+from __future__ import annotations
+
 import textwrap
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
-from typing import Any
 from typing import Dict
 from typing import Iterator
 
-from pysam import FastaFile
-
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 from fgpyo.io import assert_path_is_writable
-
-"""Stubs for pysam imports """
-if TYPE_CHECKING:
-
-    def samtools_dict(*args: Any) -> None:
-        pass
-
-    def samtools_faidx(*args: Any) -> None:
-        pass
-
-else:
-    from pysam import dict as samtools_dict
-    from pysam import faidx as samtools_faidx
 
 
 def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
@@ -81,7 +68,8 @@ def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -
         output_path: File path to write dictionary to
         input_path: Path to fasta file
     """
-    samtools_dict("-a", assembly, "-s", species, "-o", output_path, input_path)
+    require_pysam()
+    pysam.dict("-a", assembly, "-s", species, "-o", output_path, input_path)
 
 
 def pysam_faidx(input_path: str) -> None:
@@ -90,7 +78,8 @@ def pysam_faidx(input_path: str) -> None:
     Args
         input_path: Path to fasta file
     """
-    samtools_faidx(input_path)
+    require_pysam()
+    pysam.faidx(input_path)
 
 
 class ContigBuilder:
@@ -251,7 +240,7 @@ class FastaBuilder:
         )
 
     @contextmanager
-    def to_fasta_file_handle(self, path: Path) -> Iterator[FastaFile]:
+    def to_fasta_file_handle(self, path: Path) -> Iterator[pysam.FastaFile]:
         """
         Writes out the set of accumulated contigs to a FASTA file and returns an open FastaFile.
 
@@ -265,5 +254,5 @@ class FastaBuilder:
             An open `pysam.FastaFile` for the written FASTA.
         """
         self.to_file(path)
-        with FastaFile(f"{path}") as fasta:
+        with pysam.FastaFile(f"{path}") as fasta:
             yield fasta

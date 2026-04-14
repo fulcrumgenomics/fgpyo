@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("pysam")
+
 from fgpyo.sam import Template
 from fgpyo.sam import TemplateIterator
 from fgpyo.sam import reader

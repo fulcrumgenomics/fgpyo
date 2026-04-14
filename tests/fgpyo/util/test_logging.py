@@ -1,7 +1,9 @@
 import logging
 
-import pysam
 import pytest
+
+pytest.importorskip("pysam")
+import pysam
 
 from fgpyo import sam
 from fgpyo.sam import Template

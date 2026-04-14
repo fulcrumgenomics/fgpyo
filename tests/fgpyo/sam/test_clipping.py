@@ -1,6 +1,8 @@
 """Tests for :py:mod:`~fgpyo.clipping`"""
 
 import pytest
+
+pytest.importorskip("pysam")
 from pysam import AlignedSegment
 
 from fgpyo import sam

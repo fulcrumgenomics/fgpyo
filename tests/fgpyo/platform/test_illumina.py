@@ -2,6 +2,8 @@
 
 import pytest
 
+pytest.importorskip("pysam")
+
 from fgpyo.platform.illumina import _is_valid_umi
 from fgpyo.platform.illumina import copy_umi_from_read_name
 from fgpyo.platform.illumina import extract_umis_from_read_name

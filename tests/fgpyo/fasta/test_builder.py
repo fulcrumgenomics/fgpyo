@@ -4,6 +4,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
 
 import pytest
+
+pytest.importorskip("pysam")
 from pysam import FastaFile
 from pytest import raises
 

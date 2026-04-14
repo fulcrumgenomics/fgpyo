@@ -8,8 +8,10 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import pysam
 import pytest
+
+pytest.importorskip("pysam")
+import pysam
 from pysam import AlignedSegment
 from pysam import AlignmentFile
 from pysam import AlignmentHeader

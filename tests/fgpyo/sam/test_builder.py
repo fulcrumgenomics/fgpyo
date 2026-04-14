@@ -5,6 +5,8 @@ from typing import List
 
 import pytest
 
+pytest.importorskip("pysam")
+
 from fgpyo import sam
 from fgpyo.sam import SamFileType
 from fgpyo.sam import SamOrder

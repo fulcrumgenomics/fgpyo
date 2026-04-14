@@ -3,8 +3,10 @@ from typing import Any
 from typing import Dict
 from typing import List
 
-import pysam
 import pytest
+
+pytest.importorskip("pysam")
+import pysam
 
 from fgpyo.fasta.sequence_dictionary import AlternateLocus
 from fgpyo.fasta.sequence_dictionary import Keys

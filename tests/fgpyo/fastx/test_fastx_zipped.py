@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("pysam")
+
 from fgpyo.fastx import FastxZipped
 
 # TODO: Remove all the assert boilerplate when FastxRecord can be used for equality testing:

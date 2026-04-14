@@ -9,8 +9,10 @@ from typing import List
 from typing import Mapping
 from typing import Tuple
 
-import pysam
 import pytest
+
+pytest.importorskip("pysam")
+import pysam
 from pysam.libcbcf import VariantFile
 
 from fgpyo.vcf import reader as vcf_reader

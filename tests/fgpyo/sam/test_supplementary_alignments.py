@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("pysam")
+
 from fgpyo.sam import Cigar
 from fgpyo.sam import SupplementaryAlignment
 from fgpyo.sam.builder import SamBuilder

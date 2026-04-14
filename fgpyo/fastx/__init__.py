@@ -26,6 +26,8 @@ seq2: GGGG, seq2: TTTT
 
 """
 
+from __future__ import annotations
+
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
@@ -55,7 +57,9 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[pysam.FastxRecord, ...]
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
         self._paths: Tuple[Path | str, ...] = paths
-        self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
+        self._fastx = tuple(
+            pysam.FastxFile(str(path), persist=self._persist) for path in self._paths
+        )
 
     @staticmethod
     def _name_minus_ordinal(name: str) -> str:

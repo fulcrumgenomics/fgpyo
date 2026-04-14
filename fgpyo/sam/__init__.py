@@ -169,6 +169,8 @@ negative indexes and slices):
 ```
 """
 
+from __future__ import annotations
+
 import enum
 import io
 import sys
@@ -188,11 +190,9 @@ from typing import Tuple
 from typing import cast
 
 import attr
-import pysam
-from pysam import AlignedSegment
-from pysam import AlignmentFile as SamFile
-from pysam import AlignmentHeader as SamHeader
-from pysam import qualitystring_to_array
+
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 
 if sys.version_info[:2] >= (3, 11):
     from typing import Self
@@ -225,7 +225,9 @@ NO_REF_POS: int = -1
 NO_QUERY_BASES: str = "*"
 """The string to use for a SAM record with missing query bases."""
 
-NO_QUERY_QUALITIES: array = qualitystring_to_array(STRING_PLACEHOLDER)
+# Equivalent to pysam.qualitystring_to_array("*") — computed without pysam
+# so this module can be imported when pysam is not installed.
+NO_QUERY_QUALITIES: array = array("B", [ord(STRING_PLACEHOLDER) - 33])
 """The quality array corresponding to an unavailable query quality string ("*")."""
 
 _OK_BASES: set[str] = {"A", "C", "G", "T", "="}
@@ -283,7 +285,7 @@ def _pysam_open(  # noqa: C901
     file_type: SamFileType | None = None,
     unmapped: bool = False,
     **kwargs: Any,
-) -> SamFile:
+) -> pysam.AlignmentFile:
     """Opens a SAM/BAM/CRAM for reading or writing.
 
     This function permits reading from standard input and writing to standard output. The specified
@@ -300,6 +302,7 @@ def _pysam_open(  # noqa: C901
         unmapped: True if the file is unmapped and has no sequence dictionary, False otherwise.
         kwargs: any keyword arguments to be passed to `pysam.AlignmentFile`; may not include "mode".
     """
+    require_pysam()
 
     if isinstance(path, (str, Path)):
         if str(path) in _STDIN_PATHS and open_for_reading:
@@ -352,7 +355,9 @@ def _pysam_open(  # noqa: C901
     return alignment_file
 
 
-def reader(path: SamPath, file_type: SamFileType | None = None, unmapped: bool = False) -> SamFile:
+def reader(
+    path: SamPath, file_type: SamFileType | None = None, unmapped: bool = False
+) -> pysam.AlignmentFile:
     """Opens a SAM/BAM/CRAM for reading.
 
     To read from standard input, provide any of `"-"`, `"stdin"`, or `"/dev/stdin"` as the input
@@ -369,9 +374,9 @@ def reader(path: SamPath, file_type: SamFileType | None = None, unmapped: bool =
 
 def writer(
     path: SamPath,
-    header: str | Dict[str, Any] | SamHeader,
+    header: str | Dict[str, Any] | pysam.AlignmentHeader,
     file_type: SamFileType | None = None,
-) -> SamFile:
+) -> pysam.AlignmentFile:
     """Opens a SAM/BAM/CRAM for writing.
 
     To write to standard output, provide any of `"-"`, `"stdout"`, or `"/dev/stdout"` as the output
@@ -769,7 +774,7 @@ class PairOrientation(enum.Enum):
 
     @classmethod
     def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
-        cls, rec1: AlignedSegment, rec2: AlignedSegment | None = None
+        cls, rec1: pysam.AlignedSegment, rec2: pysam.AlignedSegment | None = None
     ) -> Optional["PairOrientation"]:
         """Returns the pair orientation if both reads are mapped to the same reference sequence.
 
@@ -821,7 +826,7 @@ class PairOrientation(enum.Enum):
             return PairOrientation.RF
 
 
-def isize(rec1: AlignedSegment, rec2: AlignedSegment | None = None) -> int:
+def isize(rec1: pysam.AlignedSegment, rec2: pysam.AlignedSegment | None = None) -> int:
     """Computes the insert size ("template length" or "TLEN") for a pair of records.
 
     Args:
@@ -869,11 +874,11 @@ DefaultProperlyPairedOrientations: set[PairOrientation] = {PairOrientation.FR}
 
 
 def is_proper_pair(
-    rec1: AlignedSegment,
-    rec2: AlignedSegment | None = None,
+    rec1: pysam.AlignedSegment,
+    rec2: pysam.AlignedSegment | None = None,
     max_insert_size: int = 1000,
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
-    isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
+    isize: Callable[[pysam.AlignedSegment, pysam.AlignedSegment], int] = isize,
 ) -> bool:
     """Determines if a pair of records are properly paired or not.
 
@@ -990,7 +995,7 @@ class SupplementaryAlignment:
             return []
 
 
-def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> int:
+def sum_of_base_qualities(rec: pysam.AlignedSegment, min_quality_score: int = 15) -> int:
     """Calculate the sum of base qualities score for an alignment record.
 
     This function is useful for calculating the "mate score" as implemented in `samtools fixmate`.
@@ -1015,7 +1020,7 @@ def sum_of_base_qualities(rec: AlignedSegment, min_quality_score: int = 15) -> i
     return score
 
 
-def _set_common_mate_fields(dest: AlignedSegment, mate_primary: AlignedSegment) -> None:
+def _set_common_mate_fields(dest: pysam.AlignedSegment, mate_primary: pysam.AlignedSegment) -> None:
     """Set common mate info on a destination alignment from its mate's primary alignment.
 
     Args:
@@ -1045,10 +1050,10 @@ def _set_common_mate_fields(dest: AlignedSegment, mate_primary: AlignedSegment) 
 
 
 def set_mate_info(
-    rec1: AlignedSegment,
-    rec2: AlignedSegment,
-    is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
-    isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
+    rec1: pysam.AlignedSegment,
+    rec2: pysam.AlignedSegment,
+    is_proper_pair: Callable[[pysam.AlignedSegment, pysam.AlignedSegment], bool] = is_proper_pair,
+    isize: Callable[[pysam.AlignedSegment, pysam.AlignedSegment], int] = isize,
 ) -> None:
     """Resets mate pair information between two primary alignments that share a query name.
 
@@ -1075,7 +1080,9 @@ def set_mate_info(
     rec2.is_proper_pair = proper_pair
 
 
-def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedSegment) -> None:
+def set_mate_info_on_secondary(
+    secondary: pysam.AlignedSegment, mate_primary: pysam.AlignedSegment
+) -> None:
     """Set mate info on a secondary alignment from its mate's primary alignment.
 
     Args:
@@ -1094,7 +1101,9 @@ def set_mate_info_on_secondary(secondary: AlignedSegment, mate_primary: AlignedS
     _set_common_mate_fields(dest=secondary, mate_primary=mate_primary)
 
 
-def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSegment) -> None:
+def set_mate_info_on_supplementary(
+    supp: pysam.AlignedSegment, mate_primary: pysam.AlignedSegment
+) -> None:
     """Set mate info on a supplementary alignment from its mate's primary alignment.
 
     Args:
@@ -1119,7 +1128,9 @@ def set_mate_info_on_supplementary(supp: AlignedSegment, mate_primary: AlignedSe
 
 
 @deprecated("Use `set_mate_info()` instead. Deprecated after fgpyo 0.8.0.")
-def set_pair_info(r1: AlignedSegment, r2: AlignedSegment, proper_pair: bool = True) -> None:
+def set_pair_info(
+    r1: pysam.AlignedSegment, r2: pysam.AlignedSegment, proper_pair: bool = True
+) -> None:
     """Resets mate pair information between reads in a pair.
 
     Can be handed reads that already have pairing flags setup or independent R1 and R2 records that
@@ -1189,7 +1200,7 @@ def _is_match_base(query_base: str, ref_base: str, match_htsjdk: bool) -> bool:
 
 
 def calculate_edit_info(  # noqa: C901 (11 > 10)
-    rec: AlignedSegment,
+    rec: pysam.AlignedSegment,
     reference_sequence: str,
     match_htsjdk: bool = False,
     reference_offset: int | None = None,
@@ -1327,29 +1338,29 @@ class Template:
     """
 
     name: str
-    r1: AlignedSegment | None
-    r2: AlignedSegment | None
-    r1_supplementals: List[AlignedSegment]
-    r2_supplementals: List[AlignedSegment]
-    r1_secondaries: List[AlignedSegment]
-    r2_secondaries: List[AlignedSegment]
+    r1: pysam.AlignedSegment | None
+    r2: pysam.AlignedSegment | None
+    r1_supplementals: List[pysam.AlignedSegment]
+    r2_supplementals: List[pysam.AlignedSegment]
+    r1_secondaries: List[pysam.AlignedSegment]
+    r2_secondaries: List[pysam.AlignedSegment]
 
     @staticmethod
-    def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
+    def iterator(alns: Iterator[pysam.AlignedSegment]) -> Iterator["Template"]:
         """Returns an iterator over templates. Assumes the input iterable is queryname grouped,
         and gathers consecutive runs of records sharing a common query name into templates."""
         return TemplateIterator(alns)
 
     @staticmethod
-    def build(recs: Iterable[AlignedSegment], validate: bool = True) -> "Template":
+    def build(recs: Iterable[pysam.AlignedSegment], validate: bool = True) -> "Template":
         """Build a template from a set of records all with the same queryname."""
         name = None
         r1 = None
         r2 = None
-        r1_supplementals: List[AlignedSegment] = []
-        r2_supplementals: List[AlignedSegment] = []
-        r1_secondaries: List[AlignedSegment] = []
-        r2_secondaries: List[AlignedSegment] = []
+        r1_supplementals: List[pysam.AlignedSegment] = []
+        r2_supplementals: List[pysam.AlignedSegment] = []
+        r1_secondaries: List[pysam.AlignedSegment] = []
+        r2_secondaries: List[pysam.AlignedSegment] = []
 
         for rec in recs:
             if name is None:
@@ -1425,21 +1436,21 @@ class Template:
             assert rec.is_read2, "R2 supp. not flagged as R2"
             assert rec.is_supplementary, "R2 supp. not flagged as supplementary"
 
-    def primary_recs(self) -> Iterator[AlignedSegment]:
+    def primary_recs(self) -> Iterator[pysam.AlignedSegment]:
         """Returns a list with all the primary records for the template."""
         return (r for r in (self.r1, self.r2) if r is not None)
 
-    def all_r1s(self) -> Iterator[AlignedSegment]:
+    def all_r1s(self) -> Iterator[pysam.AlignedSegment]:
         """Yields all R1 alignments of this template including secondary and supplementary."""
         r1_primary = [] if self.r1 is None else [self.r1]
         return chain(r1_primary, self.r1_secondaries, self.r1_supplementals)
 
-    def all_r2s(self) -> Iterator[AlignedSegment]:
+    def all_r2s(self) -> Iterator[pysam.AlignedSegment]:
         """Yields all R2 alignments of this template including secondary and supplementary."""
         r2_primary = [] if self.r2 is None else [self.r2]
         return chain(r2_primary, self.r2_secondaries, self.r2_supplementals)
 
-    def all_recs(self) -> Iterator[AlignedSegment]:
+    def all_recs(self) -> Iterator[pysam.AlignedSegment]:
         """Returns a list with all the records for the template."""
         for rec in self.primary_recs():
             yield rec
@@ -1455,8 +1466,10 @@ class Template:
 
     def set_mate_info(
         self,
-        is_proper_pair: Callable[[AlignedSegment, AlignedSegment], bool] = is_proper_pair,
-        isize: Callable[[AlignedSegment, AlignedSegment], int] = isize,
+        is_proper_pair: Callable[
+            [pysam.AlignedSegment, pysam.AlignedSegment], bool
+        ] = is_proper_pair,
+        isize: Callable[[pysam.AlignedSegment, pysam.AlignedSegment], int] = isize,
     ) -> Self:
         """Reset all mate information on every alignment in the template.
 
@@ -1480,7 +1493,7 @@ class Template:
 
     def write_to(
         self,
-        writer: SamFile,
+        writer: pysam.AlignmentFile,
         primary_only: bool = False,
     ) -> None:
         """Write the records associated with the template to file.
@@ -1524,7 +1537,7 @@ class TemplateIterator(Iterator[Template]):
     over templates.
     """
 
-    def __init__(self, iterator: Iterator[AlignedSegment]) -> None:
+    def __init__(self, iterator: Iterator[pysam.AlignedSegment]) -> None:
         self._iter = PeekableIterator(iterator)
 
     def __iter__(self) -> Iterator[Template]:

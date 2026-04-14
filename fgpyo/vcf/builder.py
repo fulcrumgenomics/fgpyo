@@ -2,6 +2,8 @@
 # Classes for generating VCF and records for testing
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -12,10 +14,8 @@ from typing import Iterator
 from typing import List
 from typing import Tuple
 
-import pysam
-from pysam import VariantHeader
-from pysam import VariantRecord
-
+from fgpyo._optional_dependencies import pysam
+from fgpyo._optional_dependencies import require_pysam
 from fgpyo.sam.builder import SamBuilder
 from fgpyo.vcf import writer as PysamWriter
 
@@ -77,8 +77,8 @@ class VariantBuilder:
     sample_ids: List[str]
     sd: Dict[str, Dict[str, Any]]
     seq_idx_lookup: Dict[str, int]
-    records: List[VariantRecord]
-    header: VariantHeader
+    records: List[pysam.VariantRecord]
+    header: pysam.VariantHeader
 
     def __init__(
         self,
@@ -91,11 +91,12 @@ class VariantBuilder:
             sample_ids: the name of the sample(s)
             sd: optional sequence dictionary
         """
+        require_pysam()
         self.sample_ids: List[str] = list(sample_ids) if sample_ids is not None else []
         self.sd: Dict[str, Dict[str, Any]] = sd if sd is not None else VariantBuilder.default_sd()
         self.seq_idx_lookup: Dict[str, int] = {name: i for i, name in enumerate(self.sd.keys())}
-        self.records: List[VariantRecord] = []
-        self.header = VariantHeader()
+        self.records: List[pysam.VariantRecord] = []
+        self.header = pysam.VariantHeader()
         for line in VariantBuilder._build_header_string(sd=self.sd):
             self.header.add_line(line)
         if sample_ids is not None:
@@ -177,7 +178,7 @@ class VariantBuilder:
         filter: str | Iterable[str] | None = None,
         info: Dict[str, Any] | None = None,
         samples: Dict[str, Dict[str, Any]] | None = None,
-    ) -> VariantRecord:
+    ) -> pysam.VariantRecord:
         """Generates a new variant and adds it to the internal collection.
 
         Notes:
@@ -333,15 +334,15 @@ class VariantBuilder:
             assert path.is_file()
         return path
 
-    def to_unsorted_list(self) -> List[VariantRecord]:
+    def to_unsorted_list(self) -> List[pysam.VariantRecord]:
         """Returns the accumulated records in the order they were created."""
         return list(self.records)
 
-    def to_sorted_list(self) -> List[VariantRecord]:
+    def to_sorted_list(self) -> List[pysam.VariantRecord]:
         """Returns the accumulated records in coordinate order."""
         return sorted(self.records, key=self._sort_key)
 
-    def _sort_key(self, variant: VariantRecord) -> Tuple[int, int, int]:
+    def _sort_key(self, variant: pysam.VariantRecord) -> Tuple[int, int, int]:
         return self.seq_idx_lookup[variant.contig], variant.start, variant.stop
 
     def add_header_line(self, line: str) -> None:

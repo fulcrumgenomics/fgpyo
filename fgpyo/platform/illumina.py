@@ -10,9 +10,13 @@ The functions in this module make it easy to:
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Set
 
-from pysam import AlignedSegment
+if TYPE_CHECKING:
+    from pysam import AlignedSegment
 
 SAM_UMI_DELIMITER: str = "-"
 """Multiple UMI delimiter, which SAM specification recommends should be a hyphen;

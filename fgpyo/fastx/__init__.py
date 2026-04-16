@@ -68,7 +68,6 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
         if all(record is None for record in records):
             raise StopIteration
-
         elif not all_not_none(records):
             non_none_names: List[str | None] = [
                 record.name for record in records if record is not None

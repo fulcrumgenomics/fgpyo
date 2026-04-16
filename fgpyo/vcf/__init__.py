@@ -1,5 +1,5 @@
 """
-# Classes for generating VCF and records for testing
+# Classes for generating VCF and records for testing.
 
 This module contains utility classes for the generation of VCF files and variant records, for use
 in testing.
@@ -76,7 +76,8 @@ VcfPath = Path | str | TextIO
 
 @contextmanager
 def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
-    """Opens the given path for VCF reading
+    """
+    Opens the given path for VCF reading.
 
     Args:
         path: the path to a VCF, or an open file handle
@@ -95,7 +96,8 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
 
 @contextmanager
 def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, None]:
-    """Opens the given path for VCF writing.
+    """
+    Opens the given path for VCF writing.
 
     Args:
         path: the path to a VCF, or an open filehandle

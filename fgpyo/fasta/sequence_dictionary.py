@@ -155,7 +155,7 @@ import pysam
 
 @unique
 class Topology(StrEnum):
-    """Enumeration for the topology of reference sequences (SAM @SQ.TP)"""
+    """Enumeration for the topology of reference sequences (SAM @SQ.TP)."""
 
     LINEAR = "LINEAR"
     CIRCULAR = "CIRCULAR"
@@ -178,35 +178,40 @@ class Keys(StrEnum):
 
     @staticmethod
     def attributes() -> List[str]:
-        """The list of keys that are allowed to be attributes in `SequenceMetadata`.  Notably
-        `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed."""
+        """
+        The list of keys that are allowed to be attributes in `SequenceMetadata`.
+
+        Notably, `SEQUENCE_LENGTH` and `SEQUENCE_NAME` are not allowed.
+        """
         return [key for key in Keys if key != Keys.SEQUENCE_NAME and key != Keys.SEQUENCE_LENGTH]
 
 
 @dataclass(frozen=True, init=True)
 class AlternateLocus:
-    """Stores an alternate locus for an associated sequence (1-based inclusive)"""
+    """Stores an alternate locus for an associated sequence (1-based inclusive)."""
 
     name: str
     start: int
     end: int
 
     def __post_init__(self) -> None:
-        """Any post initialization validation should go here"""
+        """Any post initialization validation should go here."""
         if self.start > self.end:
             raise ValueError(f"start > end: {self.start} > {self.end}")
         if self.start < 1:
             raise ValueError(f"start < 1: {self.start}")
 
     def __str__(self) -> str:
+        """Returns the string representation as name:start-end."""
         return f"{self.name}:{self.start}-{self.end}"
 
     def __len__(self) -> int:
+        """Returns the length of the genomic span."""
         return self.end - self.start + 1
 
     @staticmethod
     def parse(value: str) -> "AlternateLocus":
-        """Parse the genomic interval of format: `<contig>:<start>-<end>`"""
+        """Parse the genomic interval of format: `<contig>:<start>-<end>`."""
         name, rest = value.split(":", maxsplit=1)
         start, end = rest.split("-", maxsplit=1)
         return AlternateLocus(name=name, start=int(start), end=int(end))
@@ -220,7 +225,8 @@ SEQUENCE_NAME_PATTERN: Pattern = re.compile(
 
 @dataclass(frozen=True, init=True)
 class SequenceMetadata(MutableMapping[Keys | str, str]):
-    """Stores information about a single Sequence (ex. chromosome, contig).
+    """
+    Stores information about a single Sequence (ex. chromosome, contig).
 
     Implements the mutable mapping interface, which provides access to the attributes of this
     sequence, including name, length, but not index.  When using the mapping interface, for example
@@ -250,7 +256,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
     attributes: Dict[Keys | str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Any post initialization validation should go here"""
+        """Any post initialization validation should go here."""
         if self.length < 0:
             raise ValueError(f"Length must be >= 0 for '{self.name}'")
         if re.search(SEQUENCE_NAME_PATTERN, self.name) is None:
@@ -262,7 +268,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     @property
     def aliases(self) -> List[str]:
-        """The aliases (not including the primary) name"""
+        """The aliases (not including the primary) name."""
         aliases = self.attributes.get(Keys.ALIASES)
         return [] if aliases is None else aliases.split(",")
 
@@ -273,7 +279,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     @property
     def alternate(self) -> AlternateLocus | None:
-        """Gets the alternate locus for this sequence"""
+        """Gets the alternate locus for this sequence."""
         if Keys.ALTERNATE_LOCUS not in self.attributes:
             return None
         value = self.attributes[Keys.ALTERNATE_LOCUS]
@@ -286,37 +292,47 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     @property
     def is_alternate(self) -> bool:
-        """True if there is an alternate locus defined, False otherwise"""
+        """True if there is an alternate locus defined, False otherwise."""
         return self.alternate is not None
 
     @property
     def md5(self) -> str | None:
+        """Returns the MD5 checksum of the sequence, or None."""
         return self.get(Keys.MD5)
 
     @property
     def assembly(self) -> str | None:
+        """Returns the assembly name, or None."""
         return self.get(Keys.ASSEMBLY)
 
     @property
     def uri(self) -> str | None:
+        """Returns the URI of the sequence, or None."""
         return self.get(Keys.URI)
 
     @property
     def species(self) -> str | None:
+        """Returns the species name, or None."""
         return self.get(Keys.SPECIES)
 
     @property
     def description(self) -> str | None:
+        """Returns the description, or None."""
         return self.get(Keys.DESCRIPTION)
 
     @property
     def topology(self) -> Topology | None:
+        """Returns the topology (linear or circular), or None."""
         value = self.get(Keys.TOPOLOGY)
         return None if value is None else Topology[value]
 
     def same_as(self, other: "SequenceMetadata") -> bool:
-        """Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s."""
+        """
+        Returns True if the two sequences are the same.
+
+        Sequences are considered the same if they share a common reference name (including aliases),
+        have the same length, and have the same MD5 (if both have MD5s).
+        """
         if self.length != other.length:
             return False
         elif self.name != other.name and other.name not in self.all_names:
@@ -329,8 +345,12 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
             return self_m5 == other_m5
 
     def to_sam(self) -> Dict[str, Any]:
-        """Converts the sequence metadata to a dictionary equivalent to one item in the
-        list of sequences from `pysam.AlignmentHeader#to_dict()["SQ"]`."""
+        """
+        Converts the sequence metadata to a SAM-formatted dictionary.
+
+        Equivalent to one item in the list of sequences from
+        `pysam.AlignmentHeader#to_dict()["SQ"]`.
+        """
         meta_dict: Dict[str, Any] = {
             f"{Keys.SEQUENCE_NAME}": self.name,
             f"{Keys.SEQUENCE_LENGTH}": self.length,
@@ -342,9 +362,12 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
 
     @staticmethod
     def from_sam(meta: Dict[Keys | str, Any], index: int) -> "SequenceMetadata":
-        """Builds a `SequenceMetadata` from a dictionary.  The keys must include the sequence
-        name (`Keys.SEQUENCE_NAME`) and length (`Keys.SEQUENCE_LENGTH`).  All other keys from
-        `Keys` will be stored in the resulting attributes.
+        """
+        Builds a `SequenceMetadata` from a dictionary.
+
+        The keys must include the sequence name (`Keys.SEQUENCE_NAME`) and length
+        (`Keys.SEQUENCE_LENGTH`). All other keys from `Keys` will be stored in the resulting
+        attributes.
 
         Args:
             meta: the python dictionary with keys from `Keys`.  This is typically the dictionary
@@ -360,6 +383,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return SequenceMetadata(name=name, length=length, index=index, attributes=attributes)
 
     def __getitem__(self, key: Keys | str) -> Any:
+        """Returns the value for the given key."""
         if key == Keys.SEQUENCE_NAME.value:
             return self.name
         elif key == Keys.SEQUENCE_LENGTH.value:
@@ -367,32 +391,39 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return self.attributes[key]
 
     def __setitem__(self, key: Keys | str, value: str) -> None:
+        """Sets the value for the given attribute key."""
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot set '{key}' on SequenceMetadata with name '{self.name}'")
         self.attributes[key] = value
 
     def __delitem__(self, key: Keys | str) -> None:
+        """Deletes the given attribute key."""
         if key == Keys.SEQUENCE_NAME or key == Keys.SEQUENCE_LENGTH:
             raise KeyError(f"Cannot delete '{key}' on SequenceMetadata with name '{self.name}'")
         del self.attributes[key]
 
     def __iter__(self) -> Iterator[Keys | str]:
+        """Iterates over all keys, starting with name and length."""
         pre_iter = iter((Keys.SEQUENCE_NAME, Keys.SEQUENCE_LENGTH))
         return itertools.chain(pre_iter, iter(self.attributes))
 
     def __len__(self) -> int:
+        """Returns the sequence length."""
         return self.length
 
     def __str__(self) -> str:
+        """Returns the SAM-formatted @SQ line."""
         return "@SQ\t" + "\t".join(f"{key}:{value}" for key, value in self.to_sam().items())
 
     def __index__(self) -> int:
+        """Returns the index of this sequence in the dictionary."""
         return self.index
 
 
 @dataclass(frozen=True, init=True)
 class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
-    """Contains an ordered collection of sequences.
+    """
+    Contains an ordered collection of sequences.
 
     A specific `SequenceMetadata` may be retrieved by name (`str`) or index (`int`), either by
     using the generic `get` method or by the correspondingly named `by_name` and `by_index` methods.
@@ -409,6 +440,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
     _dict: Dict[str, SequenceMetadata] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        """Builds the internal name-to-metadata lookup dictionary."""
         # Initialize a mapping from sequence name to the sequence metadata for all names
         self_dict: Dict[str, SequenceMetadata] = {}
         for index, info in enumerate(self.infos):
@@ -424,8 +456,12 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         object.__setattr__(self, "_dict", self_dict)
 
     def same_as(self, other: "SequenceDictionary") -> bool:
-        """Returns true if the sequences share a common reference name (including aliases), have
-        the same length, and the same MD5 if both have MD5s"""
+        """
+        Returns True if all sequences in the two dictionaries are the same.
+
+        Sequences are considered the same if they share a common reference name (including
+        aliases), have the same length, and have the same MD5 (if both have MD5s).
+        """
         if len(self) != len(other):
             return False
         return all(this.same_as(that) for this, that in zip(self.infos, other.infos, strict=True))
@@ -438,7 +474,8 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         self,
         extra_header: Dict[str, Any] | None = None,
     ) -> pysam.AlignmentHeader:
-        """Converts the sequence dictionary to a `pysam.AlignmentHeader`.
+        """
+        Converts the sequence dictionary to a `pysam.AlignmentHeader`.
 
         Args:
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
@@ -472,7 +509,8 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
     def from_sam(
         data: Path | pysam.AlignmentFile | pysam.AlignmentHeader | List[Dict[str, Any]],
     ) -> "SequenceDictionary":
-        """Creates a `SequenceDictionary` from a SAM file or its header.
+        """
+        Creates a `SequenceDictionary` from a SAM file or its header.
 
         Args:
             data: The input may be any of:
@@ -504,11 +542,17 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         return seq_dict
 
     def __getitem__(self, key: str | int) -> SequenceMetadata:
+        """Returns the SequenceMetadata by name or index."""
         return self._dict[key] if isinstance(key, str) else self.infos[key]
 
     def get_by_name(self, name: str) -> SequenceMetadata | None:
-        """Gets a `SequenceMetadata` explicitly by `name`.  Returns None if
-        the name does not exist in this dictionary"""
+        """
+        Gets a `SequenceMetadata` explicitly by `name`.
+
+        Returns:
+            The corresponding SequenceMetadata.
+            None if the name does not exist in this dictionary.
+        """
         return self._dict.get(name)
 
     def by_name(self, name: str) -> SequenceMetadata:
@@ -516,15 +560,22 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         return self._dict[name]
 
     def by_index(self, index: int) -> SequenceMetadata:
-        """Gets a `SequenceMetadata` explicitly by `name`.  Raises an `IndexError`
-        if the index is out of bounds."""
+        """
+        Gets a `SequenceMetadata` explicitly by `name`.
+
+        Raises:
+            IndexError: if the index is out of bounds.
+        """
         return self.infos[index]
 
     def __iter__(self) -> Iterator[str]:
+        """Iterates over the sequence names."""
         return iter(self._dict)
 
     def __len__(self) -> int:
+        """Returns the number of sequences in the dictionary."""
         return len(self.infos)
 
     def __str__(self) -> str:
+        """Returns the SAM-formatted string of all sequences."""
         return "\n".join(f"{info}" for info in self.infos)

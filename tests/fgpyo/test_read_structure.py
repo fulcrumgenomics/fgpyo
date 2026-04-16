@@ -7,51 +7,51 @@ from fgpyo.read_structure import ReadStructure
 from fgpyo.read_structure import SegmentType
 
 
-def _T(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.Template)
+def _t(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.Template)
 
 
-def _B(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.SampleBarcode)
+def _b(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.SampleBarcode)
 
 
-def _M(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.MolecularBarcode)
+def _m(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.MolecularBarcode)
 
 
-def _C(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.CellBarcode)
+def _c(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.CellBarcode)
 
 
-def _S(off: int, len: int) -> ReadSegment:
-    return ReadSegment(offset=off, length=len, kind=SegmentType.Skip)
+def _s(off: int, length: int) -> ReadSegment:
+    return ReadSegment(offset=off, length=length, kind=SegmentType.Skip)
 
 
 @pytest.mark.parametrize(
     "string,segments",
     [
-        ("1T", (_T(0, 1),)),
-        ("1B", (_B(0, 1),)),
-        ("1M", (_M(0, 1),)),
-        ("1S", (_S(0, 1),)),
-        ("5C", (_C(0, 5),)),
-        ("101T", (_T(0, 101),)),
+        ("1T", (_t(0, 1),)),
+        ("1B", (_b(0, 1),)),
+        ("1M", (_m(0, 1),)),
+        ("1S", (_s(0, 1),)),
+        ("5C", (_c(0, 5),)),
+        ("101T", (_t(0, 101),)),
         (
             "5B101T",
             (
-                _B(0, 5),
-                _T(5, 101),
+                _b(0, 5),
+                _t(5, 101),
             ),
         ),
-        ("123456789T", (_T(0, 123456789),)),
+        ("123456789T", (_t(0, 123456789),)),
         (
             "10T10B10B10S10M",
             (
-                _T(0, 10),
-                _B(10, 10),
-                _B(20, 10),
-                _S(30, 10),
-                _M(40, 10),
+                _t(0, 10),
+                _b(10, 10),
+                _b(20, 10),
+                _s(30, 10),
+                _m(40, 10),
             ),
         ),
     ],
@@ -66,19 +66,19 @@ def test_read_structure_from_string(string: str, segments: Tuple[ReadSegment, ..
         (
             "75T 8B 8B 75T",
             (
-                _T(0, 75),
-                _B(75, 8),
-                _B(83, 8),
-                _T(91, 75),
+                _t(0, 75),
+                _b(75, 8),
+                _b(83, 8),
+                _t(91, 75),
             ),
         ),
         (
             " 75T  8B   8B     75T  ",
             (
-                _T(0, 75),
-                _B(75, 8),
-                _B(83, 8),
-                _T(91, 75),
+                _t(0, 75),
+                _b(75, 8),
+                _b(83, 8),
+                _t(91, 75),
             ),
         ),
     ],
@@ -92,7 +92,7 @@ def test_read_structure_from_string_with_whitespace(
 @pytest.mark.parametrize(
     "string,segments",
     [
-        ("5M+T", (_M(0, 5), ReadSegment(offset=5, length=None, kind=SegmentType.Template))),
+        ("5M+T", (_m(0, 5), ReadSegment(offset=5, length=None, kind=SegmentType.Template))),
         ("+M", (ReadSegment(offset=0, length=None, kind=SegmentType.MolecularBarcode),)),
     ],
 )
@@ -120,15 +120,15 @@ def test_read_structure_rejects_unknown_type(string: str) -> None:
 @pytest.mark.parametrize(
     "segments,expected",
     [
-        ((_T(4092, 1),), (_T(0, 1),)),
-        ((_B(4092, 1),), (_B(0, 1),)),
-        ((_M(4092, 1),), (_M(0, 1),)),
-        ((_S(4092, 1),), (_S(0, 1),)),
-        ((_T(4092, 101),), (_T(0, 101),)),
-        ((_B(4092, 5), _T(2424, 101)), (_B(0, 5), _T(5, 101))),
+        ((_t(4092, 1),), (_t(0, 1),)),
+        ((_b(4092, 1),), (_b(0, 1),)),
+        ((_m(4092, 1),), (_m(0, 1),)),
+        ((_s(4092, 1),), (_s(0, 1),)),
+        ((_t(4092, 101),), (_t(0, 101),)),
+        ((_b(4092, 5), _t(2424, 101)), (_b(0, 5), _t(5, 101))),
         (
-            (_T(4092, 101), _B(4092, 101), _B(4092, 101), _S(4092, 101), _M(4092, 101)),
-            (_T(0, 101), _B(101, 101), _B(202, 101), _S(303, 101), _M(404, 101)),
+            (_t(4092, 101), _b(4092, 101), _b(4092, 101), _s(4092, 101), _m(4092, 101)),
+            (_t(0, 101), _b(101, 101), _b(202, 101), _s(303, 101), _m(404, 101)),
         ),
     ],
 )
@@ -147,11 +147,11 @@ def test_read_structure_from_invalid_exception(string: str) -> None:
 
 def test_read_structure_collect_segments_of_a_single_kind() -> None:
     rs: ReadStructure = ReadStructure.from_string("10M9T8B7S10M9T8B7S3C")
-    assert rs.template_segments() == (_T(10, 9), _T(44, 9))
-    assert rs.molecular_barcode_segments() == (_M(0, 10), _M(34, 10))
-    assert rs.sample_barcode_segments() == (_B(19, 8), _B(53, 8))
-    assert rs.skip_segments() == (_S(27, 7), _S(61, 7))
-    assert rs.cell_barcode_segments() == (_C(68, 3),)
+    assert rs.template_segments() == (_t(10, 9), _t(44, 9))
+    assert rs.molecular_barcode_segments() == (_m(0, 10), _m(34, 10))
+    assert rs.sample_barcode_segments() == (_b(19, 8), _b(53, 8))
+    assert rs.skip_segments() == (_s(27, 7), _s(61, 7))
+    assert rs.cell_barcode_segments() == (_c(68, 3),)
 
 
 @pytest.mark.parametrize(
@@ -253,19 +253,19 @@ def test_read_structure_length(string: str, length: int) -> None:
 @pytest.mark.parametrize(
     "string,index,segment",
     [
-        ("1T", 0, _T(0, 1)),
-        ("1B", 0, _B(0, 1)),
-        ("1M", 0, _M(0, 1)),
-        ("1S", 0, _S(0, 1)),
-        ("101T", 0, _T(0, 101)),
-        ("5B101T", 0, _B(0, 5)),
-        ("5B101T", 1, _T(5, 101)),
-        ("123456789T", 0, _T(0, 123456789)),
-        ("10T10B10B10S10M", 0, _T(0, 10)),
-        ("10T10B10B10S10M", 1, _B(10, 10)),
-        ("10T10B10B10S10M", 2, _B(20, 10)),
-        ("10T10B10B10S10M", 3, _S(30, 10)),
-        ("10T10B10B10S10M", 4, _M(40, 10)),
+        ("1T", 0, _t(0, 1)),
+        ("1B", 0, _b(0, 1)),
+        ("1M", 0, _m(0, 1)),
+        ("1S", 0, _s(0, 1)),
+        ("101T", 0, _t(0, 101)),
+        ("5B101T", 0, _b(0, 5)),
+        ("5B101T", 1, _t(5, 101)),
+        ("123456789T", 0, _t(0, 123456789)),
+        ("10T10B10B10S10M", 0, _t(0, 10)),
+        ("10T10B10B10S10M", 1, _b(10, 10)),
+        ("10T10B10B10S10M", 2, _b(20, 10)),
+        ("10T10B10B10S10M", 3, _s(30, 10)),
+        ("10T10B10B10S10M", 4, _m(40, 10)),
     ],
 )
 def test_read_structure_index(string: str, index: int, segment: ReadSegment) -> None:

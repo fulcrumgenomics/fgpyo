@@ -42,29 +42,25 @@ def _get_random_contig(
 
 
 _ALL_FILTERS = frozenset({"MAYBE", "FAIL", "SOMETHING"})
-_INFO_FIELD_TYPES = MappingProxyType(
-    {
-        "TEST_INT": VcfFieldType.INTEGER,
-        "TEST_STR": VcfFieldType.STRING,
-        "TEST_FLOAT": VcfFieldType.FLOAT,
-    }
-)
+_INFO_FIELD_TYPES = MappingProxyType({
+    "TEST_INT": VcfFieldType.INTEGER,
+    "TEST_STR": VcfFieldType.STRING,
+    "TEST_FLOAT": VcfFieldType.FLOAT,
+})
 
 
 def _get_random_variant_inputs(
     random_generator: random.Random,
     sequence_dict: Dict[str, Dict[str, Any]],
 ) -> Mapping[str, Any]:
-    """
-    Randomly generate inputs that should produce a valid Variant. Don't include format fields.
-    """
+    """Randomly generate inputs that should produce a valid Variant. Don't include format fields."""
     contig, contig_len = _get_random_contig(random_generator, sequence_dict)
     variant_reference_len = random_generator.choice([0, 1, 5, 100])
     variant_read_len = random_generator.choice(
         [1, 5, 100] if variant_reference_len == 0 else [0, 1, 5, 100]
     )
     num_filters = random_generator.randint(0, 3)
-    filter = tuple(random_generator.sample(list(_ALL_FILTERS), k=num_filters))
+    filters = tuple(random_generator.sample(list(_ALL_FILTERS), k=num_filters))
     start = random_generator.randint(1, contig_len - variant_reference_len)
     # stop is not directly passed by current API, but this is what its value would be:
     # stop = start + variant_reference_len
@@ -91,16 +87,14 @@ def _get_random_variant_inputs(
         for key, value_type in _INFO_FIELD_TYPES.items()
     }
 
-    return MappingProxyType(
-        {
-            "contig": contig,
-            "pos": start,
-            "ref": ref,
-            "alts": (alt,),
-            "filter": filter,
-            "info": info,
-        }
-    )
+    return MappingProxyType({
+        "contig": contig,
+        "pos": start,
+        "ref": ref,
+        "alts": (alt,),
+        "filter": filters,
+        "info": info,
+    })
 
 
 @pytest.fixture(scope="function")
@@ -108,7 +102,8 @@ def zero_sample_record_inputs(
     random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
 ) -> Tuple[Mapping[str, Any], ...]:
     """
-    Fixture with inputs to create test Variant records for zero-sample VCFs (no genotypes).
+    Fixture with inputs to create test Variant records for zero-sample VCFs.
+
     Make them MappingProxyType so that they are immutable.
     """
     return tuple(_get_random_variant_inputs(random_generator, sequence_dict) for _ in range(100))
@@ -116,8 +111,8 @@ def zero_sample_record_inputs(
 
 def _add_headers(variant_builder: VariantBuilder) -> None:
     """Add needed headers to the VariantBuilder."""
-    for filter in _ALL_FILTERS:
-        variant_builder.add_filter_header(filter)
+    for filter_name in _ALL_FILTERS:
+        variant_builder.add_filter_header(filter_name)
     for field_name, field_type in _INFO_FIELD_TYPES.items():
         variant_builder.add_info_header(field_name, field_type=field_type)
 
@@ -273,10 +268,7 @@ def test_zero_sample_vcf_round_trip(
     zero_sample_record_inputs: Tuple[Mapping[str, Any], ...],
     compress: bool,
 ) -> None:
-    """
-    Test if zero-sample VCF (no genotypes) output records match the records read in from the
-    resulting VCF.
-    """
+    """Test if zero-sample VCF output records match the records read from the resulting VCF."""
     vcf = temp_path / ("test.vcf.gz" if compress else "test.vcf")
     variant_builder = VariantBuilder()
     _add_headers(variant_builder)
@@ -324,18 +316,16 @@ def _add_random_genotypes(
     """Add random genotypes to the record input."""
     genotypes = {
         sample_id: {
-            "GT": random_generator.choice(
-                [
-                    (None,),
-                    (0, 0),
-                    (0, 1),
-                    (1, 0),
-                    (1, 1),
-                    (None, 0),
-                    (0, None),
-                    (1, None),
-                ]
-            )
+            "GT": random_generator.choice([
+                (None,),
+                (0, 0),
+                (0, 1),
+                (1, 0),
+                (1, 1),
+                (None, 0),
+                (0, None),
+                (1, None),
+            ])
         }
         for sample_id in sample_ids
     }
@@ -352,8 +342,9 @@ def test_variant_sample_records_match_inputs(
 ) -> None:
     """
     Test if records with samples / genotypes match the requested inputs.
-    If add_genotypes is True, then add random genotypes to the record input, otherwise test that
-    the VariantBuilder will work even if genotypes are not supplied.
+
+    If add_genotypes is True, then add random genotypes to the record input, otherwise test
+    that the VariantBuilder will work even if genotypes are not supplied.
     """
     sample_ids = [f"sample{i}" for i in range(num_samples)]
     variant_builder = VariantBuilder(sample_ids=sample_ids)
@@ -392,9 +383,10 @@ def test_variant_sample_vcf_round_trip(
     add_genotypes_to_records: bool,
 ) -> None:
     """
-    Test if 1 or multi-sample VCF output records match the records read in from the resulting VCF.
-    If add_genotypes is True, then add random genotypes to the record input, otherwise test that
-    the VariantBuilder will work even if genotypes are not supplied.
+    Test if multi-sample VCF output records match the records read from the resulting VCF.
+
+    If add_genotypes is True, then add random genotypes to the record input, otherwise test
+    that the VariantBuilder will work even if genotypes are not supplied.
     """
     sample_ids = [f"sample{i}" for i in range(num_samples)]
     vcf = temp_path / ("test.vcf.gz" if compress else "test.vcf")

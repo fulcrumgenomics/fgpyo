@@ -1,4 +1,4 @@
-"""Basic tests for reference_set_builder"""
+"""Basic tests for reference_set_builder."""
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
@@ -10,15 +10,15 @@ from pytest import raises
 from fgpyo.fasta.builder import FastaBuilder
 
 
-def test_overrides_FastaBuilder() -> None:
-    """Checks that defaults can be overriden in FastaBuilder"""
+def test_overrides_fasta_builder() -> None:
+    """Checks that defaults can be overriden in FastaBuilder."""
     builder = FastaBuilder(assembly="HG38", species="Human", line_length=90)
     assert builder.assembly == "HG38"
     assert builder.species == "Human"
     assert builder.line_length == 90
 
 
-def test_bases_length_from_ContigBuilder_add_default() -> None:
+def test_bases_length_from_contig_builder_add_default() -> None:
     """Checks that the default addition of bases is a single addition."""
     builder = FastaBuilder()
     builder.add("chr10").add("AAAA")
@@ -32,20 +32,20 @@ def test_bases_length_from_ContigBuilder_add_default() -> None:
         ("chr2", "TTT", 10, 30),
     ],
 )
-def test_bases_length_from_ContigBuilder_add(
+def test_bases_length_from_contig_builder_add(
     name: str,
     bases: str,
     times: int,
     length_bases: int,
 ) -> None:
-    """Checks that the number of bases in each contig is correct"""
+    """Checks that the number of bases in each contig is correct."""
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
     assert len(builder.__getitem__(name).bases) == length_bases
 
 
 def test_override_existing_contig() -> None:
-    """Asserts than an exception is raised when an override is attempted"""
+    """Asserts than an exception is raised when an override is attempted."""
     with raises(AssertionError, match="The contig contig_name already exists,"):
         builder = FastaBuilder()
         builder.add("contig_name")
@@ -53,7 +53,7 @@ def test_override_existing_contig() -> None:
 
 
 def test_contig_dict_is_not_accessable() -> None:
-    """Ensures that an AttributeError is raised if FastaBuilder.__contig_builders is called"""
+    """Ensures that an AttributeError is raised if FastaBuilder.__contig_builders is called."""
     builder = FastaBuilder()
     with raises(AttributeError):
         builder.__contig_builders["test"] = builder.add("chr10")
@@ -66,16 +66,14 @@ def test_contig_dict_is_not_accessable() -> None:
         ("chr2", "TT T gT", 10, ("TTTGT" * 10)),
     ],
 )
-def test_bases_string_from_ContigBuilder_add(
+def test_bases_string_from_contig_builder_add(
     name: str,
     bases: str,
     times: int,
     expected: str,
     tmp_path: Path,
 ) -> None:
-    """
-    Reads bases back from fasta and checks that extra spaces are removed and bases are uppercase
-    """
+    """Reads bases back from fasta, checks spaces are removed and bases are uppercase."""
     builder = FastaBuilder()
     builder.add(name).add(bases, times)
     with NamedTemp(suffix=".fa", dir=tmp_path, mode="w", delete=True) as fp:

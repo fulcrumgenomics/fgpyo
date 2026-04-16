@@ -52,7 +52,8 @@ __LOCK = RLock()
 
 
 def setup_logging(level: str = "INFO", name: str = "fgpyo") -> None:
-    """Globally configure logging for all modules
+    """
+    Globally configure logging for all modules.
 
     Configures logging to run at a specific level and output messages to stderr with
     useful information preceding the actual log message.
@@ -65,13 +66,13 @@ def setup_logging(level: str = "INFO", name: str = "fgpyo") -> None:
 
     with __LOCK:
         if not __FGPYO_LOGGING_SETUP:
-            format = (
+            log_format = (
                 f"%(asctime)s {socket.gethostname()} %(name)s:%(funcName)s:%(lineno)s "
                 + "[%(levelname)s]: %(message)s"
             )
             handler = logging.StreamHandler()
             handler.setLevel(level)
-            handler.setFormatter(logging.Formatter(format))
+            handler.setFormatter(logging.Formatter(log_format))
 
             logger = logging.getLogger(name)
             logger.setLevel(level)
@@ -83,7 +84,8 @@ def setup_logging(level: str = "INFO", name: str = "fgpyo") -> None:
 
 
 class ProgressLogger(AbstractContextManager):
-    """A little class to track progress.
+    """
+    A little class to track progress.
 
     This will output a log message every `unit` number times recorded.
 
@@ -103,6 +105,7 @@ class ProgressLogger(AbstractContextManager):
         verb: str = "Read",
         unit: int = 100000,
     ) -> None:
+        """Initializes the progress logger with the given printer and settings."""
         self.printer: Callable[[str], Any]
         if isinstance(printer, Logger):
             self.printer = lambda s: printer.info(s)
@@ -119,6 +122,7 @@ class ProgressLogger(AbstractContextManager):
     def __exit__(
         self, ex_type: Any | None, ex_value: Any | None, traceback: Any | None
     ) -> Literal[False]:
+        """Logs the final count on exit if no exception occurred."""
         if ex_value is None:
             self.log_last()
         return False
@@ -128,7 +132,9 @@ class ProgressLogger(AbstractContextManager):
         reference_name: str | None = None,
         position: int | None = None,
     ) -> bool:
-        """Record an item at a given genomic coordinate.
+        """
+        Record an item at a given genomic coordinate.
+
         Args:
             reference_name: the reference name of the item
             position: the 1-based start position of the item
@@ -150,7 +156,8 @@ class ProgressLogger(AbstractContextManager):
         self,
         rec: AlignedSegment,
     ) -> bool:
-        """Correctly record pysam.AlignedSegments (zero-based coordinates).
+        """
+        Correctly record pysam.AlignedSegments (zero-based coordinates).
 
         Args:
             rec: pysam.AlignedSegment object
@@ -166,7 +173,8 @@ class ProgressLogger(AbstractContextManager):
         self,
         recs: Iterable[AlignedSegment],
     ) -> bool:
-        """Correctly record multiple pysam.AlignedSegments (zero-based coordinates).
+        """
+        Correctly record multiple pysam.AlignedSegments (zero-based coordinates).
 
         Args:
             recs: pysam.AlignedSegment objects
@@ -184,7 +192,8 @@ class ProgressLogger(AbstractContextManager):
         refname: str | None = None,
         position: int | None = None,
     ) -> None:
-        """Helper method to print the log message.
+        """
+        Helper method to print the log message.
 
         Args:
             refname: the name of the reference of the item

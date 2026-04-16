@@ -33,6 +33,8 @@ from fgpyo.util.metric import _assert_is_metric_class
 
 
 class EnumTest(enum.Enum):
+    """Test enum for metric parsing tests."""
+
     EnumVal1 = "val1"
     EnumVal2 = "val2"
     EnumVal3 = "val3"
@@ -42,7 +44,7 @@ T = TypeVar("T", bound=Type)
 
 
 def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
-    """Decorator to make a attr- or dataclasses-style dataclass"""
+    """Decorator to make a attr- or dataclasses-style dataclass."""
     sys.stderr.write(f"use_attr = {use_attr}\n")
     if use_attr:
 
@@ -60,10 +62,11 @@ def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
 
 class DataBuilder:
     """
-    Holds classes and data for testing, either using attr- or dataclasses-style dataclass
-    We need to run each test both with attr and dataclasses classes, so use this class to construct
-    the test metrics appropriately, governed by the use_attr flag. After construction, the
-    DataBuilder object will have all the required Metrics:
+    Holds classes and data for testing, either using attr- or dataclasses-style dataclass.
+
+    We need to run each test both with attr and dataclasses classes, so use this class to
+    construct the test metrics appropriately, governed by the use_attr flag. After construction,
+    the DataBuilder object will have all the required Metrics:
 
     Attributes:
         use_attr: If True use attr classes for Metrics, if False use dataclasses
@@ -79,6 +82,7 @@ class DataBuilder:
     """
 
     def __init__(self, use_attr: bool) -> None:
+        """Initializes test data using attr or dataclasses based on use_attr."""
         self.use_attr = use_attr
 
         @make_dataclass(use_attr=use_attr)
@@ -226,10 +230,7 @@ num_metrics = len(attr_data_and_classes.DUMMY_METRICS)
 
 @pytest.mark.parametrize("use_attr", [False, True])
 def test_is_correct_dataclass_type(use_attr: bool) -> None:
-    """
-    Test that the DataBuilder class works as expected, as do the is_attr_class and
-    is_dataclasses_class methods
-    """
+    """Test that DataBuilder, is_attr_class, and is_dataclasses_class work as expected."""
     data_and_classes = DataBuilder(use_attr=use_attr)
     assert use_attr == data_and_classes.use_attr
     assert is_attr_class(data_and_classes.DummyMetric) is use_attr
@@ -299,7 +300,7 @@ def test_metrics_roundtrip(tmp_path: Path, data_and_classes: DataBuilder) -> Non
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metrics_roundtrip_gzip(tmp_path: Path, data_and_classes: DataBuilder) -> None:
     path: Path = Path(tmp_path) / "metrics.txt.gz"
-    DummyMetric: Type[Metric] = data_and_classes.DummyMetric
+    DummyMetric: TypeAlias = data_and_classes.DummyMetric
 
     DummyMetric.write(path, *data_and_classes.DUMMY_METRICS)
 
@@ -496,9 +497,10 @@ def test_metric_formatted_values_with_empty_string(data_and_classes: DataBuilder
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_list_format(data_and_classes: DataBuilder) -> None:
-    assert data_and_classes.ListPerson(name=["Max", "Sally"], age=[43, 55]).formatted_values() == (
-        ["Max,Sally", "43,55"]
-    )
+    assert data_and_classes.ListPerson(name=["Max", "Sally"], age=[43, 55]).formatted_values() == ([
+        "Max,Sally",
+        "43,55",
+    ])
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -512,15 +514,18 @@ def test_metric_list_parse(data_and_classes: DataBuilder) -> None:
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_metric_list_format_with_empty_string(data_and_classes: DataBuilder) -> None:
     ListPerson: TypeAlias = data_and_classes.ListPerson
-    assert ListPerson(name=[None, "Sally"], age=[43, 55]).formatted_values() == (
-        [",Sally", "43,55"]
-    )
-    assert ListPerson(name=[None, "Sally"], age=[None, 55]).formatted_values() == (
-        [",Sally", ",55"]
-    )
-    assert ListPerson(name=["Max", "Sally"], age=[None, None]).formatted_values() == (
-        ["Max,Sally", ","]
-    )
+    assert ListPerson(name=[None, "Sally"], age=[43, 55]).formatted_values() == ([
+        ",Sally",
+        "43,55",
+    ])
+    assert ListPerson(name=[None, "Sally"], age=[None, 55]).formatted_values() == ([
+        ",Sally",
+        ",55",
+    ])
+    assert ListPerson(name=["Max", "Sally"], age=[None, None]).formatted_values() == ([
+        "Max,Sally",
+        ",",
+    ])
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -546,22 +551,22 @@ def test_metrics_fast_concat(tmp_path: Path, data_and_classes: DataBuilder) -> N
     ]
     path_output: Path = tmp_path / "metrics_concat.txt"
     DummyMetric: TypeAlias = data_and_classes.DummyMetric
-    DUMMY_METRICS: list[DummyMetric] = data_and_classes.DUMMY_METRICS
+    dummy_metrics: list[DummyMetric] = data_and_classes.DUMMY_METRICS
 
-    DummyMetric.write(path_input[0], DUMMY_METRICS[0])
-    DummyMetric.write(path_input[1], DUMMY_METRICS[1])
-    DummyMetric.write(path_input[2], DUMMY_METRICS[2])
+    DummyMetric.write(path_input[0], dummy_metrics[0])
+    DummyMetric.write(path_input[1], dummy_metrics[1])
+    DummyMetric.write(path_input[2], dummy_metrics[2])
 
     Metric.fast_concat(*path_input, output=path_output)
     metrics: List[DummyMetric] = list(DummyMetric.read(path=path_output))
 
-    assert len(metrics) == len(DUMMY_METRICS)
+    assert len(metrics) == len(dummy_metrics)
     assert metrics[0].header() == DummyMetric.header()
     assert metrics[1].header() == DummyMetric.header()
     assert metrics[2].header() == DummyMetric.header()
-    assert metrics[0] == DUMMY_METRICS[0]
-    assert metrics[1] == DUMMY_METRICS[1]
-    assert metrics[2] == DUMMY_METRICS[2]
+    assert metrics[0] == dummy_metrics[0]
+    assert metrics[1] == dummy_metrics[1]
+    assert metrics[2] == dummy_metrics[2]
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -582,10 +587,7 @@ def test_metric_columns_out_of_order(tmp_path: Path, data_and_classes: DataBuild
 
 
 def test_read_header_can_read_picard(tmp_path: Path) -> None:
-    """
-    Test that we can read the header of a picard-formatted file.
-    """
-
+    """Test that we can read the header of a picard-formatted file."""
     metrics_path = tmp_path / "fake_picard_metrics"
 
     with metrics_path.open("w") as metrics_file:
@@ -604,10 +606,7 @@ def test_read_header_can_read_picard(tmp_path: Path) -> None:
 
 
 def test_read_header_can_read_empty(tmp_path: Path) -> None:
-    """
-    If the input file is empty, we should get an empty header.
-    """
-
+    """If the input file is empty, we should get an empty header."""
     metrics_path = tmp_path / "empty"
     metrics_path.touch()
 
@@ -620,6 +619,8 @@ def test_read_header_can_read_empty(tmp_path: Path) -> None:
 
 @dataclass
 class FakeMetric(Metric["FakeMetric"]):
+    """Test metric class for MetricWriter tests."""
+
     foo: str
     bar: int
 
@@ -729,10 +730,7 @@ def test_writer_append_raises_if_no_header(tmp_path: Path) -> None:
 
 
 def test_writer_append_raises_if_header_does_not_match(tmp_path: Path) -> None:
-    """
-    Test that we raise an error if we try to append to a file whose header doesn't match our
-    dataclass.
-    """
+    """Test that appending to a file whose header doesn't match our dataclass raises an error."""
     fpath = tmp_path / "test.txt"
 
     with fpath.open("w") as fout:
@@ -793,7 +791,6 @@ def test_writer_include_fields_reorders(tmp_path: Path) -> None:
 
 def test_writer_exclude_fields(tmp_path: Path) -> None:
     """Test that we can exclude fields from being written."""
-
     fpath = tmp_path / "test.txt"
 
     data = [
@@ -830,17 +827,12 @@ def test_writer_raises_if_fifo(capsys: CaptureFixture) -> None:
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_assert_is_metric_class(data_and_classes: DataBuilder) -> None:
-    """
-    Test that we can validate if a class is a Metric.
-    """
+    """Test that we can validate if a class is a Metric."""
     _assert_is_metric_class(data_and_classes.DummyMetric)
 
 
 def test_assert_is_metric_class_raises_if_not_decorated() -> None:
-    """
-    Test that we raise an error if the provided type is a Metric subclass but not decorated as a
-    dataclass or attr.
-    """
+    """Test that a Metric subclass not decorated as a dataclass or attr raises an error."""
 
     class BadMetric(Metric["BadMetric"]):
         foo: str
@@ -851,10 +843,7 @@ def test_assert_is_metric_class_raises_if_not_decorated() -> None:
 
 
 def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
-    """
-    Test that we raise an error if the provided type is decorated as a
-    dataclass or attr but does not subclass Metric.
-    """
+    """Test that a dataclass or attr class not subclassing Metric raises an error."""
 
     @dataclass
     class BadMetric:
@@ -888,10 +877,7 @@ def test_assert_fieldnames_are_metric_attributes(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """
-    Should not raise an error if the provided fieldnames are all attributes of
-    the provided metric.
-    """
+    """Should not raise an error if the provided fieldnames are all metric attributes."""
     _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
@@ -908,18 +894,14 @@ def test_assert_fieldnames_are_metric_attributes_raises(
     data_and_classes: DataBuilder,
     fieldnames: List[str],
 ) -> None:
-    """
-    Should raise an error if any of the provided fieldnames are not an attribute on the metric.
-    """
+    """Should raise an error if any fieldnames are not an attribute on the metric."""
     with pytest.raises(ValueError, match="One or more of the specified fields are not "):
         _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
 
 
 @pytest.mark.parametrize("data_and_classes", (attr_data_and_classes, dataclasses_data_and_classes))
 def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: DataBuilder) -> None:
-    """
-    Should not raise an error if the provided file header matches the provided metric.
-    """
+    """Should not raise an error if the provided file header matches the provided metric."""
     metric_path = tmp_path / "metrics.tsv"
     with metric_path.open("w") as metrics_file:
         metrics_file.write("name\tage\n")
@@ -939,9 +921,7 @@ def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: Dat
 def test_assert_file_header_matches_metric_raises(
     tmp_path: Path, data_and_classes: DataBuilder, header: List[str]
 ) -> None:
-    """
-    Should raise an error if the provided file header does not match the provided metric.
-    """
+    """Should raise an error if the provided file header does not match the provided metric."""
     metric_path = tmp_path / "metrics.tsv"
     with metric_path.open("w") as metrics_file:
         metrics_file.write("\t".join(header) + "\n")

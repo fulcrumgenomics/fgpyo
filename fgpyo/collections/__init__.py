@@ -1,5 +1,5 @@
 """
-# Custom Collections and Collection Functions
+# Custom Collections and Collection Functions.
 
 This module contains classes and functions for working with collections and iterators.
 
@@ -93,7 +93,9 @@ from typing import TypeVar
 class SupportsLessThanOrEqual(Protocol):
     """A structural type for objects that support less-than-or-equal comparison."""
 
-    def __le__(self, other: Any) -> bool: ...
+    def __le__(self, other: Any) -> bool:
+        """Return True if self is less than or equal to other."""
+        ...
 
 
 IterType = TypeVar("IterType")
@@ -103,7 +105,8 @@ LessThanOrEqualType = TypeVar("LessThanOrEqualType", bound=SupportsLessThanOrEqu
 
 
 class PeekableIterator(Generic[IterType], Iterator[IterType]):
-    """A peekable iterator wrapping an iterator or iterable.
+    """
+    A peekable iterator wrapping an iterator or iterable.
 
     This allows returning the next item without consuming it.
 
@@ -112,14 +115,17 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
     """
 
     def __init__(self, source: Iterator[IterType] | Iterable[IterType]) -> None:
+        """Initializes the PeekableIterator with the given source."""
         self._iter: Iterator[IterType] = iter(source)
         self._sentinel: Any = object()
         self.__update_peek()
 
     def __iter__(self) -> Iterator[IterType]:
+        """Returns self as the iterator."""
         return self
 
     def __next__(self) -> IterType:
+        """Returns the next item and advances the iterator."""
         to_return = self.peek()
         self.__update_peek()
         return to_return
@@ -139,7 +145,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
             raise StopIteration
 
     def takewhile(self, pred: Callable[[IterType], bool]) -> List[IterType]:
-        """Consumes from the iterator while pred is true, and returns the result as a List.
+        """
+        Consumes from the iterator while pred is true, and returns the result as a List.
 
         The iterator is left pointing at the first non-matching item, or if all items match
         then the iterator will be exhausted.
@@ -158,7 +165,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         return xs
 
     def dropwhile(self, pred: Callable[[IterType], bool]) -> "PeekableIterator[IterType]":
-        """Drops elements from the iterator while the predicate is true.
+        """
+        Drops elements from the iterator while the predicate is true.
 
         Updates the iterator to point at the first non-matching element, or exhausts the
         iterator if all elements match the predicate.
@@ -176,7 +184,8 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
 
 
 def is_sorted(iterable: Iterable[LessThanOrEqualType]) -> bool:
-    """Tests lazily if an iterable of comparable objects is sorted or not.
+    """
+    Tests lazily if an iterable of comparable objects is sorted or not.
 
     Args:
         iterable: An iterable of comparable objects.

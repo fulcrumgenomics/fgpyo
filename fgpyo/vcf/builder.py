@@ -1,6 +1,4 @@
-"""
-# Classes for generating VCF and records for testing
-"""
+"""# Classes for generating VCF and records for testing."""
 
 from enum import Enum
 from pathlib import Path
@@ -17,11 +15,11 @@ from pysam import VariantHeader
 from pysam import VariantRecord
 
 from fgpyo.sam.builder import SamBuilder
-from fgpyo.vcf import writer as PysamWriter
+from fgpyo.vcf import writer as pysam_writer
 
 
 class VcfFieldType(Enum):
-    """Codes for VCF field types"""
+    """Codes for VCF field types."""
 
     INTEGER = "Integer"
     FLOAT = "Float"
@@ -31,7 +29,7 @@ class VcfFieldType(Enum):
 
 
 class VcfFieldNumber(Enum):
-    """Special codes for VCF field numbers"""
+    """Special codes for VCF field numbers."""
 
     NUM_ALT_ALLELES = "A"
     NUM_ALLELES = "R"
@@ -44,8 +42,9 @@ MissingRep = Tuple[None, ...] | None
 
 class VariantBuilder:
     """
-    Builder for constructing one or more variant records (pysam.VariantRecord) for a VCF. The VCF
-    can be sites-only, single-sample, or multi-sample.
+    Builder for constructing one or more variant records (pysam.VariantRecord) for a VCF.
+
+    The VCF can be sites-only, single-sample, or multi-sample.
 
     Provides the ability to manufacture variants from minimal arguments, while generating
     any remaining attributes to ensure a valid variant.
@@ -85,7 +84,8 @@ class VariantBuilder:
         sample_ids: Iterable[str] | None = None,
         sd: Dict[str, Dict[str, Any]] | None = None,
     ) -> None:
-        """Initializes a new VariantBuilder for generating variants and VCF files.
+        """
+        Initializes a new VariantBuilder for generating variants and VCF files.
 
         Args:
             sample_ids: the name of the sample(s)
@@ -103,7 +103,9 @@ class VariantBuilder:
 
     @classmethod
     def default_sd(cls) -> Dict[str, Dict[str, Any]]:
-        """Generates the sequence dictionary that is used by default by VariantBuilder.
+        """
+        Generates the default sequence dictionary for VariantBuilder.
+
         Re-uses the dictionary from SamBuilder for consistency.
 
         Returns:
@@ -118,7 +120,8 @@ class VariantBuilder:
 
     @classmethod
     def _build_header_string(cls, sd: Dict[str, Dict[str, Any]] | None = None) -> Iterator[str]:
-        """Builds the VCF header with the given sample name(s) and sequence dictionary.
+        """
+        Builds the VCF header with the given sample name(s) and sequence dictionary.
 
         Args:
             sd: the sequence dictionary mapping the contig name to the key-value pairs for the
@@ -163,6 +166,7 @@ class VariantBuilder:
 
     @property
     def num_samples(self) -> int:
+        """Returns the number of samples in the VCF."""
         return len(self.sample_ids)
 
     def add(
@@ -170,15 +174,16 @@ class VariantBuilder:
         contig: str | None = None,
         pos: int = 1000,
         end: int | None = None,
-        id: str = ".",
+        id: str = ".",  # noqa: A002  # pysam is already shadowing the built-in
         ref: str = "A",
         alts: str | Iterable[str] | None = (".",),
         qual: int = 60,
-        filter: str | Iterable[str] | None = None,
+        filter: str | Iterable[str] | None = None,  # noqa: A002
         info: Dict[str, Any] | None = None,
         samples: Dict[str, Dict[str, Any]] | None = None,
     ) -> VariantRecord:
-        """Generates a new variant and adds it to the internal collection.
+        """
+        Generates a new variant and adds it to the internal collection.
 
         Notes:
         * Very little validation is done with respect to INFO and FORMAT keys being defined in the
@@ -227,7 +232,7 @@ class VariantBuilder:
             alts = (alts,)
         alleles = (ref,) if alts is None else (ref, *alts)
         if isinstance(filter, str):
-            filter = (filter,)
+            filter = (filter,)  # noqa: A001  # pysam already shadows the built-in
 
         # pysam expects a list of format dicts provided in the same order as the samples in the
         # header (self.sample_ids). (This is despite the fact that it will internally represent the
@@ -269,9 +274,10 @@ class VariantBuilder:
         self, pos: int, ref: str, end: int | None, info: dict[str, Any] | None
     ) -> int:
         """
-        Derives the END/stop position for a new record based on the optionally provided `end`
-        parameter, the presence/absence of END in the info dictionary and/or the length of the
-        reference allele.
+        Derives the END/stop position for a new record.
+
+        Uses the optionally provided `end` parameter, the presence/absence of END in the info
+        dictionary and/or the length of the reference allele.
 
         Also checks that any given or calculated end position is at least greater than or equal
         to the record's position.
@@ -309,7 +315,7 @@ class VariantBuilder:
         path = self._to_vcf_path(path)
 
         # Create a writer and write to it
-        with PysamWriter(path, header=self.header) as writer:
+        with pysam_writer(path, header=self.header) as writer:
             for variant in self.to_sorted_list():
                 writer.write(variant)
 
@@ -320,9 +326,12 @@ class VariantBuilder:
 
     @staticmethod
     def _to_vcf_path(path: Path | None) -> Path:
-        """Gets the path to a VCF file.  If path is a directory, a temporary VCF will be created in
-        that directory. If path is `None`, then a temporary VCF will be created.  Otherwise, the
-        given path is simply returned.
+        """
+        Gets the path to a VCF file.
+
+        If path is a directory, a temporary VCF will be created in that directory. If path is
+        `None`, then a temporary VCF will be created.  Otherwise, the given path is simply
+        returned.
 
         Args:
             path: optionally the path to the VCF, or a directory to create a temporary VCF.
@@ -345,7 +354,7 @@ class VariantBuilder:
         return self.seq_idx_lookup[variant.contig], variant.start, variant.stop
 
     def add_header_line(self, line: str) -> None:
-        """Adds a header line to the header"""
+        """Adds a header line to the header."""
         self.header.add_line(line)
 
     def add_info_header(
@@ -357,7 +366,8 @@ class VariantBuilder:
         source: str | None = None,
         version: str | None = None,
     ) -> None:
-        """Add an INFO header field to the VCF header.
+        """
+        Add an INFO header field to the VCF header.
 
         Args:
             name: the name of the field

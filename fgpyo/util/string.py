@@ -2,7 +2,8 @@ from typing import List
 
 
 def column_it(rows: List[List[str]], delimiter: str = " ") -> str:
-    """A simple version of Unix's `column` utility.  This assumes the table is NxM.
+    """
+    A simple version of Unix's `column` utility.  This assumes the table is NxM.
 
     Args:
         rows: the rows to adjust.  Each row must have the same number of delimited fields.

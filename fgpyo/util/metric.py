@@ -1,5 +1,5 @@
 """
-# Metrics
+# Metrics.
 
 Module for storing, reading, and writing metric-like tab-delimited information.
 
@@ -169,7 +169,8 @@ class MetricFileHeader:
 
 
 class Metric(ABC, Generic[MetricType]):
-    """Abstract base class for all metric-like tab-delimited files
+    """
+    Abstract base class for all metric-like tab-delimited files.
 
     Metric files are tab-delimited, contain a header, and zero or more rows for metric values.  This
     makes it easy for them to be read in languages like `R`.
@@ -191,9 +192,7 @@ class Metric(ABC, Generic[MetricType]):
             yield getattr(self, field.name)
 
     def items(self) -> Iterator[Tuple[str, Any]]:
-        """
-        An iterator over field names and their corresponding values in the same order as the header.
-        """
+        """An iterator over field names and values in the same order as the header."""
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield (field.name, getattr(self, field.name))
 
@@ -207,9 +206,12 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
-        """Mapping of type to a specific parser for that type.  The parser must accept a string
-        as a single parameter and return a single value of the given type.  Sub-classes may
-        override this method to support custom types."""
+        """
+        Mapping of type to a specific parser for that type.
+
+        The parser must accept a string as a single parameter and return a single value of
+        the given type.  Sub-classes may override this method to support custom types.
+        """
         return {}
 
     @classmethod
@@ -220,7 +222,8 @@ class Metric(ABC, Generic[MetricType]):
         strip_whitespace: bool = False,
         threads: int | None = None,
     ) -> Iterator[Any]:
-        """Reads in zero or more metrics from the given path.
+        """
+        Reads in zero or more metrics from the given path.
 
         The metric file must contain a matching header.
 
@@ -293,9 +296,10 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def parse(cls, fields: List[str]) -> Any:
-        """Parses the string-representation of this metric.  One string per attribute should be
-        given.
+        """
+        Parses the string-representation of this metric.
 
+        One string per attribute should be given.
         """
         parsers = cls._parsers()
         header = cls.header()
@@ -306,7 +310,8 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def write(cls, path: Path, *values: MetricType, threads: int | None = None) -> None:
-        """Writes zero or more metrics to the given path.
+        """
+        Writes zero or more metrics to the given path.
 
         The header will always be written.
 
@@ -326,7 +331,8 @@ class Metric(ABC, Generic[MetricType]):
 
     @classmethod
     def format_value(cls, value: Any) -> str:  # noqa: C901
-        """The default method to format values of a given type.
+        """
+        The default method to format values of a given type.
 
         By default, this method will comma-delimit `list`, `tuple`, and `set` types, and apply
         `str` to all others.
@@ -383,6 +389,7 @@ class Metric(ABC, Generic[MetricType]):
 
     @staticmethod
     def fast_concat(*inputs: Path, output: Path) -> None:
+        """Concatenates multiple metric files into one, validating headers match."""
         if len(inputs) == 0:
             raise ValueError("No inputs provided")
 
@@ -420,7 +427,6 @@ class Metric(ABC, Generic[MetricType]):
         Raises:
             ValueError: If the file was empty or contained only comments or empty lines.
         """
-
         preamble: List[str] = []
         fieldnames: List[str] = []
 
@@ -438,7 +444,6 @@ class Metric(ABC, Generic[MetricType]):
 
 def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
     """True if the given class is a Metric."""
-
     is_metric_cls: bool = isclass(cls) and issubclass(cls, Metric)
 
     try:
@@ -452,6 +457,8 @@ def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
 
 
 class MetricWriter(Generic[MetricType], AbstractContextManager):
+    """Writes Metric instances to a delimited file."""
+
     _metric_class: Type[Metric]
     _fieldnames: List[str]
     _fout: TextIOWrapper
@@ -468,7 +475,9 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         lineterminator: str = "\n",
         threads: int | None = None,
     ) -> None:
-        """
+        r"""
+        Initializes the MetricWriter.
+
         Args:
             filename: Path to the file to write.
             metric_class: Metric class.
@@ -483,7 +492,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
                 May not be used together with `include_fields`.
             lineterminator: The string used to terminate lines produced by the MetricWriter.
                 Default = "\n".
-            threads: the number of threads to use when compressing gzip files
+            threads: the number of threads to use when compressing gzip files.
 
         Raises:
             TypeError: If the provided metric class is not a dataclass- or attr-decorated
@@ -497,7 +506,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             ValueError: If `append=True` and the header of the provided file does not match the
                 specified metric class and the specified include/exclude fields.
         """
-
         filepath: Path = Path(filename)
         if (filepath.is_fifo() or filepath.is_char_device()) and append:
             raise ValueError("Cannot append to stdout, stderr, or other named pipe or stream")
@@ -534,6 +542,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             self._writer.writeheader()
 
     def __enter__(self) -> "MetricWriter":
+        """Returns self for use as a context manager."""
         return self
 
     def __exit__(
@@ -542,6 +551,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
+        """Closes the underlying writer on exit."""
         self.close()
         super().__exit__(exc_type, exc_value, traceback)
 
@@ -565,7 +575,6 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
             TypeError: If the provided `metric` is not an instance of the Metric class used to
                 parametrize the writer.
         """
-
         # Serialize the Metric to a dict for writing by the underlying `DictWriter`
         row = {fieldname: val for fieldname, val in metric.formatted_items()}
 
@@ -609,7 +618,6 @@ def _validate_and_generate_final_output_fieldnames(
     Raises:
         ValueError: If both `include_fields` and `exclude_fields` are specified.
     """
-
     if include_fields is not None and exclude_fields is not None:
         raise ValueError(
             "Only one of `include_fields` and `exclude_fields` may be specified, not both."

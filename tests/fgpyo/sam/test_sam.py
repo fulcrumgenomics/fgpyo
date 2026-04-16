@@ -1,4 +1,4 @@
-"""Tests for :py:mod:`~fgpyo.sam`"""
+"""Tests for :py:mod:`~fgpyo.sam`."""
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
@@ -74,7 +74,8 @@ def unmapped_sam() -> Path:
 
 @pytest.fixture(scope="function")
 def in_path(request: Any, valid_sam: Path, valid_bam: Path) -> Path:
-    """A fixture for test_sam_file_open_reading to modify in_path prior to executing.
+    """
+    A fixture for test_sam_file_open_reading to modify in_path prior to executing.
 
     Returns:
          the path corresponding to the given file type (i.e. SAM or BAM).
@@ -558,7 +559,7 @@ def test_is_not_proper_pair_with_custom_isize_func() -> None:
     builder = SamBuilder()
     r1, r2 = builder.add_pair(chrom="chr1", start1=100, start2=100)
     assert is_proper_pair(r1, r2)
-    assert not is_proper_pair(r1, r2, isize=lambda a, b: False)
+    assert not is_proper_pair(r1, r2, isize=lambda _a, _b: False)
 
 
 def test_isize_when_r2_defined() -> None:
@@ -763,9 +764,8 @@ def test_calc_edit_info_with_clipping_and_deletions() -> None:
 
 
 @pytest.mark.parametrize("match_htsjdk", [True, False])
-def test_calc_edit_info_with_aligned_Ns(match_htsjdk: bool) -> None:
-    """Ns in query match Ns in reference, but should be counted as mismatches for NM when
-    n_as_match is set to `False`."""
+def test_calc_edit_info_with_aligned_ns(match_htsjdk: bool) -> None:
+    """Test that Ns aligned to Ns are counted as mismatches when n_as_match is False."""
     chrom = "ACGTNCGTACNTACGTACGTANNNACGTACACGTACGTACGTACGTACGTACGTACGTAT"
     builder = SamBuilder(r1_len=30)
     rec = builder.add_single(
@@ -792,9 +792,11 @@ def test_calc_edit_info_with_aligned_Ns(match_htsjdk: bool) -> None:
 
 @pytest.mark.parametrize("match_htsjdk", [True, False])
 def test_calc_edit_info_with_consecutive_mismatches(match_htsjdk: bool) -> None:
-    """`htsjdk` testing data with consecutive mismatches and no match to start.
+    """
+    `htsjdk` testing data with consecutive mismatches and no match to start.
 
-    `match_htsjdk` should have no effect."""
+    `match_htsjdk` should have no effect.
+    """
     chrom = "TCGATCGAtcgatcga"
     builder = SamBuilder(r1_len=16)
     rec = builder.add_single(
@@ -859,9 +861,11 @@ def test_calc_edit_info_with_equals_in_query() -> None:
 
 
 def test_calc_edit_info_all_matches() -> None:
-    """Assert that a simple read with all consecutive matches yields expected results.
+    """
+    Assert that a simple read with all consecutive matches yields expected results.
 
-    Read 4 from `htsjdk` testing data."""
+    Read 4 from `htsjdk` testing data.
+    """
     chrom = "TCGATCGAtcgatcga"
     builder = SamBuilder(r1_len=8)
     rec = builder.add_single(

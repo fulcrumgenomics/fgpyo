@@ -23,6 +23,8 @@ from fgpyo.util.inspect import tuple_parser
 
 @attr.s(auto_attribs=True, frozen=True)
 class Name:
+    """Test attr class with various field types."""
+
     required: str
     custom_parser: str
     converted: int = attr.field(converter=int)
@@ -66,16 +68,20 @@ def test_attribute_has_default() -> None:
 
 
 class Foo:
-    pass
+    """Test class used as a field type."""
 
 
 @attr.s(auto_attribs=True, frozen=True)
 class Bar:
+    """Test attr class with a Foo field."""
+
     foo: Foo
 
 
 @dataclasses.dataclass(frozen=True)
 class Baz:
+    """Test dataclass with a Foo field."""
+
     foo: Foo
 
 

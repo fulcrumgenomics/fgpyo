@@ -1,5 +1,5 @@
 """
-# Classes for generating fasta files and records for testing
+# Classes for generating fasta files and records for testing.
 
 This module contains utility classes for creating fasta files, indexed fasta files (.fai), and
 sequence dictionaries (.dict).
@@ -62,10 +62,10 @@ from fgpyo.io import assert_path_is_writable
 if TYPE_CHECKING:
 
     def samtools_dict(*args: Any) -> None:
-        pass
+        """Stub for pysam.dict used under TYPE_CHECKING."""
 
     def samtools_faidx(*args: Any) -> None:
-        pass
+        """Stub for pysam.faidx used under TYPE_CHECKING."""
 
 else:
     from pysam import dict as samtools_dict
@@ -73,9 +73,10 @@ else:
 
 
 def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -> None:
-    """Calls pysam.dict and writes the sequence dictionary to the provided output path
+    """
+    Calls pysam.dict and writes the sequence dictionary to the provided output path.
 
-    Args
+    Args:
         assembly: Assembly
         species: Species
         output_path: File path to write dictionary to
@@ -85,16 +86,19 @@ def pysam_dict(assembly: str, species: str, output_path: str, input_path: str) -
 
 
 def pysam_faidx(input_path: str) -> None:
-    """Calls pysam.faidx and writes fasta index in the same file location as the fasta file
+    """
+    Calls pysam.faidx and writes fasta index in the same file location as the fasta file.
 
-    Args
+    Args:
         input_path: Path to fasta file
     """
     samtools_faidx(input_path)
 
 
 class ContigBuilder:
-    """Builder for constructing new contigs, and adding bases to existing contigs.
+    """
+    Builder for constructing new contigs, and adding bases to existing contigs.
+
     Existing contigs cannot be overwritten, each contig name in FastaBuilder must
     be unique. Instances of ContigBuilders should be created using FastaBuilder.add(),
     where species and assembly are optional parameters and will defualt to
@@ -114,6 +118,7 @@ class ContigBuilder:
         assembly: str,
         species: str,
     ):
+        """Initializes a ContigBuilder with the given name, assembly, and species."""
         self.name = name
         self.assembly = assembly
         self.species = species
@@ -127,7 +132,7 @@ class ContigBuilder:
             bases: The bases to be added to the contig
             times: The number of times the bases should be repeated
 
-        Example
+        Example:
         add("AAA", 2) results in the following bases -> "AAAAAA"
         """
         # Remove any spaces in string and enforce upper case format
@@ -137,7 +142,8 @@ class ContigBuilder:
 
 
 class FastaBuilder:
-    """Builder for constructing sets of one or more contigs.
+    """
+    Builder for constructing sets of one or more contigs.
 
     Provides the ability to manufacture sets of contigs from minimal input, and automatically
     generates the information necessary for writing the FASTA file, index, and dictionary.
@@ -169,13 +175,14 @@ class FastaBuilder:
         species: str = "testspecies",
         line_length: int = 80,
     ):
+        """Initializes a FastaBuilder with the given assembly, species, and line length."""
         self.assembly: str = assembly
         self.species: str = species
         self.line_length: int = line_length
         self.__contig_builders: Dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
-        """Access instance of ContigBuilder by name"""
+        """Access instance of ContigBuilder by name."""
         return self.__contig_builders[key]
 
     def add(
@@ -186,6 +193,7 @@ class FastaBuilder:
     ) -> ContigBuilder:
         """
         Creates and returns a new ContigBuilder for a contig with the provided name.
+
         Contig names must be unique, attempting to create two seperate contigs with the same
         name will result in an error.
 
@@ -213,6 +221,7 @@ class FastaBuilder:
     ) -> None:
         """
         Writes out the set of accumulated contigs to a FASTA file at the `path` given.
+
         Also generates the accompanying fasta index file (`.fa.fai`) and sequence
         dictionary file (`.dict`).
 

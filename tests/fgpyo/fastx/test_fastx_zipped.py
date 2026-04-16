@@ -17,9 +17,9 @@ def test_fastx_zipped_requires_at_least_one_fastx() -> None:
 
 def test_fastx_zipped_iterates_one_empty_fastx(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over one empty FASTX file."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fastx = input / "input.fastx"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fastx = input_dir / "input.fastx"
     fastx.write_text("")
 
     with FastxZipped(fastx) as handle:
@@ -28,9 +28,9 @@ def test_fastx_zipped_iterates_one_empty_fastx(tmp_path: Path) -> None:
 
 def test_fastx_zipped_iterates_over_a_single_fasta(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over a single FASTA file."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta = input / "input.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta = input_dir / "input.fasta"
     fasta.write_text(">seq1\nACGT\n>seq2\nTGCA\n")
 
     context_manager = FastxZipped(fasta)
@@ -47,9 +47,9 @@ def test_fastx_zipped_iterates_over_a_single_fasta(tmp_path: Path) -> None:
 
 def test_fastx_zipped_iterates_over_a_single_fasta_gzipped(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over a single gzipped FASTA file."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta = input / "input.fasta.gz"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta = input_dir / "input.fasta.gz"
 
     with gzip.open(fasta, "wt") as handle:
         handle.write(">seq1\nACGT\n>seq2\nTGCA\n")
@@ -68,9 +68,9 @@ def test_fastx_zipped_iterates_over_a_single_fasta_gzipped(tmp_path: Path) -> No
 
 def test_fastx_zipped_iterates_over_a_single_fastq(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over a single FASTQ file."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fastq = input / "input.fastq"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fastq = input_dir / "input.fastq"
     fastq.write_text("@seq1\tcomment1\nACGT\n+\nFFFF\n" + "@seq2\tcomment2\nTGCA\n+\n!!!!\n")
 
     context_manager = FastxZipped(fastq)
@@ -91,10 +91,10 @@ def test_fastx_zipped_iterates_over_a_single_fastq(tmp_path: Path) -> None:
 
 def tests_fastx_zipped_raises_exception_on_truncated_fastx(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` raises an exception on truncated FASTX files."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta1 = input / "input1.fasta"
-    fasta2 = input / "input2.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta1 = input_dir / "input1.fasta"
+    fasta2 = input_dir / "input2.fasta"
     fasta1.write_text(">seq1\nAAAA\n")
     fasta2.write_text(">seq1\nCCCC\n>seq2\nGGGG\n")
 
@@ -125,10 +125,10 @@ def tests_fastx_zipped_raises_exception_on_truncated_fastx(tmp_path: Path) -> No
 
 def tests_fastx_zipped_can_iterate_over_multiple_fastx_files(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can iterate over multiple FASTX files."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta1 = input / "input1.fasta"
-    fasta2 = input / "input2.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta1 = input_dir / "input1.fasta"
+    fasta2 = input_dir / "input2.fasta"
     fasta1.write_text(">seq1\nAAAA\n>seq2\nCCCC\n")
     fasta2.write_text(">seq1\nGGGG\n>seq2\nTTTT\n")
 
@@ -150,11 +150,11 @@ def tests_fastx_zipped_can_iterate_over_multiple_fastx_files(tmp_path: Path) -> 
 
 def tests_fastx_zipped_raises_exception_on_mismatched_sequence_names(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` raises an exception on mismatched sequence names."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta1 = input / "input1.fasta"
-    fasta2 = input / "input2.fasta"
-    fasta3 = input / "input3.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta1 = input_dir / "input1.fasta"
+    fasta2 = input_dir / "input2.fasta"
+    fasta3 = input_dir / "input3.fasta"
     fasta1.write_text(">seq1\nAAAA\n")
     fasta2.write_text(">seq2\nCCCC\n")
     fasta3.write_text(">seq1\nGGGG\n")
@@ -172,10 +172,10 @@ def tests_fastx_zipped_raises_exception_on_mismatched_sequence_names(tmp_path: P
 
 def tests_fastx_zipped_handles_sequence_names_with_suffixes(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` does not use sequence name suffixes in equality tests."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta1 = input / "input1.fasta"
-    fasta2 = input / "input2.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta1 = input_dir / "input1.fasta"
+    fasta2 = input_dir / "input2.fasta"
     fasta1.write_text(">seq1/1\nAAAA\n")
     fasta2.write_text(">seq1/2\nCCCC\n")
 
@@ -205,10 +205,10 @@ def tests_fastx_zipped__name_minus_ordinal_works_with_r1_and_r2_ordinals() -> No
 
 def test_fastx_zipped_accidentally_used_as_iterator_only(tmp_path: Path) -> None:
     """Test that :class:`FastxZipped` can also be used as an interator outside a context manager."""
-    input = tmp_path / "input"
-    input.mkdir()
-    fasta1 = input / "input1.fasta"
-    fasta2 = input / "input2.fasta"
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    fasta1 = input_dir / "input1.fasta"
+    fasta2 = input_dir / "input2.fasta"
     fasta1.write_text(">seq1\nAAAA\n>seq2\nCCCC\n")
     fasta2.write_text(">seq1\nGGGG\n>seq2\nTTTT\n")
 

@@ -1,6 +1,5 @@
 """
-Methods for working with Illumina-specific UMIs in SAM files
-------------------------------------
+Methods for working with Illumina-specific UMIs in SAM files.
 
 The functions in this module make it easy to:
 
@@ -35,7 +34,8 @@ def extract_umis_from_read_name(
     umi_delimiter: str = _ILLUMINA_UMI_DELIMITER,
     strict: bool = False,
 ) -> str | None:
-    """Extract UMI(s) from an Illumina-style read name.
+    """
+    Extract UMI(s) from an Illumina-style read name.
 
     The UMI is expected to be the final component of the read name, delimited by the
     `read_name_delimiter`. Multiple UMIs may be present, delimited by the `umi_delimiter`. This
@@ -90,8 +90,9 @@ def copy_umi_from_read_name(
     rec: AlignedSegment, strict: bool = False, remove_umi: bool = False
 ) -> bool:
     """
-    Copy a UMI from an alignment's read name to its `RX` SAM tag. UMI will not be copied to RX
-    tag if invalid.
+    Copy a UMI from an alignment's read name to its `RX` SAM tag.
+
+    The UMI will not be copied to RX tag if it is invalid.
 
     Args:
         rec: The alignment record to update.
@@ -127,13 +128,15 @@ def copy_umi_from_read_name(
 
 
 def _is_valid_umi(umi: str) -> bool:
-    """Check whether a UMI is valid.
+    """
+    Check whether a UMI is valid.
+
     Illumina UMIs may only contain A/C/G/T/N.
     https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
     Args:
         umi: The UMI to check.
+
     Returns:
         `True` if the UMI is valid, `False` otherwise.
     """
-
     return len(umi) > 0 and set(umi).issubset(_VALID_UMI_CHARACTERS)

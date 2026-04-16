@@ -80,7 +80,8 @@ def complement(base: str) -> str:
 
 
 def reverse_complement(bases: str) -> str:
-    """Reverse complements a base sequence.
+    """
+    Reverse complements a base sequence.
 
     Arguments:
         bases: the bases to be reverse complemented.
@@ -108,6 +109,7 @@ def gc_content(bases: str) -> float:
 def hamming(string1: str, string2: str) -> int:
     """
     Calculates hamming distance between two strings, case sensitive.
+
     Strings must be of equal lengths.
 
     Args:
@@ -134,30 +136,30 @@ def levenshtein(string1: str, string2: str) -> int:
         string2: second string for comparison
 
     """
-    N: int = len(string1)
-    M: int = len(string2)
-    if N == 0 or M == 0:
-        return max(N, M)
-    # Initialize N + 1 x M + 1 matrix with final row/column representing the empty string.
+    n: int = len(string1)
+    m: int = len(string2)
+    if n == 0 or m == 0:
+        return max(n, m)
+    # Initialize n + 1 x m + 1 matrix with final row/column representing the empty string.
     # Fill in initial values for empty string sub-problem comparisons.
     #   A D C "
     # A - - - 3
     # B - - - 2
     # C - - - 1
     # " 3 2 1 0
-    matrix: List[List[int]] = [[int()] * (M + 1) for _ in range(N + 1)]
-    for j in range(M + 1):
-        matrix[N][j] = M - j
-    for i in range(N + 1):
-        matrix[i][M] = N - i
+    matrix: List[List[int]] = [[int()] * (m + 1) for _ in range(n + 1)]
+    for j in range(m + 1):
+        matrix[n][j] = m - j
+    for i in range(n + 1):
+        matrix[i][m] = n - i
     # Fill in matrix from bottom up using previous sub-problem solutions.
     #   A D C "      A D C "      A D C "      A D C "      A D C "
     # A - - - 3    A - - - 3    A - - 2 3    A - 2 2 3    A 1 2 2 3
     # B - - - 2 -> B - - 1 2 -> B - 1 1 2 -> B 2 1 1 2 -> B 2 1 1 2
     # C - - 0 1    C - 1 0 1    C 2 1 0 1    C 2 1 0 1    C 2 1 0 1
     # " 3 2 1 0    " 3 2 1 0    " 3 2 1 0    " 3 2 1 0    " 3 2 1 0
-    for i in range(N - 1, -1, -1):
-        for j in range(M - 1, -1, -1):
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
             if string1[i] == string2[j]:
                 matrix[i][j] = matrix[i + 1][j + 1]  # No Operation
             else:
@@ -170,7 +172,8 @@ def levenshtein(string1: str, string2: str) -> int:
 
 
 def longest_hp_length(bases: str) -> int:
-    """Calculates the length of the longest homopolymer in the input sequence.
+    """
+    Calculates the length of the longest homopolymer in the input sequence.
 
     Args:
         bases: the bases over which to compute
@@ -182,7 +185,8 @@ def longest_hp_length(bases: str) -> int:
 
 
 def longest_homopolymer_length(bases: str) -> int:
-    """Calculates the length of the longest homopolymer in the input sequence.
+    """
+    Calculates the length of the longest homopolymer in the input sequence.
 
     Args:
         bases: the bases over which to compute
@@ -207,7 +211,8 @@ def longest_homopolymer_length(bases: str) -> int:
 
 
 def longest_dinucleotide_run_length(bases: str) -> int:
-    """Number of bases in the longest dinucleotide run in a primer.
+    """
+    Number of bases in the longest dinucleotide run in a primer.
 
     A dinucleotide run is when two nucleotides are repeated in tandem. For example,
     TTGG (length = 4) or AACCAACCAA (length = 10). If there are no such runs, returns 0.
@@ -222,7 +227,8 @@ def longest_dinucleotide_run_length(bases: str) -> int:
 
 
 def longest_multinucleotide_run_length(bases: str, repeat_unit_length: int) -> int:
-    """Number of bases in the longest multi-nucleotide run.
+    """
+    Number of bases in the longest multi-nucleotide run.
 
     A multi-nucleotide run is when N nucleotides are repeated in tandem. For example,
     TTGG (length = 4, N=2) or TAGTAGTAG (length = 9, N = 3). If there are no such runs,

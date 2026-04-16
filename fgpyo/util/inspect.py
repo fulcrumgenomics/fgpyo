@@ -54,11 +54,11 @@ except ImportError:  # pragma: no cover
     # called because the import failed; but they're here to ensure that the function is defined in
     # sections of code that don't know if the import was successful or not.
 
-    def get_attr_fields(cls: type) -> Tuple[dataclasses.Field, ...]:
+    def get_attr_fields(_cls: type) -> Tuple[dataclasses.Field, ...]:
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
 
-    def get_attr_fields_dict(cls: type) -> Dict[str, dataclasses.Field]:
+    def get_attr_fields_dict(_cls: type) -> Dict[str, dataclasses.Field]:
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
 
@@ -70,6 +70,8 @@ if TYPE_CHECKING:  # pragma: no cover
 else:
 
     class DataclassInstance(Protocol):
+        """Protocol for dataclass instances when _typeshed is unavailable."""
+
         __dataclasses_fields__: ClassVar[Dict[str, dataclasses.Field[Any]]]
 
 
@@ -78,11 +80,13 @@ if TYPE_CHECKING and _use_attr:  # pragma: no cover
 else:
     # https://github.com/python-attrs/attrs/blob/f7f317ae4c3790f23ae027db626593d50e8a4e88/src/attr/_typing_compat.pyi#L9
     class AttrsInstance(Protocol):  # type: ignore[no-redef]
+        """Protocol for attrs instances when attrs is unavailable."""
+
         __attrs_attrs__: ClassVar[Any]
 
 
 def is_attr_class(cls: type) -> TypeGuard[type[AttrsInstance]]:
-    """Return True if the class is an attr class, and False otherwise"""
+    """Return True if the class is an attr class, and False otherwise."""
     return hasattr(cls, "__attrs_attrs__")
 
 
@@ -107,8 +111,8 @@ def _get_dataclasses_fields_dict(
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
 
 
-class ParserNotFoundException(Exception):
-    pass
+class ParserNotFoundException(Exception):  # noqa: N818
+    """Raised when no parser can be found for a given type."""
 
 
 def split_at_given_level(
@@ -118,14 +122,13 @@ def split_at_given_level(
     decrease_depth_chars: Iterable[str] = ("}", ")", "]"),
 ) -> List[str]:
     """
-    Splits a nested field by its outer-most level
+    Splits a nested field by its outer-most level.
 
     Note that this method may produce incorrect results fields containing strings containing
     unpaired characters that increase or decrease the depth
 
     Not currently smart enough to deal with fields enclosed in quotes ('' or "") - TODO
     """
-
     outer_depth_of_split = 0
     current_outer_splits = []
     out_vals: List[str] = []
@@ -236,9 +239,10 @@ def tuple_parser(
 
     def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
         """
-        Parses a dictionary value (can do so recursively)
+        Parses a dictionary value (can do so recursively).
+
         Note that this tool will fail on tuples containing strings containing
-        unpaired '{', or '}' characters
+        unpaired '{', or '}' characters.
         """
         assert tuple_string[0] == "(", "Tuple val improperly formatted"
         assert tuple_string[-1] == ")", "Tuple val improperly formatted"
@@ -265,7 +269,7 @@ def dict_parser(
         cls: the type of the class object this is being parsed for (used to get default val for
             parsers)
         type_: the type of the attribute to be parsed
-            parsers: an optional mapping from type to the function to use for parsing that type
+        parsers: an optional mapping from type to the function to use for parsing that type
             (allows for parsing of more complex types)
     """
     subtypes = typing.get_args(type_)
@@ -284,9 +288,7 @@ def dict_parser(
     )
 
     def dict_parse(dict_string: str) -> Dict[Any, Any]:
-        """
-        Parses a dictionary value (can do so recursively)
-        """
+        """Parses a dictionary value (can do so recursively)."""
         assert dict_string[0] == "{", "Dict val improperly formatted"
         assert dict_string[-1] == "}", "Dict val improprly formatted"
         dict_string = dict_string[1:-1]
@@ -313,7 +315,8 @@ def dict_parser(
 def _get_parser(  # noqa: C901
     cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
-    """Attempts to find a parser for a provided type.
+    """
+    Attempts to find a parser for a provided type.
 
     Args:
         cls: the type of the class object this is being parsed for (used to get default val for
@@ -392,7 +395,7 @@ def _get_parser(  # noqa: C901
 def get_fields_dict(
     cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Mapping[str, FieldType]:
-    """Get the fields dict from either a dataclasses or attr dataclass (or instance)"""
+    """Get the fields dict from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
         return _get_dataclasses_fields_dict(cls)
     # Always pass a type to is_attr_class
@@ -407,7 +410,7 @@ def get_fields_dict(
 def get_fields(
     cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
 ) -> Tuple[FieldType, ...]:
-    """Get the fields tuple from either a dataclasses or attr dataclass (or instance)"""
+    """Get the fields tuple from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
         return get_dataclasses_fields(cls)
     # Always pass a type to is_attr_class
@@ -427,7 +430,8 @@ def attr_from(
     kwargs: Dict[str, str],
     parsers: Dict[type, Callable[[str], Any]] | None = None,
 ) -> _AttrFromType:
-    """Builds an attr or dataclasses class from key-word arguments
+    """
+    Builds an attr or dataclasses class from key-word arguments.
 
     Args:
         cls: the attr or dataclasses class to be built
@@ -486,12 +490,12 @@ def attr_from(
 
 
 def _attribute_is_optional(attribute: FieldType) -> bool:
-    """Returns True if the attribute is optional, False otherwise"""
+    """Returns True if the attribute is optional, False otherwise."""
     return typing.get_origin(attribute.type) is Union and isinstance(
         None, typing.get_args(attribute.type)
     )
 
 
 def _attribute_has_default(attribute: FieldType) -> bool:
-    """Returns True if the attribute has a default value, False otherwise"""
+    """Returns True if the attribute has a default value, False otherwise."""
     return attribute.default not in _MISSING_OR_NONE or _attribute_is_optional(attribute)

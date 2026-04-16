@@ -1,5 +1,5 @@
 """
-# Zipping FASTX Files
+# Zipping FASTX Files.
 
 Zipping a set of FASTA/FASTQ files into a single stream of data is a common task in bioinformatics
 and can be achieved with the [`FastxZipped()`][fgpyo.fastx.FastxZipped] context manager.
@@ -41,7 +41,8 @@ from fgpyo.util.types import all_not_none
 
 
 class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
-    """A context manager that will lazily zip over any number of FASTA/FASTQ files.
+    """
+    A context manager that will lazily zip over any number of FASTA/FASTQ files.
 
     Args:
         paths: Paths to the FASTX files to zip over.

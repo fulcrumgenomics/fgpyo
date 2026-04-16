@@ -22,6 +22,7 @@ from typing import Protocol
 from typing import Tuple
 from typing import Type
 from typing import TypeAlias
+from typing import TypeGuard
 from typing import TypeVar
 from typing import Union
 
@@ -36,8 +37,10 @@ try:
     import attr
 
     _use_attr = True
+    assert attr is not None  # type narrowing
     get_attr_fields = attr.fields
     get_attr_fields_dict = attr.fields_dict
+
     Attribute: TypeAlias = attr.Attribute  # type: ignore[name-defined]
     # dataclasses and attr have internal tokens for missing values, join into a set so that we can
     # check if a value is missing without knowing the type of backing class
@@ -78,7 +81,7 @@ else:
         __attrs_attrs__: ClassVar[Any]
 
 
-def is_attr_class(cls: type) -> bool:
+def is_attr_class(cls: type) -> TypeGuard[type[AttrsInstance]]:
     """Return True if the class is an attr class, and False otherwise"""
     return hasattr(cls, "__attrs_attrs__")
 
@@ -346,13 +349,13 @@ def _get_parser(  # noqa: C901
                 raise ValueError("Unable to parse set (try typing.Set[type])") from ex
             elif type_ is dict:
                 raise ValueError("Unable to parse dict (try typing.Mapping[type])") from ex
-            elif typing.get_origin(type_) is list:
+            elif typing.get_origin(type_) is list:  # type: ignore[comparison-overlap]
                 return list_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is set:
+            elif typing.get_origin(type_) is set:  # type: ignore[comparison-overlap]
                 return set_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is tuple:
+            elif typing.get_origin(type_) is tuple:  # type: ignore[comparison-overlap]
                 return tuple_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is dict:
+            elif typing.get_origin(type_) is dict:  # type: ignore[comparison-overlap]
                 return dict_parser(cls, type_, parsers)
             elif isinstance(type_, type) and issubclass(type_, Enum):
                 return types.make_enum_parser(type_)
@@ -365,7 +368,7 @@ def _get_parser(  # noqa: C901
                     union=type_,
                     parsers=[_get_parser(cls, arg, parsers) for arg in typing.get_args(type_)],
                 )
-            elif typing.get_origin(type_) is Literal:
+            elif typing.get_origin(type_) is Literal:  # type: ignore[comparison-overlap]
                 return types.make_literal_parser(
                     type_,
                     [_get_parser(cls, type(arg), parsers) for arg in typing.get_args(type_)],

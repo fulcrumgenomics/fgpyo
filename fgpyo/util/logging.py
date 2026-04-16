@@ -158,10 +158,9 @@ class ProgressLogger(AbstractContextManager):
         Returns:
             true if a message was logged, false otherwise
         """
-        if rec.reference_start is None:
+        if rec.is_unmapped:
             return self.record(None, None)
-        else:
-            return self.record(rec.reference_name, rec.reference_start + 1)
+        return self.record(rec.reference_name, rec.reference_start + 1)
 
     def record_alignments(
         self,

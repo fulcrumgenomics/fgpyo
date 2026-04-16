@@ -77,7 +77,6 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
             # covers the case where all records are None, so it is safe to index into the first
             # element of non_none_names.
             sequence_name: str = non_none_names[0]
-
             raise ValueError(
                 "One or more of the FASTX files is truncated for sequence "
                 + f"{self._name_minus_ordinal(sequence_name)}:\n\t"

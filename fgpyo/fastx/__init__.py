@@ -86,10 +86,8 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
             )
 
         names_with_ordinals: List[str | None] = [record.name for record in records]
-
         assert all_not_none(names_with_ordinals)  # type narrowing
         record_names: List[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]
-
         if len(set(record_names)) != 1:
             raise ValueError(f"FASTX record names do not all match, found: {record_names}")
 

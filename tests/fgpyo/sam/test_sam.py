@@ -5,7 +5,6 @@ from tempfile import NamedTemporaryFile as NamedTemp
 from typing import Any
 from typing import Generator
 from typing import List
-from typing import Optional
 from typing import Tuple
 
 import pysam
@@ -958,7 +957,7 @@ def test_calc_edit_info_deletion_block_break_out_of_bounds() -> None:
 
 
 @pytest.mark.parametrize("query_sequence", [None, "*"])
-def test_calc_edit_info_with_missing_query_bases(query_sequence: Optional[str]) -> None:
+def test_calc_edit_info_with_missing_query_bases(query_sequence: str | None) -> None:
     """Assert expected behavior for a read that has missing query bases."""
     chrom = "AGTCCGTTA"
     builder = SamBuilder(r1_len=10)

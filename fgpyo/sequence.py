@@ -12,7 +12,6 @@ ex. https://pypi.org/project/Distance/
 from types import MappingProxyType
 from typing import Dict
 from typing import List
-from typing import Optional
 
 _COMPLEMENTS: Dict[str, str] = {
     # Discrete bases
@@ -61,7 +60,7 @@ _COMPLEMENTS: Dict[str, str] = {
 # Get str of all invalid nucleotide characters (strings missing from _COMPLEMENTS).
 _INVALID_BASES: str = "".join(c for c in (chr(o) for o in range(256)) if c not in _COMPLEMENTS)
 # Use str.maketrans to create a table matching ascii codes of bases to ascii codes of complements.
-_COMPLEMENTS_TABLE: MappingProxyType[int, Optional[int]] = MappingProxyType(
+_COMPLEMENTS_TABLE: MappingProxyType[int, int | None] = MappingProxyType(
     str.maketrans("".join(_COMPLEMENTS.keys()), "".join(_COMPLEMENTS.values()), _INVALID_BASES)
 )
 """

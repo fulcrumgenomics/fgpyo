@@ -183,7 +183,6 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import cast
 
@@ -790,7 +789,7 @@ class PairOrientation(enum.Enum):
     @classmethod
     def from_recs(  # noqa: C901  # `from_recs` is too complex (11 > 10)
         cls, rec1: AlignedSegment, rec2: AlignedSegment | None = None
-    ) -> Optional["PairOrientation"]:
+    ) -> "PairOrientation | None":
         """
         Returns the pair orientation if both reads are mapped to the same reference sequence.
 
@@ -900,7 +899,7 @@ def is_proper_pair(
     rec2: AlignedSegment | None = None,
     max_insert_size: int = 1000,
     orientations: Collection[PairOrientation] = DefaultProperlyPairedOrientations,
-    isize: Callable[[AlignedSegment, Optional[AlignedSegment]], int] = isize,
+    isize: Callable[[AlignedSegment, AlignedSegment | None], int] = isize,
 ) -> bool:
     """
     Determines if a pair of records are properly paired or not.

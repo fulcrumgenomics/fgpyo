@@ -10,7 +10,6 @@ from types import UnionType
 from typing import Callable
 from typing import Iterable
 from typing import Literal
-from typing import Optional
 from typing import Type
 from typing import TypeGuard
 from typing import TypeVar
@@ -143,7 +142,7 @@ def _make_union_parser_worker(
     union: Type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
-) -> Optional[UnionType]:
+) -> UnionType | None:
     """
     Worker function behind union parsing.
 
@@ -219,26 +218,26 @@ def none_parser(value: str) -> Literal[None]:
 
 
 @overload
-def all_not_none(values: tuple[Optional[T], ...]) -> TypeGuard[tuple[T, ...]]: ...
+def all_not_none(values: tuple[T | None, ...]) -> TypeGuard[tuple[T, ...]]: ...
 
 
 @overload
-def all_not_none(values: list[Optional[T]]) -> TypeGuard[list[T]]: ...
+def all_not_none(values: list[T | None]) -> TypeGuard[list[T]]: ...
 
 
 @overload
-def all_not_none(values: set[Optional[T]]) -> TypeGuard[set[T]]: ...
+def all_not_none(values: set[T | None]) -> TypeGuard[set[T]]: ...
 
 
 @overload
-def all_not_none(values: Sequence[Optional[T]]) -> TypeGuard[Sequence[T]]: ...
+def all_not_none(values: Sequence[T | None]) -> TypeGuard[Sequence[T]]: ...
 
 
 @overload
-def all_not_none(values: Collection[Optional[T]]) -> TypeGuard[Collection[T]]: ...
+def all_not_none(values: Collection[T | None]) -> TypeGuard[Collection[T]]: ...
 
 
-def all_not_none(values: Iterable[Optional[T]]) -> bool:
+def all_not_none(values: Iterable[T | None]) -> bool:
     """
     Type guard that checks all Optional collection elements are not None.
 

@@ -271,6 +271,87 @@ def test_add_single() -> None:
         builder.add_single(read_num=0)
 
 
+def test_add_single_explicit_none_clears_bases_and_quals() -> None:
+    """Passing `None` explicitly produces a record with no sequence and no qualities."""
+    builder = SamBuilder()
+    r = builder.add_single(bases=None, quals=None)
+    assert r.query_sequence is None
+    assert r.query_qualities is None
+
+
+def test_add_single_bases_none_also_clears_quals() -> None:
+    """Setting `bases=None` implies `quals=None`; qualities without a sequence is invalid SAM."""
+    builder = SamBuilder()
+    r = builder.add_single(bases=None)
+    assert r.query_sequence is None
+    assert r.query_qualities is None
+
+
+def test_add_single_quals_none_preserves_bases() -> None:
+    """Setting `quals=None` produces a record with a sequence but no qualities."""
+    builder = SamBuilder(r1_len=20)
+    r = builder.add_single(quals=None)
+    assert r.query_sequence is not None
+    assert len(r.query_sequence) == 20
+    assert r.query_qualities is None
+
+
+def test_add_single_none_on_mapped_read_preserves_cigar() -> None:
+    """A mapped, sequence-less record still has a cigar synthesized from the read length."""
+    builder = SamBuilder(r1_len=30)
+    r = builder.add_single(chrom="chr1", start=100, bases=None, quals=None)
+    assert not r.is_unmapped
+    assert r.cigarstring == "30M"
+    assert r.query_sequence is None
+    assert r.query_qualities is None
+
+
+def test_add_single_bases_none_with_explicit_cigar() -> None:
+    """An explicit cigar provides the length used for synthesized cigar; sequence stays None."""
+    builder = SamBuilder()
+    r = builder.add_single(chrom="chr1", start=100, bases=None, quals=None, cigar="15M")
+    assert r.cigarstring == "15M"
+    assert r.query_sequence is None
+    assert r.query_qualities is None
+
+
+def test_add_pair_explicit_none_clears_bases_and_quals() -> None:
+    """Each of bases1/bases2/quals1/quals2 can be explicitly set to None per mate."""
+    builder = SamBuilder()
+    r1, r2 = builder.add_pair(
+        chrom="chr1",
+        start1=1000,
+        start2=1200,
+        bases1=None,
+        bases2=None,
+        quals1=None,
+        quals2=None,
+    )
+    assert r1.query_sequence is None and r1.query_qualities is None
+    assert r2.query_sequence is None and r2.query_qualities is None
+
+    # Clearing only one mate leaves the other synthesized.
+    r1, r2 = builder.add_pair(chrom="chr1", start1=1000, start2=1200, bases1=None, quals1=None)
+    assert r1.query_sequence is None and r1.query_qualities is None
+    assert r2.query_sequence is not None and r2.query_qualities is not None
+
+
+def test_add_single_none_round_trips_through_bam(tmp_path: Path) -> None:
+    """A sequence-less record round-trips through a BAM file with `None` preserved."""
+    builder = SamBuilder()
+    builder.add_single(bases=None, quals=None)
+    builder.add_single(chrom="chr1", start=100, bases=None, quals=None)
+
+    path = builder.to_path(path=tmp_path / "out.bam")
+    with sam.reader(path) as reader:
+        records = list(reader)
+
+    assert len(records) == 2
+    for rec in records:
+        assert rec.query_sequence is None
+        assert rec.query_qualities is None
+
+
 def test_sorting() -> None:
     builder = SamBuilder()
     builder.add_pair(chrom="chr1", start1=5000, start2=4700, strand1="-", strand2="+")

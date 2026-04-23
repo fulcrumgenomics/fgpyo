@@ -24,6 +24,10 @@ from pysam import AlignmentHeader
 from fgpyo import sam
 from fgpyo.sam import SamOrder
 
+# Sentinel used to distinguish "caller did not supply this argument, synthesize a default"
+# from "caller explicitly passed None, produce a record with no value for this attribute."
+_UNSET: Any = object()
+
 
 class SamBuilder:
     """
@@ -230,33 +234,37 @@ class SamBuilder:
         self,
         rec: pysam.AlignedSegment,
         length: int,
-        bases: str | None = None,
-        quals: List[int] | None = None,
+        bases: str | None = _UNSET,
+        quals: List[int] | None = _UNSET,
         cigar: str | None = None,
     ) -> None:
         """
         Fills in bases, quals and cigar on a record.
 
         If any of bases, quals or cigar are defined, they must all have the same length/query
-        length.  If none are defined then the length parameter is used.  Undefined values are
-        synthesize at the inferred length.
+        length.  If none are defined then the length parameter is used.  Unspecified values are
+        synthesized at the inferred length.  A caller may pass `None` explicitly for `bases` or
+        `quals` to produce a record with no sequence or no qualities.
 
         Args:
             rec: a SAM record
-            length: the length to use if all of bases/quals/cigar are None
-            bases: an optional string of bases for the read
-            quals: an optional list of qualities for the read
+            length: the length to use if none of bases/quals/cigar contribute a length
+            bases: a string of bases for the read, or `None` to produce a record with no sequence.
+                If omitted, a random sequence is synthesized.
+            quals: a list of qualities for the read, or `None` to produce a record with no
+                qualities. If omitted, the default base quality is used.
             cigar: an optional cigar string for the read
         """
-        # Do some validation to make sure all defined things have the same lengths
+        # Only concrete values contribute a length.  An explicit `None` is a user request for
+        # a missing attribute and contributes nothing, just like an omitted argument.
         lengths = set()
-        if bases is not None:
+        if bases is not _UNSET and bases is not None:
             lengths.add(len(bases))
-        if quals is not None:
+        if quals is not _UNSET and quals is not None:
             lengths.add(len(quals))
         if cigar is not None:
             cig = sam.Cigar.from_cigarstring(cigar)
-            lengths.add(sum([elem.length_on_query for elem in cig.elements]))
+            lengths.add(sum(elem.length_on_query for elem in cig.elements))
 
         if not lengths:
             lengths.add(length)
@@ -264,13 +272,33 @@ class SamBuilder:
         if len(lengths) != 1:
             raise ValueError("Provided bases/quals/cigar are not length compatible.")
 
-        # Fill in the record, making any parts that were not defined as params
         length = lengths.pop()
-        query_quals = array("B", quals if quals else [self.base_quality] * length)
-        rec.query_sequence = bases if bases else self._bases(length)
-        rec.query_qualities = query_quals
+        resolved_bases = self._bases(length) if bases is _UNSET else bases
+        resolved_quals = self._resolve_quals(quals, bases, length)
+
+        # Assign sequence first: pysam resets query_qualities when query_sequence is assigned.
+        rec.query_sequence = resolved_bases
+        rec.query_qualities = resolved_quals
+
         if not rec.is_unmapped:
             rec.cigarstring = cigar if cigar else f"{length}M"
+
+    def _resolve_quals(
+        self,
+        quals: List[int] | None,
+        bases: str | None,
+        length: int,
+    ) -> "array[int] | None":
+        """Resolves the value to assign to `query_qualities` from the caller's inputs."""
+        if quals is None:
+            return None
+        if quals is not _UNSET:
+            return array("B", quals)
+        # Argument was omitted: synthesize unless the sequence was explicitly cleared, since
+        # qualities without a sequence is not a valid SAM record.
+        if bases is None:
+            return None
+        return array("B", [self.base_quality] * length)
 
     def rg(self) -> Dict[str, Any]:
         """Returns the single read group that is defined in the header."""
@@ -290,10 +318,10 @@ class SamBuilder:
         self,
         *,
         name: str | None = None,
-        bases1: str | None = None,
-        bases2: str | None = None,
-        quals1: List[int] | None = None,
-        quals2: List[int] | None = None,
+        bases1: str | None = _UNSET,
+        bases2: str | None = _UNSET,
+        quals1: List[int] | None = _UNSET,
+        quals2: List[int] | None = _UNSET,
         chrom: str | None = None,
         chrom1: str | None = None,
         chrom2: str | None = None,
@@ -345,10 +373,14 @@ class SamBuilder:
 
         Args:
             name: The name of the template. If None is given a unique name will be auto-generated.
-            bases1: The bases for R1. If None is given a random sequence is generated.
-            bases2: The bases for R2. If None is given a random sequence is generated.
-            quals1: The list of int qualities for R1. If None, the default base quality is used.
-            quals2: The list of int qualities for R2. If None, the default base quality is used.
+            bases1: The bases for R1. If omitted, a random sequence is generated. Pass `None`
+                explicitly to produce a record with no sequence.
+            bases2: The bases for R2. If omitted, a random sequence is generated. Pass `None`
+                explicitly to produce a record with no sequence.
+            quals1: The list of int qualities for R1. If omitted, the default base quality is used.
+                Pass `None` explicitly to produce a record with no qualities.
+            quals2: The list of int qualities for R2. If omitted, the default base quality is used.
+                Pass `None` explicitly to produce a record with no qualities.
             chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
             chrom1: The chromosome to which R1 is mapped. If None, `chrom` is used.
             chrom2: The chromosome to which R2 is mapped. If None, `chrom` is used.
@@ -430,8 +462,8 @@ class SamBuilder:
         *,
         name: str | None = None,
         read_num: int | None = None,
-        bases: str | None = None,
-        quals: List[int] | None = None,
+        bases: str | None = _UNSET,
+        quals: List[int] | None = _UNSET,
         chrom: str = sam.NO_REF_NAME,
         start: int = sam.NO_REF_POS,
         cigar: str | None = None,
@@ -467,8 +499,10 @@ class SamBuilder:
         Args:
             name: The name of the template. If None is given a unique name will be auto-generated.
             read_num: Either None, 1 for R1 or 2 for R2
-            bases: The bases for the read. If None is given a random sequence is generated.
-            quals: The list of qualities for the read. If None, the default base quality is used.
+            bases: The bases for the read. If omitted, a random sequence is generated. Pass
+                `None` explicitly to produce a record with no sequence.
+            quals: The list of qualities for the read. If omitted, the default base quality is
+                used. Pass `None` explicitly to produce a record with no qualities.
             chrom: The chromosome to which both reads are mapped. Defaults to the unmapped value.
             start: The start position of the read. Defaults to the unmapped value.
             cigar: The cigar string for R1. Defaults to None for unmapped reads, otherwise all M.

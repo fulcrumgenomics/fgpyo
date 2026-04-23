@@ -109,17 +109,44 @@ def test_strict_extract_umi_from_read_name(read_name: str, extraction: str) -> N
     assert extract_umis_from_read_name(read_name, strict=True) == extraction
 
 
-@pytest.mark.parametrize("remove_umi, strict", [[True, False], [True, False]])
-def test_copy_valid_umi_from_read_name(remove_umi: bool, strict: bool) -> None:
+@pytest.mark.parametrize(
+    "raw_umi, expected_umi",
+    [
+        ("GATTACA", "GATTACA"),
+        ("AAAA+TTTT", "AAAA-TTTT"),
+    ],
+)
+@pytest.mark.parametrize("remove_umi", [True, False])
+@pytest.mark.parametrize("strict", [True, False])
+def test_copy_valid_umi_from_read_name(
+    raw_umi: str, expected_umi: str, remove_umi: bool, strict: bool
+) -> None:
     """Test that we populate the RX field with a valid UMI based on remove_umi and strict."""
     builder = SamBuilder()
-    read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:GATTACA")
+    read = builder.add_single(name=f"abc:def:ghi:jfk:lmn:opq:rst:{raw_umi}")
     assert copy_umi_from_read_name(read, strict=strict, remove_umi=remove_umi) is True
-    assert read.get_tag("RX") == "GATTACA"
+    assert read.get_tag("RX") == expected_umi
     if remove_umi:
         assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst"
     else:
-        assert read.query_name == "abc:def:ghi:jfk:lmn:opq:rst:GATTACA"
+        assert read.query_name == f"abc:def:ghi:jfk:lmn:opq:rst:{raw_umi}"
+
+
+def test_copy_invalid_multi_umi_strict_raises() -> None:
+    """Test that an invalid multi-UMI raises and does not set the RX tag when strict."""
+    builder = SamBuilder()
+    read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:AAAA+NNNZ")
+    with pytest.raises(ValueError, match="Invalid UMIs found in read name"):
+        copy_umi_from_read_name(read, strict=True)
+    assert read.has_tag("RX") is False
+
+
+def test_copy_invalid_multi_umi_non_strict_returns_false() -> None:
+    """Test that an invalid multi-UMI returns False and does not set the RX tag when not strict."""
+    builder = SamBuilder()
+    read = builder.add_single(name="abc:def:ghi:jfk:lmn:opq:rst:AAAA+NNNZ")
+    assert copy_umi_from_read_name(read, strict=False) is False
+    assert read.has_tag("RX") is False
 
 
 def test_populated_rx_tag_raises() -> None:

@@ -111,7 +111,6 @@ def copy_umi_from_read_name(
     umi = extract_umis_from_read_name(
         read_name=rec.query_name,
         strict=strict,
-        umi_delimiter=_ILLUMINA_READ_NAME_DELIMITER,
     )
     if umi is not None:
         if rec.has_tag("RX"):

@@ -491,7 +491,8 @@ def attr_from(
 
 def _attribute_is_optional(attribute: FieldType) -> bool:
     """Returns True if the attribute is optional, False otherwise."""
-    return typing.get_origin(attribute.type) is Union and isinstance(
+    origin = typing.get_origin(attribute.type)
+    return (origin is Union or origin is python_types.UnionType) and isinstance(
         None, typing.get_args(attribute.type)
     )
 

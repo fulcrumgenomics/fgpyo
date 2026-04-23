@@ -4,6 +4,7 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Union
 
 import attr
 import pytest
@@ -28,9 +29,23 @@ class Name:
     required: str
     custom_parser: str
     converted: int = attr.field(converter=int)
+    optional_no_default: str | None
+    optional_with_default_none: str | None = None
+    optional_with_default_some: str | None = "foo"
+
+
+@attr.s(auto_attribs=True, frozen=True)
+class LegacyOptionalName:
+    """
+    Test attr class using legacy `Optional[T]` / `Union[T, None]` syntax.
+
+    Kept to ensure `_attribute_is_optional` continues to recognize the
+    `typing.Union` origin alongside `types.UnionType` (PEP 604).
+    """
+
+    required: str
     optional_no_default: Optional[str]
-    optional_with_default_none: Optional[str] = None
-    optional_with_default_some: Optional[str] = "foo"
+    union_with_none: Union[str, None] = None
 
 
 def test_attr_from() -> None:
@@ -57,6 +72,13 @@ def test_attribute_is_optional() -> None:
     assert _attribute_is_optional(fields_dict["optional_with_default_some"])
 
 
+def test_attribute_is_optional_legacy_syntax() -> None:
+    fields_dict = attr.fields_dict(LegacyOptionalName)
+    assert not _attribute_is_optional(fields_dict["required"])
+    assert _attribute_is_optional(fields_dict["optional_no_default"])
+    assert _attribute_is_optional(fields_dict["union_with_none"])
+
+
 def test_attribute_has_default() -> None:
     fields_dict = attr.fields_dict(Name)
     assert not _attribute_has_default(fields_dict["required"])
@@ -65,6 +87,13 @@ def test_attribute_has_default() -> None:
     assert _attribute_has_default(fields_dict["optional_no_default"])
     assert _attribute_has_default(fields_dict["optional_with_default_none"])
     assert _attribute_has_default(fields_dict["optional_with_default_some"])
+
+
+def test_attribute_has_default_legacy_syntax() -> None:
+    fields_dict = attr.fields_dict(LegacyOptionalName)
+    assert not _attribute_has_default(fields_dict["required"])
+    assert _attribute_has_default(fields_dict["optional_no_default"])
+    assert _attribute_has_default(fields_dict["union_with_none"])
 
 
 class Foo:

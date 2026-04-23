@@ -12,7 +12,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Type
@@ -108,8 +107,8 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class Person(Metric["Person"]):
-            name: Optional[str]
-            age: Optional[int]
+            name: str | None
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class Name:
@@ -145,7 +144,7 @@ class DataBuilder:
         @make_dataclass(use_attr=use_attr)
         class PersonMaybeAge(Metric["PersonMaybeAge"]):
             name: str
-            age: Optional[int]
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class PersonDefault(Metric["PersonDefault"]):
@@ -154,13 +153,13 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class PersonAgeFloat(Metric["PersonAgeFloat"]):
-            name: Optional[str]
-            age: Optional[float]
+            name: str | None
+            age: float | None
 
         @make_dataclass(use_attr=use_attr)
         class ListPerson(Metric["ListPerson"]):
-            name: List[Optional[str]]
-            age: List[Optional[int]]
+            name: List[str | None]
+            age: List[int | None]
 
         self.DummyMetric = DummyMetric
         self.Person = Person

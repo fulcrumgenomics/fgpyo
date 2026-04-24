@@ -48,3 +48,28 @@ def test_writer_rejects_non_path_non_handle() -> None:
     with pytest.raises(TypeError, match="Cannot open"):
         with vcf_writer(123, header=header):  # type: ignore[arg-type]
             pass
+
+
+_BGZF_MAGIC = b"\x1f\x8b"
+
+
+def test_writer_file_handle_bgzipped_round_trip(tmp_path: Path) -> None:
+    builder = VariantBuilder()
+    record = builder.add()
+    out = tmp_path / "out.vcf.gz"
+    with open(out, "wb") as handle:
+        with vcf_writer(handle, header=builder.header, mode="wz") as w:
+            w.write(record)
+    assert out.read_bytes()[:2] == _BGZF_MAGIC
+    with vcf_reader(out) as r:
+        records = list(r)
+    assert len(records) == 1
+
+
+def test_writer_default_mode_autodetects_bgzip(tmp_path: Path) -> None:
+    builder = VariantBuilder()
+    record = builder.add()
+    out = tmp_path / "out.vcf.gz"
+    with vcf_writer(out, header=builder.header) as w:
+        w.write(record)
+    assert out.read_bytes()[:2] == _BGZF_MAGIC

@@ -1,7 +1,4 @@
-from typing import List
-
-
-def column_it(rows: List[List[str]], delimiter: str = " ") -> str:
+def column_it(rows: list[list[str]], delimiter: str = " ") -> str:
     """
     A simple version of Unix's `column` utility.  This assumes the table is NxM.
 
@@ -12,7 +9,7 @@ def column_it(rows: List[List[str]], delimiter: str = " ") -> str:
     # get the # of columns
     num_columns = len(rows[0])
     # for each column, find the maximum length of a cell
-    max_column_lengths: List[int] = [
+    max_column_lengths: list[int] = [
         max(len(row[col_i]) for row in rows) for col_i in range(num_columns)
     ]
     # pad each row in the table

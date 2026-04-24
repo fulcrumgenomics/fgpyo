@@ -78,14 +78,13 @@ StopIteration
 iterable objects as well as iterators.
 """
 
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from itertools import pairwise
 from operator import le
 from typing import Any
-from typing import Callable
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
-from typing import List
 from typing import Protocol
 from typing import TypeVar
 
@@ -144,7 +143,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
         else:
             raise StopIteration
 
-    def takewhile(self, pred: Callable[[IterType], bool]) -> List[IterType]:
+    def takewhile(self, pred: Callable[[IterType], bool]) -> list[IterType]:
         """
         Consumes from the iterator while pred is true, and returns the result as a List.
 
@@ -159,7 +158,7 @@ class PeekableIterator(Generic[IterType], Iterator[IterType]):
             List[V]: A list of the values from the iterator, in order, up until and excluding
             the first value that does not match the predicate.
         """
-        xs: List[IterType] = []
+        xs: list[IterType] = []
         while self.can_peek() and pred(self._peek):
             xs.append(next(self))
         return xs

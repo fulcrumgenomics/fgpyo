@@ -1,13 +1,10 @@
 import gzip
 import random
+from collections.abc import Iterable
+from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Mapping
-from typing import Tuple
 
 import pysam
 import pytest
@@ -29,13 +26,13 @@ def random_generator(seed: int = 42) -> random.Random:
 
 
 @pytest.fixture(scope="function")
-def sequence_dict() -> Dict[str, Dict[str, Any]]:
+def sequence_dict() -> dict[str, dict[str, Any]]:
     return VariantBuilder.default_sd()
 
 
 def _get_random_contig(
-    random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
-) -> Tuple[str, int]:
+    random_generator: random.Random, sequence_dict: dict[str, dict[str, Any]]
+) -> tuple[str, int]:
     """Randomly select a contig from the sequence dictionary and return its name and length."""
     contig = random_generator.choice(list(sequence_dict.values()))
     return contig["ID"], contig["length"]
@@ -51,7 +48,7 @@ _INFO_FIELD_TYPES = MappingProxyType({
 
 def _get_random_variant_inputs(
     random_generator: random.Random,
-    sequence_dict: Dict[str, Dict[str, Any]],
+    sequence_dict: dict[str, dict[str, Any]],
 ) -> Mapping[str, Any]:
     """Randomly generate inputs that should produce a valid Variant. Don't include format fields."""
     contig, contig_len = _get_random_contig(random_generator, sequence_dict)
@@ -99,8 +96,8 @@ def _get_random_variant_inputs(
 
 @pytest.fixture(scope="function")
 def zero_sample_record_inputs(
-    random_generator: random.Random, sequence_dict: Dict[str, Dict[str, Any]]
-) -> Tuple[Mapping[str, Any], ...]:
+    random_generator: random.Random, sequence_dict: dict[str, dict[str, Any]]
+) -> tuple[Mapping[str, Any], ...]:
     """
     Fixture with inputs to create test Variant records for zero-sample VCFs.
 
@@ -173,7 +170,7 @@ def test_minimal_inputs() -> None:
 
 def test_sort_order(random_generator: random.Random) -> None:
     """Test if the VariantBuilder sorts the Variant records in the correct order."""
-    sorted_inputs: List[Dict[str, Any]] = [
+    sorted_inputs: list[dict[str, Any]] = [
         {"contig": "chr1", "pos": 100},
         {"contig": "chr1", "pos": 500},
         {"contig": "chr2", "pos": 1000},
@@ -182,7 +179,7 @@ def test_sort_order(random_generator: random.Random) -> None:
         {"contig": "chr10", "pos": 20},
         {"contig": "chr11", "pos": 5},
     ]
-    scrambled_inputs: List[Dict[str, Any]] = random_generator.sample(
+    scrambled_inputs: list[dict[str, Any]] = random_generator.sample(
         sorted_inputs, k=len(sorted_inputs)
     )
     assert scrambled_inputs != sorted_inputs  # there should be something to actually sort
@@ -200,7 +197,7 @@ def test_sort_order(random_generator: random.Random) -> None:
 
 
 def test_zero_sample_records_match_inputs(
-    zero_sample_record_inputs: Tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any]],
 ) -> None:
     """Test if zero-sample VCF (no genotypes) records produced match the requested inputs."""
     variant_builder = VariantBuilder()
@@ -265,7 +262,7 @@ def _get_is_compressed(input_file: Path) -> bool:
 @pytest.mark.parametrize("compress", (True, False))
 def test_zero_sample_vcf_round_trip(
     temp_path: Path,
-    zero_sample_record_inputs: Tuple[Mapping[str, Any], ...],
+    zero_sample_record_inputs: tuple[Mapping[str, Any], ...],
     compress: bool,
 ) -> None:
     """Test if zero-sample VCF output records match the records read from the resulting VCF."""
@@ -336,7 +333,7 @@ def _add_random_genotypes(
 @pytest.mark.parametrize("add_genotypes_to_records", (True, False))
 def test_variant_sample_records_match_inputs(
     random_generator: random.Random,
-    zero_sample_record_inputs: Tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any]],
     num_samples: int,
     add_genotypes_to_records: bool,
 ) -> None:
@@ -377,7 +374,7 @@ def test_variant_sample_records_match_inputs(
 def test_variant_sample_vcf_round_trip(
     temp_path: Path,
     random_generator: random.Random,
-    zero_sample_record_inputs: Tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any]],
     num_samples: int,
     compress: bool,
     add_genotypes_to_records: bool,

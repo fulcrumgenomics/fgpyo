@@ -6,7 +6,6 @@ import stat
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
-from typing import List
 
 import pytest
 
@@ -132,7 +131,7 @@ def test_writer(suffix: str, expected: Any, threads: int | None) -> None:
 )
 def test_read_and_write_lines(
     suffix: str,
-    list_to_write: List[Any],
+    list_to_write: list[Any],
     threads: int | None,
 ) -> None:
     """Test fgpyo.fio.read_lines and write_lines."""

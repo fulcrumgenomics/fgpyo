@@ -34,12 +34,12 @@ True
 
 import logging
 import socket
+from collections.abc import Callable
+from collections.abc import Iterable
 from contextlib import AbstractContextManager
 from logging import Logger
 from threading import RLock
 from typing import Any
-from typing import Callable
-from typing import Iterable
 from typing import Literal
 
 from pysam import AlignedSegment

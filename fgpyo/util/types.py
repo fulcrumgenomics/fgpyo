@@ -2,22 +2,20 @@ import collections
 import inspect
 import types
 import typing
+from collections.abc import Callable
 from collections.abc import Collection
+from collections.abc import Iterable
 from collections.abc import Sequence
 from enum import Enum
 from functools import partial
 from types import UnionType
-from typing import Callable
-from typing import Iterable
 from typing import Literal
-from typing import Type
+from typing import TypeAlias
 from typing import TypeGuard
 from typing import TypeVar
 from typing import Union
 from typing import cast
 from typing import overload
-
-from typing_extensions import TypeAlias
 
 EnumType = TypeVar("EnumType", bound="Enum")
 # conceptually bound to "Literal" but that's not valid in the spec
@@ -45,7 +43,7 @@ def parse_bool(string: str) -> bool:
         raise ValueError("{} is not a valid boolean string".format(string))
 
 
-def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
+def _make_enum_parser_worker(enum: type[EnumType], value: str) -> EnumType:
     """
     Worker function behind enum parsing.
 
@@ -61,7 +59,7 @@ def _make_enum_parser_worker(enum: Type[EnumType], value: str) -> EnumType:
         ) from ex
 
 
-def make_enum_parser(enum: Type[EnumType]) -> partial:
+def make_enum_parser(enum: type[EnumType]) -> partial:
     """Makes a parser function for enum classes."""
     return partial(_make_enum_parser_worker, enum)
 
@@ -139,7 +137,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
 
 
 def _make_union_parser_worker(
-    union: Type[UnionType],
+    union: type[UnionType],
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
 ) -> UnionType | None:
@@ -168,14 +166,14 @@ def _make_union_parser_worker(
 
 
 def make_union_parser(
-    union: Type[UnionType], parsers: Iterable[Callable[[str], UnionType]]
+    union: type[UnionType], parsers: Iterable[Callable[[str], UnionType]]
 ) -> partial:
     """Generates a parser function for a union type object."""
     return partial(_make_union_parser_worker, union, parsers)
 
 
 def _make_literal_parser_worker(
-    literal: Type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]], value: str
+    literal: type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]], value: str
 ) -> LiteralType:
     """
     Worker function behind literal parsing.
@@ -199,7 +197,7 @@ def _make_literal_parser_worker(
 
 
 def make_literal_parser(
-    literal: Type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]]
+    literal: type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]]
 ) -> partial:
     """Generates a parser function for a literal type object."""
     return partial(_make_literal_parser_worker, literal, parsers)

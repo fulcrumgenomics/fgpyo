@@ -1,6 +1,6 @@
 """Enforce requirements."""
 
-from typing import Callable
+from collections.abc import Callable
 
 
 class RequirementError(Exception):

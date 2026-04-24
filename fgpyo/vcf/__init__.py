@@ -58,10 +58,10 @@ in coordinate sorted order via the
 
 """
 
+import io
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
-from typing import TextIO
 
 from pysam import VariantFile
 from pysam import VariantFile as VcfReader
@@ -71,7 +71,7 @@ from pysam import VariantHeader
 import fgpyo.io
 
 """The valid base classes for opening a VCF file."""
-VcfPath = Path | str | TextIO
+VcfPath = Path | str | io.IOBase
 
 
 @contextmanager
@@ -82,16 +82,17 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
     Args:
         path: the path to a VCF, or an open file handle
     """
-    if isinstance(path, (str, Path, TextIO)):
-        with fgpyo.io.suppress_stderr():
-            # to avoid spamming log about index older than vcf, redirect stderr to /dev/null: only
-            # when first opening the file
-            _reader = VariantFile(path, mode="r")  # type: ignore[arg-type]
-        # now stderr is back, so any later stderr messages will go through
-        yield _reader
-        _reader.close()
-    else:
+    if not isinstance(path, (str, Path, io.IOBase)):
         raise TypeError(f"Cannot open '{type(path)}' for VCF reading.")
+    with fgpyo.io.suppress_stderr():
+        # to avoid spamming log about index older than vcf, redirect stderr to /dev/null: only
+        # when first opening the file
+        _reader = VariantFile(path, mode="r")  # type: ignore[arg-type]
+    # now stderr is back, so any later stderr messages will go through
+    try:
+        yield _reader
+    finally:
+        _reader.close()
 
 
 @contextmanager
@@ -104,10 +105,14 @@ def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, N
         header: the source for the output VCF header. If you are modifying a VCF file that you are
                 reading from, you can pass reader.header
     """
+    if not isinstance(path, (str, Path, io.IOBase)):
+        raise TypeError(f"Cannot open '{type(path)}' for VCF writing.")
     # Convert Path to str such that pysam will autodetect to write as a gzipped file if provided
     # with a .vcf.gz suffix.
     if isinstance(path, Path):
         path = str(path)
     _writer = VariantFile(path, header=header, mode="w")
-    yield _writer
-    _writer.close()
+    try:
+        yield _writer
+    finally:
+        _writer.close()

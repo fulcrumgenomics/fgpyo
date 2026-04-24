@@ -41,3 +41,10 @@ def test_reader_rejects_non_path_non_handle() -> None:
     with pytest.raises(TypeError, match="Cannot open"):
         with vcf_reader(123):  # type: ignore[arg-type]
             pass
+
+
+def test_writer_rejects_non_path_non_handle() -> None:
+    header = VariantBuilder().header
+    with pytest.raises(TypeError, match="Cannot open"):
+        with vcf_writer(123, header=header):  # type: ignore[arg-type]
+            pass

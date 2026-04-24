@@ -105,6 +105,8 @@ def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, N
         header: the source for the output VCF header. If you are modifying a VCF file that you are
                 reading from, you can pass reader.header
     """
+    if not isinstance(path, (str, Path, io.IOBase)):
+        raise TypeError(f"Cannot open '{type(path)}' for VCF writing.")
     # Convert Path to str such that pysam will autodetect to write as a gzipped file if provided
     # with a .vcf.gz suffix.
     if isinstance(path, Path):

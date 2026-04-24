@@ -47,12 +47,11 @@ Add bases to existing contig:
 """
 
 import textwrap
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Iterator
 
 from pysam import FastaFile
 
@@ -179,7 +178,7 @@ class FastaBuilder:
         self.assembly: str = assembly
         self.species: str = species
         self.line_length: int = line_length
-        self.__contig_builders: Dict[str, ContigBuilder] = {}
+        self.__contig_builders: dict[str, ContigBuilder] = {}
 
     def __getitem__(self, key: str) -> ContigBuilder:
         """Access instance of ContigBuilder by name."""

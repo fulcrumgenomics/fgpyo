@@ -2,6 +2,9 @@ import dataclasses
 import functools
 import types as python_types
 import typing
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
 from dataclasses import MISSING as DATACLASSES_MISSING
 from dataclasses import fields as get_dataclasses_fields
 from dataclasses import is_dataclass as is_dataclasses_class
@@ -10,17 +13,9 @@ from functools import partial
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import ClassVar
-from typing import Dict
-from typing import FrozenSet
-from typing import Iterable
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import Protocol
-from typing import Tuple
-from typing import Type
 from typing import TypeAlias
 from typing import TypeGuard
 from typing import TypeVar
@@ -29,7 +24,7 @@ from typing import Union
 import fgpyo.util.types as types
 
 attr: python_types.ModuleType | None
-MISSING: FrozenSet[Any]
+MISSING: frozenset[Any]
 
 
 # Always define get_attr_fields and get_attr_fields_dict at the module level for documentation tools
@@ -54,11 +49,11 @@ except ImportError:  # pragma: no cover
     # called because the import failed; but they're here to ensure that the function is defined in
     # sections of code that don't know if the import was successful or not.
 
-    def get_attr_fields(_cls: type) -> Tuple[dataclasses.Field, ...]:
+    def get_attr_fields(_cls: type) -> tuple[dataclasses.Field, ...]:
         """Get tuple of fields for attr class. attrs isn't imported so return empty tuple."""
         return ()
 
-    def get_attr_fields_dict(_cls: type) -> Dict[str, dataclasses.Field]:
+    def get_attr_fields_dict(_cls: type) -> dict[str, dataclasses.Field]:
         """Get dict of name->field for attr class. attrs isn't imported so return empty dict."""
         return {}
 
@@ -72,7 +67,7 @@ else:
     class DataclassInstance(Protocol):
         """Protocol for dataclass instances when _typeshed is unavailable."""
 
-        __dataclasses_fields__: ClassVar[Dict[str, dataclasses.Field[Any]]]
+        __dataclasses_fields__: ClassVar[dict[str, dataclasses.Field[Any]]]
 
 
 if TYPE_CHECKING and _use_attr:  # pragma: no cover
@@ -90,7 +85,7 @@ def is_attr_class(cls: type) -> TypeGuard[type[AttrsInstance]]:
     return hasattr(cls, "__attrs_attrs__")
 
 
-_MISSING_OR_NONE: FrozenSet[Any] = frozenset({*MISSING, None})
+_MISSING_OR_NONE: frozenset[Any] = frozenset({*MISSING, None})
 """Set of values that are considered missing or None for dataclasses or attr classes"""
 _DataclassesOrAttrClass: TypeAlias = DataclassInstance | AttrsInstance
 """
@@ -105,8 +100,8 @@ corresponding _DataclassesOrAttrClass
 
 
 def _get_dataclasses_fields_dict(
-    class_or_instance: DataclassInstance | Type[DataclassInstance],
-) -> Dict[str, dataclasses.Field]:
+    class_or_instance: DataclassInstance | type[DataclassInstance],
+) -> dict[str, dataclasses.Field]:
     """Get a dict from field name to Field for a dataclass class or instance."""
     return {field.name: field for field in get_dataclasses_fields(class_or_instance)}
 
@@ -120,7 +115,7 @@ def split_at_given_level(
     split_delim: str = ",",
     increase_depth_chars: Iterable[str] = ("{", "(", "["),
     decrease_depth_chars: Iterable[str] = ("}", ")", "]"),
-) -> List[str]:
+) -> list[str]:
     """
     Splits a nested field by its outer-most level.
 
@@ -131,7 +126,7 @@ def split_at_given_level(
     """
     outer_depth_of_split = 0
     current_outer_splits = []
-    out_vals: List[str] = []
+    out_vals: list[str] = []
     for high_level_split in field.split(split_delim):
         increase_in_depth = 0
         for char in increase_depth_chars:
@@ -156,7 +151,7 @@ NoneType: TypeAlias = type(None)  # type: ignore[no-redef]
 
 
 def list_parser(
-    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a "stringified" list into a `List` of the correct type.
@@ -185,7 +180,7 @@ def list_parser(
 
 
 def set_parser(
-    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified set into a `Set` of the correct type.
@@ -216,7 +211,7 @@ def set_parser(
 
 
 def tuple_parser(
-    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified tuple into a `Tuple` of the correct type.
@@ -237,7 +232,7 @@ def tuple_parser(
         for subtype in typing.get_args(type_)
     ]
 
-    def tuple_parse(tuple_string: str) -> Tuple[Any, ...]:
+    def tuple_parse(tuple_string: str) -> tuple[Any, ...]:
         """
         Parses a dictionary value (can do so recursively).
 
@@ -260,7 +255,7 @@ def tuple_parser(
 
 
 def dict_parser(
-    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified dict into a `Dict` of the correct type.
@@ -287,7 +282,7 @@ def dict_parser(
         ),
     )
 
-    def dict_parse(dict_string: str) -> Dict[Any, Any]:
+    def dict_parse(dict_string: str) -> dict[Any, Any]:
         """Parses a dictionary value (can do so recursively)."""
         assert dict_string[0] == "{", "Dict val improperly formatted"
         assert dict_string[-1] == "}", "Dict val improprly formatted"
@@ -313,7 +308,7 @@ def dict_parser(
 
 
 def _get_parser(  # noqa: C901
-    cls: Type, type_: TypeAlias, parsers: Dict[type, Callable[[str], Any]] | None = None
+    cls: type[Any], type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Attempts to find a parser for a provided type.
@@ -393,7 +388,7 @@ def _get_parser(  # noqa: C901
 
 
 def get_fields_dict(
-    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
+    cls: _DataclassesOrAttrClass | type[_DataclassesOrAttrClass],
 ) -> Mapping[str, FieldType]:
     """Get the fields dict from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
@@ -408,8 +403,8 @@ def get_fields_dict(
 
 
 def get_fields(
-    cls: _DataclassesOrAttrClass | Type[_DataclassesOrAttrClass],
-) -> Tuple[FieldType, ...]:
+    cls: _DataclassesOrAttrClass | type[_DataclassesOrAttrClass],
+) -> tuple[FieldType, ...]:
     """Get the fields tuple from either a dataclasses or attr dataclass (or instance)."""
     if is_dataclasses_class(cls):
         return get_dataclasses_fields(cls)
@@ -426,9 +421,9 @@ _AttrFromType = TypeVar("_AttrFromType")
 
 
 def attr_from(
-    cls: Type[_AttrFromType],
-    kwargs: Dict[str, str],
-    parsers: Dict[type, Callable[[str], Any]] | None = None,
+    cls: type[_AttrFromType],
+    kwargs: dict[str, str],
+    parsers: dict[type, Callable[[str], Any]] | None = None,
 ) -> _AttrFromType:
     """
     Builds an attr or dataclasses class from key-word arguments.
@@ -439,7 +434,7 @@ def attr_from(
         parsers: a dictionary of parser functions to apply to specific types
 
     """
-    return_values: Dict[str, Any] = {}
+    return_values: dict[str, Any] = {}
     for attribute in get_fields(cls):  # type: ignore[arg-type]
         return_value: Any
         if attribute.name in kwargs:

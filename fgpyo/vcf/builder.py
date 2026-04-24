@@ -1,14 +1,11 @@
 """# Classes for generating VCF and records for testing."""
 
+from collections.abc import Iterable
+from collections.abc import Iterator
 from enum import Enum
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Tuple
 
 import pysam
 from pysam import VariantHeader
@@ -37,7 +34,7 @@ class VcfFieldNumber(Enum):
     UNKNOWN = "."
 
 
-MissingRep = Tuple[None, ...] | None
+MissingRep = tuple[None, ...] | None
 
 
 class VariantBuilder:
@@ -73,16 +70,16 @@ class VariantBuilder:
         header: the pysam header
     """
 
-    sample_ids: List[str]
-    sd: Dict[str, Dict[str, Any]]
-    seq_idx_lookup: Dict[str, int]
-    records: List[VariantRecord]
+    sample_ids: list[str]
+    sd: dict[str, dict[str, Any]]
+    seq_idx_lookup: dict[str, int]
+    records: list[VariantRecord]
     header: VariantHeader
 
     def __init__(
         self,
         sample_ids: Iterable[str] | None = None,
-        sd: Dict[str, Dict[str, Any]] | None = None,
+        sd: dict[str, dict[str, Any]] | None = None,
     ) -> None:
         """
         Initializes a new VariantBuilder for generating variants and VCF files.
@@ -91,10 +88,10 @@ class VariantBuilder:
             sample_ids: the name of the sample(s)
             sd: optional sequence dictionary
         """
-        self.sample_ids: List[str] = list(sample_ids) if sample_ids is not None else []
-        self.sd: Dict[str, Dict[str, Any]] = sd if sd is not None else VariantBuilder.default_sd()
-        self.seq_idx_lookup: Dict[str, int] = {name: i for i, name in enumerate(self.sd.keys())}
-        self.records: List[VariantRecord] = []
+        self.sample_ids: list[str] = list(sample_ids) if sample_ids is not None else []
+        self.sd: dict[str, dict[str, Any]] = sd if sd is not None else VariantBuilder.default_sd()
+        self.seq_idx_lookup: dict[str, int] = {name: i for i, name in enumerate(self.sd.keys())}
+        self.records: list[VariantRecord] = []
         self.header = VariantHeader()
         for line in VariantBuilder._build_header_string(sd=self.sd):
             self.header.add_line(line)
@@ -102,7 +99,7 @@ class VariantBuilder:
             self.header.add_samples(sample_ids)
 
     @classmethod
-    def default_sd(cls) -> Dict[str, Dict[str, Any]]:
+    def default_sd(cls) -> dict[str, dict[str, Any]]:
         """
         Generates the default sequence dictionary for VariantBuilder.
 
@@ -112,14 +109,14 @@ class VariantBuilder:
             A new copy of the sequence dictionary as a map of contig name to dictionary, one per
             contig.
         """
-        sd: Dict[str, Dict[str, Any]] = {}
+        sd: dict[str, dict[str, Any]] = {}
         for sequence in SamBuilder.default_sd():
             contig = sequence["SN"]
             sd[contig] = {"ID": contig, "length": sequence["LN"]}
         return sd
 
     @classmethod
-    def _build_header_string(cls, sd: Dict[str, Dict[str, Any]] | None = None) -> Iterator[str]:
+    def _build_header_string(cls, sd: dict[str, dict[str, Any]] | None = None) -> Iterator[str]:
         """
         Builds the VCF header with the given sample name(s) and sequence dictionary.
 
@@ -179,8 +176,8 @@ class VariantBuilder:
         alts: str | Iterable[str] | None = (".",),
         qual: int = 60,
         filter: str | Iterable[str] | None = None,  # noqa: A002
-        info: Dict[str, Any] | None = None,
-        samples: Dict[str, Dict[str, Any]] | None = None,
+        info: dict[str, Any] | None = None,
+        samples: dict[str, dict[str, Any]] | None = None,
     ) -> VariantRecord:
         """
         Generates a new variant and adds it to the internal collection.
@@ -342,15 +339,15 @@ class VariantBuilder:
             assert path.is_file()
         return path
 
-    def to_unsorted_list(self) -> List[VariantRecord]:
+    def to_unsorted_list(self) -> list[VariantRecord]:
         """Returns the accumulated records in the order they were created."""
         return list(self.records)
 
-    def to_sorted_list(self) -> List[VariantRecord]:
+    def to_sorted_list(self) -> list[VariantRecord]:
         """Returns the accumulated records in coordinate order."""
         return sorted(self.records, key=self._sort_key)
 
-    def _sort_key(self, variant: VariantRecord) -> Tuple[int, int, int]:
+    def _sort_key(self, variant: VariantRecord) -> tuple[int, int, int]:
         return self.seq_idx_lookup[variant.contig], variant.start, variant.stop
 
     def add_header_line(self, line: str) -> None:

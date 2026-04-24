@@ -1,11 +1,9 @@
 """Tests for :py:mod:`~fgpyo.sam`."""
 
+from collections.abc import Generator
 from pathlib import Path
 from tempfile import NamedTemporaryFile as NamedTemp
 from typing import Any
-from typing import Generator
-from typing import List
-from typing import Tuple
 
 import pysam
 import pytest
@@ -126,7 +124,7 @@ def test_unmapped_sam_open_reading_exception(unmapped_sam: Path) -> None:
 
 
 @pytest.fixture
-def expected_records(valid_sam: Path) -> List[pysam.AlignedSegment]:
+def expected_records(valid_sam: Path) -> list[pysam.AlignedSegment]:
     """Returns the records that are found in the valid_sam."""
     with sam.reader(valid_sam) as fh:
         return [r for r in fh]
@@ -140,7 +138,7 @@ def header_dict(valid_sam: Path) -> AlignmentHeader:
 
 
 def assert_actual_vs_expected(
-    actual_path: str, expected_records: List[pysam.AlignedSegment]
+    actual_path: str, expected_records: list[pysam.AlignedSegment]
 ) -> None:
     """Helper method to ensure the expected records are in the SAM/BAM at the actual path."""
     with sam.reader(actual_path) as sam_reader:
@@ -153,7 +151,7 @@ def assert_actual_vs_expected(
 @pytest.mark.parametrize("file_type", [SamFileType.SAM, SamFileType.BAM])
 def test_sam_file_open_writing(
     file_type: SamFileType,
-    expected_records: List[pysam.AlignedSegment],
+    expected_records: list[pysam.AlignedSegment],
     header_dict: AlignmentHeader,
     tmp_path: Path,
 ) -> None:
@@ -172,7 +170,7 @@ def test_sam_file_open_writing(
 
 
 def test_sam_file_open_writing_header_keyword(
-    expected_records: List[pysam.AlignedSegment],
+    expected_records: list[pysam.AlignedSegment],
     header_dict: AlignmentHeader,
     tmp_path: Path,
 ) -> None:
@@ -228,7 +226,7 @@ def test_invalid_cigar_element(character: str) -> None:
         ([(op.code, op.code + 1) for op in CigarOp], "1M2I3D4N5S6H7P8=9X"),  # all operators
     ],
 )
-def test_cigar_from_cigartuples(cigartuples: List[Tuple[int, int]], cigarstring: str) -> None:
+def test_cigar_from_cigartuples(cigartuples: list[tuple[int, int]], cigarstring: str) -> None:
     cigar = Cigar.from_cigartuples(cigartuples)
     assert str(cigar) == cigarstring
 

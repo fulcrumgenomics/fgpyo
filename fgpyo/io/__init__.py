@@ -63,21 +63,20 @@ Read lines from a path into a generator:
 import os
 import sys
 import warnings
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
 from contextlib import contextmanager
 from io import TextIOWrapper
 from pathlib import Path
 from typing import IO
 from typing import Any
-from typing import Generator
-from typing import Iterable
-from typing import Iterator
-from typing import Set
 from typing import cast
 
 from zlib_ng import gzip_ng
 from zlib_ng import gzip_ng_threaded
 
-COMPRESSED_FILE_EXTENSIONS: Set[str] = {".gz", ".bgz"}
+COMPRESSED_FILE_EXTENSIONS: set[str] = {".gz", ".bgz"}
 
 
 def assert_path_is_readable(path: Path) -> None:

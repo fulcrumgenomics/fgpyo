@@ -1,9 +1,5 @@
 import dataclasses
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Set
-from typing import Tuple
 
 import attr
 import pytest
@@ -97,32 +93,32 @@ def test_attr_from_custom_type_without_parser_fails() -> None:
 
 
 def test_list_parser() -> None:
-    parser = list_parser(Foo, List[int], {})
+    parser = list_parser(Foo, list[int], {})
     assert parser("") == []
     assert parser("1,2,3") == [1, 2, 3]
 
 
 def test_set_parser() -> None:
-    parser = set_parser(Foo, Set[int], {})
+    parser = set_parser(Foo, set[int], {})
     assert parser("{}") == set()
     assert parser("{1,2,3}") == {1, 2, 3}
     assert parser("{1,1,2,3}") == {1, 2, 3}
 
 
 def test_tuple_parser() -> None:
-    parser = tuple_parser(Foo, Tuple[int, str], {})
+    parser = tuple_parser(Foo, tuple[int, str], {})
     assert parser("()") == ()
     assert parser("(1,a)") == (1, "a")
 
 
 def test_dict_parser() -> None:
-    parser = dict_parser(Foo, Dict[int, str], {})
+    parser = dict_parser(Foo, dict[int, str], {})
     assert parser("{}") == {}
     assert parser("{123;a}") == {123: "a"}
 
 
 def test_dict_parser_with_duplicate_keys() -> None:
-    parser = dict_parser(Foo, Dict[int, str], {})
+    parser = dict_parser(Foo, dict[int, str], {})
     with pytest.raises(ValueError):
         parser("{123;a,123;b}")
 

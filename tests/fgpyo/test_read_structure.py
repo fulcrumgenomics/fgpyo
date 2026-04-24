@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import pytest
 
 from fgpyo.read_structure import ReadSegment
@@ -56,7 +54,7 @@ def _s(off: int, length: int) -> ReadSegment:
         ),
     ],
 )
-def test_read_structure_from_string(string: str, segments: Tuple[ReadSegment, ...]) -> None:
+def test_read_structure_from_string(string: str, segments: tuple[ReadSegment, ...]) -> None:
     assert ReadStructure.from_string(segments=string).segments == segments
 
 
@@ -84,7 +82,7 @@ def test_read_structure_from_string(string: str, segments: Tuple[ReadSegment, ..
     ],
 )
 def test_read_structure_from_string_with_whitespace(
-    string: str, segments: Tuple[ReadSegment, ...]
+    string: str, segments: tuple[ReadSegment, ...]
 ) -> None:
     assert ReadStructure.from_string(segments=string).segments == segments
 
@@ -97,7 +95,7 @@ def test_read_structure_from_string_with_whitespace(
     ],
 )
 def test_read_structure_variable_once_and_only_once_last_segment_ok(
-    string: str, segments: Tuple[ReadSegment, ...]
+    string: str, segments: tuple[ReadSegment, ...]
 ) -> None:
     assert ReadStructure.from_string(segments=string).segments == segments
 
@@ -133,7 +131,7 @@ def test_read_structure_rejects_unknown_type(string: str) -> None:
     ],
 )
 def test_read_structure_from_segments_reset_offset(
-    segments: Tuple[ReadSegment, ...], expected: Tuple[ReadSegment, ...]
+    segments: tuple[ReadSegment, ...], expected: tuple[ReadSegment, ...]
 ) -> None:
     read_structure = ReadStructure.from_segments(segments=segments, reset_offsets=True)
     assert read_structure.segments == expected

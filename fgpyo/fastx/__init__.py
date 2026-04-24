@@ -26,13 +26,10 @@ seq2: GGGG, seq2: TTTT
 
 """
 
+from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from pathlib import Path
 from types import TracebackType
-from typing import Iterator
-from typing import List
-from typing import Tuple
-from typing import Type
 
 from pysam import FastxFile
 from pysam import FastxRecord
@@ -40,7 +37,7 @@ from pysam import FastxRecord
 from fgpyo.util.types import all_not_none
 
 
-class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
+class FastxZipped(AbstractContextManager, Iterator[tuple[FastxRecord, ...]]):
     """
     A context manager that will lazily zip over any number of FASTA/FASTQ files.
 
@@ -55,7 +52,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         if len(paths) <= 0:
             raise ValueError(f"Must provide at least one FASTX to {self.__class__.__name__}")
         self._persist: bool = persist
-        self._paths: Tuple[Path | str, ...] = paths
+        self._paths: tuple[Path | str, ...] = paths
         self._fastx = tuple(FastxFile(str(path), persist=self._persist) for path in self._paths)
 
     @staticmethod
@@ -63,14 +60,14 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
         """Return the name of the FASTX record minus its ordinal suffix (e.g. "/1" or "/2")."""
         return name[: len(name) - 2] if len(name) >= 2 and name[-2] == "/" else name
 
-    def __next__(self) -> Tuple[FastxRecord, ...]:
+    def __next__(self) -> tuple[FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
         records = tuple(next(handle, None) for handle in self._fastx)
 
         if all(record is None for record in records):
             raise StopIteration
         elif not all_not_none(records):
-            non_none_names: List[str | None] = [
+            non_none_names: list[str | None] = [
                 record.name for record in records if record is not None
             ]
             assert all_not_none(non_none_names)  # type narrowing
@@ -86,9 +83,9 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
                 )
             )
 
-        names_with_ordinals: List[str | None] = [record.name for record in records]
+        names_with_ordinals: list[str | None] = [record.name for record in records]
         assert all_not_none(names_with_ordinals)  # type narrowing
-        record_names: List[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]
+        record_names: list[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]
         if len(set(record_names)) != 1:
             raise ValueError(f"FASTX record names do not all match, found: {record_names}")
 
@@ -96,7 +93,7 @@ class FastxZipped(AbstractContextManager, Iterator[Tuple[FastxRecord, ...]]):
 
     def __exit__(
         self,
-        exc_type: Type[BaseException] | None,
+        exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool | None:

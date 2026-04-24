@@ -58,10 +58,8 @@ cat clipped.bam | samtools sort -n | samtools fixmate | samtools sort | samtools
 """  # noqa: E501
 
 from array import array
-from typing import Iterable
-from typing import List
+from collections.abc import Iterable
 from typing import NamedTuple
-from typing import Tuple
 
 from pysam import AlignedSegment
 
@@ -358,7 +356,7 @@ def _read_pos_at_ref_pos(
 
 def _clip(
     cigar: Cigar, quals: array, bases_to_clip: int, clipped_base_quality: int | None
-) -> Tuple[Cigar, ClippingInfo]:
+) -> tuple[Cigar, ClippingInfo]:
     """
     Workhorse private clipping method that clips the start of cigars.
 
@@ -378,7 +376,7 @@ def _clip(
     existing_soft_clips = elems.takewhile(lambda c: c.operator == CigarOp.S)
     read_bases_clipped = 0
     ref_bases_clipped = 0
-    new_elems: List[CigarElement] = []  # buffer of cigar elements used to make the returned cigar
+    new_elems: list[CigarElement] = []  # buffer of cigar elements used to make the returned cigar
 
     # Returns true if the operator immediately after the clipping point is a deletion
     def is_trailing_deletion() -> bool:

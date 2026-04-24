@@ -1,8 +1,5 @@
 """Tests for `~fgpyo.sequence`."""
 
-from typing import List
-from typing import Tuple
-
 import pytest
 
 from fgpyo.sequence import complement
@@ -167,7 +164,7 @@ def test_levenshtein_dynamic(string1: str, string2: str, levenshtein_distance: i
     assert levenshtein(string1, string2) == levenshtein_distance
 
 
-MULTINUCLEOTIDE_TEST_CASES: List[Tuple[str, int, int]] = [
+MULTINUCLEOTIDE_TEST_CASES: list[tuple[str, int, int]] = [
     ("", 2, 0),
     ("", 1, 0),
     ("A", 1, 1),
@@ -203,7 +200,7 @@ MULTINUCLEOTIDE_TEST_CASES: List[Tuple[str, int, int]] = [
     ("ttgaTtaCaGATTACAgattacacc", 7, 21),
 ]
 
-DINUCLEOTIDE_TEST_CASES: List[Tuple[str, int]] = [
+DINUCLEOTIDE_TEST_CASES: list[tuple[str, int]] = [
     (bases, expected_length)
     for bases, repeat_unit_length, expected_length in MULTINUCLEOTIDE_TEST_CASES
     if repeat_unit_length == 2

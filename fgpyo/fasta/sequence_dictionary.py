@@ -129,18 +129,16 @@ import copy
 import itertools
 import re
 import sys
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import replace
 from enum import unique
 from pathlib import Path
+from re import Pattern
 from typing import Any
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Mapping
-from typing import MutableMapping
-from typing import Pattern
 from typing import overload
 
 from fgpyo import sam
@@ -177,7 +175,7 @@ class Keys(StrEnum):
     URI = "UR"
 
     @staticmethod
-    def attributes() -> List[str]:
+    def attributes() -> list[str]:
         """
         The list of keys that are allowed to be attributes in `SequenceMetadata`.
 
@@ -253,7 +251,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
     name: str
     length: int
     index: int
-    attributes: Dict[Keys | str, str] = field(default_factory=dict)
+    attributes: dict[Keys | str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Any post initialization validation should go here."""
@@ -267,13 +265,13 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
             raise ValueError(f"'{Keys.SEQUENCE_LENGTH}' should not given in the list of attributes")
 
     @property
-    def aliases(self) -> List[str]:
+    def aliases(self) -> list[str]:
         """The aliases (not including the primary) name."""
         aliases = self.attributes.get(Keys.ALIASES)
         return [] if aliases is None else aliases.split(",")
 
     @property
-    def all_names(self) -> List[str]:
+    def all_names(self) -> list[str]:
         """A list of all names, including the primary name and aliases, in that order."""
         return [self.name] + self.aliases
 
@@ -344,14 +342,14 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         else:
             return self_m5 == other_m5
 
-    def to_sam(self) -> Dict[str, Any]:
+    def to_sam(self) -> dict[str, Any]:
         """
         Converts the sequence metadata to a SAM-formatted dictionary.
 
         Equivalent to one item in the list of sequences from
         `pysam.AlignmentHeader#to_dict()["SQ"]`.
         """
-        meta_dict: Dict[str, Any] = {
+        meta_dict: dict[str, Any] = {
             f"{Keys.SEQUENCE_NAME}": self.name,
             f"{Keys.SEQUENCE_LENGTH}": self.length,
         }
@@ -361,7 +359,7 @@ class SequenceMetadata(MutableMapping[Keys | str, str]):
         return meta_dict
 
     @staticmethod
-    def from_sam(meta: Dict[Keys | str, Any], index: int) -> "SequenceMetadata":
+    def from_sam(meta: dict[Keys | str, Any], index: int) -> "SequenceMetadata":
         """
         Builds a `SequenceMetadata` from a dictionary.
 
@@ -436,13 +434,13 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
         infos: the ordered collection of sequence metadata
     """
 
-    infos: List[SequenceMetadata]
-    _dict: Dict[str, SequenceMetadata] = field(init=False, repr=False)
+    infos: list[SequenceMetadata]
+    _dict: dict[str, SequenceMetadata] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         """Builds the internal name-to-metadata lookup dictionary."""
         # Initialize a mapping from sequence name to the sequence metadata for all names
-        self_dict: Dict[str, SequenceMetadata] = {}
+        self_dict: dict[str, SequenceMetadata] = {}
         for index, info in enumerate(self.infos):
             if info.index != index:
                 raise ValueError(
@@ -466,13 +464,13 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
             return False
         return all(this.same_as(that) for this, that in zip(self.infos, other.infos, strict=True))
 
-    def to_sam(self) -> List[Dict[str, Any]]:
+    def to_sam(self) -> list[dict[str, Any]]:
         """Converts the list of dictionaries, one per sequence."""
         return [meta.to_sam() for meta in self.infos]
 
     def to_sam_header(
         self,
-        extra_header: Dict[str, Any] | None = None,
+        extra_header: dict[str, Any] | None = None,
     ) -> pysam.AlignmentHeader:
         """
         Converts the sequence dictionary to a `pysam.AlignmentHeader`.
@@ -481,7 +479,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
             extra_header: a dictionary of extra values to add to the header, None otherwise.  See
                           `:~pysam.AlignmentHeader` for more details.
         """
-        header_dict: Dict[str, Any] = {
+        header_dict: dict[str, Any] = {
             "HD": {"VN": "1.5"},
             "SQ": self.to_sam(),
         }
@@ -503,11 +501,11 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
 
     @staticmethod
     @overload
-    def from_sam(data: List[Dict[str, Any]]) -> "SequenceDictionary": ...
+    def from_sam(data: list[dict[str, Any]]) -> "SequenceDictionary": ...
 
     @staticmethod
     def from_sam(
-        data: Path | pysam.AlignmentFile | pysam.AlignmentHeader | List[Dict[str, Any]],
+        data: Path | pysam.AlignmentFile | pysam.AlignmentHeader | list[dict[str, Any]],
     ) -> "SequenceDictionary":
         """
         Creates a `SequenceDictionary` from a SAM file or its header.
@@ -531,7 +529,7 @@ class SequenceDictionary(Mapping[str | int, SequenceMetadata]):
                 seq_dict = SequenceDictionary.from_sam(fh.header)
         else:  # assuming `data` is a `list[dict[str, Any]]`
             try:
-                infos: List[SequenceMetadata] = [
+                infos: list[SequenceMetadata] = [
                     SequenceMetadata.from_sam(meta=meta, index=index)
                     for index, meta in enumerate(data)
                 ]

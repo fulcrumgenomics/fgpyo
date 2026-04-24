@@ -173,17 +173,14 @@ import enum
 import io
 import sys
 from array import array
+from collections.abc import Callable
 from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Iterator
 from itertools import chain
 from pathlib import Path
 from typing import IO
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Tuple
 from typing import cast
 
 import attr
@@ -235,10 +232,10 @@ _OK_BASES: set[str] = {"A", "C", "G", "T", "="}
 _IOClasses = (io.TextIOBase, io.BufferedIOBase, io.RawIOBase, io.IOBase)
 """The classes that should be treated as file-like classes"""
 
-_STDIN_PATHS: List[str] = ["-", "stdin", "/dev/stdin"]
+_STDIN_PATHS: list[str] = ["-", "stdin", "/dev/stdin"]
 """Paths that should be opened as standard input."""
 
-_STDOUT_PATHS: List[str] = ["-", "stdout", "/dev/stdout"]
+_STDOUT_PATHS: list[str] = ["-", "stdout", "/dev/stdout"]
 """Paths that should be opened as standard output."""
 
 
@@ -374,7 +371,7 @@ def reader(path: SamPath, file_type: SamFileType | None = None, unmapped: bool =
 
 def writer(
     path: SamPath,
-    header: str | Dict[str, Any] | SamHeader,
+    header: str | dict[str, Any] | SamHeader,
     file_type: SamFileType | None = None,
 ) -> SamFile:
     """
@@ -411,7 +408,7 @@ class _CigarOpUtil:
     This is to speed up the translation of cigar op code to CigarOp in CigarOp, so needs to be
     declared beforehand.
     """
-    CODE_TO_CHARACTER: Dict[int, str] = {
+    CODE_TO_CHARACTER: dict[int, str] = {
         0: "M",
         1: "I",
         2: "D",
@@ -531,10 +528,10 @@ class Cigar:
         - elements (Tuple[CigarElement, ...]): zero or more cigar elements
     """
 
-    elements: Tuple[CigarElement, ...] = ()
+    elements: tuple[CigarElement, ...] = ()
 
     @classmethod
-    def from_cigartuples(cls, cigartuples: List[Tuple[int, int]] | None) -> "Cigar":
+    def from_cigartuples(cls, cigartuples: list[tuple[int, int]] | None) -> "Cigar":
         """
         Returns a Cigar from a list of tuples returned by pysam.
 
@@ -639,7 +636,7 @@ class Cigar:
         """
         if len(self.elements) <= 1:
             return self
-        result: List[CigarElement] = []
+        result: list[CigarElement] = []
         for elem in self.elements:
             if result and result[-1].operator == elem.operator:
                 result[-1] = CigarElement(
@@ -653,7 +650,7 @@ class Cigar:
             return self
         return Cigar(coalesced)
 
-    def query_alignment_offsets(self) -> Tuple[int, int]:
+    def query_alignment_offsets(self) -> tuple[int, int]:
         """
         Gets the 0-based, end-exclusive positions of the first and last aligned base in the query.
 
@@ -713,7 +710,7 @@ class Cigar:
         if length < 0:
             raise ValueError(f"length must be >= 0, got {length}")
         remaining = length
-        builder: List[CigarElement] = []
+        builder: list[CigarElement] = []
         for elem in self.elements:
             if remaining <= 0:
                 break
@@ -994,7 +991,7 @@ class SupplementaryAlignment:
         )
 
     @staticmethod
-    def parse_sa_tag(tag: str) -> List["SupplementaryAlignment"]:
+    def parse_sa_tag(tag: str) -> list["SupplementaryAlignment"]:
         """
         Parses an SA tag of supplementary alignments from a BAM file.
 
@@ -1005,7 +1002,7 @@ class SupplementaryAlignment:
         return [SupplementaryAlignment.parse(a) for a in tag.split(";") if len(a) > 0]
 
     @classmethod
-    def from_read(cls, read: pysam.AlignedSegment) -> List["SupplementaryAlignment"]:
+    def from_read(cls, read: pysam.AlignedSegment) -> list["SupplementaryAlignment"]:
         """
         Construct a list of SupplementaryAlignments from the SA tag in a pysam.AlignedSegment.
 
@@ -1368,10 +1365,10 @@ class Template:
     name: str
     r1: AlignedSegment | None
     r2: AlignedSegment | None
-    r1_supplementals: List[AlignedSegment]
-    r2_supplementals: List[AlignedSegment]
-    r1_secondaries: List[AlignedSegment]
-    r2_secondaries: List[AlignedSegment]
+    r1_supplementals: list[AlignedSegment]
+    r2_supplementals: list[AlignedSegment]
+    r1_secondaries: list[AlignedSegment]
+    r2_secondaries: list[AlignedSegment]
 
     @staticmethod
     def iterator(alns: Iterator[AlignedSegment]) -> Iterator["Template"]:
@@ -1388,10 +1385,10 @@ class Template:
         name = None
         r1 = None
         r2 = None
-        r1_supplementals: List[AlignedSegment] = []
-        r2_supplementals: List[AlignedSegment] = []
-        r1_secondaries: List[AlignedSegment] = []
-        r2_secondaries: List[AlignedSegment] = []
+        r1_supplementals: list[AlignedSegment] = []
+        r2_supplementals: list[AlignedSegment] = []
+        r1_secondaries: list[AlignedSegment] = []
+        r2_secondaries: list[AlignedSegment] = []
 
         for rec in recs:
             if name is None:

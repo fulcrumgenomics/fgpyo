@@ -6,15 +6,12 @@ alignment records, for use in testing.
 """
 
 from array import array
+from collections.abc import Callable
 from pathlib import Path
 from random import Random
 from tempfile import NamedTemporaryFile
 from typing import IO
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Tuple
 from typing import cast
 
 import pysam
@@ -56,7 +53,7 @@ class SamBuilder:
     DEFAULT_R2_LENGTH: int = 100
 
     @staticmethod
-    def default_sd() -> List[Dict[str, Any]]:
+    def default_sd() -> list[dict[str, Any]]:
         """
         Generates the sequence dictionary that is used by default by SamBuilder.
 
@@ -94,7 +91,7 @@ class SamBuilder:
         ]
 
     @staticmethod
-    def default_rg() -> Dict[str, str]:
+    def default_rg() -> dict[str, str]:
         """Returns the default read group used by the SamBuilder, as a dictionary."""
         return {"ID": "1", "SM": "1_AAAAAA", "LB": "default", "PL": "ILLUMINA", "PU": "xxx.1"}
 
@@ -104,9 +101,9 @@ class SamBuilder:
         r2_len: int | None = None,
         base_quality: int = 30,
         mapping_quality: int = 60,
-        sd: List[Dict[str, Any]] | None = None,
-        rg: Dict[str, str] | None = None,
-        extra_header: Dict[str, Any] | None = None,
+        sd: list[dict[str, Any]] | None = None,
+        rg: dict[str, str] | None = None,
+        extra_header: dict[str, Any] | None = None,
         seed: int = 42,
         sort_order: SamOrder = SamOrder.Coordinate,
     ) -> None:
@@ -134,7 +131,7 @@ class SamBuilder:
             raise ValueError(f"sort_order must be a SamOrder, got {type(sort_order)}")
         self._sort_order = sort_order
 
-        self._header: Dict[str, Any] = {
+        self._header: dict[str, Any] = {
             "HD": {"VN": "1.5", "SO": sort_order.value},
             "SQ": (sd if sd is not None else SamBuilder.default_sd()),
             "RG": [(rg if rg is not None else SamBuilder.default_rg())],
@@ -145,7 +142,7 @@ class SamBuilder:
         self._seq_lookup = dict([(s["SN"], s) for s in self._header["SQ"]])
 
         self._random: Random = Random(seed)
-        self._records: List[AlignedSegment] = []
+        self._records: list[AlignedSegment] = []
         self._counter: int = 0
 
     def _next_name(self) -> str:
@@ -164,7 +161,7 @@ class SamBuilder:
         chrom: str,
         start: int,
         mapq: int | None,
-        attrs: Dict[str, Any] | None,
+        attrs: dict[str, Any] | None,
     ) -> AlignedSegment:
         """
         Generates a new AlignedSegment.
@@ -235,7 +232,7 @@ class SamBuilder:
         rec: pysam.AlignedSegment,
         length: int,
         bases: str | None = _UNSET,
-        quals: List[int] | None = _UNSET,
+        quals: list[int] | None = _UNSET,
         cigar: str | None = None,
     ) -> None:
         """
@@ -285,7 +282,7 @@ class SamBuilder:
 
     def _resolve_quals(
         self,
-        quals: List[int] | None,
+        quals: list[int] | None,
         bases: str | None,
         length: int,
     ) -> "array[int] | None":
@@ -302,11 +299,11 @@ class SamBuilder:
             return None
         return array("B", [self.base_quality] * length)
 
-    def rg(self) -> Dict[str, Any]:
+    def rg(self) -> dict[str, Any]:
         """Returns the single read group that is defined in the header."""
         # The `RG` field contains a list of read group mappings
         # e.g. `[{"ID": "rg1", "PL": "ILLUMINA"}]`
-        rgs = cast(List[Dict[str, Any]], self._header["RG"])
+        rgs = cast(list[dict[str, Any]], self._header["RG"])
         assert len(rgs) == 1, "Header did not contain exactly one read group!"
         return rgs[0]
 
@@ -322,8 +319,8 @@ class SamBuilder:
         name: str | None = None,
         bases1: str | None = _UNSET,
         bases2: str | None = _UNSET,
-        quals1: List[int] | None = _UNSET,
-        quals2: List[int] | None = _UNSET,
+        quals1: list[int] | None = _UNSET,
+        quals2: list[int] | None = _UNSET,
         chrom: str | None = None,
         chrom1: str | None = None,
         chrom2: str | None = None,
@@ -335,8 +332,8 @@ class SamBuilder:
         mapq2: int | None = None,
         strand1: str = "+",
         strand2: str = "-",
-        attrs: Dict[str, Any] | None = None,
-    ) -> Tuple[AlignedSegment, AlignedSegment]:
+        attrs: dict[str, Any] | None = None,
+    ) -> tuple[AlignedSegment, AlignedSegment]:
         """
         Generates a new pair of reads, adds them to the internal collection, and returns them.
 
@@ -465,7 +462,7 @@ class SamBuilder:
         name: str | None = None,
         read_num: int | None = None,
         bases: str | None = _UNSET,
-        quals: List[int] | None = _UNSET,
+        quals: list[int] | None = _UNSET,
         chrom: str = sam.NO_REF_NAME,
         start: int = sam.NO_REF_POS,
         cigar: str | None = None,
@@ -473,7 +470,7 @@ class SamBuilder:
         strand: str = "+",
         secondary: bool = False,
         supplementary: bool = False,
-        attrs: Dict[str, Any] | None = None,
+        attrs: dict[str, Any] | None = None,
     ) -> AlignedSegment:
         """
         Generates a new single reads, adds them to the internal collection, and returns it.
@@ -616,11 +613,11 @@ class SamBuilder:
         """Returns the number of records accumulated so far."""
         return len(self._records)
 
-    def to_unsorted_list(self) -> List[pysam.AlignedSegment]:
+    def to_unsorted_list(self) -> list[pysam.AlignedSegment]:
         """Returns the accumulated records in the order they were created."""
         return list(self._records)
 
-    def to_sorted_list(self) -> List[pysam.AlignedSegment]:
+    def to_sorted_list(self) -> list[pysam.AlignedSegment]:
         """Returns the accumulated records in coordinate order."""
         with NamedTemporaryFile(suffix=".bam", delete=True) as fp:
             filename = fp.name

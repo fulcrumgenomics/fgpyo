@@ -1,8 +1,6 @@
-from typing import Iterable
-from typing import List
+from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import Optional
-from typing import Sequence
-from typing import Type
 from typing import Union
 
 import pytest
@@ -12,7 +10,7 @@ from fgpyo.util.inspect import NoneType
 
 
 def test_is_listlike() -> None:
-    assert types.is_list_like(List[str])
+    assert types.is_list_like(list[str])
     assert types.is_list_like(Iterable[str])
     assert types.is_list_like(Sequence[str])
     assert not types.is_list_like(str)
@@ -32,7 +30,7 @@ def test_is_listlike() -> None:
         (str, False),
     ],
 )
-def test_is_optional(tpe: Type, expected: bool) -> None:
+def test_is_optional(tpe: type, expected: bool) -> None:
     assert types._is_optional(tpe) == expected
 
 

@@ -125,6 +125,9 @@ PersonWithName(name=Name(first='john', last='doe'), age=42)
 
 import dataclasses
 from abc import ABC
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from csv import DictWriter
 from dataclasses import dataclass
@@ -134,14 +137,7 @@ from io import TextIOWrapper
 from pathlib import Path
 from types import TracebackType
 from typing import Any
-from typing import Callable
-from typing import Dict
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Tuple
-from typing import Type
 from typing import TypeGuard
 from typing import TypeVar
 
@@ -164,8 +160,8 @@ class MetricFileHeader:
         fieldnames: The field names specified in the final line of the header.
     """
 
-    preamble: List[str]
-    fieldnames: List[str]
+    preamble: list[str]
+    fieldnames: list[str]
 
 
 class Metric(ABC, Generic[MetricType]):
@@ -191,21 +187,21 @@ class Metric(ABC, Generic[MetricType]):
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield getattr(self, field.name)
 
-    def items(self) -> Iterator[Tuple[str, Any]]:
+    def items(self) -> Iterator[tuple[str, Any]]:
         """An iterator over field names and values in the same order as the header."""
         for field in inspect.get_fields(self.__class__):  # type: ignore[arg-type]
             yield (field.name, getattr(self, field.name))
 
-    def formatted_values(self) -> List[str]:
+    def formatted_values(self) -> list[str]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [self.format_value(value) for value in self.values()]
 
-    def formatted_items(self) -> List[Tuple[str, str]]:
+    def formatted_items(self) -> list[tuple[str, str]]:
         """An iterator over formatted attribute values in the same order as the header."""
         return [(key, self.format_value(value)) for key, value in self.items()]
 
     @classmethod
-    def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
+    def _parsers(cls) -> dict[type, Callable[[str], Any]]:
         """
         Mapping of type to a specific parser for that type.
 
@@ -239,7 +235,7 @@ class Metric(ABC, Generic[MetricType]):
         """
         parsers = cls._parsers()
         with io.to_reader(path, threads=threads) as reader:
-            header: List[str] = reader.readline().rstrip("\r\n").split("\t")
+            header: list[str] = reader.readline().rstrip("\r\n").split("\t")
             # check the header
             class_fields = set(cls.header())
             file_fields = set(header)
@@ -277,7 +273,7 @@ class Metric(ABC, Generic[MetricType]):
             # read the metric lines
             for lineno, line in enumerate(reader, 2):
                 # parse the raw values
-                values: List[str] = line.rstrip("\r\n").split("\t")
+                values: list[str] = line.rstrip("\r\n").split("\t")
                 if strip_whitespace:
                     values = [v.strip() for v in values]
 
@@ -295,7 +291,7 @@ class Metric(ABC, Generic[MetricType]):
                 yield instance
 
     @classmethod
-    def parse(cls, fields: List[str]) -> Any:
+    def parse(cls, fields: list[str]) -> Any:
         """
         Parses the string-representation of this metric.
 
@@ -325,7 +321,7 @@ class Metric(ABC, Generic[MetricType]):
             writer.writeall(values)
 
     @classmethod
-    def header(cls) -> List[str]:
+    def header(cls) -> list[str]:
         """The list of header values for the metric."""
         return [a.name for a in inspect.get_fields(cls)]  # type: ignore[arg-type]
 
@@ -383,7 +379,7 @@ class Metric(ABC, Generic[MetricType]):
             return f"{value}"
 
     @classmethod
-    def to_list(cls, value: str) -> List[Any]:
+    def to_list(cls, value: str) -> list[Any]:
         """Returns a list value split on comma delimeter."""
         return [] if value == "" else value.split(",")
 
@@ -427,8 +423,8 @@ class Metric(ABC, Generic[MetricType]):
         Raises:
             ValueError: If the file was empty or contained only comments or empty lines.
         """
-        preamble: List[str] = []
-        fieldnames: List[str] = []
+        preamble: list[str] = []
+        fieldnames: list[str] = []
 
         for line in reader:
             if line.strip().startswith(comment_prefix) or line.strip() == "":
@@ -459,19 +455,19 @@ def _is_metric_class(cls: Any) -> TypeGuard[Metric]:
 class MetricWriter(Generic[MetricType], AbstractContextManager):
     """Writes Metric instances to a delimited file."""
 
-    _metric_class: Type[Metric]
-    _fieldnames: List[str]
+    _metric_class: type[Metric]
+    _fieldnames: list[str]
     _fout: TextIOWrapper
     _writer: DictWriter
 
     def __init__(
         self,
         filename: Path | str,
-        metric_class: Type[Metric],
+        metric_class: type[Metric],
         append: bool = False,
         delimiter: str = "\t",
-        include_fields: List[str] | None = None,
-        exclude_fields: List[str] | None = None,
+        include_fields: list[str] | None = None,
+        exclude_fields: list[str] | None = None,
         lineterminator: str = "\n",
         threads: int | None = None,
     ) -> None:
@@ -510,7 +506,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
         if (filepath.is_fifo() or filepath.is_char_device()) and append:
             raise ValueError("Cannot append to stdout, stderr, or other named pipe or stream")
 
-        ordered_fieldnames: List[str] = _validate_and_generate_final_output_fieldnames(
+        ordered_fieldnames: list[str] = _validate_and_generate_final_output_fieldnames(
             metric_class=metric_class,
             include_fields=include_fields,
             exclude_fields=exclude_fields,
@@ -547,7 +543,7 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
     def __exit__(
         self,
-        exc_type: Type[BaseException] | None,
+        exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
@@ -600,10 +596,10 @@ class MetricWriter(Generic[MetricType], AbstractContextManager):
 
 
 def _validate_and_generate_final_output_fieldnames(
-    metric_class: Type[MetricType],
-    include_fields: List[str] | None = None,
-    exclude_fields: List[str] | None = None,
-) -> List[str]:
+    metric_class: type[MetricType],
+    include_fields: list[str] | None = None,
+    exclude_fields: list[str] | None = None,
+) -> list[str]:
     """
     Subset and/or re-order the Metric's fieldnames based on the specified include/exclude lists.
 
@@ -636,9 +632,9 @@ def _validate_and_generate_final_output_fieldnames(
 
 def _assert_file_header_matches_metric(
     path: Path,
-    metric_class: Type[MetricType],
+    metric_class: type[MetricType],
     delimiter: str,
-    ordered_fieldnames: List[str] | None = None,
+    ordered_fieldnames: list[str] | None = None,
 ) -> None:
     """
     Check that the specified file has a header and its fields match those of the provided Metric.
@@ -662,7 +658,7 @@ def _assert_file_header_matches_metric(
     if header.fieldnames == []:
         raise ValueError(f"Could not find a header in the provided file: {path}")
 
-    fieldnames: List[str] = (
+    fieldnames: list[str] = (
         ordered_fieldnames if ordered_fieldnames is not None else list(metric_class.keys())
     )
 
@@ -677,8 +673,8 @@ def _assert_file_header_matches_metric(
 
 
 def _assert_fieldnames_are_metric_attributes(
-    specified_fieldnames: List[str],
-    metric_class: Type[MetricType],
+    specified_fieldnames: list[str],
+    metric_class: type[MetricType],
 ) -> None:
     """
     Check that all of the specified fields are attributes on the given Metric.
@@ -698,7 +694,7 @@ def _assert_fieldnames_are_metric_attributes(
         )
 
 
-def _assert_is_metric_class(cls: Type[Metric]) -> None:
+def _assert_is_metric_class(cls: type[Metric]) -> None:
     """
     Assert that the given class is a Metric.
 

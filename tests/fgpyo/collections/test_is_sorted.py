@@ -1,6 +1,5 @@
 from functools import total_ordering
 from typing import Any
-from typing import List
 
 import pytest
 
@@ -79,7 +78,7 @@ def test_is_sorted_raises_on_non_comparable_objects() -> None:
             self.field = field
 
     # NB: an exception is only raised when there are more than one objects
-    iterable: List[MyClass] = [MyClass(field=1), MyClass(field=2)]
+    iterable: list[MyClass] = [MyClass(field=1), MyClass(field=2)]
 
     with pytest.raises(TypeError):
         # NB: the type ignore below checks that MyPy is aware the custom class is incorrectly typed
@@ -107,8 +106,8 @@ def test_is_sorted_on_custom_comparable_objects() -> None:
             return NotImplemented
 
     # NB: comparisons only occur when there are more than one object in the iterable.
-    iterable_sorted: List[MyClass] = [MyClass(field=1), MyClass(field=2)]
-    iterable_unsorted: List[MyClass] = [MyClass(field=2), MyClass(field=1)]
+    iterable_sorted: list[MyClass] = [MyClass(field=1), MyClass(field=2)]
+    iterable_unsorted: list[MyClass] = [MyClass(field=2), MyClass(field=1)]
 
     assert is_sorted(iterable_sorted)
     assert not is_sorted(iterable_unsorted)

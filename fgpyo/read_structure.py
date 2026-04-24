@@ -49,10 +49,8 @@ Read structure missing length information: 23T2T[T]23T
 """
 
 import enum
-from typing import Iterable
-from typing import Iterator
-from typing import List
-from typing import Tuple
+from collections.abc import Iterable
+from collections.abc import Iterator
 
 import attr
 
@@ -219,7 +217,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     """
 
-    segments: Tuple[ReadSegment, ...]
+    segments: tuple[ReadSegment, ...]
 
     @property
     def _min_length(self) -> int:
@@ -257,35 +255,35 @@ class ReadStructure(Iterable[ReadSegment]):
             last_segment = attr.evolve(last_segment, length=None)
             return ReadStructure(segments=self.segments[:-1] + (last_segment,))
 
-    def extract(self, bases: str) -> Tuple[SubReadWithoutQuals, ...]:
+    def extract(self, bases: str) -> tuple[SubReadWithoutQuals, ...]:
         """Splits the given bases into tuples with its associated read segment."""
         return tuple([segment.extract(bases=bases) for segment in self])
 
-    def extract_with_quals(self, bases: str, quals: str) -> Tuple[SubReadWithQuals, ...]:
+    def extract_with_quals(self, bases: str, quals: str) -> tuple[SubReadWithQuals, ...]:
         """Splits the given bases and qualities into triples with its associated read segment."""
         return tuple([segment.extract_with_quals(bases=bases, quals=quals) for segment in self])
 
-    def segments_by_kind(self, kind: SegmentType) -> Tuple[ReadSegment, ...]:
+    def segments_by_kind(self, kind: SegmentType) -> tuple[ReadSegment, ...]:
         """Returns just the segments of a given kind."""
         return tuple([segment for segment in self if segment.kind == kind])
 
-    def template_segments(self) -> Tuple[ReadSegment, ...]:
+    def template_segments(self) -> tuple[ReadSegment, ...]:
         """Returns segments of kind Template."""
         return self.segments_by_kind(kind=SegmentType.Template)
 
-    def sample_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+    def sample_barcode_segments(self) -> tuple[ReadSegment, ...]:
         """Returns segments of kind SampleBarcode."""
         return self.segments_by_kind(kind=SegmentType.SampleBarcode)
 
-    def molecular_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+    def molecular_barcode_segments(self) -> tuple[ReadSegment, ...]:
         """Returns segments of kind MolecularBarcode."""
         return self.segments_by_kind(kind=SegmentType.MolecularBarcode)
 
-    def cell_barcode_segments(self) -> Tuple[ReadSegment, ...]:
+    def cell_barcode_segments(self) -> tuple[ReadSegment, ...]:
         """Returns segments of kind CellBarcode."""
         return self.segments_by_kind(kind=SegmentType.CellBarcode)
 
-    def skip_segments(self) -> Tuple[ReadSegment, ...]:
+    def skip_segments(self) -> tuple[ReadSegment, ...]:
         """Returns segments of kind Skip."""
         return self.segments_by_kind(kind=SegmentType.Skip)
 
@@ -307,7 +305,7 @@ class ReadStructure(Iterable[ReadSegment]):
 
     @classmethod
     def from_segments(
-        cls, segments: Tuple[ReadSegment, ...], reset_offsets: bool = False
+        cls, segments: tuple[ReadSegment, ...], reset_offsets: bool = False
     ) -> "ReadStructure":
         """Creates a new ReadStructure, optionally resetting the offsets on each of the segments."""
         # Check that none but the last segment has an indefinite length
@@ -340,9 +338,9 @@ class ReadStructure(Iterable[ReadSegment]):
         return cls.from_segments(segments=cls._from_string(string=tidied), reset_offsets=True)
 
     @classmethod
-    def _from_string(cls, string: str) -> Tuple[ReadSegment, ...]:
+    def _from_string(cls, string: str) -> tuple[ReadSegment, ...]:
         index = 0
-        segments: List[ReadSegment] = []
+        segments: list[ReadSegment] = []
         while index < len(string):
             # tash the beginning position of our parsing so we can highlight what we're having
             # trouble with

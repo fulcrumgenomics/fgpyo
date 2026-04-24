@@ -48,6 +48,15 @@ class LegacyOptionalName:
     union_with_none: Union[str, None] = None
 
 
+@attr.s(auto_attribs=True, frozen=True)
+class MultiArgOptionalName:
+    """Test attr class with multi-arg union fields containing None."""
+
+    required: str
+    multi_arg_optional: str | int | None
+    legacy_multi_arg_optional: Union[str, int, None] = None
+
+
 def test_attr_from() -> None:
     name = attr_from(
         cls=Name,
@@ -94,6 +103,20 @@ def test_attribute_has_default_legacy_syntax() -> None:
     assert not _attribute_has_default(fields_dict["required"])
     assert _attribute_has_default(fields_dict["optional_no_default"])
     assert _attribute_has_default(fields_dict["union_with_none"])
+
+
+def test_attribute_is_optional_multi_arg_union() -> None:
+    fields_dict = attr.fields_dict(MultiArgOptionalName)
+    assert not _attribute_is_optional(fields_dict["required"])
+    assert _attribute_is_optional(fields_dict["multi_arg_optional"])
+    assert _attribute_is_optional(fields_dict["legacy_multi_arg_optional"])
+
+
+def test_attribute_has_default_multi_arg_union() -> None:
+    fields_dict = attr.fields_dict(MultiArgOptionalName)
+    assert not _attribute_has_default(fields_dict["required"])
+    assert _attribute_has_default(fields_dict["multi_arg_optional"])
+    assert _attribute_has_default(fields_dict["legacy_multi_arg_optional"])
 
 
 class Foo:

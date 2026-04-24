@@ -948,3 +948,20 @@ def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
     assert len(out_metrics) == 2
     assert out_metrics[0] == in_metrics[0]
     assert out_metrics[1] == in_metrics[1]
+
+
+@pytest.mark.parametrize("use_attr", [False, True])
+def test_metric_multi_arg_optional_missing_column(use_attr: bool, tmp_path: Path) -> None:
+    """A multi-arg optional column may be missing from the file (treated as None)."""
+
+    @make_dataclass(use_attr=use_attr)
+    class PersonMaybeId(Metric["PersonMaybeId"]):
+        name: str
+        identifier: str | int | None = None
+
+    path: Path = tmp_path / "metrics.txt"
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+
+    out_metrics: List[PersonMaybeId] = list(PersonMaybeId.read(path=path))
+    assert out_metrics == [PersonMaybeId(name="Max", identifier=None)]

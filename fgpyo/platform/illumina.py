@@ -87,17 +87,28 @@ def extract_umis_from_read_name(
 
 
 def copy_umi_from_read_name(
-    rec: AlignedSegment, strict: bool = False, remove_umi: bool = False
+    rec: AlignedSegment,
+    strict: bool = False,
+    remove_umi: bool = False,
+    read_name_delimiter: str = _ILLUMINA_READ_NAME_DELIMITER,
+    umi_delimiter: str = _ILLUMINA_UMI_DELIMITER,
 ) -> bool:
     """
     Copy a UMI from an alignment's read name to its `RX` SAM tag.
 
     The UMI will not be copied to RX tag if it is invalid.
 
+    `strict`, `read_name_delimiter`, and `umi_delimiter` are forwarded to
+    [`extract_umis_from_read_name`][fgpyo.platform.illumina.extract_umis_from_read_name] — see
+    that function for their semantics.
+
     Args:
         rec: The alignment record to update.
-        strict: If `True` and UMI invalid, will throw an exception
+        strict: If `True` and UMI invalid, will throw an exception.
         remove_umi: If `True`, the UMI will be removed from the read name after copying.
+        read_name_delimiter: The delimiter separating the components of the read name.
+            Also used to strip the UMI segment when `remove_umi` is `True`.
+        umi_delimiter: The delimiter separating multiple UMIs.
 
     Returns:
         `True` if the UMI was successfully extracted, False if otherwise.
@@ -106,18 +117,21 @@ def copy_umi_from_read_name(
         ValueError: If the read name does not end with a valid UMI.
         ValueError: If the record already has a populated `RX` SAM tag.
     """
+    # NB: Keep the signature of this function in sync with `extract_umis_from_read_name`.
     assert rec.query_name is not None, "Alignment record must have a query name"
 
     umi = extract_umis_from_read_name(
         read_name=rec.query_name,
         strict=strict,
+        read_name_delimiter=read_name_delimiter,
+        umi_delimiter=umi_delimiter,
     )
     if umi is not None:
         if rec.has_tag("RX"):
             raise ValueError(f"Record {rec.query_name} already has a populated RX tag")
         rec.set_tag(tag="RX", value=umi)
         if remove_umi:
-            last_index = rec.query_name.rfind(_ILLUMINA_READ_NAME_DELIMITER)
+            last_index = rec.query_name.rfind(read_name_delimiter)
             rec.query_name = rec.query_name[:last_index] if last_index != -1 else rec.query_name
         return True
     elif strict:

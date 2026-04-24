@@ -149,6 +149,23 @@ def test_copy_invalid_multi_umi_non_strict_returns_false() -> None:
     assert read.has_tag("RX") is False
 
 
+def test_copy_umi_from_read_name_custom_read_name_delimiter() -> None:
+    """Test that a custom read_name_delimiter is used for both extraction and UMI removal."""
+    builder = SamBuilder()
+    read = builder.add_single(name="abc_def_ghi_AAAA+TTTT")
+    assert copy_umi_from_read_name(read, remove_umi=True, read_name_delimiter="_") is True
+    assert read.get_tag("RX") == "AAAA-TTTT"
+    assert read.query_name == "abc_def_ghi"
+
+
+def test_copy_umi_from_read_name_custom_umi_delimiter() -> None:
+    """Test that a custom umi_delimiter is forwarded when parsing multi-UMI segments."""
+    builder = SamBuilder()
+    read = builder.add_single(name="abc:def:ghi:AAAA|TTTT")
+    assert copy_umi_from_read_name(read, umi_delimiter="|") is True
+    assert read.get_tag("RX") == "AAAA-TTTT"
+
+
 def test_populated_rx_tag_raises() -> None:
     """Test that we raise a ValueError when a record already has a populated RX tag."""
     builder = SamBuilder()

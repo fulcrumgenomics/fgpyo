@@ -336,6 +336,23 @@ def test_add_pair_explicit_none_clears_bases_and_quals() -> None:
     assert r2.query_sequence is not None and r2.query_qualities is not None
 
 
+def test_add_pair_quals_none_preserves_bases() -> None:
+    """Setting quals1/quals2 to None produces records with a sequence but no qualities."""
+    builder = SamBuilder(r1_len=20, r2_len=15)
+    r1, r2 = builder.add_pair(chrom="chr1", start1=1000, start2=1200, quals1=None, quals2=None)
+    assert r1.query_sequence is not None and len(r1.query_sequence) == 20
+    assert r2.query_sequence is not None and len(r2.query_sequence) == 15
+    assert r1.query_qualities is None
+    assert r2.query_qualities is None
+
+
+def test_add_single_quals_with_none_bases_raises() -> None:
+    """Providing qualities without a sequence is disallowed by the SAM spec."""
+    builder = SamBuilder()
+    with pytest.raises(ValueError, match="Cannot provide qualities when bases is None"):
+        builder.add_single(bases=None, quals=[30] * 10)
+
+
 def test_add_single_none_round_trips_through_bam(tmp_path: Path) -> None:
     """A sequence-less record round-trips through a BAM file with `None` preserved."""
     builder = SamBuilder()

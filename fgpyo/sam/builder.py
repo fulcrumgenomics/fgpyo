@@ -293,9 +293,11 @@ class SamBuilder:
         if quals is None:
             return None
         if quals is not _UNSET:
+            # Qualities without a sequence is explicitly disallowed by the SAM spec.
+            if bases is None:
+                raise ValueError("Cannot provide qualities when bases is None.")
             return array("B", quals)
-        # Argument was omitted: synthesize unless the sequence was explicitly cleared, since
-        # qualities without a sequence is not a valid SAM record.
+        # Argument was omitted: synthesize unless the sequence was explicitly cleared.
         if bases is None:
             return None
         return array("B", [self.base_quality] * length)

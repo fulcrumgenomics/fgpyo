@@ -50,7 +50,7 @@ def test_writer_rejects_non_path_non_handle() -> None:
             pass
 
 
-_BGZF_MAGIC = b"\x1f\x8b"
+_BGZF_MAGIC: bytes = b"\x1f\x8b"
 
 
 def test_writer_file_handle_bgzipped_round_trip(tmp_path: Path) -> None:

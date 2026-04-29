@@ -24,7 +24,6 @@ from typing import Type
 from typing import TypeAlias
 from typing import TypeGuard
 from typing import TypeVar
-from typing import Union
 
 import fgpyo.util.types as types
 
@@ -491,9 +490,7 @@ def attr_from(
 
 def _attribute_is_optional(attribute: FieldType) -> bool:
     """Returns True if the attribute is optional, False otherwise."""
-    return typing.get_origin(attribute.type) is Union and isinstance(
-        None, typing.get_args(attribute.type)
-    )
+    return types._is_optional(attribute.type)
 
 
 def _attribute_has_default(attribute: FieldType) -> bool:

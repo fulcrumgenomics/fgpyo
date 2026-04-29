@@ -12,7 +12,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import Type
@@ -108,8 +107,8 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class Person(Metric["Person"]):
-            name: Optional[str]
-            age: Optional[int]
+            name: str | None
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class Name:
@@ -145,7 +144,7 @@ class DataBuilder:
         @make_dataclass(use_attr=use_attr)
         class PersonMaybeAge(Metric["PersonMaybeAge"]):
             name: str
-            age: Optional[int]
+            age: int | None
 
         @make_dataclass(use_attr=use_attr)
         class PersonDefault(Metric["PersonDefault"]):
@@ -154,13 +153,13 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class PersonAgeFloat(Metric["PersonAgeFloat"]):
-            name: Optional[str]
-            age: Optional[float]
+            name: str | None
+            age: float | None
 
         @make_dataclass(use_attr=use_attr)
         class ListPerson(Metric["ListPerson"]):
-            name: List[Optional[str]]
-            age: List[Optional[int]]
+            name: List[str | None]
+            age: List[int | None]
 
         self.DummyMetric = DummyMetric
         self.Person = Person
@@ -949,3 +948,20 @@ def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
     assert len(out_metrics) == 2
     assert out_metrics[0] == in_metrics[0]
     assert out_metrics[1] == in_metrics[1]
+
+
+@pytest.mark.parametrize("use_attr", [False, True])
+def test_metric_multi_arg_optional_missing_column(use_attr: bool, tmp_path: Path) -> None:
+    """A multi-arg optional column may be missing from the file (treated as None)."""
+
+    @make_dataclass(use_attr=use_attr)
+    class PersonMaybeId(Metric["PersonMaybeId"]):
+        name: str
+        identifier: str | int | None = None
+
+    path: Path = tmp_path / "metrics.txt"
+    with path.open("w") as writer:
+        writer.write("name\nMax\n")
+
+    out_metrics: List[PersonMaybeId] = list(PersonMaybeId.read(path=path))
+    assert out_metrics == [PersonMaybeId(name="Max", identifier=None)]

@@ -26,9 +26,9 @@ def test_is_listlike() -> None:
         (Optional[str], True),
         (str | None, True),
         (Union[str, int], False),
-        (Union[str, int, None], False),
+        (Union[str, int, None], True),
         (str | int, False),
-        (str | int | None, False),
+        (str | int | None, True),
         (str, False),
     ],
 )

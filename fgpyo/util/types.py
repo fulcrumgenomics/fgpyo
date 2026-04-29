@@ -116,8 +116,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
         dtype: A type.
 
     Returns:
-        True if the type is a union type with exactly two elements, one of which is `None`.
-        False otherwise.
+        True if the type is a union type that includes `None` in its arguments. False otherwise.
 
     Raises:
         TypeError: If the input is not a valid `TypeAnnotation` type.
@@ -130,12 +129,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
 
     # Optional[T] has `typing.Union` as its origin, but PEP604 syntax (e.g. `int | None`) has
     # `types.UnionType` as its origin.
-    return (
-        origin is not None
-        and (origin is Union or origin is UnionType)
-        and len(args) == 2
-        and type(None) in args
-    )
+    return origin is not None and (origin is Union or origin is UnionType) and type(None) in args
 
 
 def _make_union_parser_worker(

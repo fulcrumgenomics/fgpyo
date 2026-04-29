@@ -96,7 +96,11 @@ def reader(path: VcfPath) -> Generator[VcfReader, None, None]:
 
 
 @contextmanager
-def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, None]:
+def writer(
+    path: VcfPath,
+    header: VariantHeader,
+    mode: str = "w",
+) -> Generator[VcfWriter, None, None]:
     """
     Opens the given path for VCF writing.
 
@@ -104,6 +108,10 @@ def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, N
         path: the path to a VCF, or an open filehandle
         header: the source for the output VCF header. If you are modifying a VCF file that you are
                 reading from, you can pass reader.header
+        mode: the pysam write mode. The default `"w"` relies on pysam auto-detecting the output
+                format from the filename extension (e.g. `.vcf.gz` → bgzipped). Callers passing an
+                open file handle should supply an explicit mode — `"wz"` for bgzipped VCF, `"wb"`
+                for BCF — since there is no filename to sniff.
     """
     if not isinstance(path, (str, Path, io.IOBase)):
         raise TypeError(f"Cannot open '{type(path)}' for VCF writing.")
@@ -111,7 +119,8 @@ def writer(path: VcfPath, header: VariantHeader) -> Generator[VcfWriter, None, N
     # with a .vcf.gz suffix.
     if isinstance(path, Path):
         path = str(path)
-    _writer = VariantFile(path, header=header, mode="w")
+    # pysam's stubs narrow `mode` and `path` below what's accepted at runtime (e.g. mode="wz").
+    _writer = VariantFile(path, header=header, mode=mode)  # type: ignore[arg-type]
     try:
         yield _writer
     finally:

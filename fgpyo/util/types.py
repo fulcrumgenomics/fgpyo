@@ -131,7 +131,7 @@ def _is_optional(dtype: TypeAnnotation) -> bool:
 
 
 def _make_union_parser_worker(
-    union: type[UnionType],
+    union: TypeAnnotation,
     parsers: Iterable[Callable[[str], UnionType]],
     value: str,
 ) -> UnionType | None:
@@ -160,14 +160,14 @@ def _make_union_parser_worker(
 
 
 def make_union_parser(
-    union: type[UnionType], parsers: Iterable[Callable[[str], UnionType]]
+    union: TypeAnnotation, parsers: Iterable[Callable[[str], UnionType]]
 ) -> partial:
     """Generates a parser function for a union type object."""
     return partial(_make_union_parser_worker, union, parsers)
 
 
 def _make_literal_parser_worker(
-    literal: type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]], value: str
+    literal: TypeAnnotation, parsers: Iterable[Callable[[str], LiteralType]], value: str
 ) -> LiteralType:
     """
     Worker function behind literal parsing.
@@ -191,7 +191,7 @@ def _make_literal_parser_worker(
 
 
 def make_literal_parser(
-    literal: type[LiteralType], parsers: Iterable[Callable[[str], LiteralType]]
+    literal: TypeAnnotation, parsers: Iterable[Callable[[str], LiteralType]]
 ) -> partial:
     """Generates a parser function for a literal type object."""
     return partial(_make_literal_parser_worker, literal, parsers)

@@ -9,15 +9,13 @@ The functions in this module make it easy to:
 
 """
 
-from typing import Set
-
 from pysam import AlignedSegment
 
 SAM_UMI_DELIMITER: str = "-"
 """Multiple UMI delimiter, which SAM specification recommends should be a hyphen;
 see specification here: https://samtools.github.io/hts-specs/SAMtags.pdf"""
 
-_VALID_UMI_CHARACTERS: Set[str] = set("ACGTN")
+_VALID_UMI_CHARACTERS: set[str] = set("ACGTN")
 """Illumina's restricted UMI characters;
 https://support.illumina.com/help/BaseSpace_Sequence_Hub_OLH_009008_2/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm."""  # noqa
 

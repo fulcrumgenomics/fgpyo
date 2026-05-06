@@ -10,10 +10,8 @@ ex. https://pypi.org/project/Distance/
 """
 
 from types import MappingProxyType
-from typing import Dict
-from typing import List
 
-_COMPLEMENTS: Dict[str, str] = {
+_COMPLEMENTS: dict[str, str] = {
     # Discrete bases
     "A": "T",
     "C": "G",
@@ -146,7 +144,7 @@ def levenshtein(string1: str, string2: str) -> int:
     # B - - - 2
     # C - - - 1
     # " 3 2 1 0
-    matrix: List[List[int]] = [[int()] * (m + 1) for _ in range(n + 1)]
+    matrix: list[list[int]] = [[int()] * (m + 1) for _ in range(n + 1)]
     for j in range(m + 1):
         matrix[n][j] = m - j
     for i in range(n + 1):

@@ -6,15 +6,10 @@ import enum
 import gzip
 import os
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Set
-from typing import Tuple
-from typing import Type
 from typing import TypeAlias
 from typing import TypeVar
 
@@ -39,7 +34,7 @@ class EnumTest(enum.Enum):
     EnumVal3 = "val3"
 
 
-T = TypeVar("T", bound=Type)
+T = TypeVar("T", bound=type[Any])
 
 
 def make_dataclass(use_attr: bool = False) -> Callable[[T], T]:
@@ -94,14 +89,14 @@ class DataBuilder:
             optional_int_value: int | None
             optional_bool_value: bool | None
             optional_enum_value: EnumTest | None
-            dict_value: Dict[int, str]
-            tuple_value: Tuple[int, str]
-            list_value: List[str]
-            complex_value: Dict[
+            dict_value: dict[int, str]
+            tuple_value: tuple[int, str]
+            list_value: list[str]
+            complex_value: dict[
                 int,
-                Dict[
-                    Tuple[int, int],
-                    Set[str],
+                dict[
+                    tuple[int, int],
+                    set[str],
                 ],
             ]
 
@@ -131,7 +126,7 @@ class DataBuilder:
             age: int
 
             @classmethod
-            def _parsers(cls) -> Dict[type, Callable[[str], Any]]:
+            def _parsers(cls) -> dict[type, Callable[[str], Any]]:
                 return {Name: lambda value: Name.parse(value=value)}
 
             @classmethod
@@ -158,8 +153,8 @@ class DataBuilder:
 
         @make_dataclass(use_attr=use_attr)
         class ListPerson(Metric["ListPerson"]):
-            name: List[str | None]
-            age: List[int | None]
+            name: list[str | None]
+            age: list[int | None]
 
         self.DummyMetric = DummyMetric
         self.Person = Person
@@ -170,7 +165,7 @@ class DataBuilder:
         self.PersonDefault = PersonDefault
         self.ListPerson = ListPerson
 
-        self.DUMMY_METRICS: List[DummyMetric] = [
+        self.DUMMY_METRICS: list[DummyMetric] = [
             DummyMetric(
                 int_value=1,
                 str_value="2",
@@ -278,7 +273,7 @@ def test_metric_roundtrip(
     DummyMetric: TypeAlias = data_and_classes.DummyMetric
 
     DummyMetric.write(path, metric)
-    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
+    metrics: list[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == 1
     assert metrics[0] == metric
@@ -290,7 +285,7 @@ def test_metrics_roundtrip(tmp_path: Path, data_and_classes: DataBuilder) -> Non
     DummyMetric: TypeAlias = data_and_classes.DummyMetric
 
     DummyMetric.write(path, *data_and_classes.DUMMY_METRICS)
-    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
+    metrics: list[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == len(data_and_classes.DUMMY_METRICS)
     assert metrics == data_and_classes.DUMMY_METRICS
@@ -306,7 +301,7 @@ def test_metrics_roundtrip_gzip(tmp_path: Path, data_and_classes: DataBuilder) -
     with gzip.open(path, "r") as handle:
         handle.read(1)  # Will raise an exception if not a GZIP file.
 
-    metrics: List[DummyMetric] = list(DummyMetric.read(path=path))
+    metrics: list[DummyMetric] = list(DummyMetric.read(path=path))
 
     assert len(metrics) == len(data_and_classes.DUMMY_METRICS)
     assert metrics == data_and_classes.DUMMY_METRICS
@@ -557,7 +552,7 @@ def test_metrics_fast_concat(tmp_path: Path, data_and_classes: DataBuilder) -> N
     DummyMetric.write(path_input[2], dummy_metrics[2])
 
     Metric.fast_concat(*path_input, output=path_output)
-    metrics: List[DummyMetric] = list(DummyMetric.read(path=path_output))
+    metrics: list[DummyMetric] = list(DummyMetric.read(path=path_output))
 
     assert len(metrics) == len(dummy_metrics)
     assert metrics[0].header() == DummyMetric.header()
@@ -874,7 +869,7 @@ def test_assert_is_metric_class_raises_if_not_a_metric() -> None:
 # fmt: on
 def test_assert_fieldnames_are_metric_attributes(
     data_and_classes: DataBuilder,
-    fieldnames: List[str],
+    fieldnames: list[str],
 ) -> None:
     """Should not raise an error if the provided fieldnames are all metric attributes."""
     _assert_fieldnames_are_metric_attributes(fieldnames, data_and_classes.Person)
@@ -891,7 +886,7 @@ def test_assert_fieldnames_are_metric_attributes(
 )
 def test_assert_fieldnames_are_metric_attributes_raises(
     data_and_classes: DataBuilder,
-    fieldnames: List[str],
+    fieldnames: list[str],
 ) -> None:
     """Should raise an error if any fieldnames are not an attribute on the metric."""
     with pytest.raises(ValueError, match="One or more of the specified fields are not "):
@@ -918,7 +913,7 @@ def test_assert_file_header_matches_metric(tmp_path: Path, data_and_classes: Dat
     ],
 )
 def test_assert_file_header_matches_metric_raises(
-    tmp_path: Path, data_and_classes: DataBuilder, header: List[str]
+    tmp_path: Path, data_and_classes: DataBuilder, header: list[str]
 ) -> None:
     """Should raise an error if the provided file header does not match the provided metric."""
     metric_path = tmp_path / "metrics.tsv"
@@ -943,7 +938,7 @@ def test_metric_str_or_none(use_attr: bool, tmp_path: Path) -> None:
     ]
 
     PersonMaybeAge.write(path, *in_metrics)
-    out_metrics: List[PersonMaybeAge] = list(PersonMaybeAge.read(path=path))
+    out_metrics: list[PersonMaybeAge] = list(PersonMaybeAge.read(path=path))
 
     assert len(out_metrics) == 2
     assert out_metrics[0] == in_metrics[0]
@@ -963,5 +958,5 @@ def test_metric_multi_arg_optional_missing_column(use_attr: bool, tmp_path: Path
     with path.open("w") as writer:
         writer.write("name\nMax\n")
 
-    out_metrics: List[PersonMaybeId] = list(PersonMaybeId.read(path=path))
+    out_metrics: list[PersonMaybeId] = list(PersonMaybeId.read(path=path))
     assert out_metrics == [PersonMaybeId(name="Max", identifier=None)]

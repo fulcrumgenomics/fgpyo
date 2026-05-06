@@ -197,7 +197,7 @@ def test_sort_order(random_generator: random.Random) -> None:
 
 
 def test_zero_sample_records_match_inputs(
-    zero_sample_record_inputs: tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any], ...],
 ) -> None:
     """Test if zero-sample VCF (no genotypes) records produced match the requested inputs."""
     variant_builder = VariantBuilder()
@@ -333,7 +333,7 @@ def _add_random_genotypes(
 @pytest.mark.parametrize("add_genotypes_to_records", (True, False))
 def test_variant_sample_records_match_inputs(
     random_generator: random.Random,
-    zero_sample_record_inputs: tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any], ...],
     num_samples: int,
     add_genotypes_to_records: bool,
 ) -> None:
@@ -374,7 +374,7 @@ def test_variant_sample_records_match_inputs(
 def test_variant_sample_vcf_round_trip(
     temp_path: Path,
     random_generator: random.Random,
-    zero_sample_record_inputs: tuple[Mapping[str, Any]],
+    zero_sample_record_inputs: tuple[Mapping[str, Any], ...],
     num_samples: int,
     compress: bool,
     add_genotypes_to_records: bool,

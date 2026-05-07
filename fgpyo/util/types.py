@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 from enum import Enum
 from functools import partial
+from pathlib import PurePath
 from types import UnionType
 from typing import Literal
 from typing import TypeAlias
@@ -23,6 +24,21 @@ EnumType = TypeVar("EnumType", bound="Enum")
 LiteralType = TypeVar("LiteralType")
 
 T = TypeVar("T")
+
+
+# NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
+TypeAnnotation: TypeAlias = type | typing._GenericAlias | UnionType | types.GenericAlias  # type: ignore[name-defined]
+"""
+A function parameter's type annotation may be any of the following:
+    1) `type`, when declaring any of the built-in Python types
+    2) `typing._GenericAlias`, when declaring generic collection types or union types using pre-PEP
+        585 and pre-PEP 604 syntax (e.g. `List[int]`, `Optional[int]`, or `Union[int, None]`)
+    3) `types.UnionType`, when declaring union types using PEP604 syntax (e.g. `int | None`)
+    4) `types.GenericAlias`, when declaring generic collection types using PEP 585 syntax (e.g.
+       `list[int]`)
+`types.GenericAlias` is a subclass of `type`, but `typing._GenericAlias` and `types.UnionType` are
+not and must be considered explicitly.
+"""
 
 
 class InspectException(Exception):  # noqa: N818
@@ -64,40 +80,28 @@ def make_enum_parser(enum: type[EnumType]) -> partial:
     return partial(_make_enum_parser_worker, enum)
 
 
-def is_constructible_from_str(type_: type) -> bool:
-    """Returns true if the provided type can be constructed from a string."""
+def is_known_str_constructible(type_: TypeAnnotation) -> TypeGuard[type]:
+    """
+    Returns true if `type_` is one of the built-in types known to be constructible from a str.
+
+    Complements `is_constructible_from_str`, which detects str-constructibility via constructor
+    signature inspection. This predicate covers types whose constructors aren't annotated for
+    introspection (e.g. `int`, `str`, `float`) or whose subclasses don't all share an annotation
+    (e.g. `PurePath`).
+    """
+    return isinstance(type_, type) and (type_ in (str, int, float) or issubclass(type_, PurePath))
+
+
+def is_constructible_from_str(type_: TypeAnnotation) -> TypeGuard[type]:
+    """Returns true if the provided type is a class constructible from a single str argument."""
+    if not isinstance(type_, type):
+        return False
     try:
         sig = inspect.signature(type_)
         ((argname, _),) = sig.bind(object()).arguments.items()
-    except TypeError:  # Can be raised by signature() or Signature.bind().
+    except (TypeError, ValueError):
         return False
-    except ValueError:
-        # Can be raised for classes, if the relevant info is in `__init__`.
-        if not isinstance(type_, type):
-            raise
-    else:
-        if sig.parameters[argname].annotation is str:
-            return True
-    # FIXME
-    # if isinstance(type_, type):
-    #     # signature() first checks __new__, if it is present.
-    #     return _is_constructible_from_str(type_.__init__(object(), type_))
-    return False
-
-
-# NB: since `_GenericAlias` is a private attribute of the `typing` module, mypy doesn't find it
-TypeAnnotation: TypeAlias = type | typing._GenericAlias | UnionType | types.GenericAlias  # type: ignore[name-defined]
-"""
-A function parameter's type annotation may be any of the following:
-    1) `type`, when declaring any of the built-in Python types
-    2) `typing._GenericAlias`, when declaring generic collection types or union types using pre-PEP
-        585 and pre-PEP 604 syntax (e.g. `List[int]`, `Optional[int]`, or `Union[int, None]`)
-    3) `types.UnionType`, when declaring union types using PEP604 syntax (e.g. `int | None`)
-    4) `types.GenericAlias`, when declaring generic collection types using PEP 585 syntax (e.g.
-       `list[int]`)
-`types.GenericAlias` is a subclass of `type`, but `typing._GenericAlias` and `types.UnionType` are
-not and must be considered explicitly.
-"""
+    return sig.parameters[argname].annotation is str
 
 
 def _is_optional(dtype: TypeAnnotation) -> bool:

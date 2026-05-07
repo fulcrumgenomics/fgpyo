@@ -21,6 +21,7 @@ from typing import TypeGuard
 from typing import TypeVar
 
 import fgpyo.util.types as types
+from fgpyo.util.types import TypeAnnotation
 
 attr: python_types.ModuleType | None
 MISSING: frozenset[Any]
@@ -150,7 +151,7 @@ NoneType: TypeAlias = type(None)  # type: ignore[no-redef]
 
 
 def list_parser(
-    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAnnotation, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a "stringified" list into a `List` of the correct type.
@@ -179,7 +180,7 @@ def list_parser(
 
 
 def set_parser(
-    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAnnotation, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified set into a `Set` of the correct type.
@@ -210,7 +211,7 @@ def set_parser(
 
 
 def tuple_parser(
-    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAnnotation, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified tuple into a `Tuple` of the correct type.
@@ -254,7 +255,7 @@ def tuple_parser(
 
 
 def dict_parser(
-    cls: type, type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
+    cls: type, type_: TypeAnnotation, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Returns a function that parses a stringified dict into a `Dict` of the correct type.
@@ -307,7 +308,7 @@ def dict_parser(
 
 
 def _get_parser(  # noqa: C901
-    cls: type[Any], type_: TypeAlias, parsers: dict[type, Callable[[str], Any]] | None = None
+    cls: type[Any], type_: TypeAnnotation, parsers: dict[type, Callable[[str], Any]] | None = None
 ) -> partial:
     """
     Attempts to find a parser for a provided type.
@@ -319,7 +320,6 @@ def _get_parser(  # noqa: C901
         parsers: an optional mapping from type to the function to use for parsing that type (allows
             for parsing of more complex types)
     """
-    parser: partial[type_]
     if parsers is None:
         parsers = cls._parsers()
 
@@ -328,14 +328,14 @@ def _get_parser(  # noqa: C901
         nonlocal type_
         nonlocal parsers
         try:
-            return functools.partial(parsers[type_])
+            return functools.partial(parsers[type_])  # type: ignore[index]
         except KeyError as ex:
             if (
                 type_ in [str, int, float]
                 or isinstance(type_, type)
                 and issubclass(type_, PurePath)
             ):
-                return functools.partial(type_)
+                return functools.partial(type_)  # type: ignore[arg-type,misc,operator]
             elif type_ is bool:
                 return functools.partial(types.parse_bool)
             elif type_ is list:
@@ -346,18 +346,18 @@ def _get_parser(  # noqa: C901
                 raise ValueError("Unable to parse set (try typing.Set[type])") from ex
             elif type_ is dict:
                 raise ValueError("Unable to parse dict (try typing.Mapping[type])") from ex
-            elif typing.get_origin(type_) is list:  # type: ignore[comparison-overlap]
+            elif typing.get_origin(type_) is list:
                 return list_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is set:  # type: ignore[comparison-overlap]
+            elif typing.get_origin(type_) is set:
                 return set_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is tuple:  # type: ignore[comparison-overlap]
+            elif typing.get_origin(type_) is tuple:
                 return tuple_parser(cls, type_, parsers)
-            elif typing.get_origin(type_) is dict:  # type: ignore[comparison-overlap]
+            elif typing.get_origin(type_) is dict:
                 return dict_parser(cls, type_, parsers)
             elif isinstance(type_, type) and issubclass(type_, Enum):
                 return types.make_enum_parser(type_)
-            elif types.is_constructible_from_str(type_):
-                return functools.partial(type_)
+            elif types.is_constructible_from_str(type_):  # type: ignore[arg-type]
+                return functools.partial(type_)  # type: ignore[arg-type,misc,operator]
             elif type_ == NoneType:
                 return functools.partial(types.none_parser)
             elif types._is_optional(type_):
@@ -365,7 +365,7 @@ def _get_parser(  # noqa: C901
                     union=type_,
                     parsers=[_get_parser(cls, arg, parsers) for arg in typing.get_args(type_)],
                 )
-            elif typing.get_origin(type_) is Literal:  # type: ignore[comparison-overlap]
+            elif typing.get_origin(type_) is Literal:
                 return types.make_literal_parser(
                     type_,
                     [_get_parser(cls, type(arg), parsers) for arg in typing.get_args(type_)],

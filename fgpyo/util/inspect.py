@@ -10,7 +10,6 @@ from dataclasses import fields as get_dataclasses_fields
 from dataclasses import is_dataclass as is_dataclasses_class
 from enum import Enum
 from functools import partial
-from pathlib import PurePath
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
@@ -330,12 +329,8 @@ def _get_parser(  # noqa: C901
         try:
             return functools.partial(parsers[type_])  # type: ignore[index]
         except KeyError as ex:
-            if (
-                type_ in [str, int, float]
-                or isinstance(type_, type)
-                and issubclass(type_, PurePath)
-            ):
-                return functools.partial(type_)  # type: ignore[arg-type,misc,operator]
+            if types.is_str_or_path_type(type_):
+                return functools.partial(type_)
             elif type_ is bool:
                 return functools.partial(types.parse_bool)
             elif type_ is list:
@@ -356,8 +351,8 @@ def _get_parser(  # noqa: C901
                 return dict_parser(cls, type_, parsers)
             elif isinstance(type_, type) and issubclass(type_, Enum):
                 return types.make_enum_parser(type_)
-            elif types.is_constructible_from_str(type_):  # type: ignore[arg-type]
-                return functools.partial(type_)  # type: ignore[arg-type,misc,operator]
+            elif types.is_constructible_from_str(type_):
+                return functools.partial(type_)
             elif type_ == NoneType:
                 return functools.partial(types.none_parser)
             elif types._is_optional(type_):

@@ -329,7 +329,7 @@ def _get_parser(  # noqa: C901
         try:
             return functools.partial(parsers[type_])  # type: ignore[index]
         except KeyError as ex:
-            if types.is_str_or_path_type(type_):
+            if types.is_known_str_constructible(type_):
                 return functools.partial(type_)
             elif type_ is bool:
                 return functools.partial(types.parse_bool)

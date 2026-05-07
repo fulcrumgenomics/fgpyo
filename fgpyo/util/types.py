@@ -80,8 +80,15 @@ def make_enum_parser(enum: type[EnumType]) -> partial:
     return partial(_make_enum_parser_worker, enum)
 
 
-def is_str_or_path_type(type_: TypeAnnotation) -> TypeGuard[type]:
-    """Returns true if `type_` is `str`, `int`, `float`, or a `PurePath` subclass."""
+def is_known_str_constructible(type_: TypeAnnotation) -> TypeGuard[type]:
+    """
+    Returns true if `type_` is one of the built-in types known to be constructible from a str.
+
+    Complements `is_constructible_from_str`, which detects str-constructibility via constructor
+    signature inspection. This predicate covers types whose constructors aren't annotated for
+    introspection (e.g. `int`, `str`, `float`) or whose subclasses don't all share an annotation
+    (e.g. `PurePath`).
+    """
     return isinstance(type_, type) and (type_ in (str, int, float) or issubclass(type_, PurePath))
 
 

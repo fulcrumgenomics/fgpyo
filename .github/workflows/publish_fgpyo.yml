@@ -4,9 +4,13 @@ on:
   push:
     tags: '[0-9]+.[0-9]+.[0-9]+'
 
+permissions: {}
+
 jobs:
   on-main-branch-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       on_main: ${{ steps.contains_tag.outputs.retval }}
     steps:
@@ -21,6 +25,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: rickstaa/action-contains-tag@a9ff27d505ba2bf074a2ebb48b208e76d35ff308  # v1.2.10
         id: contains_tag
@@ -32,22 +37,27 @@ jobs:
     name: tests
     needs: on-main-branch-check
     if: ${{ needs.on-main-branch-check.outputs.on_main == 'true' }}
+    permissions: {}
     uses: "./.github/workflows/tests.yml"
 
   build-wheels:
     name: build wheels
     needs: tests
+    permissions: {}
     uses: "./.github/workflows/wheels.yml"
 
   build-sdist:
     name: build source distribution
     needs: tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
@@ -86,6 +96,8 @@ jobs:
   make-changelog:
     runs-on: ubuntu-latest
     needs: publish-to-pypi
+    permissions:
+      contents: read
     outputs:
       release_body: ${{ steps.git-cliff.outputs.content }}
     steps:
@@ -94,6 +106,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
+          persist-credentials: false
 
       - name: Generate a Changelog
         uses: orhun/git-cliff-action@c93ef52f3d0ddcdcc9bd5447d98d458a11cd4f72  # v4.7.1

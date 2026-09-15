@@ -60,6 +60,18 @@ class FastxZipped(AbstractContextManager, Iterator[tuple[FastxRecord, ...]]):
         """Return the name of the FASTX record minus its ordinal suffix (e.g. "/1" or "/2")."""
         return name[: len(name) - 2] if len(name) >= 2 and name[-2] == "/" else name
 
+    def _unnamed_record_message(self) -> str:
+        """
+        Return the error message for a FASTX record with no name.
+
+        `pysam.FastxRecord.name` is typed as optional, but the parser assigns at least the empty
+        string to every record it reads, so this is a defensive check rather than a reachable
+        parse error.
+        """
+        return "One or more of the FASTX files contains a record with no name:\n\t" + "\n\t".join(
+            str(path) for path in self._paths
+        )
+
     def __next__(self) -> tuple[FastxRecord, ...]:
         """Return the next set of FASTX records from the zipped FASTX files."""
         records = tuple(next(handle, None) for handle in self._fastx)
@@ -70,7 +82,8 @@ class FastxZipped(AbstractContextManager, Iterator[tuple[FastxRecord, ...]]):
             non_none_names: list[str | None] = [
                 record.name for record in records if record is not None
             ]
-            assert all_not_none(non_none_names)  # type narrowing
+            if not all_not_none(non_none_names):
+                raise ValueError(self._unnamed_record_message())
             # We know there is at least one non-None record because the previous conditional
             # covers the case where all records are None, so it is safe to index into the first
             # element of non_none_names.
@@ -84,7 +97,8 @@ class FastxZipped(AbstractContextManager, Iterator[tuple[FastxRecord, ...]]):
             )
 
         names_with_ordinals: list[str | None] = [record.name for record in records]
-        assert all_not_none(names_with_ordinals)  # type narrowing
+        if not all_not_none(names_with_ordinals):
+            raise ValueError(self._unnamed_record_message())
         record_names: list[str] = [self._name_minus_ordinal(name) for name in names_with_ordinals]
         if len(set(record_names)) != 1:
             raise ValueError(f"FASTX record names do not all match, found: {record_names}")
